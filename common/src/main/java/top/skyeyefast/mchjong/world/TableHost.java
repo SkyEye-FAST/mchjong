@@ -102,6 +102,7 @@ final class TableHost {
             return false;
         if (session instanceof McrSession mcr && !mcr.pendingReplays().isEmpty()) return false;
         if (session instanceof SichuanSession sichuan && !sichuan.pendingReplays().isEmpty()) return false;
+        if (session instanceof TaiwanSession taiwan && !taiwan.pendingReplays().isEmpty()) return false;
         TableSession replacement = session.selectVariant(actor, incarnation, decision, variant);
         if (replacement == null) return false;
         session = replacement;

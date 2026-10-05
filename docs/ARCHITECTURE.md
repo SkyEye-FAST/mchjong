@@ -152,7 +152,7 @@ slot order from the cut; tail replacement reverses that order. The no-flower
 seventeen-stack overflow and numbered-side traversal are frozen project preset
 rules. Exact indexing and source limits belong to [Taiwan design](TAIWAN_DESIGN.md#opening-and-wall-representation).
 
-`TaiwanGameState` and `TaiwanSession.State` each accept only format 1. Game restore
+`TaiwanGameState` accepts only format 1; `TaiwanSession.State` accepts only format 2. Game restore
 checks physical conservation, player structure/provenance, cursor occupancy,
 replacement/chronology counts, passing/ready state, pending offers and terminal
 score/payment consistency. Actions are rederived; saved response choices must
@@ -202,7 +202,8 @@ Bots, automatically ready them and retain their difficulty. The session schedule
 them after twelve active ticks with inactive Bot clocks and automatic nonfinal
 result confirmations. One human and three Bots can complete all four winds,
 including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwan-built-in-opponent).
-Taiwan has no Replay, external Bot or convenience-hint integration.
+Taiwan records native replays through the shared archive and browser; external Bot
+and convenience-hint integration remain unavailable.
 
 ## MCR match orchestration
 
@@ -1016,9 +1017,9 @@ completion callback. See `AUDIO.md` for the recording contract.
 
 Replay recording and playback live in the Minecraft-independent engine.
 `ReplayMatch` holds shared identity, participants, variant, timestamps and
-completion state; `RiichiReplay`, `McrReplay` and `SichuanReplay` own independent
+completion state; `RiichiReplay`, `McrReplay`, `SichuanReplay` and `TaiwanReplay` own independent
 completed-hand types, and exactly one payload matches the selected variant.
-MCR and Sichuan record complete physical openings and accepted server decisions,
+MCR, Sichuan and Taiwan record complete physical openings and accepted server decisions,
 then reconstruct read-only event frames by executing their own game rules and
 checking each event. `SichuanReplayHand` seals the 108 physical wall slots, dice
 and dealer, starting cumulative scores, initial hands, void suits, issued choices
@@ -1030,14 +1031,33 @@ match once; closing a match queues its already sealed hands. Private session sav
 retain the current recorder, sealed hands and unacknowledged archives. Restoration
 reexecutes the recorder and verifies it against the saved game, and validates queued
 archives without applying payments or requeuing acknowledged records.
+`TaiwanReplayHand` independently seals its hand number, rules, three-die opening,
+round/dealer/continuation, complete fixed 136/144-slot wall, raw opening player
+zones, starting long scores, issued options and accepted indices, physical events,
+terminal state/settlement and ending scores. `TaiwanGame` supplies passive physical
+checkpoints at automatic and action boundaries; `TaiwanReplayRecorder` derives
+events from their differences without performing game transitions. Automatic
+opening flowers, consecutive replacements and flower victories have events at
+the current decision cursor, including zero, without invented player decisions.
+`TaiwanReplayPlayback` reconstructs the real opening, submits every recorded
+choice and checks regenerated options, events/cursors, conservation and complete
+terminal state. `TaiwanReplay` validates wind/dealer/repeat and score succession;
+sixteen completed dealer positions finish the match. `ReplayMatch.Header` retains
+Taiwan's final scores as long values and derives ranks before display conversion.
+`TaiwanSession` persists its recorder, sealed hands and archive queue, reexecutes
+the active recorder against its saved game and queues one complete four-wind
+match. Closing early archives only sealed hands. Acknowledgement survives restores.
 `ReplayStore` handles bounded atomic files, searchable indexes and per-player durable
 deletion markers; `ReplayServer` handles
 permissions and commands, and `ReplayTransfer` handles bounded reassembly.
 `ReplayCodec` checks complete typed JSON fields and validates rule-specific timelines.
 The shared browser lists each variant and final standings; `ReplayScreen` uses
 native timelines through `ReplayPresentation` for common navigation and receipts.
-Sealed playback exposes all four hands through replay frames, while running
-`SichuanView` projections continue to enforce recipient-safe privacy.
+Sealed Riichi/MCR/Sichuan playback exposes all hands through replay frames. Taiwan
+presentation projects the selected player's hand and covered kongs separately for
+each viewpoint, including settlement, while keeping other hands hidden. Its wall
+panel uses `TaiwanWallLayout`; hand, meld, flower, river and receipt primitives
+remain shared. Running recipient projections retain their existing privacy.
 The viewer never feeds recorded actions back into a live match. `TenhouReplay`
 consumes completed Riichi records and does not rerun
 scoring. See `REPLAYS.md` for the storage layout and interchange details.

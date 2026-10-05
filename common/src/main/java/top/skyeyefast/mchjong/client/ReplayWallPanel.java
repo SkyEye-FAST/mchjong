@@ -100,7 +100,8 @@ final class ReplayWallPanel extends AbstractWidget {
     }
 
     private int nextLive(Set<Integer> used, int liveEnd) {
-        for (int slot = 0; slot < liveEnd; slot++) if (!used.contains(playback.wall().get(slot))) return slot;
+        if (match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN && frame.board().remaining() == 0) return -1;
+        for (int slot : playback.wallDrawOrder()) if (slot < liveEnd && !used.contains(playback.wall().get(slot))) return slot;
         return -1;
     }
 

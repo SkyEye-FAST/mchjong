@@ -96,7 +96,7 @@ final class RoomLobby {
         var replays = RoomLobbyControls.button(Component.translatable("replay.mchjong.title"), layout.left(), layout.footer(), layout.rail(),
             () -> ClientReplays.list(0, "", false)).navigation();
         replays.active = table() != null && table().clientWorldPolicy().replaysEnabled();
-        if (room.variant() != MahjongVariant.TAIWAN) buttons.add(replays);
+        buttons.add(replays);
         var invite = RoomLobbyControls.button(Component.translatable("ui.mchjong.invite"), layout.left(), layout.footer() - 24, layout.rail(),
             () -> client.setScreen(new TableInviteScreen(parent, pos))).navigation().shortCaption(Component.translatable("ui.mchjong.invite.short"));
         invite.active = room.viewerSeat() >= 0 && room.lobby() && table().clientWorldPolicy().invitationsEnabled();

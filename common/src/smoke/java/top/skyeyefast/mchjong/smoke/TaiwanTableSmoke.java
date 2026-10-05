@@ -28,6 +28,7 @@ final class TaiwanTableSmoke {
     private List<TaiwanGameState.Action> sentActions = List.of();
     private int selectedTile;
     private UUID incarnation;
+    private UUID replayId;
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
         check(++ticks < 6600, "Taiwan smoke timed out at " + stage);
@@ -236,6 +237,11 @@ final class TaiwanTableSmoke {
                     check(called, "Taiwan smoke never completed a call/kong");
                     var saved = t.saveWithoutMetadata(player.registryAccess()); t.loadWithComponents(saved, player.registryAccess());
                     check(t.taiwanView(player).scores().equals(end.scores()), "Final save repaid Taiwan");
+                    var session = (TaiwanSession) t.participantRoom(player);
+                    replayId = session.save().replay().id();
+                    try { top.skyeyefast.mchjong.replay.ReplayServer.flush(server,session); }
+                    catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
+                    check(session.pendingReplays().isEmpty(),"Taiwan replay archive was not acknowledged");
                     t.open(player);
                 }); captures = 0; stage++;
             }
@@ -244,7 +250,50 @@ final class TaiwanTableSmoke {
                 if (++captures == 1) press(client, "ui.mchjong.result_page.2");
                 if (captures < 12) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-match-end.png", client.getMainRenderTarget(), ignored -> {});
-                task = server.submit(() -> botMatch(target(client, pos), main(client), pos)); stage++;
+                ClientReplays.list(0,replayId.toString(),false); captures = 0; stage = 40;
+            }
+            case 40 -> {
+                if (!(client.screen instanceof ReplayBrowserScreen)) break;
+                if (++captures < 12) break;
+                press(client,"replay.mchjong.open"); stage++;
+            }
+            case 41 -> {
+                if (!(client.screen instanceof ReplayScreen replay)) break;
+                check(replay.match().id().equals(replayId) && replay.match().variant() == MahjongVariant.TAIWAN
+                    && replay.match().complete() && replay.match().header().taiwanScores().size() == 4,"Browser did not retrieve native Taiwan match");
+                check(replay.cursor() == 0,"Taiwan replay did not start at opening");
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT,0,0);
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT,0,0);
+                check(replay.cursor() == 2,"Taiwan replay event stepping failed");
+                int viewer = replay.viewerSeat();
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V,0,0);
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V,0,0);
+                check(replay.viewerSeat() == (viewer+2)%4,"Taiwan replay viewpoint switching failed");
+                var frames = TaiwanReplayPlayback.timeline(replay.match(),0).frames();
+                int flower = -1;
+                for (int i = 0; i < frames.size(); i++) if (frames.get(i).event().kind() == TaiwanReplayHand.Kind.FLOWER) { flower = i; break; }
+                check(flower >= 0,"Taiwan opening flower missing from playback");
+                replay.seek(flower);
+                var event = frames.get(flower).event();
+                check(frames.get(flower).state().players().get(event.seat()).flowers().stream().anyMatch(f -> f.id() == event.tile()),
+                    "Taiwan playback flower did not reach public rail");
+                captures = 0; stage++;
+            }
+            case 42 -> {
+                if (!(client.screen instanceof ReplayScreen replay)) break;
+                if (++captures < 12) break;
+                SmokeScreenshots.grab(output.toFile(),"taiwan-replay.png",client.getMainRenderTarget(),ignored -> {});
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END,0,0);
+                press(client,"ui.mchjong.result_page.0"); captures = 0; stage++;
+            }
+            case 43 -> {
+                if (!(client.screen instanceof ReplayScreen replay)) break;
+                if (++captures < 12) break;
+                check(replay.cursor() == TaiwanReplayPlayback.timeline(replay.match(),0).frames().size()-1,"Taiwan replay settlement seek failed");
+                SmokeScreenshots.grab(output.toFile(),"taiwan-replay-settlement.png",client.getMainRenderTarget(),ignored -> {});
+                replay.onClose(); check(client.screen instanceof ReplayBrowserScreen,"Taiwan replay did not return to browser");
+                client.screen.onClose();
+                task = server.submit(() -> botMatch(target(client,pos),main(client),pos)); stage = 19;
             }
             case 19 -> {
                 if (view == null || view.lifecycle() != TableSession.Lifecycle.FINISHED || !(client.screen instanceof TaiwanResultsScreen)) break;
@@ -311,9 +360,15 @@ final class TaiwanTableSmoke {
         }
         var end = table.taiwanView(player);
         check(end.lifecycle() == TableSession.Lifecycle.FINISHED && end.scores().stream().mapToLong(Long::longValue).sum() == 0, "Taiwan Bot match did not finish with balanced scores");
+        var session = (TaiwanSession) table.participantRoom(player); var replay = session.save().replay();
+        check(replay.complete() && replay.participants().stream().filter(ReplayMatch.Participant::bot).count() == 3
+            && replay.header().taiwanScores().equals(end.scores()),"Taiwan Bot replay lost roster or final standings");
+        ReplayCodec.validate(replay);
         checkPrivacy(table, player); table.open(player);
     }
     private void driveOne(MahjongTableBlockEntity table, ServerPlayer main, BlockPos pos) {
+        // The queued client request can finish the hand before this server task runs.
+        if (table.taiwanView(main).game().result() != null) return;
         for (var player : players(main)) {
             var view = table.taiwanView(player); if (view.game().actions().isEmpty()) continue;
             int action = choose(view.game());

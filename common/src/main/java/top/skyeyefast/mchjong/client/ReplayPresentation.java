@@ -9,7 +9,7 @@ import top.skyeyefast.mchjong.engine.*;
 /** Authorized replay records adapted to the same controls, table and receipts for every variant. */
 record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableResultState result,
                           List<Integer> wall, List<List<Integer>> wallSlots, int deadStart,
-                          List<Integer> doraSlots, List<Integer> uraSlots) {
+                          List<Integer> doraSlots, List<Integer> uraSlots, List<Integer> wallDrawOrder) {
     record Frame(TableBoardState board, Component caption, boolean settled, List<Integer> dora, int rawCursor, int replacements) {}
     record Decision(int index, int cursor, int seat, int selected, List<Component> options) {}
     static List<TableParticipant> participants(ReplayMatch match) {
@@ -25,7 +25,11 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
             case MCR -> Component.translatable("mcr.mchjong.indicator_round", Component.translatable("wind.mchjong."
                 + new String[]{"east", "south", "west", "north"}[index / 4] + ".short"), index + 1);
             case SICHUAN -> Component.translatable("sichuan.mchjong.indicator_round", index + 1, match.sichuan().rules().matchHands());
-            case TAIWAN -> throw new IllegalArgumentException("Taiwan replay is unavailable");
+            case TAIWAN -> {
+                var h = match.taiwan().hands().get(index).recording();
+                yield Component.translatable("taiwan.mchjong.round",Component.translatable("wind.mchjong."
+                    + new String[]{"east","south","west","north"}[h.roundWind()-Tile.EAST]+".short"),h.opening().dealer()+1,h.continuation());
+            }
         };
     }
     static ReplayPresentation of(ReplayMatch match, int index) {
@@ -33,7 +37,7 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
             case RIICHI -> riichi(match, index);
             case MCR -> mcr(match, index);
             case SICHUAN -> sichuan(match, index);
-            case TAIWAN -> throw new IllegalArgumentException("Taiwan replay is unavailable");
+            case TAIWAN -> taiwan(match,index);
         };
     }
     private static Component caption(ReplayMatch match, int seat, String key) {
@@ -80,7 +84,8 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
                 decisions.add(new Decision(i, cursor, d.seat(), d.selected(), d.options().stream().map(a -> action(a.translationKey(), a.tiles())).toList()));
         }
         return new ReplayPresentation(frames, List.copyOf(decisions), TableResultState.replay(match, h, 0), h.wall().tiles(),
-            slots(h.wall().tiles().size(), match.participants().size(), h.wall().breakOffset()), h.wall().tiles().size() - 14, h.wall().dora(), h.wall().ura());
+            slots(h.wall().tiles().size(), match.participants().size(), h.wall().breakOffset()), h.wall().tiles().size() - 14, h.wall().dora(), h.wall().ura(),
+            java.util.stream.IntStream.range(0,h.wall().tiles().size()).boxed().toList());
     }
     private static int beforeAction(List<Integer> cursors, int action) {
         for (int i = 1; i < cursors.size(); i++) if (cursors.get(i) >= action) return i - 1;
@@ -114,7 +119,7 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
             for (var layer : McrWallLayout.Layer.values()) for (int stack = 0; stack < 18; stack++) side.add(McrWallLayout.slot(McrWallLayout.stack(seat, stack), layer));
             sides.add(List.copyOf(side)); }
         return new ReplayPresentation(frames, List.copyOf(decisions), TableResultState.mcr(timeline.frames().getLast().view(), participants(match), 0),
-            h.wall(), List.copyOf(sides), h.wall().size(), List.of(), List.of());
+            h.wall(), List.copyOf(sides), h.wall().size(), List.of(), List.of(),java.util.stream.IntStream.range(0,h.wall().size()).boxed().toList());
     }
     private static ReplayPresentation sichuan(ReplayMatch match, int index) {
         var h = match.sichuan().hands().get(index); var timeline = SichuanReplayPlayback.timeline(match, index);
@@ -150,6 +155,53 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
             sides.add(List.copyOf(side)); }
         var last = timeline.frames().getLast();
         return new ReplayPresentation(frames, List.copyOf(decisions), TableResultState.sichuan(match.sichuan().rules(), h.result(), last.seats(), h.finalPoints(), 0,
-            participants(match)), h.opening().slots(), List.copyOf(sides), 108, List.of(), List.of());
+            participants(match)), h.opening().slots(), List.copyOf(sides), 108, List.of(), List.of(),java.util.stream.IntStream.range(0,108).boxed().toList());
+    }
+    private static ReplayPresentation taiwan(ReplayMatch match, int index) {
+        var hand = match.taiwan().hands().get(index); var initial = hand.recording();
+        var timeline = TaiwanReplayPlayback.timeline(match,index);
+        var frames = timeline.frames().stream().map(f -> {
+            var event = f.event();
+            String key = switch (event.kind()) {
+                case INITIAL -> "replay.mchjong.initial";
+                case RESPONSE -> "taiwan.mchjong.responded";
+                case DRAW -> "taiwan.mchjong.action.draw";
+                case REPLACEMENT, FLOWER -> "taiwan.mchjong.action.replace_flower";
+                case DISCARD -> "taiwan.mchjong.action.discard";
+                case READY -> "taiwan.mchjong.action.ready_discard";
+                case CHOW -> "taiwan.mchjong.action.chow";
+                case PONG -> "taiwan.mchjong.action.pong";
+                case OPEN_KONG -> "taiwan.mchjong.action.open_kong";
+                case CONCEALED_KONG -> "taiwan.mchjong.action.concealed_kong";
+                case ADDED_KONG, KONG_OFFER -> "taiwan.mchjong.action.added_kong";
+                case WIN -> "taiwan.mchjong.action.win";
+                case ROBBING_KONG -> "taiwan.mchjong.pattern.robbing_kong";
+                case FLOWER_WIN -> "taiwan.mchjong.flower_win";
+                case PASS -> "taiwan.mchjong.action.pass";
+                case SETTLEMENT -> "taiwan.mchjong.results";
+            };
+            return new Frame(TableBoardState.replay(f),caption(match,event.kind() == TaiwanReplayHand.Kind.INITIAL ? -1 : event.seat(),key),
+                event.kind() == TaiwanReplayHand.Kind.SETTLEMENT,List.of(),event.actionCursor(),0);
+        }).toList();
+        var cursors = frames.stream().map(Frame::rawCursor).toList(); var decisions = new ArrayList<Decision>();
+        for (int i = 0; i < hand.decisions().size(); i++) {
+            var decision = hand.decisions().get(i);
+            decisions.add(new Decision(i,beforeAction(cursors,i+1),decision.seat(),decision.selected(),decision.options().stream()
+                .map(a -> action("taiwan.mchjong.action."+a.type().name().toLowerCase(Locale.ROOT),a.tiles())).toList()));
+        }
+        var sides = new ArrayList<List<Integer>>(); int size = initial.wall().size();
+        for (int side = 0; side < 4; side++) {
+            var slots = new ArrayList<Integer>();
+            for (var layer : TaiwanWallLayout.Layer.values()) for (int stack = 0; stack < TaiwanWallLayout.stacks(size); stack++)
+                slots.add(TaiwanWallLayout.slot(size,side,stack,layer));
+            sides.add(List.copyOf(slots));
+        }
+        var result = hand.settlement(); var score = result.score(); var flower = result.flowerScore();
+        var publicResult = new TaiwanView.Result(result.winner(),result.supplier(),score == null ? List.of() : score.awards(),
+            flower == null ? null : flower.award(),flower != null ? flower.rawTai() : score == null ? 0 : score.rawTai(),
+            flower != null ? flower.tai() : score == null ? 0 : score.tai(),result.transfers(),result.deltas(),result.nextDealer(),result.nextContinuation());
+        return new ReplayPresentation(frames,List.copyOf(decisions),TableResultState.taiwan(frames.getLast().board(),publicResult,participants(match)),
+            initial.wall(),List.copyOf(sides),size,List.of(),List.of(),java.util.stream.IntStream.range(0,size)
+                .mapToObj(i -> TaiwanWallLayout.drawSlot(size,initial.opening().restore(),i)).toList());
     }
 }

@@ -21,6 +21,9 @@ public final class TaiwanSession extends TableSession {
     private long futureSeed;
     private int confirmed;
     private int age;
+    private ReplayMatch replay;
+    private TaiwanReplayRecorder recorder;
+    private final List<ReplayMatch> archiveQueue = new ArrayList<>();
 
     public TaiwanSession(UUID tableId, long seed, TaiwanRules rules) {
         super(tableId, MahjongVariant.TAIWAN, 4, seed);
@@ -97,6 +100,12 @@ public final class TaiwanSession extends TableSession {
         if (!equipped()) throw new IllegalStateException("Missing Taiwan stock");
         validateRoster(participants());
         completed.clear(); futureSeed = seed;
+        if (worldPolicy.replaysEnabled()) {
+            long now = System.currentTimeMillis();
+            replay = new ReplayMatch(UUID.randomUUID(),tableId,now,now,
+                participants().stream().map(p -> new ReplayMatch.Participant(p.id(),p.name(),p.bot())).toList(),
+                MahjongVariant.TAIWAN,false,null,null,null,new TaiwanReplay(rules,List.of()));
+        }
         deal(0,Tile.EAST,0);
         lifecycle = Lifecycle.PLAYING; renewIncarnation(); updateEnd();
     }
@@ -108,9 +117,24 @@ public final class TaiwanSession extends TableSession {
         var dice = List.of(random.nextInt(6)+1,random.nextInt(6)+1,random.nextInt(6)+1);
         game = new TaiwanGame(rules.restore(),new TaiwanOpening(dealer,dice),tiles,wind,continuation);
         game.rebaseDecision(previous);
+        if (replay != null) {
+            var initial = new long[4];
+            for (var hand : completed) for (int s = 0; s < 4; s++) initial[s] = Math.addExact(initial[s],hand.settlement().deltas().get(s));
+            recorder = new TaiwanReplayRecorder(completed.size()+1,List.of(initial[0],initial[1],initial[2],initial[3]),game);
+            if (game.getPhase() == TaiwanGame.Phase.FINISHED) finishReplay();
+        }
         confirmed = 0; resetClock(true);
     }
-    @Override protected void clearMatch() { game = null; completed.clear(); clocks.clear(); confirmed = age = 0; futureSeed = 0; }
+    @Override protected void clearMatch() {
+        if (replay != null && !replay.complete() && replay.handCount() > 0) archiveQueue.add(replay);
+        game = null; replay = null; recorder = null; completed.clear(); clocks.clear(); confirmed = age = 0; futureSeed = 0;
+    }
+    private void finishReplay() {
+        replay = replay.appendTaiwan(recorder.finish(game),matchEnded()); recorder = null;
+        if (replay.complete()) archiveQueue.add(replay);
+    }
+    public List<ReplayMatch> pendingReplays() { return List.copyOf(archiveQueue); }
+    public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
     private int rotations() {
         return (int) completed.stream().filter(h -> h.settlement().nextDealer() != h.opening().dealer()).count();
     }
@@ -133,7 +157,12 @@ public final class TaiwanSession extends TableSession {
     private boolean apply(int seat, long token, int index) {
         var d = game.decisions().stream().filter(v -> v.getSeat() == seat && v.getToken() == token).findFirst().orElse(null);
         if (d == null || index < 0 || index >= d.getActions().size()) return false;
+        var before = recorder == null ? null : game.save();
         game.submit(seat,token,index);
+        if (recorder != null) {
+            recorder.accepted(before,seat,d.getActions(),index,game);
+            if (game.getPhase() == TaiwanGame.Phase.FINISHED) finishReplay();
+        }
         if (game.getPhase() == TaiwanGame.Phase.FINISHED && !matchEnded()) confirmBots();
         if (game.getDecision() != token || game.getPhase() == TaiwanGame.Phase.FINISHED) resetClock(false);
         updateEnd(); changed(false); return true;
@@ -208,7 +237,8 @@ public final class TaiwanSession extends TableSession {
         if (age % 10 == 0) changed(false);
     }
 
-    public State save() { return new State(State.FORMAT,saveRoom(),rules,stock,control,clocks,age,confirmed,futureSeed,completed,game == null ? null : game.save()); }
+    public State save() { return new State(State.FORMAT,saveRoom(),rules,stock,control,clocks,age,confirmed,futureSeed,completed,
+        game == null ? null : game.save(),replay,recorder == null ? null : recorder.save(),archiveQueue); }
     public static TaiwanSession restore(State state) {
         var session = new TaiwanSession(state.room().tableId(),state.room().seed(),state.rules().restore());
         session.restoreRoom(state.room()); session.stock = state.stock(); session.control = state.control();
@@ -231,6 +261,22 @@ public final class TaiwanSession extends TableSession {
                 || (state.room().lifecycle() == Lifecycle.FINISHED) != session.matchEnded()) throw new IllegalArgumentException("Invalid Taiwan match chain");
             validateRoster(session.participants()); session.scores();
         }
+        session.replay = state.replay();
+        if (state.replay() != null) {
+            ReplayCodec.validate(state.replay());
+            for (int i = 0; i < state.replay().handCount(); i++) {
+                var proof = i < state.completed().size() ? state.completed().get(i) : state.game();
+                if (!TaiwanReplayPlayback.samePosition(state.replay().taiwan().hands().get(i).finalState(),proof))
+                    throw new IllegalArgumentException("Taiwan replay history disagrees with match");
+            }
+        }
+        if (state.recorder() != null) {
+            if (!TaiwanReplayPlayback.samePosition(TaiwanReplayPlayback.reconstruct(state.recorder()).save(),state.game()))
+                throw new IllegalArgumentException("Taiwan recorder disagrees with saved game");
+            session.recorder = new TaiwanReplayRecorder(state.recorder());
+        }
+        for (var archived : state.archiveQueue()) ReplayCodec.validate(archived);
+        session.archiveQueue.addAll(state.archiveQueue());
         return session;
     }
     private static void validatePosition(TaiwanGameState state, TaiwanGameState.Rules rules, int dealer, int wind, int continuation) {
@@ -244,11 +290,25 @@ public final class TaiwanSession extends TableSession {
     }
     public record State(int format, TableSession.State room, TaiwanGameState.Rules rules, List<Integer> stock,
                         TimeControl control, List<TimeControl.Clock> clocks, int age, int confirmed, long futureSeed,
-                        List<TaiwanGameState> completed, TaiwanGameState game) {
-        public static final int FORMAT = 1;
+                        List<TaiwanGameState> completed, TaiwanGameState game, ReplayMatch replay,
+                        TaiwanReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
+        public static final int FORMAT = 2;
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(control);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks); completed = List.copyOf(completed);
+            archiveQueue = List.copyOf(archiveQueue);
+            if (replay != null && (game == null || replay.variant() != MahjongVariant.TAIWAN || !replay.tableId().equals(room.tableId())
+                || !replay.taiwan().rules().equals(rules) || replay.handCount() != completed.size()+(game.settlement() == null ? 0 : 1)
+                || replay.complete() != (room.lifecycle() == Lifecycle.FINISHED)
+                || !replay.participants().equals(room.participants().stream().map(p -> new ReplayMatch.Participant(p.id(),p.name(),p.bot())).toList()))
+                || replay != null && (game.settlement() == null) != (recorder != null)
+                || recorder != null && (replay == null || recorder.number() != completed.size()+1 || !recorder.rules().equals(rules)
+                    || !recorder.opening().equals(game.opening()) || recorder.roundWind() != game.roundWind() || recorder.continuation() != game.continuation()
+                    || !recorder.initialScores().equals(replay.handCount() == 0 ? List.of(0L,0L,0L,0L) : replay.taiwan().hands().get(replay.handCount()-1).finalScores()))
+                || archiveQueue.stream().map(ReplayMatch::id).distinct().count() != archiveQueue.size()
+                || archiveQueue.stream().anyMatch(m -> m.variant() != MahjongVariant.TAIWAN || m.handCount() == 0 || !m.tableId().equals(room.tableId())
+                    || replay != null && m.id().equals(replay.id()) && (!replay.complete() || !m.equals(replay))))
+                throw new IllegalArgumentException("Invalid Taiwan replay session state");
             if (format != FORMAT || room.variant() != MahjongVariant.TAIWAN || room.capacity() != 4 || room.manual()
                 || room.participants().stream().anyMatch(p -> p.entityBot() || p.externalBotId() != null || p.bot() && !p.ready())
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null) || age < 0 || age > 14_400

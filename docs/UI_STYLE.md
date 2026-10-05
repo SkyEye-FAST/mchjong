@@ -183,7 +183,7 @@ provides the complete score table. Reserve both badge and text
 space before the readout begins. Do not reflow the hand or restart the readout
 on a resize or snapshot refresh.
 All four variants share the table, player-card, action-grid, camera, settings
-and settlement design. Riichi, MCR and Sichuan also share replay presentation. Rule adapters supply native winds,
+and settlement design. All four share replay presentation. Rule adapters supply native winds,
 flowers, void suits, yaku/fan and payment data. Receipts retain native win methods;
 MCR, Sichuan and Taiwan standings show cumulative points, without Riichi uma fields.
 Dense payment ledgers paginate with the wheel or Page Up/Down; their original
@@ -192,7 +192,7 @@ tai awards and transfers while keeping opponent hands and covered kongs hidden.
 Taiwan uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
 are shared. Its lobby exposes human and built-in Bot seats, presets,
-payment/reserve rules and clocks, with no Replay or convenience-hint controls.
+payment/reserve rules, clocks and shared Replay navigation, with no convenience-hint controls.
 All four variants share one lobby layout. The left rail selects Riichi, MCR,
 Sichuan or Taiwan; variant selection never appears among that variant's settings. The body
 has Players and bots and Match settings tabs. Keep the roster visible on arrival,
@@ -512,7 +512,7 @@ table axes, bounded to 0.55 blocks on each axis. Holding arrows adjusts yaw/pitc
 at 20 degrees per second. Home restores distance, height, direction, target and
 inspect progress. Minecraft controls third-person views. Camera sliders preserve
 the current look direction; saved personal adjustments remain adjustable, and Restore defaults applies
-the current elevated seating view. All four variants use the same top-right toolbar order (Taiwan omits Replays): Replays, view, Settings,
+the current elevated seating view. All four variants use the same top-right toolbar order: Replays, view, Settings,
 and Exit. Narrow seated overlays use short captions with the full names on hover;
 normal and immersive toolbars size buttons from their translated captions.
 The top-bar view button or V switches to the

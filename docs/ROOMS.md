@@ -63,6 +63,20 @@ World `allowBots` controls preparation; running matches retain their roster.
 Scores, final standings and replay participants include Bots. See
 [Bot analysis](BOTS.md#sichuan-built-in-opponent) for their decision boundary.
 
+## Taiwan Bot rooms
+
+Pocket uses a complete 144-tile set with eight flowers; Southern uses the 136
+ordinary tiles. Both support one human and three built-in Bots through East,
+South, West and North, including repeat dealers. Add individual Bots or fill
+empty seats, then prepare seats and ready at your assigned stool. Bots are ready
+automatically and confirm nonfinal results. Easy and Hard use the current built-in
+policy described in [Bot analysis](BOTS.md#taiwan-built-in-opponent).
+
+Leaving the last human stool pauses decisions and result reading; returning resumes
+them. World `allowBots` controls preparation. Scores, final standings and native
+replay participants retain Bot identities. Replays use the shared browser and
+human-participant permissions; see [Replays](REPLAYS.md).
+
 ## World policy
 
 Each world save has `config/mchjong-world.toml`, shared by all dimensions and
@@ -132,7 +146,7 @@ leaves participant seats available and grants no game actions.
 Taiwan always supplies only the recipient's own concealed hand. Opponent hands
 and covered kongs stay hidden at settlement, and spectators receive no concealed
 identities or private decisions even when the world enables wider Riichi visibility.
-Its four seats require human players; Bot replacement is unavailable.
+Its four seats support humans and built-in Bots, including one human with three Bots.
 
 ## Room ownership
 

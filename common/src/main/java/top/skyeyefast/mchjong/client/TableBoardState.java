@@ -86,8 +86,34 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
             new Indicator(caption, java.util.stream.IntStream.range(0, 4).mapToObj(i -> wind(Math.floorMod(i - dealer, 4))).toList()));
     }
     TableBoardState replay(int viewer) {
+        if (seats.get(0).variant() == MahjongVariant.TAIWAN) {
+            var visible = java.util.stream.IntStream.range(0,4).mapToObj(i -> {
+                var p = seats.get(i);
+                return new Seat(p.points(),i == viewer ? p.hand() : java.util.Collections.nCopies(p.hand().size(),Tile.HIDDEN),
+                    i == viewer ? p.drawn() : Tile.ABSENT, taiwanMelds(p.melds(),i,viewer),p.river(),p.norths(),false,MahjongVariant.TAIWAN);
+            }).toList();
+            return new TableBoardState(viewer,players,dealer,round,honba,riichiSticks,turn,remaining,visible,focus,
+                true,true,false,roundLabel,indicator);
+        }
         return new TableBoardState(viewer, players, dealer, round, honba, riichiSticks, turn, remaining, seats, focus,
             true, true, true, roundLabel, indicator);
+    }
+    static List<Meld> taiwanMelds(List<Meld> melds, int owner, int viewer) {
+        return melds.stream().map(m -> m.closed() && owner != viewer
+            ? new Meld(m.type(),java.util.Collections.nCopies(4,Tile.HIDDEN),owner,Tile.ABSENT) : m).toList();
+    }
+    static TableBoardState replay(TaiwanReplayPlayback.Frame frame) {
+        var state = frame.state();
+        var seats = java.util.stream.IntStream.range(0,4).mapToObj(i -> {
+            var p = state.players().get(i);
+            return new Seat(frame.scores().get(i),p.hand(),i == state.turn() && p.hand().contains(state.drawn()) ? state.drawn() : Tile.ABSENT,
+                p.melds(),p.river().stream().map(t -> new Discard(t,false,false,false)).toList(),p.flowers().stream().map(FlowerTile::id).toList(),false,MahjongVariant.TAIWAN);
+        }).toList();
+        int dealer = state.opening().dealer();
+        var label = Component.translatable("taiwan.mchjong.round",wind(state.roundWind()-Tile.EAST),dealer+1,state.continuation());
+        return new TableBoardState(0,4,dealer,(state.roundWind()-Tile.EAST)*4+dealer,-1,-1,state.turn(),frame.drawable(),seats,
+            state.offer() == null ? null : new Focus(state.offer().tile()),true,true,false,label,
+            new Indicator(label,java.util.stream.IntStream.range(0,4).mapToObj(i -> wind(Math.floorMod(i-dealer,4))).toList()));
     }
     static TableBoardState replay(SichuanReplayPlayback.Frame frame, int viewer) {
         var state = frame.state();

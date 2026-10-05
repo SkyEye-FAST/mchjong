@@ -15,6 +15,7 @@ data class ReplayMatch(
     val riichi: RiichiReplay?,
     val mcr: McrReplay?,
     val sichuan: SichuanReplay?,
+    val taiwan: TaiwanReplay?,
 ) {
     @JvmRecord
     data class Participant(val id: UUID, val name: String, val bot: Boolean) {
@@ -29,24 +30,30 @@ data class ReplayMatch(
         val variant: MahjongVariant,
         val riichiRules: RiichiRules?,
         val sichuanRules: SichuanRules?,
+        val taiwanRules: TaiwanGameState.Rules?,
         val hands: Int,
         val complete: Boolean,
         val names: List<String>,
         val finalScores: List<Double>,
         val finalRanks: List<Int>,
+        val taiwanScores: List<Long>,
     ) {
         init {
             require(
-                variant != MahjongVariant.TAIWAN && startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
+                startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
                     (variant == MahjongVariant.RIICHI) == (riichiRules != null) &&
                     (variant == MahjongVariant.SICHUAN) == (sichuanRules != null) &&
+                    (variant == MahjongVariant.TAIWAN) == (taiwanRules != null) &&
+                    (variant != MahjongVariant.TAIWAN || !complete || hands >= 16) &&
                     (variant != MahjongVariant.MCR || hands <= 16 && (!complete || hands == 16)) &&
                     (sichuanRules == null || hands <= sichuanRules.matchHands() && (!complete || hands == sichuanRules.matchHands())) &&
                     names.size == (riichiRules?.players() ?: 4) &&
                     names.none { it.isBlank() || it.length > 128 } &&
-                    finalScores.size == finalRanks.size &&
+                    (if (variant == MahjongVariant.TAIWAN) finalScores.isEmpty() && taiwanScores.size == finalRanks.size
+                        else taiwanScores.isEmpty() && finalScores.size == finalRanks.size) &&
                     finalScores.none { !it.isFinite() } && finalRanks.none { it !in 1..names.size } &&
-                    (if (complete) finalScores.size == names.size else finalScores.isEmpty()) &&
+                    (if (complete) finalRanks.size == names.size else finalRanks.isEmpty()) &&
+                    taiwanScores.indices.all { seat -> finalRanks[seat] == 1 + taiwanScores.count { it > taiwanScores[seat] } } &&
                     (variant == MahjongVariant.RIICHI || finalScores.indices.all { seat ->
                         finalRanks[seat] == 1 + finalScores.count { it > finalScores[seat] }
                     }),
@@ -60,30 +67,34 @@ data class ReplayMatch(
     }
 
     init {
-        require(variant != MahjongVariant.TAIWAN && startedAt > 0 && updatedAt >= startedAt &&
+        require(startedAt > 0 && updatedAt >= startedAt &&
             (variant == MahjongVariant.RIICHI) == (riichi != null) &&
             (variant == MahjongVariant.MCR) == (mcr != null) &&
             (variant == MahjongVariant.SICHUAN) == (sichuan != null) &&
+            (variant == MahjongVariant.TAIWAN) == (taiwan != null) &&
             participants.size == (riichi?.rules?.players() ?: 4) &&
             participants.map { it.id }.distinct().size == participants.size &&
             handCount() <= 1024 && (!complete || handCount() > 0)) { "Invalid replay match" }
         if (complete) {
             require(riichi?.hands?.lastOrNull()?.let { it.finalScores.size == participants.size && it.finalRanks.size == participants.size }
-                ?: (mcr?.hands?.size?.let { it == 16 } ?: (sichuan!!.hands.size == sichuan.rules.matchHands()))) { "Missing final replay standings" }
+                ?: (mcr?.hands?.size?.let { it == 16 } ?: sichuan?.let { it.hands.size == it.rules.matchHands() } ?: taiwan!!.complete())) { "Missing final replay standings" }
         }
+        require(taiwan == null || complete == taiwan.complete()) { "Taiwan completion disagrees with dealer chain" }
     }
 
-    fun handCount(): Int = riichi?.hands?.size ?: mcr?.hands?.size ?: sichuan!!.hands.size
+    fun handCount(): Int = riichi?.hands?.size ?: mcr?.hands?.size ?: sichuan?.hands?.size ?: taiwan!!.hands.size
 
     fun header(): Header {
-        val scores = if (!complete) emptyList() else riichi?.hands?.last()?.finalScores
+        val scores = if (!complete || taiwan != null) emptyList() else riichi?.hands?.last()?.finalScores
             ?: (mcr?.hands?.last()?.finalPoints ?: sichuan!!.hands.last().finalPoints).map(Int::toDouble)
         val ranks = if (!complete) emptyList() else riichi?.hands?.last()?.finalRanks ?: run {
-            val points = mcr?.hands?.last()?.finalPoints ?: sichuan!!.hands.last().finalPoints
+            val points = (mcr?.hands?.last()?.finalPoints ?: sichuan?.hands?.last()?.finalPoints)?.map(Int::toLong)
+                ?: taiwan!!.hands.last().finalScores
             points.map { score -> 1 + points.count { it > score } }
         }
-        return Header(id, startedAt, updatedAt, variant, riichi?.rules, sichuan?.rules, handCount(), complete,
-            java.util.List.copyOf(participants.map { it.name }), java.util.List.copyOf(scores), java.util.List.copyOf(ranks))
+        return Header(id, startedAt, updatedAt, variant, riichi?.rules, sichuan?.rules, taiwan?.rules, handCount(), complete,
+            java.util.List.copyOf(participants.map { it.name }), java.util.List.copyOf(scores), java.util.List.copyOf(ranks),
+            if (complete && taiwan != null) taiwan.hands.last().finalScores else emptyList())
     }
 
     fun permits(player: UUID): Boolean = participants.any { !it.bot && it.id == player }
@@ -101,5 +112,10 @@ data class ReplayMatch(
     fun appendSichuan(hand: SichuanReplayHand, ended: Boolean): ReplayMatch = copy(
         updatedAt = System.currentTimeMillis(), complete = ended,
         sichuan = SichuanReplay(requireNotNull(sichuan).rules, java.util.List.copyOf(sichuan.hands + hand)),
+    )
+
+    fun appendTaiwan(hand: TaiwanReplayHand, ended: Boolean): ReplayMatch = copy(
+        updatedAt = System.currentTimeMillis(), complete = ended,
+        taiwan = TaiwanReplay(requireNotNull(taiwan).rules, java.util.List.copyOf(taiwan.hands + hand)),
     )
 }

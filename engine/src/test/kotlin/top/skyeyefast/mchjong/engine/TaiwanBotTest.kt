@@ -159,7 +159,7 @@ class TaiwanBotTest {
         val start = TaiwanSession.start(UUID.randomUUID(), roster, 4, TaiwanWall.expected(game.rules), game.rules)
         val saved = start.save()
         return TaiwanSession.restore(TaiwanSession.State(saved.format(), saved.room(), saved.rules(), saved.stock(), saved.control(),
-            saved.clocks(), 0, 0, saved.futureSeed(), emptyList(), game.save())).also(::mount)
+            saved.clocks(), 0, 0, saved.futureSeed(), emptyList(), game.save(),null,null,emptyList())).also(::mount)
     }
     private fun restore(room: TaiwanSession): TaiwanSession = (TableSessionCodec.restore(TableSessionCodec.save(room)) as TaiwanSession).also {
         assertEquals(room.scores(), it.scores())
@@ -229,7 +229,7 @@ class TaiwanBotTest {
         act(game, 0, Type.DISCARD, 33)
         val initial = TaiwanSession.start(UUID.randomUUID(), players, 4, TaiwanWall.expected(game.rules), game.rules).save()
         var room = TaiwanSession.restore(TaiwanSession.State(initial.format(), initial.room(), initial.rules(), initial.stock(), initial.control(),
-            initial.clocks(), 0, 0, initial.futureSeed(), emptyList(), game.save()))
+            initial.clocks(), 0, 0, initial.futureSeed(), emptyList(), game.save(),null,null,emptyList()))
         fun mountBoth() = room.synchronizeSeats(mapOf(human to 0, second to 1))
         mountBoth()
         repeat(6) { room.tick() }

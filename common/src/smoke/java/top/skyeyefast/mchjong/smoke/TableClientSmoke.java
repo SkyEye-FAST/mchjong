@@ -244,7 +244,7 @@ public final class TableClientSmoke {
                 step = 31; entered = ticks;
             } else if (step == 45) {
                 if (taiwanSmoke.tick(client, CENTER, output)) {
-                    Files.writeString(output.resolve("PASS.txt"), "Taiwan four-variant switching, 136/144 equipment, four-human play, initial flowers, calls, recipient privacy, settlement/confirmations, NBT restoration, four winds and stale authority passed\n");
+                    Files.writeString(output.resolve("PASS.txt"), "Taiwan four-variant switching, 136/144 equipment, real play, flowers/calls, recipient privacy, settlement/confirmations, NBT restoration, four winds, stale authority, shared replay browser/open/event/viewer/settlement/return and one-human/three-Bot replay standings passed\n");
                     LOG.info("MCHJONG_TAIWAN_SMOKE_PASS"); step = 14; client.stop();
                 }
             } else if (step == 42) {

@@ -173,7 +173,7 @@ dealer/continuation and the derived round wind. Scores start at zero and are the
 exact sum of completed `TaiwanSettlement.deltas` plus the current settlement,
 with checked arithmetic. Advancing or restoring never pays a hand twice.
 Completed proofs are private terminal game states for validating the dealer,
-score and rule chain; they contain no event timeline or replay API.
+score and rule chain. Native sealed hands retain the corresponding event timeline.
 
 Human participants use the existing identity/mount authority. Built-in Bots use
 the shared room controls, become ready automatically and select issued actions
@@ -202,9 +202,10 @@ are rejected. Terminal scores and payments are recomputed and compared with the
 saved result. Decision/revision authority refreshes on restore; session hand
 boundaries also advance decision tokens.
 
-`TaiwanSession.State` format **1** saves the common room, rules,
+`TaiwanSession.State` format **2** saves the common room, rules,
 stock, future seed, completed proofs, current game, clock reserves, decision age
-and confirmations. Restore validates the entire dealer/wind/continuation chain
+and confirmations, current replay/recorder and unacknowledged archive queue.
+Restore validates the entire dealer/wind/continuation chain
 and scores before returning a session, creates a fresh incarnation, and requires
 live presence to be observed again. `TaiwanCodec` separates private game/session
 saves from recipient view documents, rejects malformed data without replacement
@@ -226,6 +227,42 @@ Completion publishes awards and payments, with no private decomposition or
 automatic reveal of any opponent's hand. The selected rules do not require all
 hands to be exposed. Session views expose only the recipient's clock, so clock
 activation cannot reveal another player's submitted reaction.
+
+## Native replay
+
+`TaiwanReplay`, `TaiwanReplayHand`, `TaiwanReplayRecorder` and
+`TaiwanReplayPlayback` are independent Taiwan contracts. The recorder stores
+the complete initial physical wall, real three-die opening, raw dealt player zones,
+rules, hand number, round wind/dealer/continuation and starting long scores.
+Only accepted engine decisions append their seat, complete issued options and
+selected index. Passive engine physical checkpoints supply state differences for
+draws, discards, ready declarations, flowers, calls, all kongs and settlement.
+Transient response collections belong to live saves and accepted decisions, rather
+than physical checkpoints. Recording never executes its own rules.
+
+Initial flower rounds and victories use decision cursor zero. Continuous flowers,
+seven-versus-one, eight flowers and kong replacements retain their actual physical
+slot/front/tail/kong cursors. The added-kong offer remains separate from commit;
+robbery keeps the pong and consumes no replacement. Automatic events do not invent
+player actions. Playback reconstructs the opening through `TaiwanGame`, reissues
+and compares every option, submits the recorded index and compares every derived
+event. It checks conservation after accepted actions and compares the complete
+terminal state, settlement, succession and ending scores. Mismatches are rejected.
+
+The shared match validates all sixteen dealer positions and derives final ranks
+from exact long cumulative scores. Participant identities and built-in Bot flags
+remain those of the real room; only human participants can fetch the archive under
+the shared world replay policy. Mid-hand and partial-reaction restores reexecute
+the recorder and compare it with the saved position, without paying or recording
+again. Complete matches enter the shared archive queue once; early closure queues
+only completed hands, and acknowledged entries are never queued again.
+
+The shared browser shows Taiwan, hand count, completion and final standings.
+The viewer uses Taiwan's 136/144 fixed slots, native public zones and receipts,
+with event/decision navigation and participant viewpoints. Ordinary timelines and
+settlement keep opponents' concealed hands and covered kongs hidden for the
+selected viewpoint. The explicit physical-wall panel provides the original sealed
+wall for review. Storage and controls are described in [Replays](REPLAYS.md).
 
 ## Minecraft integration and acceptance
 
@@ -266,8 +303,11 @@ settlement/next-hand packets, NBT restoration, final North completion and stale
 incarnation/decision rejection. It also prepares and restores a Bot roster through
 native room handlers and finishes a one-human/three-Bot Southern match. Test-only
 human legal-action drivers are not production Bots. Both presets' complete
-four-wind Bot matches have engine coverage. Replay, external Bots and complex convenience hints remain outside
-Taiwan support. Maven Central publication and compatibility-port synchronization
+four-wind Bot matches have engine coverage. The smoke retrieves the completed
+Taiwan match through the shared browser, opens playback, steps events, changes
+viewpoints, inspects an opening flower and settlement, and returns to the list.
+External Bots and convenience hints remain outside Taiwan support.
+Maven Central publication and compatibility-port synchronization
 are separate work.
 
 See [Verification](VERIFICATION.md#taiwan-hand-library) for focused commands.

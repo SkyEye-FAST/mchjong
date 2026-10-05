@@ -16,7 +16,7 @@ class TaiwanSessionTest {
     private fun session(game: TaiwanGame): TaiwanSession {
         val initial=TaiwanSession.start(UUID.randomUUID(),roster,81,TaiwanWall.expected(game.rules),game.rules)
         val s=initial.save()
-        return TaiwanSession.restore(TaiwanSession.State(s.format(),s.room(),s.rules(),s.stock(),s.control(),s.clocks(),0,0,s.futureSeed(),emptyList(),game.save())).also { mount(it) }
+        return TaiwanSession.restore(TaiwanSession.State(s.format(),s.room(),s.rules(),s.stock(),s.control(),s.clocks(),0,0,s.futureSeed(),emptyList(),game.save(),null,null,emptyList())).also { mount(it) }
     }
     private fun restore(session: TaiwanSession): TaiwanSession = TaiwanCodec.restoreSession(TaiwanCodec.saveSession(session)).also {
         assertEquals(session.scores(),it.scores()); assertNotEquals(session.incarnation(),it.incarnation()); assertTrue(it.paused() || it.lifecycle()==TableSession.Lifecycle.FINISHED)
@@ -127,7 +127,7 @@ class TaiwanSessionTest {
         submit(waiting,0,Type.DISCARD,33)
         val saved=waiting.save()
         val timed=TaiwanSession.restore(TaiwanSession.State(saved.format(),saved.room(),saved.rules(),saved.stock(),TimeControl(0,1),
-            List(4) { TimeControl.Clock(20,0,false) },saved.age(),saved.confirmed(),saved.futureSeed(),saved.completed(),saved.game()))
+            List(4) { TimeControl.Clock(20,0,false) },saved.age(),saved.confirmed(),saved.futureSeed(),saved.completed(),saved.game(),saved.replay(),saved.recorder(),saved.archiveQueue()))
         mount(timed); repeat(20) { timed.tick() }
         assertEquals(TaiwanGame.Phase.TURN,timed.game().phase); assertNull(timed.game().settlement)
         assertTrue(timed.game().player(1).passedWin)
@@ -191,7 +191,7 @@ class TaiwanSessionTest {
             val dealerWin=fixture(mapOf(3 to wait+33),rules=preset.rules(),dealer=3,roundWind=Tile.NORTH,continuation=position.game().continuation())
             act(dealerWin,3,Type.WIN)
             val repeat=TaiwanSession.restore(TaiwanSession.State(position.format(),position.room(),position.rules(),position.stock(),position.control(),position.clocks(),
-                0,0,position.futureSeed(),position.completed(),dealerWin.save()))
+                0,0,position.futureSeed(),position.completed(),dealerWin.save(),null,null,emptyList()))
             mount(repeat)
             assertFalse(repeat.matchEnded()); assertEquals(TableSession.Lifecycle.PLAYING,repeat.lifecycle())
             for (p in roster) assertTrue(repeat.confirmNextHand(p.id(),repeat.tableId(),repeat.incarnation(),repeat.game().decision))

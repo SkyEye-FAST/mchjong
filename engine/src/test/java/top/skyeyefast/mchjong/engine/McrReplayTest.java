@@ -122,7 +122,7 @@ class McrReplayTest {
         var players = new ArrayList<ReplayMatch.Participant>();
         for (int seat = 0; seat < 4; seat++) players.add(new ReplayMatch.Participant(id(seat), "Seat " + seat, seat == 3));
         return new ReplayMatch(UUID.randomUUID(), TABLE, 1, 2, players, MahjongVariant.MCR, false,
-            null, new McrReplay(List.of(hand)), null);
+            null, new McrReplay(List.of(hand)), null, null);
     }
 
     private static void choose(McrGame game, McrReplayRecorder recorder, int seat, McrAction.Type type) {

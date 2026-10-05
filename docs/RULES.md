@@ -159,9 +159,10 @@ stores the set composition, so Tenhou exports report the correct `aka51`,
 
 ## Taiwan presets
 
-Taiwan uses four human players with sixteen-tile hands and a complete four-wind
-match. Pocket common includes eight flowers in a 144-tile stock; Southern common
-uses the 136 ordinary tiles. Both start cumulative scores at zero and retain the
+Taiwan uses four seats, including at least one human, with sixteen-tile hands and
+a complete four-wind match. Vacant seats can use built-in Bots; see
+[room controls](ROOMS.md). Pocket common includes eight flowers in a 144-tile stock;
+Southern common uses the 136 ordinary tiles. Both start cumulative scores at zero and retain the
 dealer on a dealer win or draw. The match ends after all sixteen dealer positions
 complete, allowing repeat hands at the last North position.
 

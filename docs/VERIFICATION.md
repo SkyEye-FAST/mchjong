@@ -286,14 +286,15 @@ recipient privacy. Lifecycle/manual checks exercise both player counts; enumerat
 presets only where rules differ. `CompactTableLayoutTest` owns hand clearance and
 picking; `TableLayoutTest` owns melds, rivers and walls. Replay storage/authorization
 belongs to `ReplayStoreTest`, and bounded chunk reassembly to `ReplayTransferTest`.
-The storage suite also checks Sichuan browser headers, final standings, participant
+The storage suite also checks Sichuan/Taiwan browser headers, final standings, participant
 permissions and altered-event rejection. Run
 `gradlew.bat :fabric:test --tests "*ReplayStoreTest" --warning-mode fail --console=plain`.
 Asset tests cover deterministic output, texture/model contracts, translation key
 parity, duplicate keys, placeholders and literal source references.
-`ReplayPresentationTest` checks static MCR/Sichuan hand selectors and every frame's
+`ReplayPresentationTest` checks static MCR/Sichuan/Taiwan hand selectors and every frame's
 remaining wall count from real played openings through exhaustion, including both
-Sichuan presets. Run `:fabric:test --tests "*ReplayPresentationTest"`.
+Sichuan presets, both Taiwan wall sizes and Taiwan viewpoint/settlement privacy.
+Run `:fabric:test --tests "*ReplayPresentationTest"`.
 `ChinesePickingTest` checks the projected centers of every concealed hand tile
 against the same oriented tile boxes, in real post-deal, midgame and late-game
 positions from all four seats at 320 × 240. Run `:fabric:test --tests "*ChinesePickingTest"`.
@@ -376,6 +377,17 @@ the selected profiles; the library ledger records the conflicting historical rul
 dealer/dice sum, action-by-action persistence, legal/still-submitted reactions,
 pending added-kong commit/robbery, passing/ready restore, concealed-kong and
 end-of-hand privacy, strict JSON rejection and settlement recomputation.
+`TaiwanReplayTest` owns independent sealed 136/144-slot openings, accepted options
+and indices, ordinary play, initial/consecutive flowers, chi/pong arbitration,
+all three kongs and robbery, ready/ordinary/flower wins and exhaustion. It checks
+mid-hand and partial-reaction recorder restoration, exact final state/scores,
+physical conservation at event frames, altered options/selection/events/wall/
+settlement rejection, complete one-human/three-Bot four-wind archive/ranks,
+participant/Bot permissions and queue acknowledgement without duplication.
+
+```text
+gradlew.bat :engine:test --tests "*TaiwanReplayTest" :fabric:test --tests "*ReplayPresentationTest" --tests "*ReplayStoreTest" --warning-mode fail --console=plain
+```
 `TaiwanSessionTest` owns four-human preparation, both physical stocks,
 incarnation/mount authorization, recipient-only clocks/response privacy,
 paused/restored allowances and exit votes, partial hand acknowledgements,
@@ -411,8 +423,12 @@ roster and completes a Southern one-human/three-Bot match with automatic result
 confirmations, conserved tiles, private views and balanced final scores. Old decisions and
 pre-restore incarnations are rejected. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`
 and `fabric/build/smoke/taiwan-evidence/PASS.txt`, with no `FAIL.txt`; inspect the
-requested captures there. The legal-action driver is test-only. Taiwan Replay,
-external Bot and complex convenience hints are not supported.
+requested captures there. The profile also retrieves the completed native match
+from the shared replay browser, opens it, steps two events, changes viewpoints,
+inspects an initial flower, opens hand settlement and returns to the list.
+Use `-PsmokeScreenshots=taiwan-replay.png,taiwan-replay-settlement.png` for these
+affected playback states. The legal-action driver is test-only. Taiwan external
+Bot and convenience hints are not supported.
 
 ## Bot checks
 

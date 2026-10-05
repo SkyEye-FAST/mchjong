@@ -26,6 +26,7 @@ public final class TableResults extends AbstractWidget {
     private static final int TEXT = MahjongUi.TEXT, MUTED = MahjongUi.MUTED, GOLD = MahjongUi.ACCENT;
     private final Font font;
     private TableResultState view;
+    private final TableResultState source;
     private final List<List<TableResultState.Row>> receipts;
     private final TileFacePreset preset;
     private final TileMaterial material;
@@ -58,7 +59,7 @@ public final class TableResults extends AbstractWidget {
                  net.minecraft.resources.ResourceLocation backPreset, int x, int y, int width, int height,
                  int winner, Page page, long started, int contentScale) {
         super(x, y, width, height, view.heading());
-        this.font = font; this.view = view; this.receipts = view.wins().stream().map(TableResultState.Win::rows).toList();
+        this.font = font; this.source = view; this.view = view.withViewer(view.viewerSeat()); this.receipts = view.wins().stream().map(TableResultState.Win::rows).toList();
         this.preset = preset; this.material = material; this.dye = dye; this.backPreset = backPreset;
         this.page = page; this.started = started; this.contentScale = contentScale;
         this.winner = Math.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
@@ -71,7 +72,7 @@ public final class TableResults extends AbstractWidget {
 
     public TableResults readout(ResultReadout value) { readout = value; return this; }
     TableResults artwork(java.util.function.IntUnaryOperator value) { artwork = value; return this; }
-    void setViewer(int viewer) { view = view.withViewer(viewer); }
+    void setViewer(int viewer) { view = source.withViewer(viewer); }
     public int selectedWinner() { return readout != null && !readout.complete() ? readout.winner() : winner; }
     public TileMaterial material() { return material; }
     public DyeColor dye() { return dye; }

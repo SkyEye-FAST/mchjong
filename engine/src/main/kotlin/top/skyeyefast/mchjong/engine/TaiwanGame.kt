@@ -34,7 +34,7 @@ class TaiwanGame private constructor(
         private set
     var settlement: TaiwanSettlement? = null
         private set
-    private var token = 0L
+    private var token = 1L
     var revision = 1L
         private set
     val decision: Long get() = token
@@ -48,6 +48,12 @@ class TaiwanGame private constructor(
     private var calls = 0
     private var draws = 0
     private var outcome: TaiwanGameState.Outcome? = null
+    private val openingWall = java.util.List.copyOf(stock)
+    private val replaySteps = mutableListOf<TaiwanGameState>()
+    /** Passive physical checkpoints; playback executes the engine, never these snapshots. */
+    fun replayOpeningWall(): List<Int> = openingWall
+    fun replaySteps(): List<TaiwanGameState> = java.util.List.copyOf(replaySteps)
+    private fun checkpoint() { replaySteps += snapshot(emptyList()) }
 
     init {
         require(roundWind in Tile.EAST..Tile.NORTH && continuation in 0..1_000_000)
@@ -57,12 +63,14 @@ class TaiwanGame private constructor(
             }
             drawn = checkNotNull(wall.draw())
             players[turn].hand += drawn
+            checkpoint()
             initialFlowers()
             if (settlement == null) {
                 turnWaits = waitsWithoutDraw(turn)
                 publishTurn()
             }
             checkConservation()
+            checkpoint()
         }
     }
 
@@ -79,12 +87,15 @@ class TaiwanGame private constructor(
         val decision = decisions().singleOrNull { it.seat == seat && it.token == decisionToken }
         require(decision != null && actionIndex in decision.actions.indices) { "Not an issued action" }
         val action = decision.actions[actionIndex]
+        replaySteps.clear()
         if (phase == Phase.REACTION) {
             responses[seat] = action
+            checkpoint()
             if (responses.size == issued.size) resolve()
         } else takeTurn(action)
         revision = Math.addExact(revision, 1)
         checkConservation()
+        checkpoint()
     }
 
     /** Also useful to hosts/tests: aliases such as drawn/offered never own a second physical copy. */
@@ -111,9 +122,11 @@ class TaiwanGame private constructor(
                 for (flower in flowers) {
                     p.hand.remove(flower)
                     p.flowers += checkNotNull(FlowerTile.of(flower))
+                    checkpoint()
                     val tile = checkNotNull(wall.replace()) // At most eight flowers in a complete opening stock.
                     p.hand += tile
                     if (s == opening.dealer) { drawn = tile; origin = TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT }
+                    checkpoint()
                 }
             }
         } while (changed)
@@ -191,6 +204,7 @@ class TaiwanGame private constructor(
                 p.river += tile
                 p.discards++
                 drawn = Tile.ABSENT
+                checkpoint()
                 react(Offered(turn, tile))
             }
             Type.CONCEALED_KONG -> {
@@ -198,6 +212,7 @@ class TaiwanGame private constructor(
                 p.melds += Meld(Meld.Type.CONCEALED_QUAD, action.tiles, turn, Tile.ABSENT)
                 calls++
                 wall.completeKong()
+                checkpoint()
                 drawReplacement(TaiwanWinContext.DrawOrigin.KONG_REPLACEMENT)
             }
             Type.ADDED_KONG -> {
@@ -232,6 +247,7 @@ class TaiwanGame private constructor(
             }
             TaiwanDecision(id, s, actions)
         }
+        checkpoint()
     }
 
     private fun resolve() {
@@ -257,6 +273,7 @@ class TaiwanGame private constructor(
             p.passed = false
             calls++
             wall.completeKong()
+            checkpoint()
             turn = offer.seat
             drawReplacement(TaiwanWinContext.DrawOrigin.KONG_REPLACEMENT)
             return
@@ -276,6 +293,7 @@ class TaiwanGame private constructor(
             calls++
             drawn = Tile.ABSENT
             origin = TaiwanWinContext.DrawOrigin.ORDINARY
+            checkpoint()
             if (action.type == Type.OPEN_KONG) {
                 wall.completeKong()
                 drawReplacement(TaiwanWinContext.DrawOrigin.KONG_REPLACEMENT)
@@ -301,6 +319,7 @@ class TaiwanGame private constructor(
         origin = drawOrigin
         while (tile != null && Tile.isFlower(tile)) {
             p.flowers += checkNotNull(FlowerTile.of(tile))
+            checkpoint()
             val robber = (0..3).firstOrNull { it != turn && players[it].flowers.size == 7 }
             if (robber != null && rules.values.getValue(TaiwanRules.Pattern.SEVEN_ROBS_ONE) > 0) {
                 val special = checkNotNull(TaiwanHandAnalyzer.flowerWin(players[robber].hand, players[robber].melds, robber,
@@ -314,6 +333,7 @@ class TaiwanGame private constructor(
         if (tile == null) { finish(null, null, null); return }
         drawn = tile
         p.hand += tile
+        checkpoint()
         if (!ownFlowerVictory(turn, initial = false)) publishTurn()
     }
 
@@ -375,13 +395,15 @@ class TaiwanGame private constructor(
         responses.clear()
         offered = null
         if (drawn !in players[turn].hand) drawn = Tile.ABSENT
+        checkpoint()
     }
 
-    fun save(): TaiwanGameState = TaiwanGameState(TaiwanGameState.FORMAT, TaiwanGameState.Rules.of(rules),
+    fun save(): TaiwanGameState = snapshot(responses.map { TaiwanGameState.Reply(it.key, TaiwanGameState.Action.of(it.value)) })
+    private fun snapshot(replies: List<TaiwanGameState.Reply>): TaiwanGameState = TaiwanGameState(TaiwanGameState.FORMAT, TaiwanGameState.Rules.of(rules),
         TaiwanGameState.Opening(opening.dealer, opening.dice), roundWind, continuation, revision, token, phase, turn,
         wall.save(), players.map { TaiwanGameState.Player(it.hand, it.melds, it.flowers, it.river, it.ready, it.passed, it.discards) },
         drawn, turnDrawn, origin, turnWaits, calls, draws, offered?.let { TaiwanGameState.Offer(it.seat, it.tile, it.addedMeld) },
-        responses.map { TaiwanGameState.Reply(it.key, TaiwanGameState.Action.of(it.value)) }, outcome, TaiwanGameState.Result.of(settlement))
+        replies, outcome, TaiwanGameState.Result.of(settlement))
 
     fun view(recipient: Int): TaiwanView = view(recipient, true)
     fun view(recipient: Int, allowActions: Boolean): TaiwanView {

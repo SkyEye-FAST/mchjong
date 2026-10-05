@@ -122,7 +122,7 @@ public final class McrSession extends TableSession {
             long now = System.currentTimeMillis();
             replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now,
                 participants().stream().map(player -> new ReplayMatch.Participant(player.id(), player.name(), player.bot())).toList(),
-                MahjongVariant.MCR, false, null, new McrReplay(List.of()), null);
+                MahjongVariant.MCR, false, null, new McrReplay(List.of()), null, null);
             recorder = new McrReplayRecorder(game);
         } else { replay = null; recorder = null; }
         resetDecision(true);
