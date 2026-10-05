@@ -84,8 +84,8 @@ Pocket uses a complete 144-tile set with eight flowers; Southern uses the 136
 ordinary tiles. Both support one human and three built-in Bots through East,
 South, West and North, including repeat dealers. Add individual Bots or fill
 empty seats, then prepare seats and ready at your assigned stool. Bots are ready
-automatically and confirm nonfinal results. Easy and Hard use the current built-in
-policy described in [Bot analysis](BOTS.md#taiwan-built-in-opponent).
+automatically and confirm nonfinal results. Taiwan has one built-in
+Bot policy, described in [Bot analysis](BOTS.md#taiwan-built-in-opponent).
 
 Leaving the last human stool pauses decisions and result reading; returning resumes
 them. World `allowBots` controls preparation. Scores, final standings and native

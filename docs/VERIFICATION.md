@@ -343,6 +343,20 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 
 ## Taiwan hand library
 
+All three Minecraft profiles declare the Maven Central release
+`top.skyeyefast:taiwan-mahjong:0.1.0`. Verify its independent artifact contract
+with source substitution disabled and no Maven Local repository:
+
+```text
+gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar -PtaiwanSource=false --warning-mode fail --console=plain
+```
+
+The standalone release checks JVM 17 bytecode/API, the public ABI, POM/module
+metadata, sources/Dokka JARs and Apache-2.0 license. Its independent Java and
+Kotlin consumers exercise `Hand`, shanten/analyze/discards, scoring, flower wins
+and profiles on Java 17; Kotlin stdlib is the only public library dependency,
+and MCR remains test-only. Source development retains these checks:
+
 ```text
 gradlew.bat :taiwan-mahjong:check :engine:test --tests="*Taiwan*Test" :engine:shadowJar spotlessCheck --configure-on-demand --warning-mode fail --console=plain
 ```
@@ -416,7 +430,7 @@ scenes through native actions and settlement, including hidden opponent hands,
 felt boundaries and intersections.
 
 ```text
-gradlew.bat :fabric:test --tests "*TaiwanPresentationTest" :forge:compileJava :neoforge:test --tests "*TaiwanIntegrationTest" --warning-mode fail --console=plain
+gradlew.bat :fabric:test --tests "*TaiwanPresentationTest" :neoforge:test --tests "*TaiwanIntegrationTest" --warning-mode fail --console=plain
 gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true "-PsmokeScreenshots=taiwan-table.png,taiwan-immersive.png,taiwan-results.png,taiwan-payments.png,taiwan-match-end.png,taiwan-rules.png" --warning-mode fail --console=plain
 ```
 
@@ -426,7 +440,7 @@ registered packets, checks 136/144 case admission and seats four participants.
 It exercises initial flower replacement, native calls, recipient/spectator privacy,
 seated and immersive discard selection, focused convenience-hint previews and
 world-policy disabling, exit-vote pause, result/next-hand packets,
-NBT restore and a complete East/South/West/North match. It then adds, changes,
+NBT restore and a complete East/South/West/North match. It then adds,
 removes and fills Bot seats through native room handlers, restores their NBT
 roster and completes a Southern one-human/three-Bot match with automatic result
 confirmations, conserved tiles, private views and balanced final scores. Old decisions and

@@ -37,16 +37,18 @@ For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 
 Current build profiles support these Minecraft versions and loaders:
 
-| Minecraft | Development branch | Java runtime | Loader artifacts | Quilt |
-| --- | --- | --- | --- | --- |
-| 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact |
-| 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
-| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact |
+| Minecraft | Development branch | Java runtime | Loader artifacts | Quilt | Taiwan |
+| --- | --- | --- | --- | --- | --- |
+| 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact | Playable |
+| 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact | Playable |
+| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact | Playable |
 
 Taiwan is playable on all three profiles, with Pocket/Southern 144/136-tile
 stocks, complete four-wind matches, one built-in Bot option, native replays and
-convenience hints. See [Taiwan verification](docs/VERIFICATION.md#taiwan-hand-library)
-for the focused build and client checks.
+convenience hints. All profiles embed the Maven Central release
+`top.skyeyefast:taiwan-mahjong:0.1.0`. See
+[Taiwan verification](docs/VERIFICATION.md#taiwan-hand-library) for the focused
+artifact, build and client checks.
 
 Optional integrations are scoped to the loader named in each cell:
 
