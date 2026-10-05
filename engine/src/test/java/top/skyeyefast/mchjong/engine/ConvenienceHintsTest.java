@@ -11,7 +11,7 @@ class ConvenienceHintsTest {
     @Test void everyRoomSharesHostPolicyPersistenceAndVariantSelection() {
         UUID host = UUID.randomUUID(), guest = UUID.randomUUID();
         for (TableSession session : List.of(new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1),
-                new McrSession(UUID.randomUUID(), 1), new SichuanSession(UUID.randomUUID(), 1))) {
+                new McrSession(UUID.randomUUID(), 1), new SichuanSession(UUID.randomUUID(), 1), new TaiwanSession(UUID.randomUUID(), 1))) {
             session.join(host, "Host", 0); session.join(guest, "Guest", 1);
             assertFalse(session.roomView(host).convenienceHints());
             assertFalse(session.configureConvenienceHints(guest, session.decision(), true));
@@ -20,9 +20,11 @@ class ConvenienceHintsTest {
             assertTrue(session.roomView(guest).convenienceHints());
             var restored = TableSessionCodec.restore(TableSessionCodec.save(session));
             assertTrue(restored.convenienceHints());
-            var next = session.selectVariant(host, session.decision(),
+            var next = session.selectVariant(host, session.incarnation(), session.decision(),
                 session.variant() == MahjongVariant.MCR ? MahjongVariant.SICHUAN : MahjongVariant.MCR);
             assertNotNull(next); assertTrue(next.convenienceHints());
+            var taiwan = next.selectVariant(host, next.incarnation(), next.decision(), MahjongVariant.TAIWAN);
+            assertNotNull(taiwan); assertTrue(taiwan.convenienceHints());
             restored.configureWorld(new WorldPolicy(false, false, true, 5000, true, true, true, true, null));
             assertFalse(restored.convenienceHints());
             assertFalse(restored.roomView(host).allowConvenienceHints());

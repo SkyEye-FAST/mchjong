@@ -58,6 +58,9 @@ public final class TableIndicator {
         render(TableBoardState.live(view), view.phase() == top.skyeyefast.mchjong.engine.SichuanGame.Phase.TURN
             || view.phase() == top.skyeyefast.mchjong.engine.SichuanGame.Phase.REACTION, false, pose, buffers, light);
     }
+    public static void render(top.skyeyefast.mchjong.engine.TaiwanSession.View view, PoseStack pose, MultiBufferSource buffers, int light) {
+        render(TableBoardState.live(view), view.game().result() == null, true, pose, buffers, light);
+    }
     private static void render(TableBoardState view, boolean playing, boolean winds, PoseStack pose, MultiBufferSource buffers, int light) {
         housing(pose, buffers, light);
         var vertices = buffers.getBuffer(TileRenderTypes.FACES);
@@ -115,9 +118,9 @@ public final class TableIndicator {
         pose.popPose();
     }
 
-    private static void number(PoseStack pose, VertexConsumer out, int value, float center, float z,
+    private static void number(PoseStack pose, VertexConsumer out, long value, float center, float z,
                                float height, float maxWidth, int color, int light) {
-        String digits = Integer.toString(value);
+        String digits = Long.toString(value);
         height = Math.min(height, maxWidth / (.5f + (digits.length() - 1) * .675f));
         float width = height * .5f, pitch = width * 1.35f;
         float x = center - (digits.length() * pitch - (pitch - width)) / 2;

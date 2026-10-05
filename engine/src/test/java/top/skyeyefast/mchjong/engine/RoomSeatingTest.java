@@ -9,15 +9,31 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RoomSeatingTest {
+    @Test void allFourVariantsRequireFreshIncarnationAndRegisteredRestoration() {
+        UUID actor = id(0); TableSession session = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 4);
+        session.join(actor, "Host", 0);
+        for (var variant : List.of(MahjongVariant.MCR, MahjongVariant.SICHUAN, MahjongVariant.TAIWAN, MahjongVariant.RIICHI)) {
+            UUID previous = session.incarnation();
+            assertNull(session.selectVariant(actor, UUID.randomUUID(), session.decision(), variant));
+            var next = session.selectVariant(actor, previous, session.decision(), variant);
+            assertNotNull(next); assertEquals(variant, next.variant()); assertEquals(session.tableId(), next.tableId());
+            assertEquals(0, next.seatOf(actor)); assertNotEquals(previous, next.incarnation());
+            assertNull(next.selectVariant(actor, previous, next.decision(), session.variant()));
+            var restored = TableSessionCodec.restore(TableSessionCodec.save(next));
+            assertEquals(variant, restored.variant()); assertNotEquals(next.incarnation(), restored.incarnation());
+            session = restored;
+        }
+    }
+
     @Test void threeSeatRiichiCanSwitchToFourSeatMcrWithoutLosingHumans() {
         var riichi = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_3, 19);
         for (int seat = 0; seat < 3; seat++) assertTrue(riichi.join(id(seat), "Human " + seat, seat));
-        var mcr = riichi.selectVariant(id(0), riichi.decision(), MahjongVariant.MCR);
+        var mcr = riichi.selectVariant(id(0), riichi.incarnation(), riichi.decision(), MahjongVariant.MCR);
         assertInstanceOf(McrSession.class, mcr);
         assertEquals(4, mcr.capacity());
         for (int seat = 0; seat < 3; seat++) assertEquals(seat, mcr.seatOf(id(seat)));
         assertFalse(mcr.occupied(3));
-        var returned = mcr.selectVariant(id(0), mcr.decision(), MahjongVariant.RIICHI);
+        var returned = mcr.selectVariant(id(0), mcr.incarnation(), mcr.decision(), MahjongVariant.RIICHI);
         assertInstanceOf(RiichiSession.class, returned);
         assertEquals(4, returned.capacity());
         for (int seat = 0; seat < 3; seat++) assertEquals(seat, returned.seatOf(id(seat)));
@@ -28,13 +44,13 @@ class RoomSeatingTest {
         var riichi = new RiichiSession(tableId, RiichiPreset.TENHOU_4, 71);
         assertTrue(riichi.join(id(0), "Host", 0));
         assertTrue(riichi.join(id(1), "Guest", 1));
-        TableSession session = riichi.selectVariant(id(0), riichi.decision(), MahjongVariant.MCR);
+        TableSession session = riichi.selectVariant(id(0), riichi.incarnation(), riichi.decision(), MahjongVariant.MCR);
         assertInstanceOf(McrSession.class, session);
         assertEquals(tableId, session.tableId());
         assertEquals(0, session.seatOf(id(0)));
         assertEquals(1, session.seatOf(id(1)));
         assertNotEquals(riichi.incarnation(), session.incarnation());
-        assertTrue(session.configureEquipment(false, Tile.mcrSet()));
+        assertTrue(session.configureEquipment(false, Tile.standard144Set()));
         assertTrue(session.join(id(2), "West", 2));
         assertTrue(session.join(id(3), "North", 3));
         session.synchronizeSeats(Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3));

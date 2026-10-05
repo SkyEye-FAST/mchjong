@@ -88,33 +88,33 @@ class McrLayoutTest {
 
     @Test void sourcesChooseLeftMiddleRightAndEveryKongIsOneFlatRow() {
         for (int from : new int[]{3, 2, 1}) {
-            var triplet = McrMeldLayout.of(new Meld(Meld.Type.TRIPLET, List.of(0, 1, 2), from, 0), 0, false);
+            var triplet = ChineseMeldLayout.of(new Meld(Meld.Type.TRIPLET, List.of(0, 1, 2), from, 0), 0, false);
             int called = from == 3 ? 0 : from == 2 ? 1 : 2;
             assertTrue(triplet.parts().get(called).sideways());
             for (var type : List.of(Meld.Type.OPEN_QUAD, Meld.Type.ADDED_QUAD)) {
-                var layout = McrMeldLayout.of(new Meld(type, List.of(0, 1, 2, 3), from, 0), 0, false);
+                var layout = ChineseMeldLayout.of(new Meld(type, List.of(0, 1, 2, 3), from, 0), 0, false);
                 assertEquals(4, layout.parts().size());
                 assertEquals(3 * (double) TileMesh.WIDTH + TileMesh.HEIGHT, layout.width(), 1e-8);
                 assertTrue(layout.parts().get(from == 1 ? 3 : called).sideways());
-                assertEquals(1, layout.parts().stream().filter(McrMeldLayout.Part::sideways).count());
+                assertEquals(1, layout.parts().stream().filter(ChineseMeldLayout.Part::sideways).count());
                 for (int i = 1; i < 4; i++) assertTrue(layout.parts().get(i).x() > layout.parts().get(i - 1).x());
             }
         }
         var chow = new Meld(Meld.Type.SEQUENCE, List.of(0, 4, 8), 3, 4);
-        assertTrue(McrMeldLayout.of(chow, 0, false).parts().get(0).sideways());
-        assertThrows(IllegalArgumentException.class, () -> McrMeldLayout.of(new Meld(chow.type(), chow.tiles(), 1, 4), 0, false));
+        assertTrue(ChineseMeldLayout.of(chow, 0, false).parts().get(0).sideways());
+        assertThrows(IllegalArgumentException.class, () -> ChineseMeldLayout.of(new Meld(chow.type(), chow.tiles(), 1, 4), 0, false));
         var concealed = new Meld(Meld.Type.CONCEALED_QUAD, List.of(0, 1, 2, 3), 0, Tile.ABSENT);
-        assertTrue(McrMeldLayout.of(concealed, 0, false).parts().stream().allMatch(part -> part.back() && !part.sideways()));
-        assertTrue(McrMeldLayout.of(concealed, 0, true).parts().stream().noneMatch(McrMeldLayout.Part::back));
+        assertTrue(ChineseMeldLayout.of(concealed, 0, false).parts().stream().allMatch(part -> part.back() && !part.sideways()));
+        assertTrue(ChineseMeldLayout.of(concealed, 0, true).parts().stream().noneMatch(ChineseMeldLayout.Part::back));
     }
 
     @Test void flowersHaveTheirOwnAreaAndHandIndicesKeepTheirSourceIdentity() {
         var flowers = java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList();
-        var layout = McrFlowerLayout.of(flowers);
+        var layout = ChineseFlowerLayout.of(flowers);
         assertEquals(8, layout.size());
         assertTrue(layout.stream().allMatch(part -> part.z() == 0));
         assertEquals(7 * (double) TileMesh.WIDTH, layout.get(layout.size() - 1).x() - layout.get(0).x(), 1e-8);
-        assertThrows(IllegalArgumentException.class, () -> McrFlowerLayout.of(List.of(0)));
+        assertThrows(IllegalArgumentException.class, () -> ChineseFlowerLayout.of(List.of(0)));
         var game = new McrGame(711);
         var scene = McrTableScene.build(game.view(0));
         assertEquals(144, scene.size());

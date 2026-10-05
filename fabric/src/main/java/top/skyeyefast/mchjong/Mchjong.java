@@ -150,6 +150,22 @@ public class Mchjong implements ModInitializer {
             var payload = top.skyeyefast.mchjong.network.RiichiVisibilityPayload.decode(buffer);
             server.execute(() -> TableNetworking.receive(player, payload));
         });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TaiwanActionPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanNextHandPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TaiwanNextHandPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanRulesPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TaiwanRulesPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanClockPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TaiwanClockPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
         LOGGER.info("Initializing {} for Fabric", MOD_ID);
     }
 }

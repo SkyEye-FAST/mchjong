@@ -76,7 +76,7 @@ public final class SichuanSession extends TableSession {
             long now = System.currentTimeMillis();
             replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now,
                 participants().stream().map(player -> new ReplayMatch.Participant(player.id(), player.name(), player.bot())).toList(),
-                MahjongVariant.SICHUAN, false, null, null, new SichuanReplay(rules, List.of()));
+                MahjongVariant.SICHUAN, false, null, null, new SichuanReplay(rules, List.of()), null);
             recorder = new SichuanReplayRecorder(game);
         }
         for (int seat = 0; seat < 4; seat++) clocks.add(new TimeControl.Clock(timeControl.moveSeconds() * 20, timeControl.reserveSeconds() * 20, false));

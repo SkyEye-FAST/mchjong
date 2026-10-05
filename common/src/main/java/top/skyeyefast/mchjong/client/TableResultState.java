@@ -7,9 +7,9 @@ import top.skyeyefast.mchjong.engine.*;
 
 /** Rule adapters supply receipts; the result widget owns their common presentation. */
 record TableResultState(Component heading, int viewerSeat, List<Seat> seats, List<Win> wins,
-                        List<Integer> deltas, List<Integer> finalRanks, List<Double> finalUma,
+                        List<? extends Number> deltas, List<Integer> finalRanks, List<Double> finalUma,
                         List<Double> finalScores, List<Component> payments) {
-    record Seat(int points, List<Integer> hand, List<Meld> melds, boolean exposed, Component name,
+    record Seat(long points, List<Integer> hand, List<Meld> melds, boolean exposed, Component name,
                 boolean occupied, boolean bot, boolean entityBot, Component status, MahjongVariant variant) {
         MeldLayout layout(Meld meld, int owner) { return MeldLayout.of(meld, owner, variant, exposed); }
     }
@@ -39,6 +39,14 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
             wins, view.deltas(), view.finalRanks(), view.finalUma(), view.finalScores(), List.of());
     }
     TableResultState withViewer(int viewer) {
+        if (seats.get(0).variant() == MahjongVariant.TAIWAN) {
+            var visible = java.util.stream.IntStream.range(0,4).mapToObj(i -> {
+                var p = seats.get(i);
+                return new Seat(p.points(),i == viewer ? p.hand() : java.util.Collections.nCopies(p.hand().size(),Tile.HIDDEN),
+                    TableBoardState.taiwanMelds(p.melds(),i,viewer),i == viewer,p.name(),p.occupied(),p.bot(),p.entityBot(),p.status(),p.variant());
+            }).toList();
+            return new TableResultState(heading,viewer,visible,wins,deltas,finalRanks,finalUma,finalScores,payments);
+        }
         return new TableResultState(heading, viewer, seats, wins, deltas, finalRanks, finalUma, finalScores, payments);
     }
     static TableResultState replay(ReplayMatch match, ReplayHand hand, int viewer) {
@@ -123,6 +131,30 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
         }).toList();
         return new TableResultState(Component.translatable(result.exhaustive() ? "sichuan.mchjong.exhaustive" : "sichuan.mchjong.three_winners"),
             viewer, seats, wins, result.deltas(), ranks(seats), List.of(), List.of(), payments);
+    }
+    static TableResultState taiwan(TaiwanSession.View view) {
+        return taiwan(TableBoardState.live(view),view.game().result(),view.participants());
+    }
+    static TableResultState taiwan(TableBoardState board, TaiwanView.Result result, List<TableParticipant> participants) {
+        var seats = java.util.stream.IntStream.range(0, 4).mapToObj(i -> {
+            var s = board.seats().get(i); var p = participants.get(i);
+            return new Seat(s.points(), s.hand(), s.melds(), i == board.viewerSeat(), Component.literal(p.name()), true, p.bot(), p.entityBot(),
+                Component.translatable("taiwan.mchjong.flowers", s.norths().size()), MahjongVariant.TAIWAN);
+        }).toList();
+        var wins = new java.util.ArrayList<Win>();
+        if (result.winner() != null) {
+            var awards = new java.util.ArrayList<>(result.awards());
+            if (result.flowerAward() != null) awards.add(result.flowerAward());
+            var rows = awards.stream().map(a -> new Row(Component.translatable("taiwan.mchjong.pattern." + a.pattern().name().toLowerCase(Locale.ROOT)),
+                Component.translatable("taiwan.mchjong.tai", a.tai()), null)).toList();
+            wins.add(new Win(result.winner(), Tile.ABSENT, result.supplier() == null ? Component.translatable("taiwan.mchjong.action.self_drawn")
+                : Component.translatable("ui.mchjong.ron_from", seats.get(result.supplier()).name()),
+                Component.translatable("taiwan.mchjong.tai", result.tai()), rows, Component.empty(), null, List.of(), List.of()));
+        }
+        var payments = result.transfers().stream().<Component>map(t -> Component.translatable("taiwan.mchjong.payment",
+            seats.get(t.from()).name(), seats.get(t.to()).name(), t.amount(), t.base(), t.handTai(), t.dealerTai())).toList();
+        return new TableResultState(Component.translatable(result.winner() == null ? "taiwan.mchjong.draw_result" : "taiwan.mchjong.results"),
+            board.viewerSeat(), seats, wins, result.deltas(), ranks(seats), List.of(), List.of(), payments);
     }
     private static List<Integer> ranks(List<Seat> seats) {
         return seats.stream().map(s -> 1 + (int) seats.stream().filter(other -> other.points() > s.points()).count()).toList();

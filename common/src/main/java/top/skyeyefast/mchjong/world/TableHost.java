@@ -11,6 +11,7 @@ import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.SichuanSession;
+import top.skyeyefast.mchjong.engine.TaiwanSession;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.TableSessionCodec;
 import top.skyeyefast.mchjong.engine.WorldPolicy;
@@ -34,6 +35,7 @@ final class TableHost {
     RiichiGame riichiGame() { return riichi() == null ? null : riichi().game(); }
     McrSession mcr() { return session instanceof McrSession mcr ? mcr : null; }
     SichuanSession sichuan() { return session instanceof SichuanSession sichuan ? sichuan : null; }
+    TaiwanSession taiwan() { return session instanceof TaiwanSession taiwan ? taiwan : null; }
     BotServiceState botState() { return riichi() == null ? null : bots.state(riichi()); }
 
     /** Returns whether equipment selection changed its public appearance. */
@@ -62,6 +64,13 @@ final class TableHost {
                 automatic && equipment.hasCloth() && stock != null ? stock.deck().tiles() : List.of());
             yield false;
         }
+        case TAIWAN -> {
+            var taiwan = (TaiwanSession) session;
+            var stock = equipment.taiwanStock(taiwan.rules());
+            if (taiwan.lobby()) taiwan.configureEquipment(false,
+                automatic && equipment.hasCloth() && stock != null ? stock.tiles() : List.of());
+            yield false;
+        }
         case SICHUAN -> {
             var sichuan = (SichuanSession) session;
             var stock = equipment.sichuanStock();
@@ -78,6 +87,7 @@ final class TableHost {
             case RIICHI -> equipment.deck() != null;
             case MCR -> equipment.mcrStock() != null;
             case SICHUAN -> equipment.sichuanStock() != null;
+            case TAIWAN -> equipment.taiwanStock(taiwan().rules()) != null;
         };
     }
 
@@ -86,13 +96,14 @@ final class TableHost {
         if (session instanceof RiichiSession riichi) bots.tick(riichi);
     }
 
-    boolean selectVariant(UUID actor, long decision, MahjongVariant variant) {
+    boolean selectVariant(UUID actor, UUID incarnation, long decision, MahjongVariant variant) {
         // Completed side effects must be acknowledged before releasing their owning runtime.
         if (session instanceof RiichiSession riichi && (!riichi.pendingReplays().isEmpty() || !riichi.pendingExperience().isEmpty()))
             return false;
         if (session instanceof McrSession mcr && !mcr.pendingReplays().isEmpty()) return false;
         if (session instanceof SichuanSession sichuan && !sichuan.pendingReplays().isEmpty()) return false;
-        TableSession replacement = session.selectVariant(actor, decision, variant);
+        if (session instanceof TaiwanSession taiwan && !taiwan.pendingReplays().isEmpty()) return false;
+        TableSession replacement = session.selectVariant(actor, incarnation, decision, variant);
         if (replacement == null) return false;
         session = replacement;
         return true;

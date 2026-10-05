@@ -41,12 +41,12 @@ object Tile {
         return id and RED_FLAG.inv()
     }
 
-    /** Standard MCR stock: four copies of each ordinary kind and eight unique flowers. */
+    /** Standard 144-tile stock: 136 ordinary tiles and eight unique flowers. */
     @JvmStatic
-    fun mcrSet(): List<Int> = java.util.List.copyOf(set(false, RedFives.NONE) + FlowerTile.entries.map { it.id() })
+    fun standard144Set(): List<Int> = java.util.List.copyOf(set(false, RedFives.NONE) + FlowerTile.entries.map { it.id() })
 
     @JvmStatic
-    fun validMcrSet(tiles: List<Int>): Boolean = tiles.size == 144 && tiles.toSet() == mcrSet().toSet()
+    fun validStandard144Set(tiles: List<Int>): Boolean = tiles.size == 144 && tiles.toSet() == standard144Set().toSet()
 
     @JvmStatic
     fun sichuanSet(): List<Int> = java.util.List.copyOf((0..<108).toList())

@@ -20,7 +20,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
         return seat.won() ? Component.translatable("sichuan.mchjong.won").withStyle(style -> style.withColor(MahjongUi.POSITIVE))
             : seat.voidSuit() < 0 ? Component.literal("—") : Component.translatable("sichuan.mchjong.suit." + seat.voidSuit() + ".short");
     }
-    record Seat(int points, List<Integer> hand, int drawn, List<Meld> melds,
+    record Seat(long points, List<Integer> hand, int drawn, List<Meld> melds,
                 List<Discard> river, List<Integer> norths, boolean exposed, MahjongVariant variant) {
         MeldLayout layout(Meld meld, int owner) { return MeldLayout.of(meld, owner, variant, exposed); }
         Seat {
@@ -70,9 +70,50 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
             new Indicator(Component.translatable("sichuan.mchjong.indicator_round", view.handNumber(), view.rules().matchHands()),
                 view.seats().stream().map(TableBoardState::voidLabel).toList()));
     }
+    static TableBoardState live(TaiwanSession.View view) {
+        var game = view.game();
+        var seats = java.util.stream.IntStream.range(0, 4).mapToObj(i -> {
+            var player = game.seats().get(i);
+            var hand = i == game.recipient() ? player.concealed() : java.util.Collections.nCopies(player.concealedCount(), Tile.HIDDEN);
+            return new Seat(view.scores().get(i), hand, player.drawn(), player.melds(), player.river().stream()
+                .map(t -> new Discard(t, false, false, false)).toList(), player.flowers().stream().map(FlowerTile::id).toList(), false, MahjongVariant.TAIWAN);
+        }).toList();
+        int dealer = game.opening().dealer();
+        int round = (game.roundWind() - Tile.EAST) * 4 + dealer;
+        var caption = Component.translatable("taiwan.mchjong.round", wind(game.roundWind() - Tile.EAST), dealer + 1, game.continuation());
+        return new TableBoardState(game.recipient(), 4, dealer, round, -1, -1, game.turn(), game.drawable(), seats,
+            game.focus() == null ? null : new Focus(game.focus().tile()), false, false, false, caption,
+            new Indicator(caption, java.util.stream.IntStream.range(0, 4).mapToObj(i -> wind(Math.floorMod(i - dealer, 4))).toList()));
+    }
     TableBoardState replay(int viewer) {
+        if (seats.get(0).variant() == MahjongVariant.TAIWAN) {
+            var visible = java.util.stream.IntStream.range(0,4).mapToObj(i -> {
+                var p = seats.get(i);
+                return new Seat(p.points(),i == viewer ? p.hand() : java.util.Collections.nCopies(p.hand().size(),Tile.HIDDEN),
+                    i == viewer ? p.drawn() : Tile.ABSENT, taiwanMelds(p.melds(),i,viewer),p.river(),p.norths(),false,MahjongVariant.TAIWAN);
+            }).toList();
+            return new TableBoardState(viewer,players,dealer,round,honba,riichiSticks,turn,remaining,visible,focus,
+                true,true,false,roundLabel,indicator);
+        }
         return new TableBoardState(viewer, players, dealer, round, honba, riichiSticks, turn, remaining, seats, focus,
             true, true, true, roundLabel, indicator);
+    }
+    static List<Meld> taiwanMelds(List<Meld> melds, int owner, int viewer) {
+        return melds.stream().map(m -> m.closed() && owner != viewer
+            ? new Meld(m.type(),java.util.Collections.nCopies(4,Tile.HIDDEN),owner,Tile.ABSENT) : m).toList();
+    }
+    static TableBoardState replay(TaiwanReplayPlayback.Frame frame) {
+        var state = frame.state();
+        var seats = java.util.stream.IntStream.range(0,4).mapToObj(i -> {
+            var p = state.players().get(i);
+            return new Seat(frame.scores().get(i),p.hand(),i == state.turn() && p.hand().contains(state.drawn()) ? state.drawn() : Tile.ABSENT,
+                p.melds(),p.river().stream().map(t -> new Discard(t,false,false,false)).toList(),p.flowers().stream().map(FlowerTile::id).toList(),false,MahjongVariant.TAIWAN);
+        }).toList();
+        int dealer = state.opening().dealer();
+        var label = Component.translatable("taiwan.mchjong.round",wind(state.roundWind()-Tile.EAST),dealer+1,state.continuation());
+        return new TableBoardState(0,4,dealer,(state.roundWind()-Tile.EAST)*4+dealer,-1,-1,state.turn(),frame.drawable(),seats,
+            state.offer() == null ? null : new Focus(state.offer().tile()),true,true,false,label,
+            new Indicator(label,java.util.stream.IntStream.range(0,4).mapToObj(i -> wind(Math.floorMod(i-dealer,4))).toList()));
     }
     static TableBoardState replay(SichuanReplayPlayback.Frame frame, int viewer) {
         var state = frame.state();

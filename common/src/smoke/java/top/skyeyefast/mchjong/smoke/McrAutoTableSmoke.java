@@ -73,7 +73,7 @@ final class McrAutoTableSmoke {
             case 1 -> {
                 var lobby = clientTable.clientRoom();
                 if (lobby == null || lobby.viewerSeat() < 0 || client.getConnection() == null) break;
-                client.getConnection().send(PayloadPackets.serverbound(new TableVariantPayload(pos, lobby.tableId(),
+                client.getConnection().send(PayloadPackets.serverbound(new TableVariantPayload(pos, lobby.tableId(), lobby.incarnation(),
                     lobby.decision(), MahjongVariant.MCR)));
                 stage++;
             }

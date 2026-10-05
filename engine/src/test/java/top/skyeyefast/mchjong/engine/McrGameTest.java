@@ -496,7 +496,7 @@ class McrGameTest {
 
     /** Build one full physical wall, allocating copies across all explicitly supplied hands. */
     static final class Fixture {
-        private final List<Integer> stock = new ArrayList<>(Tile.mcrSet());
+        private final List<Integer> stock = new ArrayList<>(Tile.standard144Set());
         private final Integer[] order = new Integer[144];
 
         Fixture hand(int seat, String notation) {

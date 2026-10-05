@@ -103,7 +103,7 @@ final class TableImmersiveTable {
 
     private void norths(int seat, TableBoardState.Seat player) {
         int side = side(seat);
-        boolean flowers = player.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR;
+        boolean flowers = player.norths().stream().anyMatch(top.skyeyefast.mchjong.engine.Tile::isFlower);
         double x = flowers ? 0 : -meldCorner(side) + 30 * RATIO + 5;
         double z = outerRail(side) - (flowers ? 30 * RATIO + 5 : 0);
         for (int tile : player.norths()) {

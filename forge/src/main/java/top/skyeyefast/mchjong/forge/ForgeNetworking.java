@@ -10,7 +10,7 @@ final class ForgeNetworking {
 
     static void register() {
         var channel = NetworkRegistry.ChannelBuilder.named(ResourceIds.of("mchjong", "play"))
-            .networkProtocolVersion(() -> "18").clientAcceptedVersions("18"::equals).serverAcceptedVersions("18"::equals).simpleChannel();
+            .networkProtocolVersion(() -> "19").clientAcceptedVersions("19"::equals).serverAcceptedVersions("19"::equals).simpleChannel();
         channel.messageBuilder(VoiceChoicePayload.class, 0, NetworkDirection.PLAY_TO_SERVER)
             .encoder(VoiceChoicePayload::write).decoder(VoiceChoicePayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());
@@ -104,6 +104,25 @@ final class ForgeNetworking {
         channel.messageBuilder(StickAppearancePayload.class, 24, NetworkDirection.PLAY_TO_CLIENT)
             .encoder(StickAppearancePayload::write).decoder(StickAppearancePayload::decode)
             .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.RiichiStickPresets.receive(payload)).add();
+        channel.messageBuilder(TaiwanActionPayload.class, 25, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(TaiwanActionPayload::write).decoder(TaiwanActionPayload::decode).consumerMainThread((payload, context) -> {
+                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
+            }).add();
+        channel.messageBuilder(TaiwanNextHandPayload.class, 26, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(TaiwanNextHandPayload::write).decoder(TaiwanNextHandPayload::decode).consumerMainThread((payload, context) -> {
+                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
+            }).add();
+        channel.messageBuilder(TaiwanRulesPayload.class, 27, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(TaiwanRulesPayload::write).decoder(TaiwanRulesPayload::decode).consumerMainThread((payload, context) -> {
+                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
+            }).add();
+        channel.messageBuilder(TaiwanClockPayload.class, 28, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(TaiwanClockPayload::write).decoder(TaiwanClockPayload::decode).consumerMainThread((payload, context) -> {
+                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
+            }).add();
+        channel.messageBuilder(TaiwanViewPayload.class, 29, NetworkDirection.PLAY_TO_CLIENT)
+            .encoder(TaiwanViewPayload::write).decoder(TaiwanViewPayload::decode)
+            .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.ClientTaiwanNetworking.receive(payload)).add();
         PayloadPackets.initialize(payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_SERVER),
             payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_CLIENT));
     }

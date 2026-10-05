@@ -38,7 +38,7 @@ public record McrReplayHand(int number, List<Integer> initialPoints, List<Intege
         finalPoints = List.copyOf(finalPoints);
         if (number < 1 || number > 16 || opening.dealer() != (number - 1) % 4
             || initialPoints.size() != 4 || initialPoints.stream().mapToLong(Integer::longValue).sum() != 0
-            || !Tile.validMcrSet(wall) || initialHands.size() != 4 ||
+            || !Tile.validStandard144Set(wall) || initialHands.size() != 4 ||
             events.isEmpty() || events.size() > 8192 || decisions.isEmpty() || decisions.size() > 4096
             || events.get(events.size() - 1).kind() != Kind.SETTLEMENT || events.get(events.size() - 1).actionCursor() != decisions.size()
             || (win == null) != draw || finalPoints.size() != 4 || finalPoints.stream().mapToLong(Integer::longValue).sum() != 0)

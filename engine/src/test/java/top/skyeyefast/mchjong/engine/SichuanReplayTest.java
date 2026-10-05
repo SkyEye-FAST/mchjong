@@ -245,7 +245,7 @@ class SichuanReplayTest {
     }
     private static ReplayMatch match(SichuanRules rules, List<SichuanReplayHand> hands, boolean complete) {
         var players = java.util.stream.IntStream.range(0, 4).mapToObj(seat -> new ReplayMatch.Participant(id(seat), "Seat " + seat, false)).toList();
-        return new ReplayMatch(UUID.randomUUID(), TABLE, 1, 2, players, MahjongVariant.SICHUAN, complete, null, null, new SichuanReplay(rules, hands));
+        return new ReplayMatch(UUID.randomUUID(), TABLE, 1, 2, players, MahjongVariant.SICHUAN, complete, null, null, new SichuanReplay(rules, hands), null);
     }
     private static void voidAll(SichuanGame game, SichuanReplayRecorder recorder) {
         for (int seat = 0; seat < 4; seat++) {

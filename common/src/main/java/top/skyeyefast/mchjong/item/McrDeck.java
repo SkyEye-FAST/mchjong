@@ -17,7 +17,7 @@ public record McrDeck(TileMaterial material, DyeColor back, TileFacePreset prese
         Objects.requireNonNull(backPreset);
     }
 
-    public List<Integer> tiles() { return Tile.mcrSet(); }
+    public List<Integer> tiles() { return Tile.standard144Set(); }
 
     /** Physical flowers are independent identities, not ordinary kinds 34 through 41. */
     public TileData tile(int physicalId) {

@@ -24,6 +24,19 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         if (table.automatic() && (table.clientRoom() == null || table.clientRoom().lobby()))
             TableIndicator.renderStandby(pose, buffers, light);
         pose.popPose();
+        if (table.clientVariant() == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN) {
+            if (table.clientTaiwanView() == null || table.clientTaiwanDeck() == null) return;
+            var screen = TaiwanTableScreen.active(Minecraft.getInstance().screen);
+            var active = screen != null && screen.tablePos().equals(table.getBlockPos()) ? screen : null;
+            pose.pushPose();
+            pose.translate(.5, 0, .5);
+            TaiwanSceneRenderer.render(TaiwanTableScene.build(table.clientTaiwanView().game()), table.clientTaiwanDeck(),
+                pose, buffers, light, piece -> active == null ? 0 : active.highlight(piece),
+                piece -> active != null && active.selected(piece), TableAnimation.of(table), Util.getMillis());
+            if (table.automatic()) TableIndicator.render(table.clientTaiwanView(), pose, buffers, light);
+            pose.popPose();
+            return;
+        }
         if (table.clientVariant() == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN) {
             if (table.clientSichuanView() == null || table.clientSichuanDeck() == null) return;
             var screen = SichuanTableScreen.active(Minecraft.getInstance().screen);

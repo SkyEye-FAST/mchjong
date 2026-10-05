@@ -90,7 +90,7 @@ public final class McrSession extends TableSession {
         return true;
     }
 
-    public boolean equipped() { return Tile.validMcrSet(stock); }
+    public boolean equipped() { return Tile.validStandard144Set(stock); }
 
     public TimeControl timeControl() { return timeControl; }
 
@@ -105,7 +105,7 @@ public final class McrSession extends TableSession {
     public boolean configureEquipment(boolean manual, List<Integer> tiles) {
         Objects.requireNonNull(tiles);
         if (manual || !lobby()) return false;
-        if (!tiles.isEmpty() && !Tile.validMcrSet(tiles))
+        if (!tiles.isEmpty() && !Tile.validStandard144Set(tiles))
             throw new IllegalArgumentException("An MCR table requires all 144 physical tiles");
         if (stock.equals(tiles)) return false;
         stock = List.copyOf(tiles);
@@ -122,7 +122,7 @@ public final class McrSession extends TableSession {
             long now = System.currentTimeMillis();
             replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now,
                 participants().stream().map(player -> new ReplayMatch.Participant(player.id(), player.name(), player.bot())).toList(),
-                MahjongVariant.MCR, false, null, new McrReplay(List.of()), null);
+                MahjongVariant.MCR, false, null, new McrReplay(List.of()), null, null);
             recorder = new McrReplayRecorder(game);
         } else { replay = null; recorder = null; }
         resetDecision(true);
@@ -288,13 +288,13 @@ public final class McrSession extends TableSession {
             stock = List.copyOf(stock);
             archiveQueue = List.copyOf(archiveQueue);
             if (room.variant() != MahjongVariant.MCR || room.capacity() != 4 || room.manual()
-                || !stock.isEmpty() && !Tile.validMcrSet(stock)
+                || !stock.isEmpty() && !Tile.validStandard144Set(stock)
                 || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != McrGame.Phase.HAND_END)
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null)
                 || recorder != null && (replay == null || game == null || game.result() != null || recorder.number() != game.handNumber())
                 || replay != null && replay.variant() != MahjongVariant.MCR
                 || archiveQueue.stream().anyMatch(match -> match.variant() != MahjongVariant.MCR || match.handCount() == 0)
-                || game != null && (!Tile.validMcrSet(stock)
+                || game != null && (!Tile.validStandard144Set(stock)
                     || (room.lifecycle() == Lifecycle.FINISHED) != (game.phase() == McrGame.Phase.MATCH_END)))
                 throw new IllegalArgumentException("Invalid MCR session state");
             if (game != null) roster(room.participants());

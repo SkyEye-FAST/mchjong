@@ -23,7 +23,7 @@ click also opens it. **Delete** (or the Delete key while the list is focused) op
 a confirmation screen; Escape or Cancel does not change any records. Deletion
 retains the active filter and sort order and returns to its first page.
 
-The browser labels Riichi, MCR and Sichuan records separately. All three use the
+The browser labels Riichi, MCR, Sichuan and Taiwan records separately. All four use the
 same table viewer, player cards, timeline, playback speeds and navigation.
 The upper hand selector opens a scrollable list for direct hand selection; the
 viewpoint control rotates any participant to the bottom seat. Playback supports
@@ -35,8 +35,10 @@ jump between reviewable decisions for the current viewpoint.
 
 Playback steps are semantic table actions rather than raw recorder events. Riichi
 deposit acceptance and dora reveals are folded into the declaration, discard or
-kan that caused them. Every non-settlement frame keeps all participants visible at
-once, including hands, rivers, calls, extracted norths, points and revealed dora.
+kan that caused them. Frames retain hands, rivers, calls, public extractions,
+points and revealed indicators. Taiwan shows only the selected viewpoint's
+concealed identities and covered kongs, including settlement; other concealed
+hands stay hidden. Switching viewpoint applies that player's visibility anew.
 Gold river borders distinguish hand discards from tsumogiri; sideways tiles mark
 riichi discards. Settlement uses a dedicated panel with the recorded point changes,
 winning tile, yaku, dora/ura indicators and final standings when the match ended.
@@ -71,11 +73,12 @@ The chat shows the full path or the screen reports a failure. Re-exporting the
 same match replaces that match's local export. No file is opened automatically
 and nothing is uploaded to an external service. MCR and Sichuan use **Export replay
 JSON**, writing their native sealed match record to the same local directory.
+Taiwan uses the same native export.
 
 ## Privacy and persistence
 
 Live tables continue to send recipient-redacted `RiichiView`, `McrView` and
-`SichuanView` snapshots.
+`SichuanView` and `TaiwanView` snapshots.
 Independent server recorders store initial hands, actual committed actions and
 the legal choices selected at each game decision. Only when a hand settles is an
 immutable rule-specific hand record appended to its match. Riichi hands seal the
@@ -87,9 +90,14 @@ cumulative scores, initial hands, void suits, every accepted choice, public
 events, the complete settlement ledger and ending cumulative scores. Secret
 first-discard selections are physical tile choices in the decisions; playback
 enforces the binding. Sichuan rules and fan names distinguish MIL SBR from T/TFMJ.
+Taiwan hands independently seal their 136/144 fixed physical slots, three dice,
+rules, round/dealer/continuation, raw opening zones, accepted decisions and
+automatic flowers/replacements, ready/call/kong/robbery/win events, exact terminal
+state, settlement and long cumulative scores. Initial replacement events precede
+the first decision; compulsory flower victories require no invented player action.
 Running recipient views hide other players' selections until the tile is played.
 MCR and
-Sichuan playback reexecutes the recorded decisions against their respective
+Sichuan and Taiwan playback reexecute recorded decisions against their respective
 rules, checking every event and settlement rather than storing view snapshots. The
 archive contains completed hands without an RNG seed; live views never expose a
 future wall. Private table saves retain active recording state and queued
@@ -110,10 +118,10 @@ hand, a queued save or a server restart cannot recreate the deleted entry. Once
 every human participant has deleted their reference, the canonical archive is
 removed as well. These markers remain part of the world backup.
 
-Riichi and MCR finished hands update the archive atomically. Sichuan retains each
+Riichi and MCR finished hands update the archive atomically. Sichuan and Taiwan retain each
 sealed hand in the private session during play and archives the complete match
 once it ends; closing an unfinished match archives the hands already sealed.
-Acknowledged Sichuan archives are not queued again after restoration or returning
+Acknowledged Sichuan/Taiwan archives are not queued again after restoration or returning
 to the lobby. Pending writes also remain
 in the table's normal saved game data until all index updates succeed. An I/O
 failure is logged and retried after sixty seconds; it does not acknowledge or

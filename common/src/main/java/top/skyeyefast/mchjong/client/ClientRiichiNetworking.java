@@ -70,7 +70,8 @@ public final class ClientRiichiNetworking {
                 screen.resetView();
             }
         } else if (rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
-            || rootScreen instanceof SichuanLobbyScreen screen && screen.tablePos().equals(payload.pos())) {
+            || rootScreen instanceof SichuanLobbyScreen screen && screen.tablePos().equals(payload.pos())
+            || rootScreen instanceof TaiwanLobbyScreen screen && screen.tablePos().equals(payload.pos())) {
             client.setScreen(new RiichiTableScreen(payload.pos()));
         }
     }
