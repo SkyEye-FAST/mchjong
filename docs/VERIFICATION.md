@@ -59,6 +59,13 @@ without opening a screen. Evidence uses `patchouli-installed-evidence`
 and `patchouli-absent-evidence`. Select `manual-zh_cn.png` or
 `manual-recommendation.png` with `-PsmokeScreenshots` for visual review.
 
+The 0.10.0 handbook expansion passed the focused resource/catalog and mixed-kong
+result tests on all three Minecraft profiles. Installed Fabric/Patchouli runs
+covered every spread in all four locales on 1.21.1, 1.20.1 and 26.1.2; selected
+award pages, tile diagrams and the placement table were also reviewed as screenshots.
+These checks cover the handbook; loader adapter availability is listed separately
+in [Compatibility](COMPATIBILITY.md).
+
 ### Maid integration
 
 ```text
