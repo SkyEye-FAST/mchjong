@@ -9,7 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Publish the standalone Taiwan library as `top.skyeyefast:taiwan-mahjong:0.1.0` on Maven Central with JVM 17 ABI validation, Dokka/sources artifacts, Apache-2.0 metadata and Java/Kotlin consumer verification; use its formal dependency on all three Minecraft profiles while retaining optional source development and shadow relocation.
+- Publish the standalone Taiwan library as `top.skyeyefast:taiwan-mahjong:0.1.0` on Maven Central with JVM 17 ABI validation, Dokka/sources artifacts, Apache-2.0 metadata and Java/Kotlin consumer verification; use its formal dependency on all three Minecraft profiles with shadow relocation and remove the source submodule and composite build.
 - Synchronize complete Taiwan play, persistence, 136/144 stock, packets, fixed-slot rendering, one built-in Bot, Replay, hints and localization into 1.20.1 and 26.1.2, retaining their loader/Java profiles and focused build/client validation.
 
 - Offer one formal Taiwan built-in Bot option, matching MCR/Sichuan; remove ineffective difficulty choices and reject unsupported Taiwan Bot values in private saves.

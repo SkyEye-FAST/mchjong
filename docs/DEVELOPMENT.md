@@ -7,21 +7,13 @@
 Use JDK 21 for the current development profile.
 
 ```bash
-git clone --recurse-submodules https://github.com/SkyEye-FAST/mchjong.git
+git clone https://github.com/SkyEye-FAST/mchjong.git
 cd mchjong
 ```
 
 The default `main` branch contains Fabric, Forge and NeoForge support. Minecraft,
 loader, mappings, and Java versions are selected by the build profile in
 `gradle.properties`.
-
-For an existing checkout, run `git submodule update --init --recursive` after
-pulling. The `taiwan-mahjong/` submodule pins the independent
-[Taiwan hand library](https://github.com/SkyEye-FAST/taiwan-mahjong); Gradle uses
-that exact source through a composite build by default. `-PtaiwanSource=false`
-disables source substitution and resolves the engine's declared Maven coordinate. Publish library commits to its
-repository before advancing the submodule pointer in MChjong. CI initializes
-the pinned submodules for snapshot and release builds.
 
 ### Fabric
 

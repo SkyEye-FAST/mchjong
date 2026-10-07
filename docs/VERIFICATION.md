@@ -344,30 +344,17 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 ## Taiwan hand library
 
 All three Minecraft profiles declare the Maven Central release
-`top.skyeyefast:taiwan-mahjong:0.1.0`. Verify its independent artifact contract
-with source substitution disabled and no Maven Local repository:
+`top.skyeyefast:taiwan-mahjong:0.1.0`. Verify the engine adapter and embedded artifact contract:
 
 ```text
-gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar -PtaiwanSource=false --warning-mode fail --console=plain
+gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar --warning-mode fail --console=plain
 ```
 
-The standalone release checks JVM 17 bytecode/API, the public ABI, POM/module
-metadata, sources/Dokka JARs and Apache-2.0 license. Its independent Java and
-Kotlin consumers exercise `Hand`, shanten/analyze/discards, scoring, flower wins
-and profiles on Java 17; Kotlin stdlib is the only public library dependency,
-and MCR remains test-only. Source development retains these checks:
-
-```text
-gradlew.bat :taiwan-mahjong:check :engine:test --tests="*Taiwan*Test" :engine:shadowJar spotlessCheck --configure-on-demand --warning-mode fail --console=plain
-```
-
-The standalone library also runs with its own wrapper in `taiwan-mahjong/`.
-Its tests own five-meld decomposition, exact copy-aware distance, effective tiles,
-discard availability, source-qualified scoring/exclusions and flower victories.
-`TaiwanHandAnalyzerTest` owns physical identity/provenance, named flower mapping,
-public-copy deduplication and the library-free engine API. The MCR dependency is
-a test-only four-meld remainder oracle, not a Taiwan rules authority. `buildAll`
-includes the standalone library's `check`.
+The independent library owns five-meld decomposition, exact copy-aware distance,
+effective tiles, discard availability, source-qualified scoring/exclusions and
+flower victories. `TaiwanHandAnalyzerTest` owns physical identity/provenance,
+named flower mapping, public-copy deduplication and the library-free engine API.
+`buildAll` includes the engine's adapter and runtime tests.
 
 `TaiwanHintsTest` owns shanten/effective tiles, legal discard previews, multiple
 waits with distinct ron/self-draw tai, Pocket/Southern and current-rule caps,

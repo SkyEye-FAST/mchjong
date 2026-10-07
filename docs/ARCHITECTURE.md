@@ -53,8 +53,8 @@ Artifact names include both loader and Minecraft version to keep releases distin
 ## Hand analysis boundaries
 
 `TaiwanHandAnalyzer` is the sole production boundary to the independent
-Kotlin/JVM 17 `taiwan-mahjong` library. Source development uses a composite build;
-`-PtaiwanSource=false` selects the declared Maven dependency. It owns physical identity and
+Kotlin/JVM 17 `taiwan-mahjong` library, resolved from Maven Central.
+The analyzer owns physical identity and
 meld-provenance conversion; the library owns five-meld sixteen-tile structure,
 analysis and source-qualified tai scoring. `TaiwanGame` and `TaiwanSession` own
 the Taiwan runtime without changing that algorithm/score boundary.

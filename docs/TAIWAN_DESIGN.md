@@ -8,13 +8,10 @@ provides automatic-table preparation, native actions and a complete four-wind ma
 
 ## Ownership
 
-`taiwan-mahjong/` is a standalone Kotlin/JVM 17 Gradle build with its own Maven
-coordinate, tests and sources artifact. It is pinned as a Git submodule from
-[its own repository](https://github.com/SkyEye-FAST/taiwan-mahjong).
-Root `settings.gradle` includes it as a composite build; there is no dependency
-on the MChjong root or engine. Its runtime
-is Kotlin/JDK only. The engine declares its coordinate and relocates the embedded
-library under `top.skyeyefast.mchjong.internal.taiwan`.
+`taiwan-mahjong` is an independent Kotlin/JVM 17 library with a Kotlin/JDK-only
+runtime. The engine resolves `top.skyeyefast:taiwan-mahjong` from Maven Central
+and relocates the embedded library under `top.skyeyefast.mchjong.internal.taiwan`.
+The exact version is declared in `gradle.properties`.
 
 `TaiwanHandAnalyzer` is the sole production import boundary. It validates physical
 IDs and meld provenance, translates kinds and named flowers, deduplicates public
