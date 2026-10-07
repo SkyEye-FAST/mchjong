@@ -11,17 +11,19 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 public final class SichuanTableScene {
-    public static final float TILE_SCALE = 1.0f;
-    public static final double WIDTH = TileMesh.WIDTH * (double) TILE_SCALE;
-    public static final double HEIGHT = TileMesh.HEIGHT * (double) TILE_SCALE;
-    public static final double DEPTH = TileMesh.DEPTH * (double) TILE_SCALE;
+    public static final TileDimensions DIMENSIONS = TileDimensions.LARGE;
+    public static final double WIDTH = DIMENSIONS.width();
+    public static final double HEIGHT = DIMENSIONS.height();
+    public static final double DEPTH = DIMENSIONS.depth();
     public static final double HAND_Z = McrTableScene.HAND_Z;
     public static final double RIVER_Z = TableIndicator.HALF_WIDTH + HEIGHT / 2 + .005;
     public static final double MELD_LEFT = McrTableScene.MELD_LEFT;
     public static final double RIVER_X = McrTableScene.RIVER_X;
     public enum Area { WALL, HAND, RIVER, MELD }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
-                        float yaw, boolean flat, boolean back, float scale) {}
+                        float yaw, boolean flat, boolean back) {
+        public TileDimensions dimensions() { return DIMENSIONS; }
+    }
     public record Claim(int tile, int supplier, List<Integer> winners) {
         public Claim { winners = List.copyOf(winners); }
     }
@@ -29,9 +31,9 @@ public final class SichuanTableScene {
     private SichuanTableScene() {}
 
     private static Piece piece(int tile, int seat, Area area, int index, double horizontal, double height,
-                               double depth, float yaw, boolean flat, boolean back, float scale) {
+                               double depth, float yaw, boolean flat, boolean back) {
         return new Piece(tile, seat, area, index, TableGeometry.orient(horizontal, TableGeometry.FELT_Y + height, depth, seat),
-            seat * 90 + yaw, flat, back, scale);
+            seat * 90 + yaw, flat, back);
     }
 
     public static List<Piece> fullWall(boolean eastWestLongWall) {
@@ -48,7 +50,7 @@ public final class SichuanTableScene {
                 int slot = SichuanWallLayout.slot(seat, column, layer, eastWestLongWall);
                 var position = wall.position(column);
                 if (slots.get(slot) != Tile.ABSENT) pieces.add(piece(slots.get(slot), seat, Area.WALL, slot,
-                    position.x, (layer == 0 ? 1.5 : .5) * DEPTH, position.z, wall.yaw(), true, true, TILE_SCALE));
+                    position.x, (layer == 0 ? 1.5 : .5) * DEPTH, position.z, wall.yaw(), true, true));
             }
         }
         return List.copyOf(pieces);
@@ -65,22 +67,17 @@ public final class SichuanTableScene {
 
     private static List<Piece> build(List<Integer> slots, List<SichuanView.Seat> seats, boolean ended, boolean eastWestLongWall) {
         var pieces = new ArrayList<>(wall(slots, eastWestLongWall));
-        var occupied = new ArrayList<>(pieces.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat())).toList());
+        var occupied = new ArrayList<>(pieces.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
         occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
         for (int seat = 0; seat < 4; seat++) {
             var player = seats.get(seat);
             int owner = seat;
             var layouts = player.melds().stream().map(meld -> MeldLayout.of(meld, owner,
                 top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN, ended)).toList();
-            var origins = ChineseTableLayout.melds(layouts, seat, occupied);
             boolean drawn = player.drawn() != Tile.ABSENT && !player.hand().isEmpty();
-            double handWidth = player.hand().size() * WIDTH + (drawn ? RiichiTableScene.DRAW_GAP : 0);
-            double handLeft = -(handWidth - WIDTH) / 2;
-            for (int group = 0; group < origins.size(); group++) {
-                var origin = origins.get(group);
-                if (Math.abs(origin.z - HAND_Z) < HEIGHT)
-                    handLeft = Math.max(handLeft, origin.x + layouts.get(group).width() + .04 + WIDTH / 2);
-            }
+            var publicArea = ChineseTableLayout.publicArea(layouts, 0, player.hand().size(), drawn, seat, occupied, DIMENSIONS);
+            var origins = publicArea.melds();
+            double handLeft = publicArea.handLeft();
             var indices = new ArrayList<>(java.util.stream.IntStream.range(0, player.hand().size()).boxed().toList());
             int drawnIndex = player.drawn() >= 0 ? player.hand().indexOf(player.drawn()) : -1;
             if (drawnIndex >= 0) { indices.remove(Integer.valueOf(drawnIndex)); indices.add(drawnIndex); }
@@ -88,7 +85,7 @@ public final class SichuanTableScene {
                 int original = indices.get(index);
                 pieces.add(piece(player.hand().get(original), seat, Area.HAND, original,
                     handLeft + index * WIDTH + (drawn && index == indices.size() - 1 ? RiichiTableScene.DRAW_GAP : 0),
-                    (ended ? DEPTH : HEIGHT) / 2, HAND_Z, 0, ended, false, TILE_SCALE));
+                    (ended ? DEPTH : HEIGHT) / 2, HAND_Z, 0, ended, false));
             }
             for (int group = 0; group < player.melds().size(); group++) {
                 var layout = layouts.get(group);
@@ -96,14 +93,16 @@ public final class SichuanTableScene {
                     var part = layout.parts().get(index);
                     pieces.add(piece(part.tile(), seat, Area.MELD, group * 4 + index,
                         origins.get(group).x + part.x(), DEPTH / 2, origins.get(group).z + part.z(),
-                        part.sideways() ? 90 : 0, true, part.back(), TILE_SCALE));
+                        part.sideways() ? 90 : 0, true, part.back()));
                 }
             }
+            pieces.stream().filter(piece -> piece.area() == Area.HAND).forEach(piece ->
+                occupied.add(ChineseTableLayout.bounds(piece.position(), piece.yaw(), piece.flat(), DIMENSIONS)));
         }
         var rivers = seats.stream().map(player -> player.river().stream().filter(discard -> !discard.claimed()).toList()).toList();
-        occupied = new ArrayList<>(pieces.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat())).toList());
-        occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
-        var positions = ChineseTableLayout.rivers(rivers.stream().map(List::size).toList(), occupied);
+        var riverOccupied = new ArrayList<>(pieces.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
+        riverOccupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
+        var positions = ChineseTableLayout.rivers(rivers.stream().map(List::size).toList(), riverOccupied, DIMENSIONS);
         for (int seat = 0; seat < 4; seat++) {
             int index = 0;
             for (int history = 0; history < seats.get(seat).river().size(); history++) {
@@ -111,7 +110,7 @@ public final class SichuanTableScene {
                 if (discard.claimed()) continue;
                 var position = positions.get(seat).get(index++);
                 pieces.add(piece(discard.tile(), seat, Area.RIVER, history, position.x,
-                    DEPTH / 2, position.z, 0, true, false, TILE_SCALE));
+                    DEPTH / 2, position.z, 0, true, false));
             }
         }
         return List.copyOf(pieces);

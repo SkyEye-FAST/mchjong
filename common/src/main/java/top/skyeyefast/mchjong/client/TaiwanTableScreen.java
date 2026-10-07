@@ -85,7 +85,7 @@ public final class TaiwanTableScreen extends Screen {
             var player = game.seats().get(game.recipient());
             var tiles = new ArrayList<>(player.concealed());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
-            hand = new TableHand(tiles, player.drawn(), player.melds(), game.recipient(), TableCanvas.WIDTH, TableCanvas.HEIGHT - 60, 58, true, top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN);
+            hand = new TableHand(tiles, player.drawn(), player.melds(), player.flowers().size(), game.recipient(), TableCanvas.WIDTH, TableCanvas.HEIGHT - 60, 58, true, top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN);
         }
         if (room.exitVote() != null) {
             hints.clearPreview();
@@ -175,7 +175,7 @@ public final class TaiwanTableScreen extends Screen {
         var pointer = projection().pointer(x, y);
         double closest = Double.POSITIVE_INFINITY; int tile = Tile.ABSENT;
         for (var piece : TaiwanTableScene.build(view.game())) if (ownHand(piece)) {
-            double distance = TilePicking.distanceSquared(TableAnimation.of(table()).worldPose(piece, Util.getMillis()), piece.scale(), pointer.origin(), pointer.ray(), selected(piece));
+            double distance = TilePicking.distanceSquared(TableAnimation.of(table()).worldPose(piece, Util.getMillis()), piece.dimensions(), pointer.origin(), pointer.ray(), selected(piece));
             if (distance < closest) { closest = distance; tile = piece.tile(); }
         }
         return tile;
@@ -269,10 +269,10 @@ public final class TaiwanTableScreen extends Screen {
             var pose = TableAnimation.of(table()).worldPose(piece, Util.getMillis());
             var transform = new org.joml.Matrix4f().translation((float) pose.position().x,
                 (float) pose.position().y, (float) pose.position().z)
-                .rotateY((float) Math.toRadians(pose.yaw())).rotateX((float) Math.toRadians(pose.pitch())).scale(piece.scale());
+                .rotateY((float) Math.toRadians(pose.yaw())).rotateX((float) Math.toRadians(pose.pitch()));
             for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
-                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
-                    y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
+                var corner = transform.transformPosition(new org.joml.Vector3f(x * piece.dimensions().width() / 2,
+                    y * piece.dimensions().height() / 2, z * piece.dimensions().depth() / 2));
                 var point = projection.project(new net.minecraft.world.phys.Vec3(corner.x, corner.y + .035, corner.z), .01);
                 if (point != null) { top = Math.min(top, point.y()); bottom = Math.max(bottom, point.y()); }
             }
@@ -314,10 +314,10 @@ public final class TaiwanTableScreen extends Screen {
             var pose = TableAnimation.of(table()).worldPose(piece, Util.getMillis());
             var transform = new org.joml.Matrix4f().translation((float) pose.position().x,
                 (float) pose.position().y, (float) pose.position().z)
-                .rotateY((float) Math.toRadians(pose.yaw())).rotateX((float) Math.toRadians(pose.pitch())).scale(piece.scale());
+                .rotateY((float) Math.toRadians(pose.yaw())).rotateX((float) Math.toRadians(pose.pitch()));
             for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
-                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
-                    y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
+                var corner = transform.transformPosition(new org.joml.Vector3f(x * piece.dimensions().width() / 2,
+                    y * piece.dimensions().height() / 2, z * piece.dimensions().depth() / 2));
                 var point = projection.project(new net.minecraft.world.phys.Vec3(corner.x, corner.y + .035, corner.z), .01);
                 if (point != null) {
                     left = Math.min(left, point.x()); right = Math.max(right, point.x());

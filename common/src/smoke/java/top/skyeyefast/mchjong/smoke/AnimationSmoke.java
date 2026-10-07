@@ -286,9 +286,9 @@ final class AnimationSmoke {
         double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
         for (var piece : RiichiTableScene.build(table.clientView())) {
             if (piece.seat() != 0 || piece.area() != RiichiTableScene.Area.HAND && piece.area() != RiichiTableScene.Area.MELD) continue;
-            double x = TileMesh.WIDTH * RiichiTableScene.TILE_SCALE / 2;
-            double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE / 2;
-            double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * RiichiTableScene.TILE_SCALE / 2;
+            double x = top.skyeyefast.mchjong.client.TileDimensions.SMALL.width() / 2;
+            double y = (piece.flat() ? top.skyeyefast.mchjong.client.TileDimensions.SMALL.depth() : top.skyeyefast.mchjong.client.TileDimensions.SMALL.height()) / 2;
+            double z = (piece.flat() ? top.skyeyefast.mchjong.client.TileDimensions.SMALL.height() : top.skyeyefast.mchjong.client.TileDimensions.SMALL.depth()) / 2;
             if (Math.floorMod(Math.round(piece.yaw() / 90), 2) == 1) { double swap = x; x = z; z = swap; }
             for (int dx : new int[]{-1, 1}) for (int dy : new int[]{-1, 1}) for (int dz : new int[]{-1, 1}) {
                 var point = TableGeometry.world(table.getBlockPos(), piece.position().add(dx * x, dy * y, dz * z))

@@ -11,9 +11,9 @@ import net.minecraft.world.item.DyeColor;
 
 /** Material body, optional dyed back and opaque white face share one physical tile envelope. */
 public final class TileMesh {
-    public static final float WIDTH = .104f;
-    public static final float HEIGHT = .160f;
-    public static final float DEPTH = .0726f;
+    private static final float WIDTH = TileDimensions.LARGE.width();
+    private static final float HEIGHT = TileDimensions.LARGE.height();
+    private static final float DEPTH = TileDimensions.LARGE.depth();
     public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
     public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
     public static final ResourceLocation GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");

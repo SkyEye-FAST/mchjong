@@ -199,12 +199,11 @@ final class TaiwanTableSmoke {
                 var own = view.game().seats().get(view.game().recipient());
                 var tiles = new ArrayList<>(own.concealed());
                 if (own.drawn() >= 0 && tiles.remove(Integer.valueOf(own.drawn()))) tiles.add(own.drawn());
-                int w = Math.min(58, 1244 / Math.max(14, tiles.size())), gap = own.drawn() < 0 ? 0 : Math.max(18, w / 2);
-                int rail = (1280 - Math.max(14, tiles.size()) * w - Math.max(18, w / 2)) / 2;
-                int left = 1280 - rail - tiles.size() * w - gap;
+                int w = Math.min(58, 1244 / Math.max(17, tiles.size())), gap = own.drawn() < 0 ? 0 : Math.max(18, w / 2);
+                int left = (1280 - tiles.size() * w - gap) / 2;
                 double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
                 double x = (screen.width - 1280 * scale) / 2 + (left + tiles.indexOf(selectedTile) * w + (selectedTile == own.drawn() ? gap : 0) + w / 2.0) * scale;
-                double y = (screen.height - 800 * scale) / 2 + (725 - Math.round(w * TileMesh.HEIGHT / TileMesh.WIDTH) / 2.0) * scale;
+                double y = (screen.height - 800 * scale) / 2 + (725 - Math.round(w * top.skyeyefast.mchjong.client.TileDimensions.SMALL.height() / top.skyeyefast.mchjong.client.TileDimensions.SMALL.width()) / 2.0) * scale;
                 check(screen.mouseClicked(x, y, 0), "Taiwan immersive picking failed");
                 screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 var selectedPiece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();

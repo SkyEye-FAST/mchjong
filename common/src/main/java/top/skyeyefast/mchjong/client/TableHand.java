@@ -23,10 +23,10 @@ final class TableHand {
     }
 
     TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
-        this(player.hand(), player.drawn(), player.melds(), owner, width, height, maxTileWidth, perspective, top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
+        this(player.hand(), player.drawn(), player.melds(), 0, owner, width, height, maxTileWidth, perspective, top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
     }
 
-    TableHand(List<Integer> tiles, int drawn, List<top.skyeyefast.mchjong.engine.Meld> melds,
+    TableHand(List<Integer> tiles, int drawn, List<top.skyeyefast.mchjong.engine.Meld> melds, int flowers,
               int owner, int width, int height, int maxTileWidth, boolean perspective, top.skyeyefast.mchjong.engine.MahjongVariant variant) {
         this.owner = owner; this.variant = variant;
         this.melds = melds;
@@ -34,20 +34,24 @@ final class TableHand {
         right = width - (perspective ? 24 : 8);
         this.tiles = tiles;
         this.drawn = drawn;
-        tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / Math.max(14, tiles.size())));
-        tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / Math.max(variant == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN ? 17 : 14, tiles.size())));
+        tileHeight = Math.round(tileWidth * TileDimensions.of(variant).ratio());
         gap = drawn == Tile.ABSENT || tiles.isEmpty() || tiles.getLast() != drawn ? 0 : Math.max(18, tileWidth / 2);
         span = tiles.size() * tileWidth + gap;
-        // Anchor short hands opposite their variant's public meld corner on the same stable rail.
+        // Chinese public tiles occupy the board; the foreground hand stays centered.
         int railLeft = (width - Math.max(14, tiles.size()) * tileWidth - Math.max(18, tileWidth / 2)) / 2;
-        left = perspective && variant != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI
-            ? width - railLeft - span : railLeft;
         y = height - (perspective ? 15 : 20) - tileHeight;
+        int centered = (width - span) / 2;
+        left = variant == top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI ? railLeft
+            : perspective ? TableImmersiveTable.foregroundLeft(melds, flowers, tiles.size(), gap > 0, owner,
+                variant, centered, span, y - Math.max(12, tileWidth / 5) - 2) : centered;
     }
 
     int top() { return y - (perspective ? Math.max(12, tileWidth / 5) + 2 : 7); }
     int centerX() { return left + span / 2; }
     int tileWidth() { return tileWidth; }
+    int span() { return span; }
+    TileDimensions dimensions() { return TileDimensions.of(variant); }
 
     int centerX(int tile) {
         int index = tiles.indexOf(tile);
@@ -113,26 +117,26 @@ final class TableHand {
                 if (fraction <= 0) continue;
                 double progress = ImmersiveMotion.smooth(fraction);
                 int movingWidth = (int) Math.round(20 + (tileWidth - 20) * progress);
-                int movingHeight = Math.round(movingWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+                int movingHeight = Math.round(movingWidth * TileDimensions.of(variant).ratio());
                 int movingX = (int) Math.round(source.x() + (x(i) + tileWidth / 2.0 - source.x()) * progress);
                 int movingY = (int) Math.round(source.y() + (top + tileHeight / 2.0 - source.y()) * progress
                     - Math.sin(Math.PI * fraction) * 22);
                 TileGui.tileArtwork(graphics, tile, movingX - movingWidth / 2, movingY - movingHeight / 2, movingWidth,
-                    fraction < .45, false, false, false, Math.max(2, movingWidth / 8), preset, material, dye, backPreset, artwork);
+                    fraction < .45, false, false, false, Math.max(2, movingWidth / 8), preset, material, dye, backPreset, artwork, TileDimensions.of(variant));
                 continue;
             }
             if (tile != suppressedTile) {
                 TileGui.tileArtwork(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
-                    perspective ? Math.max(2, tileWidth / 8) : 0, preset, material, dye, backPreset, artwork);
+                    perspective ? Math.max(2, tileWidth / 8) : 0, preset, material, dye, backPreset, artwork, TileDimensions.of(variant));
                 if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
             }
         }
-        if (perspective) return;
+        if (perspective || variant != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI) return;
         int meldTileWidth = tileWidth;
         int meldAvailable = right - left - span - 8;
         while (meldTileWidth > 2 && meldWidth(meldTileWidth) > meldAvailable) meldTileWidth--;
         int meldX = right;
-        int meldHeight = Math.round(meldTileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        int meldHeight = Math.round(meldTileWidth * TileDimensions.of(variant).ratio());
         int meldY = y + tileHeight - meldHeight;
         for (var meld : melds) {
             meldX -= TileGui.meldWidth(MeldLayout.of(meld, owner, variant, true), meldTileWidth);

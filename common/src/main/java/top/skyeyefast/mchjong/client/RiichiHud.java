@@ -205,7 +205,7 @@ final class RiichiHud {
                     else {
                         int meldX = x + 5;
                         for (var meld : player.melds()) {
-                            TileGui.meld(graphics, meld, seat, meldX, top + 27, tileWidth, preset, material, dye, backPreset);
+                            TileGui.meld(graphics, meld, seat, meldX, top + 28, tileWidth, preset, material, dye, backPreset);
                             meldX += TileGui.meldWidth(meld, seat, tileWidth) + 2;
                         }
                     }
@@ -229,7 +229,7 @@ final class RiichiHud {
                 TileGui.tile(graphics, tile, x, tileY, tileWidth, false, false, false, preset);
                 x += tileWidth + 2;
             }
-            regions.addFirst(new Region(start, tileY, x - start, Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH),
+            regions.addFirst(new Region(start, tileY, x - start, Math.round(tileWidth * TileDimensions.LARGE.height() / TileDimensions.LARGE.width()),
                 Component.translatable("ui.mchjong.result_indicators")));
         }
         if (view.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {

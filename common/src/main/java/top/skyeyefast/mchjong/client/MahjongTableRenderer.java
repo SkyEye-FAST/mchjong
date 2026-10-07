@@ -113,7 +113,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.translate(position.x, position.y + (selected ? 0.035 : 0), position.z);
             pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
             pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
-            pose.scale(RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE);
+            RiichiTableScene.DIMENSIONS.apply(pose);
             // A face-down tile turns the back image toward the table center, including during a flip.
             boolean faceDown = frame.pitch() > 0;
             switch (layer) {

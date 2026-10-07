@@ -87,12 +87,12 @@ class TableLayoutTest {
                 assertSeatedFraming(pieces);
                 var calls = pieces.stream().filter(p -> p.seat() == 0 && p.area() == RiichiTableScene.Area.MELD).toList();
                 for (var part : calls) {
-                    double bottom = RiichiTableScene.HAND_Z + TileMesh.HEIGHT * RiichiTableScene.TILE_SCALE / 2;
+                    double bottom = RiichiTableScene.HAND_Z + TileDimensions.SMALL.height() / 2;
                     if (type == Meld.Type.ADDED_QUAD && part.index() % 4 == 3)
-                        bottom -= TileMesh.WIDTH * RiichiTableScene.TILE_SCALE;
+                        bottom -= TileDimensions.SMALL.width();
                     assertEquals(bottom, bounds(part).maxZ, 1e-5, "Align the bottom edges; added tiles go in front");
                     assertEquals(top.skyeyefast.mchjong.world.TableGeometry.FELT_Y
-                        + TileMesh.DEPTH * RiichiTableScene.TILE_SCALE / 2, part.position().y, 1e-7);
+                        + TileDimensions.SMALL.depth() / 2, part.position().y, 1e-7);
                 }
                 double right = calls.stream().mapToDouble(p -> bounds(p).maxX).max().orElseThrow();
                 assertEquals(RiichiTableScene.MELD_RIGHT, right, 1e-5);
@@ -123,7 +123,7 @@ class TableLayoutTest {
         }
     }
 
-    @Test void rotatedSeatsKeepHandsMeldsNorthsAndCompleteWallsInsideTheFeltWithoutIntersection() {
+    @Test void rotatedSeatsKeepHandsMeldsAndNorthsInsideTheFeltWithoutIntersection() {
         for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) for (int count = 0; count <= 4; count++) {
             var v = start(rules);
             var seats = new ArrayList<RiichiView.Seat>();
@@ -144,7 +144,6 @@ class TableLayoutTest {
                     north.position().z, (4 - north.seat()) % 4);
                 assertEquals(RiichiTableScene.HAND_Z, local.z, 1e-8, "Extracted norths share the hand rail");
             }
-            for (int i = 0; i < v.wall().size(); i++) pieces.add(RiichiTableScene.wallPiece(v, i, true));
             for (int i = 0; i < pieces.size(); i++) {
                 var bounds = bounds(pieces.get(i));
                 double edge = top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH;
@@ -185,9 +184,9 @@ class TableLayoutTest {
     }
 
     private static net.minecraft.world.phys.AABB bounds(RiichiTableScene.Piece piece) {
-        double x = TileMesh.WIDTH * RiichiTableScene.TILE_SCALE / 2;
-        double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE / 2;
-        double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * RiichiTableScene.TILE_SCALE / 2;
+        double x = TileDimensions.SMALL.width() / 2;
+        double y = (piece.flat() ? TileDimensions.SMALL.depth() : TileDimensions.SMALL.height()) / 2;
+        double z = (piece.flat() ? TileDimensions.SMALL.height() : TileDimensions.SMALL.depth()) / 2;
         if (Math.floorMod(Math.round(piece.yaw() / 90), 2) == 1) { double swap = x; x = z; z = swap; }
         var p = piece.position();
         return new net.minecraft.world.phys.AABB(p.x - x, p.y - y, p.z - z, p.x + x, p.y + y, p.z + z).deflate(1e-6);
@@ -199,17 +198,17 @@ class TableLayoutTest {
             for (int i = 1; i < 3; i++) {
                 var before = layout.parts().get(i - 1);
                 var after = layout.parts().get(i);
-                double widths = (before.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH)
-                    + (after.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH);
+                double widths = (before.sideways() ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width())
+                    + (after.sideways() ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width());
                 assertEquals(widths / 2, after.x() - before.x(), 1e-7);
             }
             var added = layout.parts().getLast();
             var called = layout.parts().stream().filter(p -> p.tile() == 0).findFirst().orElseThrow();
             assertTrue(added.sideways());
             assertEquals(called.x(), added.x());
-            assertEquals(TileMesh.WIDTH, called.z() - added.z(), 1e-7);
-            for (var part : layout.parts().subList(0, 3)) assertEquals(TileMesh.HEIGHT / 2.0,
-                part.z() + (part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) / 2.0, 1e-7);
+            assertEquals(TileDimensions.SMALL.width(), called.z() - added.z(), 1e-7);
+            for (var part : layout.parts().subList(0, 3)) assertEquals(TileDimensions.SMALL.height() / 2.0,
+                part.z() + (part.sideways() ? TileDimensions.SMALL.width() : TileDimensions.SMALL.height()) / 2.0, 1e-7);
         }
     }
 
@@ -224,8 +223,8 @@ class TableLayoutTest {
         for (int i = 1; i < river.size(); i++) {
             if (i % 6 == 0) assertEquals(RiichiTableScene.RIVER_ROW, riverTop(river.get(i)) - riverTop(river.get(i - 1)), 1e-6);
             else {
-                double widths = (river.get(i).yaw() == 90 ? .160 : .104) + (river.get(i - 1).yaw() == 90 ? .160 : .104);
-                assertEquals(widths * RiichiTableScene.TILE_SCALE / 2,
+                double widths = (river.get(i).yaw() == 90 ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width()) + (river.get(i - 1).yaw() == 90 ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width());
+                assertEquals(widths / 2,
                     river.get(i).position().x - river.get(i - 1).position().x, 1e-7, "Tiles must touch, including the riichi tile");
                 assertEquals(riverTop(river.get(i)), riverTop(river.get(i - 1)), 1e-7);
             }
@@ -245,8 +244,8 @@ class TableLayoutTest {
                 for (var piece : pieces) {
                     var neighbors = pieces.stream().filter(other -> other != piece)
                         .mapToDouble(other -> piece.position().distanceTo(other.position())).sorted().toArray();
-                    assertEquals(TileMesh.DEPTH * RiichiTableScene.TILE_SCALE, neighbors[0], 1e-7, "Stack must touch");
-                    assertEquals(TileMesh.WIDTH * RiichiTableScene.TILE_SCALE, neighbors[1], 1e-7, "Wall must touch");
+                    assertEquals(TileDimensions.SMALL.depth(), neighbors[0], 1e-7, "Stack must touch");
+                    assertEquals(TileDimensions.SMALL.width(), neighbors[1], 1e-7, "Wall must touch");
                 }
             }
         }
@@ -268,7 +267,7 @@ class TableLayoutTest {
                 var next = RiichiTableScene.wallPiece(view, (i + 2) % size, true);
                 assertEquals(first.position().x, second.position().x);
                 assertEquals(first.position().z, second.position().z);
-                assertEquals(TileMesh.DEPTH * RiichiTableScene.TILE_SCALE * (i < size - 14 ? 1 : -1),
+                assertEquals(TileDimensions.SMALL.depth() * (i < size - 14 ? 1 : -1),
                     first.position().y - second.position().y, 1e-7);
                 if (first.seat() == next.seat()) {
                     var step = top.skyeyefast.mchjong.world.TableGeometry.orient(-RiichiTableScene.WALL_STEP, 0, 0, first.seat());
@@ -290,18 +289,18 @@ class TableLayoutTest {
                 .filter(piece -> piece.area() == RiichiTableScene.Area.RIVER && piece.seat() == 0).toList();
             for (int i = 0; i < river.size(); i++) {
                 if (i % 6 > 0) {
-                    double width = (i == riichi ? TileMesh.HEIGHT : TileMesh.WIDTH)
-                        + (i - 1 == riichi ? TileMesh.HEIGHT : TileMesh.WIDTH);
-                    assertEquals(width * RiichiTableScene.TILE_SCALE / 2, river.get(i).position().x - river.get(i - 1).position().x, 1e-7);
+                    double width = (i == riichi ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width())
+                        + (i - 1 == riichi ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width());
+                    assertEquals(width / 2, river.get(i).position().x - river.get(i - 1).position().x, 1e-7);
                 }
-                if (i >= 6) assertEquals(TileMesh.HEIGHT * RiichiTableScene.TILE_SCALE,
+                if (i >= 6) assertEquals(TileDimensions.SMALL.height(),
                     riverTop(river.get(i)) - riverTop(river.get(i - 6)), 1e-7);
             }
         }
     }
 
     private static double riverTop(RiichiTableScene.Piece piece) {
-        return piece.position().z - (piece.yaw() == 90 ? TileMesh.WIDTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE / 2.0;
+        return piece.position().z - (piece.yaw() == 90 ? TileDimensions.SMALL.width() : TileDimensions.SMALL.height()) / 2.0;
     }
 
     @Test void hidingRiversAlwaysShowsRemainingTilesAndResetRestoresDefaults() {

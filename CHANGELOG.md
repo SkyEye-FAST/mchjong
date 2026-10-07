@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Calibrate Riichi and Taiwan tiles to the shared 33 × 24 × 17.5 mm envelope while preserving large MCR/Sichuan tiles; tighten tilted walls by their actual lengths, combine flowers and melds in a wrapping left public area, and align physical spacing, picking and display proportions.
+
 - Publish the standalone Taiwan library as `top.skyeyefast:taiwan-mahjong:0.1.0` on Maven Central with JVM 17 ABI validation, Dokka/sources artifacts, Apache-2.0 metadata and Java/Kotlin consumer verification; use its formal dependency on all three Minecraft profiles with shadow relocation and remove the source submodule and composite build.
 - Synchronize complete Taiwan play, persistence, 136/144 stock, packets, fixed-slot rendering, one built-in Bot, Replay, hints and localization into 1.20.1 and 26.1.2, retaining their loader/Java profiles and focused build/client validation.
 
