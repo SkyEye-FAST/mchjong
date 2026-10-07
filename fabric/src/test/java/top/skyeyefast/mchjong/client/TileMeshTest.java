@@ -72,7 +72,7 @@ class TileMeshTest {
             pose.translate(.2, 1.1, -.4);
             pose.mulPose(Axis.YP.rotationDegrees(yaw));
             pose.mulPose(Axis.XP.rotationDegrees(pitch));
-            pose.scale(RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE);
+            RiichiTableScene.DIMENSIONS.apply(pose);
             var transformed = new Mesh();
             TileMesh.drawOutline(pose, transformed, MahjongUi.ACCENT);
             for (int i = 0; i < local.vertices.size(); i++)
@@ -86,7 +86,7 @@ class TileMeshTest {
             var pose = new PoseStack();
             pose.mulPose(Axis.YP.rotationDegrees(90));
             pose.mulPose(Axis.XP.rotationDegrees(pitch));
-            pose.scale(RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE);
+            RiichiTableScene.DIMENSIONS.apply(pose);
             var mesh = new Mesh();
             var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
             TileMesh.drawBody(pose, mesh, 0, material, null);
@@ -153,7 +153,7 @@ class TileMeshTest {
             TileMesh.drawFace(new PoseStack(), mesh, 0, false, 0);
             assertTrue(mesh.vertices.subList(0, bodyVertices).stream().allMatch(vertex -> vertex.color == material.color()), material.name());
             assertTrue(mesh.vertices.subList(bodyVertices, mesh.vertices.size()).stream().allMatch(vertex -> vertex.color == 0xffffffff), material.name());
-            assertEquals(TileMesh.DEPTH / 2, mesh.vertices.getLast().position.z);
+            assertEquals(TileDimensions.LARGE.depth() / 2, mesh.vertices.getLast().position.z);
         }
     }
 
@@ -166,8 +166,8 @@ class TileMeshTest {
         var face = mesh.vertices.subList(mesh.vertices.size() - 12, mesh.vertices.size());
         assertTrue(face.stream().allMatch(vertex -> vertex.position.y > 0.036 && vertex.normal.y > 0.99));
         for (var vertex : face) {
-            assertEquals(.5f + vertex.position.x / (TileMesh.WIDTH - .003f), vertex.u, 1e-6);
-            assertEquals(.5f + vertex.position.z / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
+            assertEquals(.5f + vertex.position.x / (TileDimensions.LARGE.width() - .003f), vertex.u, 1e-6);
+            assertEquals(.5f + vertex.position.z / (TileDimensions.LARGE.height() - .003f), vertex.v, 1e-6);
         }
         var pattern = new Mesh();
         TileMesh.drawBackPattern(pose, pattern, true, 0);
@@ -178,8 +178,8 @@ class TileMeshTest {
         var standing = new Mesh();
         TileMesh.drawBackPattern(new PoseStack(), standing, false, 0);
         for (var vertex : standing.vertices) {
-            assertEquals(.5f - vertex.position.x / (TileMesh.WIDTH - .003f), vertex.u, 1e-6);
-            assertEquals(.5f - vertex.position.y / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
+            assertEquals(.5f - vertex.position.x / (TileDimensions.LARGE.width() - .003f), vertex.u, 1e-6);
+            assertEquals(.5f - vertex.position.y / (TileDimensions.LARGE.height() - .003f), vertex.v, 1e-6);
         }
     }
 

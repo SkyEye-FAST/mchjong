@@ -50,8 +50,8 @@ Artifact names include both loader and Minecraft version to keep releases distin
 ## Hand analysis boundaries
 
 `TaiwanHandAnalyzer` is the sole production boundary to the independent
-Kotlin/JVM 17 `taiwan-mahjong` library. Source development uses a composite build;
-`-PtaiwanSource=false` selects the declared Maven dependency. It owns physical identity and
+Kotlin/JVM 17 `taiwan-mahjong` library, resolved from Maven Central.
+The analyzer owns physical identity and
 meld-provenance conversion; the library owns five-meld sixteen-tile structure,
 analysis and source-qualified tai scoring. `TaiwanGame` and `TaiwanSession` own
 the Taiwan runtime without changing that algorithm/score boundary.
@@ -562,8 +562,8 @@ identities, and its live projection consumes only already-redacted data.
 
 `McrRiverLayout` packs unclaimed discards into six columns. `McrMeldLayout`
 positions flat public melds with a source-marking sideways tile, including all
-four tiles of a supplemented triplet in one row. `McrFlowerLayout` reserves a
-separate public flower area. `McrSceneRenderer` consumes the scene and `McrDeck`,
+four tiles of a supplemented triplet in one row. `ChineseTableLayout` packs actual meld groups and individual flowers in one
+left-side public area, wrapping intact groups and moving hands only as needed. `McrSceneRenderer` consumes the scene and `McrDeck`,
 sharing tile meshes, materials and artwork lookup while retaining MCR geometry.
 The dimensional and visibility contracts are in [Interface style](UI_STYLE.md#mcr-physical-layout).
 
@@ -573,7 +573,7 @@ canvas, letterboxing and pointer conversion. The world renderer consumes
 `McrTableScene.build`; `TableBoardState` supplies the same shared immersive
 rails, rivers, perspective solids and player plaques used by Riichi and Sichuan,
 with a private `TableHand` in the foreground. `TilePicking` intersects the MCR piece's
-actual scale and orientation.
+actual `TileDimensions` envelope and orientation.
 Hand selection resolves only issued discard indices; other declarations use
 native action buttons with localized names and tile previews. View changes retain
 selection and leave the world camera pose intact. Settlement carries the selected
@@ -781,7 +781,7 @@ primitives from authorized live views or sealed replays. `TableImmersiveTable`
 owns the same rails, rivers, public extraction/flower rail and center device for
 all variants. `MeldLayout` retains each rule's concealed and upgraded-kong display.
 `TableBoard` owns projected anchors and the flat replay layout. `TableHand`,
-`TileMesh` and `TilePicking` share hand, mesh and intersection responsibilities.
+`TileDimensions`, `TileMesh` and `TilePicking` share hand, mesh and intersection responsibilities.
 `TableDeal` supplies deal timing; `RiichiAnimation` retains Riichi declarations
 and `TableAnimation` adapts MCR/Sichuan deal, draw, discard and world transitions.
 World picking samples the same pose as rendering. Recipient/view changes clear

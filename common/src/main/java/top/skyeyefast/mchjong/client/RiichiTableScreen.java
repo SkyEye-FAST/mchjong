@@ -551,7 +551,7 @@ public final class RiichiTableScreen extends Screen {
         double x = source.x() + (motion.target().x() - source.x()) * progress;
         double y = source.y() + (motion.target().y() - source.y()) * progress - Math.sin(Math.PI * fraction) * 22;
         int tileWidth = Math.max(16, (int) Math.round(20 + (motion.targetWidth() - 20) * progress));
-        int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        int tileHeight = Math.round(tileWidth * TileDimensions.SMALL.height() / TileDimensions.SMALL.width());
         TileGui.tile3d(graphics, motion.tile(), (int) Math.round(x) - tileWidth / 2,
             (int) Math.round(y) - tileHeight / 2, tileWidth, false, false, false, false,
             Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack(), tileBackPreset());
@@ -909,7 +909,7 @@ public final class RiichiTableScreen extends Screen {
             dealing() ? animation() : null, board == null ? null : board.drawSource(), Util.getMillis());
         if (handDrag != null && handDragMoved) {
             int tileWidth = hand == null ? Math.min(32, Math.max(16, uiWidth() / 14)) : hand.tileWidth();
-            int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+            int tileHeight = Math.round(tileWidth * TileDimensions.SMALL.height() / TileDimensions.SMALL.width());
             TileGui.tile3d(graphics, handDragTile, (int) handDragX - tileWidth / 2,
                 (int) handDragY - tileHeight / 2, tileWidth, false, false, false, false,
                 Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack(), tileBackPreset());
@@ -994,11 +994,10 @@ public final class RiichiTableScreen extends Screen {
             // Project the hand at its table position, reserving the maximum selection lift.
             var transform = new org.joml.Matrix4f().translation((float) piece.position().x,
                 (float) piece.position().y, (float) piece.position().z)
-                .rotateY((float) Math.toRadians(piece.yaw())).rotateX((float) Math.toRadians(frame.pitch()))
-                .scale(RiichiTableScene.TILE_SCALE);
+                .rotateY((float) Math.toRadians(piece.yaw())).rotateX((float) Math.toRadians(frame.pitch()));
             for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
-                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
-                    y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
+                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileDimensions.SMALL.width() / 2,
+                    y * TileDimensions.SMALL.height() / 2, z * TileDimensions.SMALL.depth() / 2));
                 for (int lift = 0; lift <= (piece.area() == RiichiTableScene.Area.HAND ? 1 : 0); lift++) {
                     var point = project(new Vec3(corner.x, corner.y + lift * .035, corner.z));
                     if (point != null) {
@@ -1058,7 +1057,7 @@ public final class RiichiTableScreen extends Screen {
             if (piece.area() != RiichiTableScene.Area.HAND || piece.seat() != view.viewerSeat()
                 || standing && piece.flat()) continue;
             var point = project(piece.position().add(0,
-                (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE / 2.0, 0));
+                (piece.flat() ? TileDimensions.SMALL.depth() : TileDimensions.SMALL.height()) / 2.0, 0));
             if (point != null) {
                 handLeft = Math.min(handLeft, point.x());
                 handRight = Math.max(handRight, point.x());

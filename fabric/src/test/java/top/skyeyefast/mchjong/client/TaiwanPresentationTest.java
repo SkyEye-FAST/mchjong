@@ -56,8 +56,8 @@ class TaiwanPresentationTest {
     }
 
     private static WallGeometryAssertions.Solid solid(TaiwanTableScene.Piece p) {
-        return new WallGeometryAssertions.Solid(p.position(), p.yaw(), TileMesh.WIDTH * (double) p.scale(),
-            (p.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) p.scale(),
-            (p.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) p.scale());
+        return new WallGeometryAssertions.Solid(p.position(), p.yaw(), TileDimensions.SMALL.width(),
+            (p.flat() ? TileDimensions.SMALL.depth() : TileDimensions.SMALL.height()),
+            (p.flat() ? TileDimensions.SMALL.height() : TileDimensions.SMALL.depth()));
     }
 }

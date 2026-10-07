@@ -57,7 +57,7 @@ class SichuanPresentationTest {
                 SichuanTableScene.HEIGHT, SichuanTableScene.DEPTH));
     }
 
-    @Test void bothSichuanAssignmentsUseTheSameOuterRailAsMcr() {
+    @Test void shorterSichuanWallsTightenTheOuterFootprint() {
         var mcr = McrTableScene.fullWall();
         for (boolean eastWestLongWall : new boolean[]{false, true}) {
             var sichuan = SichuanTableScene.fullWall(eastWestLongWall);
@@ -69,18 +69,18 @@ class SichuanPresentationTest {
                 var actual = sichuan.stream().filter(piece -> piece.seat() == owner)
                     .map(SichuanTableScene.Piece::position).reduce(net.minecraft.world.phys.Vec3.ZERO, net.minecraft.world.phys.Vec3::add)
                     .scale(1.0 / (2 * SichuanWallLayout.stacks(seat, eastWestLongWall)));
-                assertEquals(0, expected.distanceTo(actual), 1e-8, "Stack count must not move the wall rail or center");
+                assertTrue(actual.length() < expected.length(), "Shorter walls must move inward");
             }
         }
     }
 
     @Test void realGamesConserveStockAndClearAllPhysicalZonesInBothAssignments() {
-        assertEquals(1.0f, SichuanTableScene.TILE_SCALE);
+        assertEquals(TileDimensions.LARGE, SichuanTableScene.DIMENSIONS);
         for (boolean eastWest : new boolean[]{true, false}) for (long seed : new long[]{1, 2, 3, 4, 5, 6, 19, 20, 21, 22, 42, 43, 711, 712, 2025, 2026}) {
             top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.sichuan(seed, eastWest, -1, 0, false, view -> {
                 var scene = SichuanTableScene.build(view);
                 assertEquals(108, scene.size(), "Physical stock must survive every accepted action");
-                assertTrue(scene.stream().allMatch(piece -> piece.scale() == 1.0f));
+                assertTrue(scene.stream().allMatch(piece -> piece.dimensions().equals(TileDimensions.LARGE)));
                 for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
                 WallGeometryAssertions.leftMeldsAndMinimalHandShift(scene.stream().map(piece ->
                     new WallGeometryAssertions.PublicPiece(WallGeometryAssertions.solid(piece), piece.seat(),

@@ -76,8 +76,6 @@ class McrLayoutTest {
             assertFalse(history.get(part.historyIndex()).called());
             assertEquals(index % 6, part.column());
             assertEquals(index / 6, part.row());
-            assertEquals((index % 6 - 2.5) * TileMesh.WIDTH, part.x(), 1e-8);
-            assertEquals(index / 6 * (double) TileMesh.HEIGHT, part.z(), 1e-8);
         }
         assertEquals(3, parts.get(2).historyIndex());
         assertEquals(14, parts.get(12).historyIndex());
@@ -88,33 +86,31 @@ class McrLayoutTest {
 
     @Test void sourcesChooseLeftMiddleRightAndEveryKongIsOneFlatRow() {
         for (int from : new int[]{3, 2, 1}) {
-            var triplet = ChineseMeldLayout.of(new Meld(Meld.Type.TRIPLET, List.of(0, 1, 2), from, 0), 0, false);
+            var triplet = ChineseMeldLayout.of(new Meld(Meld.Type.TRIPLET, List.of(0, 1, 2), from, 0), 0, false, TileDimensions.LARGE);
             int called = from == 3 ? 0 : from == 2 ? 1 : 2;
             assertTrue(triplet.parts().get(called).sideways());
             for (var type : List.of(Meld.Type.OPEN_QUAD, Meld.Type.ADDED_QUAD)) {
-                var layout = ChineseMeldLayout.of(new Meld(type, List.of(0, 1, 2, 3), from, 0), 0, false);
+                var layout = ChineseMeldLayout.of(new Meld(type, List.of(0, 1, 2, 3), from, 0), 0, false, TileDimensions.LARGE);
                 assertEquals(4, layout.parts().size());
-                assertEquals(3 * (double) TileMesh.WIDTH + TileMesh.HEIGHT, layout.width(), 1e-8);
+                assertEquals(3 * (double) TileDimensions.LARGE.width() + TileDimensions.LARGE.height(), layout.width(), 1e-8);
                 assertTrue(layout.parts().get(from == 1 ? 3 : called).sideways());
                 assertEquals(1, layout.parts().stream().filter(ChineseMeldLayout.Part::sideways).count());
                 for (int i = 1; i < 4; i++) assertTrue(layout.parts().get(i).x() > layout.parts().get(i - 1).x());
             }
         }
         var chow = new Meld(Meld.Type.SEQUENCE, List.of(0, 4, 8), 3, 4);
-        assertTrue(ChineseMeldLayout.of(chow, 0, false).parts().get(0).sideways());
-        assertThrows(IllegalArgumentException.class, () -> ChineseMeldLayout.of(new Meld(chow.type(), chow.tiles(), 1, 4), 0, false));
+        assertTrue(ChineseMeldLayout.of(chow, 0, false, TileDimensions.LARGE).parts().get(0).sideways());
+        assertThrows(IllegalArgumentException.class, () -> ChineseMeldLayout.of(new Meld(chow.type(), chow.tiles(), 1, 4), 0, false, TileDimensions.LARGE));
         var concealed = new Meld(Meld.Type.CONCEALED_QUAD, List.of(0, 1, 2, 3), 0, Tile.ABSENT);
-        assertTrue(ChineseMeldLayout.of(concealed, 0, false).parts().stream().allMatch(part -> part.back() && !part.sideways()));
-        assertTrue(ChineseMeldLayout.of(concealed, 0, true).parts().stream().noneMatch(ChineseMeldLayout.Part::back));
+        assertTrue(ChineseMeldLayout.of(concealed, 0, false, TileDimensions.LARGE).parts().stream().allMatch(part -> part.back() && !part.sideways()));
+        assertTrue(ChineseMeldLayout.of(concealed, 0, true, TileDimensions.LARGE).parts().stream().noneMatch(ChineseMeldLayout.Part::back));
     }
 
-    @Test void flowersHaveTheirOwnAreaAndHandIndicesKeepTheirSourceIdentity() {
-        var flowers = java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList();
-        var layout = ChineseFlowerLayout.of(flowers);
-        assertEquals(8, layout.size());
-        assertTrue(layout.stream().allMatch(part -> part.z() == 0));
-        assertEquals(7 * (double) TileMesh.WIDTH, layout.get(layout.size() - 1).x() - layout.get(0).x(), 1e-8);
-        assertThrows(IllegalArgumentException.class, () -> ChineseFlowerLayout.of(List.of(0)));
+    @Test void flowersShareTheLeftPublicAreaAndHandIndicesKeepTheirSourceIdentity() {
+        var publicArea = ChineseTableLayout.publicArea(List.of(), 8, 13, false, 0,
+            new ArrayList<>(), TileDimensions.LARGE);
+        assertEquals(8, publicArea.flowers().size());
+        assertTrue(publicArea.flowers().getFirst().x < 0);
         var game = new McrGame(711);
         var scene = McrTableScene.build(game.view(0));
         assertEquals(144, scene.size());
@@ -131,16 +127,16 @@ class McrLayoutTest {
     }
 
     @Test void realGamesConserveStockAndClearAllPhysicalZones() {
-        assertEquals(1.0f, McrTableScene.TILE_SCALE);
+        assertEquals(TileDimensions.LARGE, McrTableScene.DIMENSIONS);
         for (long seed : new long[]{1, 2, 3, 4, 5, 6, 19, 20, 21, 22, 42, 43, 711, 712, 2025, 2026}) {
             top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.mcr(seed, -1, 0, view -> {
                 var scene = McrTableScene.build(view);
                 assertEquals(144, scene.size(), "Physical stock must survive every accepted action");
-                assertTrue(scene.stream().allMatch(piece -> piece.scale() == 1.0f));
+                assertTrue(scene.stream().allMatch(piece -> piece.dimensions().equals(TileDimensions.LARGE)));
                 for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
                 WallGeometryAssertions.leftMeldsAndMinimalHandShift(scene.stream().map(piece ->
                     new WallGeometryAssertions.PublicPiece(WallGeometryAssertions.solid(piece), piece.seat(),
-                        piece.area() == McrTableScene.Area.HAND, piece.area() == McrTableScene.Area.MELD ? piece.index() / 4 : -1)).toList(),
+                        piece.area() == McrTableScene.Area.HAND, piece.area() == McrTableScene.Area.MELD ? piece.index() / 4 : piece.area() == McrTableScene.Area.FLOWER ? 4 + piece.index() : -1)).toList(),
                     view.seats().stream().map(player -> player.hand().size() * McrTableScene.WIDTH
                         + (player.drawn() != Tile.ABSENT && !player.hand().isEmpty() ? RiichiTableScene.DRAW_GAP : 0)).toList(), McrTableScene.HAND_Z);
                 assertDoesNotThrow(() -> { for (int i=0; i<scene.size(); i++) for(int j=i+1;j<scene.size();j++)
@@ -157,7 +153,7 @@ class McrLayoutTest {
         assertEquals(2, view.seats().get(0).hand().size());
         var scene = McrTableScene.build(view);
         assertEquals(144, scene.size());
-        assertTrue(scene.stream().allMatch(piece -> piece.scale() == 1.0f));
+        assertTrue(scene.stream().allMatch(piece -> piece.dimensions().equals(TileDimensions.LARGE)));
         for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
         WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
     }
@@ -165,9 +161,9 @@ class McrLayoutTest {
     private static AABB bounds(McrTableScene.Piece piece) {
         double cosine = Math.abs(Math.cos(Math.toRadians(piece.yaw())));
         double sine = Math.abs(Math.sin(Math.toRadians(piece.yaw())));
-        double width = TileMesh.WIDTH * (double) piece.scale();
-        double height = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) piece.scale();
-        double depth = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) piece.scale();
+        double width = TileDimensions.LARGE.width();
+        double height = (piece.flat() ? TileDimensions.LARGE.depth() : TileDimensions.LARGE.height());
+        double depth = (piece.flat() ? TileDimensions.LARGE.height() : TileDimensions.LARGE.depth());
         double halfX = (width * cosine + depth * sine) / 2;
         double halfZ = (width * sine + depth * cosine) / 2;
         var p = piece.position();

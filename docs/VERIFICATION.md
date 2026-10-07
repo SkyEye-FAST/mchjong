@@ -108,8 +108,8 @@ config-screen factory.
 tail replacements, exhaustion and conservation across player-owned zones.
 `McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
 and first/third jump sources, front/tail traversal and restored physical cursors.
-`McrLayoutTest` and `SichuanPresentationTest` own fixed-size Chinese geometry:
-12-degree windmill walls, opposite inner-face spacing along the wall normal,
+`McrLayoutTest`, `SichuanPresentationTest` and `TaiwanPresentationTest` own physical Chinese geometry:
+12-degree tilted walls, length-derived corner clearance and opposite spacing along the wall normal,
 physical slots, layer contact, felt bounds, left-side meld chronology, minimal
 hand displacement and six-column rivers. `ChineseGameplayFixtures` uses only
 engine-issued actions and calls engine conservation validation after every
@@ -123,6 +123,15 @@ Run shared checks with:
 gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*SichuanPresentationTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain
 ```
 
+`TableLayoutEvidenceTest` exports equal-scale top views directly from production
+scene poses to `fabric/build/layout-evidence/table-layouts.svg`. It verifies felt
+bounds and oriented intersections on full walls, real dealt/midgame/late positions,
+a conserved MCR four-kong/eight-flower hand, and engine-issued Taiwan play reaching
+five melds. Taiwan hand rays are checked against every scene tile from all four
+seats. Run it with `:fabric:test --tests "*TableLayoutEvidenceTest" --warning-mode fail`.
+`TileMeshTest` and `TilePickingTest` cover the shared three-axis envelope transform;
+`ChinesePickingTest` retains MCR/Sichuan seated visibility as walls empty.
+
 The layout smoke renders the unopened wall and actual engine post-deal, midgame
 and late-game snapshots for MCR, Sichuan SBR and Sichuan TFMJ. All captures include
 the automatic table's central instrument housing. Run:
@@ -134,8 +143,8 @@ gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr
 Inspect fresh `PASS.txt`/`FAIL.txt` and selected images under
 `fabric/build/smoke/mcr-layout-evidence/screenshots`. `mcr-immersive.png` captures
 the same midgame with walls omitted. Check large Chinese tile proportions,
-matching wall yaw, larger Sichuan end gaps, the first river outside the housing,
-later rows in emptied wall space and chronological public groups on the left.
+matching wall yaw, compact Sichuan wall ends, the first river outside the housing,
+later rows in emptied wall space and intact public groups sharing the left area with flowers.
 
 The `smokeMcrAuto` profile supplies `mcr-wall-seated.png`, `mcr-dealt-seated.png`,
 `mcr-midgame-seated.png` and `mcr-late-seated.png`. `smokeSichuan` supplies the
@@ -342,30 +351,17 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 ## Taiwan hand library
 
 All three Minecraft profiles declare the Maven Central release
-`top.skyeyefast:taiwan-mahjong:0.1.0`. Verify its independent artifact contract
-with source substitution disabled and no Maven Local repository:
+`top.skyeyefast:taiwan-mahjong:0.1.0`. Verify the engine adapter and embedded artifact contract:
 
 ```text
-gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar -PtaiwanSource=false --warning-mode fail --console=plain
+gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar --warning-mode fail --console=plain
 ```
 
-The standalone release checks JVM 17 bytecode/API, the public ABI, POM/module
-metadata, sources/Dokka JARs and Apache-2.0 license. Its independent Java and
-Kotlin consumers exercise `Hand`, shanten/analyze/discards, scoring, flower wins
-and profiles on Java 17; Kotlin stdlib is the only public library dependency,
-and MCR remains test-only. Source development retains these checks:
-
-```text
-gradlew.bat :taiwan-mahjong:check :engine:test --tests="*Taiwan*Test" :engine:shadowJar spotlessCheck --configure-on-demand --warning-mode fail --console=plain
-```
-
-The standalone library also runs with its own wrapper in `taiwan-mahjong/`.
-Its tests own five-meld decomposition, exact copy-aware distance, effective tiles,
-discard availability, source-qualified scoring/exclusions and flower victories.
-`TaiwanHandAnalyzerTest` owns physical identity/provenance, named flower mapping,
-public-copy deduplication and the library-free engine API. The MCR dependency is
-a test-only four-meld remainder oracle, not a Taiwan rules authority. `buildAll`
-includes the standalone library's `check`.
+The independent library owns five-meld decomposition, exact copy-aware distance,
+effective tiles, discard availability, source-qualified scoring/exclusions and
+flower victories. `TaiwanHandAnalyzerTest` owns physical identity/provenance,
+named flower mapping, public-copy deduplication and the library-free engine API.
+`buildAll` includes the engine's adapter and runtime tests.
 
 `TaiwanHintsTest` owns shanten/effective tiles, legal discard previews, multiple
 waits with distinct ron/self-draw tai, Pocket/Southern and current-rule caps,
@@ -474,6 +470,12 @@ seated/immersive packets. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`, `PASS.txt`
 and no `FAIL.txt` in that branch's `fabric/build/smoke/taiwan-evidence`.
 The 26.1.2 native server boundary also runs `:neoforge:test --tests
 "*TaiwanIntegrationTest"`. These focused checks do not repeat main's full matrix.
+
+On 26.1.2, `ImmersiveDepthTest` checks table vertices against the native GUI
+projection's clip range and retains near-to-far face ordering. Run
+`:fabric:test --tests "*ImmersiveDepthTest" --warning-mode fail`; inspect
+`taiwan-immersive.png` from the Taiwan client profile to verify the tabletop,
+opponent tiles and center instrument remain visible.
 
 ## Bot checks
 

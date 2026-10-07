@@ -12,9 +12,9 @@ import net.minecraft.world.item.DyeColor;
 
 /** Material body, optional dyed back and opaque white face share one physical tile envelope. */
 public final class TileMesh {
-    public static final float WIDTH = .104f;
-    public static final float HEIGHT = .160f;
-    public static final float DEPTH = .0726f;
+    private static final float WIDTH = TileDimensions.LARGE.width();
+    private static final float HEIGHT = TileDimensions.LARGE.height();
+    private static final float DEPTH = TileDimensions.LARGE.depth();
     public static final ResourceLocation ATLAS = ResourceIds.of(MahjongContent.MOD_ID, "textures/tiles.png");
     public static final ResourceLocation BACK = ResourceIds.of(MahjongContent.MOD_ID, "textures/tile/back.png");
     public static final ResourceLocation GLYPHS = ResourceIds.of(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
@@ -226,7 +226,8 @@ public final class TileMesh {
 
     private static void vertex(PoseStack pose, VertexConsumer out, float x, float y, float z, float u, float v,
             int color, float nx, float ny, float nz, int light) {
+        var normal = new org.joml.Vector3f(nx, ny, nz).mul(pose.last().normal()).normalize();
         out.vertex(pose.last().pose(), x, y, z).color(color).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY)
-            .uv2(light).normal(pose.last().normal(), nx, ny, nz).endVertex();
+            .uv2(light).normal(normal.x, normal.y, normal.z).endVertex();
     }
 }

@@ -49,10 +49,10 @@ class TablePresentationTest {
         var added = new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.ADDED_QUAD,
             List.of(4, 5, 6, 7), 1, 4);
         for (var part : MeldLayout.of(added, 0).parts()) {
-            double depth = part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT;
-            int y = 27 + (int) Math.round((part.z() + TileMesh.HEIGHT / 2.0 - depth / 2) * 7 / TileMesh.WIDTH);
+            double depth = part.sideways() ? TileDimensions.SMALL.width() : TileDimensions.SMALL.height();
+            int y = 28 + (int) Math.round((part.z() + TileDimensions.SMALL.height() / 2.0 - depth / 2) * 7 / TileDimensions.SMALL.width());
             assertTrue(y >= 24, "Added kan must clear the wind/score row");
-            assertTrue(y + Math.round(depth * 7 / TileMesh.WIDTH) < RiichiHud.seatedCardHeight(true, 7));
+            assertTrue(y + Math.round(depth * 7 / TileDimensions.SMALL.width()) < RiichiHud.seatedCardHeight(true, 7));
         }
     }
 
@@ -87,7 +87,7 @@ class TablePresentationTest {
         }
     }
     @Test void handPitchIsExactlyTheTileWidthWithoutChangingTheDrawGap() {
-        assertEquals((double) TileMesh.WIDTH * RiichiTableScene.TILE_SCALE, RiichiTableScene.HAND_STEP);
+        assertEquals((double) TileDimensions.SMALL.width(), RiichiTableScene.HAND_STEP);
         assertEquals(RiichiTableScene.RIVER_STEP, RiichiTableScene.HAND_STEP);
         assertTrue(RiichiTableScene.DRAW_GAP > 0);
     }
@@ -138,7 +138,7 @@ class TablePresentationTest {
             25000, List.of(0, 4, 8), 8, List.of(), List.of(), List.of(), false, false, false);
         var hand = new TableHand(player, 0, 1280, 752, 58, true);
         var drawn = hand.point(8);
-        int halfHeight = Math.round(hand.tileWidth() * TileMesh.HEIGHT / TileMesh.WIDTH) / 2;
+        int halfHeight = Math.round(hand.tileWidth() * TileDimensions.SMALL.height() / TileDimensions.SMALL.width()) / 2;
         assertEquals(8, hand.pick(drawn.x(), drawn.y() + halfHeight + 5, -1),
             "The visible lower body belongs to the drawn tile");
         assertTrue(hand.contains(drawn.x(), drawn.y() + halfHeight + 5));
@@ -156,21 +156,19 @@ class TablePresentationTest {
 
     @Test void chineseForegroundHandsClearLeftMeldsAndKeepPickingAligned() {
         for (var variant : List.of(top.skyeyefast.mchjong.engine.MahjongVariant.MCR,
-                top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN)) {
-            for (int count = 0; count <= 4; count++) {
+                top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN, top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN)) {
+            int capacity = variant == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN ? 17 : 14;
+            int flowerLimit = variant == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN ? 0 : 8;
+            for (int count = 0; count <= capacity / 3; count++) for (int flowers = 0; flowers <= flowerLimit; flowers++) {
                 var melds = java.util.stream.IntStream.range(0, count).mapToObj(i ->
                     new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_QUAD,
                         List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 3, i * 4)).toList();
-                var tiles = java.util.stream.IntStream.range(32, 46 - 3 * count).boxed().toList();
-                var hand = new TableHand(tiles, tiles.get(tiles.size() - 1), melds, 0, 1280, 740, 58, true, variant);
-                var first = hand.point(tiles.get(0));
-                if (count > 0) {
-                    double right = -TableImmersiveTable.meldCorner(0);
-                    for (var meld : melds) right += TileGui.meldWidth(MeldLayout.of(meld, 0, variant, true), 30) + 5;
-                    var edge = TableProjection.seat(0, right, 422, ImmersiveTable.thickness(30));
-                    assertTrue(first.x() - hand.tileWidth() / 2 - 24 > edge.x(),
-                        "Foreground rack must clear the projected left meld corner");
-                }
+                var tiles = java.util.stream.IntStream.range(32, 32 + capacity - 3 * count).boxed().toList();
+                var hand = new TableHand(tiles, tiles.getLast(), melds, flowers, 0, 1280, 740, 58, true, variant);
+                var first = hand.point(tiles.getFirst());
+                if (count == 0 && flowers == 0) assertEquals(640, hand.centerX(), 1, "An empty public area leaves the hand centered");
+                assertTrue(hand.centerX() >= 639);
+                assertTrue(hand.point(tiles.getLast()).x() + hand.tileWidth() / 2 <= 1256);
                 for (int tile : tiles) {
                     var point = hand.point(tile);
                     assertEquals(tile, hand.pick(point.x(), point.y(), -1));
@@ -182,7 +180,7 @@ class TablePresentationTest {
 
     @Test void immersiveDiscardsLandExactlyAndKeepDistinctUncoloredTrajectories() {
         var start = new TableProjection.Point(600, 680);
-        var end = TableProjection.seat(0, -80, 165, ImmersiveTable.thickness(32));
+        var end = TableProjection.seat(0, -80, 165, new ImmersiveTable(TileDimensions.SMALL).thickness(32));
         for (boolean tsumogiri : new boolean[]{false, true}) {
             assertEquals(start, ImmersiveMotion.interpolate(start, end, ImmersiveMotion.smooth(0), 0, tsumogiri));
             assertEquals(end, ImmersiveMotion.interpolate(start, end, ImmersiveMotion.smooth(1), 1, tsumogiri));
@@ -191,12 +189,12 @@ class TablePresentationTest {
         var tsumogiri = ImmersiveMotion.interpolate(start, end, .5, .5, true);
         assertTrue(tedashi.y() < tsumogiri.y(), "Tedashi has a higher arc");
         assertTrue(ImmersiveMotion.duration(true) < ImmersiveMotion.duration(false));
-        assertEquals(TileMesh.DEPTH / TileMesh.WIDTH, ImmersiveTable.thickness(32) / 32, 1e-6);
+        assertEquals(TileDimensions.SMALL.depth() / TileDimensions.SMALL.width(), new ImmersiveTable(TileDimensions.SMALL).thickness(32) / 32, 1e-6);
         var hidden = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Opponent", true, false, false,
             25000, java.util.Collections.nCopies(14, top.skyeyefast.mchjong.engine.Tile.HIDDEN),
             top.skyeyefast.mchjong.engine.Tile.HIDDEN, List.of(), List.of(), List.of(), false, false, false);
-        assertEquals(195, TableImmersiveTable.discardSourceX(TableBoardState.seat(hidden), 1, 0, 4, 60, true));
-        assertEquals(0, TableImmersiveTable.discardSourceX(TableBoardState.seat(hidden), 1, 0, 4, 60, false));
+        assertEquals(6.5 * TileDimensions.SMALL.width() * 320 + RiichiTableScene.DRAW_GAP * 160, TableImmersiveTable.discardSourceX(TableBoardState.seat(hidden), 1, 0, 4, 60, true), 1e-6);
+        assertEquals(-RiichiTableScene.DRAW_GAP * 160, TableImmersiveTable.discardSourceX(TableBoardState.seat(hidden), 1, 0, 4, 60, false), 1e-6);
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
@@ -283,7 +281,8 @@ class TablePresentationTest {
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
         var player = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false, 25000,
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false, false);
-        int meldWidth = melds.stream().mapToInt(m -> TileGui.meldWidth(m, 0, 30) + 5).sum();
+        double physicalWidth = TileDimensions.SMALL.width() * 320.0;
+        double meldWidth = melds.stream().mapToDouble(m -> MeldLayout.of(m, 0).width() * 320 + 5).sum();
         for (int side = 0; side < 4; side++) {
             double handLeft = TableImmersiveTable.handLeft(TableBoardState.seat(player), 0, side);
             double corner = TableImmersiveTable.meldCorner(side);
@@ -291,17 +290,17 @@ class TablePresentationTest {
             double halfDepth = side % 2 == 0 ? 425 : 510;
             assertEquals(halfWidth - 3, corner, "Melds stay at the owner's right corner");
             assertTrue(handLeft >= -halfWidth, "Standing hand left the cloth");
-            assertTrue(handLeft + 60 + 18 <= corner - meldWidth,
+            assertTrue(handLeft + 2 * physicalWidth + 18 <= corner - meldWidth,
                 "Four kans need one row with space before the shifted standing hand");
             double right = corner;
             for (var meld : melds) {
-                right -= TileGui.meldWidth(meld, 0, 30);
+                right -= MeldLayout.of(meld, 0).width() * 320;
                 for (var part : MeldLayout.of(meld, 0).parts()) {
-                    double scale = 30.0 / TileMesh.WIDTH;
+                    double scale = 320;
                     double x = right + part.x() * scale;
                     double z = TableImmersiveTable.outerRail(side) + part.z() * scale;
-                    double w = (part.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH) * scale;
-                    double d = (part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) * scale;
+                    double w = (part.sideways() ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width()) * scale;
+                    double d = (part.sideways() ? TileDimensions.SMALL.width() : TileDimensions.SMALL.height()) * scale;
                     assertTrue(x - w / 2 >= -halfWidth && x + w / 2 <= halfWidth);
                     assertTrue(z - d / 2 >= -halfDepth && z + d / 2 <= halfDepth);
                     assertEquals(halfDepth - 3, z + d / 2, 1e-5);

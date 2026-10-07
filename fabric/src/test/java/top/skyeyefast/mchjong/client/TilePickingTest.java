@@ -13,7 +13,7 @@ class TilePickingTest {
     @Test void picksAllSeatOrientationsAndAnimatedTilts() {
         var settings = new TableSettings();
         for (int seat = 0; seat < 4; seat++) for (float pitch : new float[]{0, -30, -60, -90}) {
-            var position = TableGeometry.orient(0, TableGeometry.FELT_Y + .081 * RiichiTableScene.TILE_SCALE, RiichiTableScene.HAND_Z, seat);
+            var position = TableGeometry.orient(0, TableGeometry.FELT_Y + TileDimensions.SMALL.height() / 2, RiichiTableScene.HAND_Z, seat);
             var origin = TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, seat);
             assertTrue(Double.isFinite(TilePicking.distanceSquared(tile(position, seat * 90, pitch), origin, position.subtract(origin), false)));
         }
@@ -23,9 +23,9 @@ class TilePickingTest {
         var settings = new TableSettings();
         for (int seat = 0; seat < 4; seat++) for (boolean sideways : new boolean[]{false, true})
             for (boolean stacked : new boolean[]{false, true}) {
-                double width = (sideways ? TileMesh.HEIGHT : TileMesh.WIDTH) * RiichiTableScene.TILE_SCALE;
+                double width = (sideways ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width());
                 var position = TableGeometry.orient(RiichiTableScene.MELD_RIGHT - width / 2,
-                    TableGeometry.FELT_Y + TileMesh.DEPTH * RiichiTableScene.TILE_SCALE * (stacked ? 1.5 : .5), RiichiTableScene.HAND_Z, seat);
+                    TableGeometry.FELT_Y + TileDimensions.SMALL.depth() * (stacked ? 1.5 : .5), RiichiTableScene.HAND_Z, seat);
                 var piece = new RiichiTableScene.Piece(0, seat, RiichiTableScene.Area.MELD, 0, position,
                     seat * 90 + (sideways ? 90 : 0), true, false);
                 var frame = new RiichiAnimation.Frame(piece, -90);
@@ -67,7 +67,7 @@ class TilePickingTest {
                 new RiichiTableScene.Area[]{RiichiTableScene.Area.RIVER, RiichiTableScene.Area.MELD}) {
                 int opposite = (seat + 2) % 4;
                 var position = TableGeometry.orient(area == RiichiTableScene.Area.RIVER ? .25 : RiichiTableScene.MELD_RIGHT - .1,
-                    TableGeometry.FELT_Y + TileMesh.DEPTH * RiichiTableScene.TILE_SCALE / 2,
+                    TableGeometry.FELT_Y + TileDimensions.SMALL.depth() / 2,
                     area == RiichiTableScene.Area.RIVER ? .45 : RiichiTableScene.HAND_Z, opposite);
                 var piece = new RiichiTableScene.Piece(0, opposite, area, 0, position, opposite * 90, true, false);
                 var origin = camera.eye(seat);
@@ -79,7 +79,7 @@ class TilePickingTest {
 
     @Test void tracksRaisedSelectionAndReturnsNearestHitDistance() {
         var tile = tile(Vec3.ZERO, 0, 0);
-        var origin = new Vec3(0, .09, 2);
+        var origin = new Vec3(0, TileDimensions.SMALL.height() / 2 + .02, 2);
         assertEquals(Double.POSITIVE_INFINITY, TilePicking.distanceSquared(tile, origin, new Vec3(0, 0, -1), false));
         assertTrue(Double.isFinite(TilePicking.distanceSquared(tile, origin, new Vec3(0, 0, -1), true)));
         var farther = tile(new Vec3(0, 0, -1), 0, 0);

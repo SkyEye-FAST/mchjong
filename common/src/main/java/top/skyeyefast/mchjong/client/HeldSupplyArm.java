@@ -36,7 +36,7 @@ public final class HeldSupplyArm {
         modelTransform.apply(model, context, transform, leftHand);
         // Mesh coordinates include ItemRenderer's centering and MahjongItemRenderer's local placement.
         var grip = stack.is(MahjongContent.TILE_ITEM)
-            ? new Vector3f(0, -TileMesh.HEIGHT * 4.5f / 2, 0)
+            ? new Vector3f(0, -TileDimensions.LARGE.height() * 4.5f / 2, 0)
             : new Vector3f((leftHand ? 1 : -1) * FurnitureMesh.STICK_HALF_LENGTH * .75f, -.05f, 0);
         grip.mulPosition(transform.last().pose());
 

@@ -13,4 +13,3 @@ plugins {
 
 rootProject.name = 'mchjong'
 include 'engine', 'fabric', 'forge', 'art'
-if (providers.gradleProperty('taiwanSource').getOrElse('true').toBoolean()) includeBuild('taiwan-mahjong')

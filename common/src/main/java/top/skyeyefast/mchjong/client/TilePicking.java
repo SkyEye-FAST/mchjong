@@ -7,8 +7,6 @@ import org.joml.Vector3f;
 
 /** Pick the rendered oriented tile box, including its animated pitch and selection lift. */
 public final class TilePicking {
-    private static final AABB TILE = new AABB(-TileMesh.WIDTH / 2.0, -TileMesh.HEIGHT / 2.0, -TileMesh.DEPTH / 2.0,
-        TileMesh.WIDTH / 2.0, TileMesh.HEIGHT / 2.0, TileMesh.DEPTH / 2.0);
     private TilePicking() {}
 
     public static double distanceSquared(RiichiAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted) {
@@ -17,33 +15,33 @@ public final class TilePicking {
 
     public static double distanceSquared(RiichiAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted, double padding) {
         var piece = frame.piece();
-        return distanceSquared(piece.position(), piece.yaw(), frame.pitch(), RiichiTableScene.TILE_SCALE, origin, direction, lifted, padding);
+        return distanceSquared(piece.position(), piece.yaw(), frame.pitch(), RiichiTableScene.DIMENSIONS, origin, direction, lifted, padding);
     }
 
     public static double distanceSquared(McrTableScene.Piece piece, Vec3 origin, Vec3 direction, boolean lifted) {
         return distanceSquared(piece.position(), piece.yaw(), piece.flat() ? piece.back() ? 90 : -90 : 0,
-            piece.scale(), origin, direction, lifted, 0);
+            piece.dimensions(), origin, direction, lifted, 0);
     }
 
     public static double distanceSquared(SichuanTableScene.Piece piece, Vec3 origin, Vec3 direction, boolean lifted) {
         return distanceSquared(piece.position(), piece.yaw(), piece.flat() ? piece.back() ? 90 : -90 : 0,
-            piece.scale(), origin, direction, lifted, 0);
+            piece.dimensions(), origin, direction, lifted, 0);
     }
 
-    static double distanceSquared(TableAnimation.Pose pose, float scale, Vec3 origin, Vec3 direction, boolean lifted) {
-        return distanceSquared(pose.position(), pose.yaw(), pose.pitch(), scale, origin, direction, lifted, 0);
+    static double distanceSquared(TableAnimation.Pose pose, TileDimensions dimensions, Vec3 origin, Vec3 direction, boolean lifted) {
+        return distanceSquared(pose.position(), pose.yaw(), pose.pitch(), dimensions, origin, direction, lifted, 0);
     }
-    private static double distanceSquared(Vec3 position, float yaw, float pitch, float scale,
+    private static double distanceSquared(Vec3 position, float yaw, float pitch, TileDimensions dimensions,
                                           Vec3 origin, Vec3 direction, boolean lifted, double padding) {
         var inverse = new Matrix4f().translation((float) position.x,
             (float) (position.y + (lifted ? 0.035 : 0)), (float) position.z)
             .rotateY((float) Math.toRadians(yaw)).rotateX((float) Math.toRadians(pitch))
-            .scale(scale).invert();
+            .invert();
         Vec3 start = local(inverse, origin);
         Vec3 end = local(inverse, origin.add(direction.normalize().scale(32)));
-        AABB target = padding > 0 ? TILE.inflate(padding) : TILE;
+        AABB target = dimensions.bounds().inflate(padding);
         if (target.contains(start)) return 0;
-        return target.clip(start, end).map(hit -> start.distanceToSqr(hit) * scale * scale)
+        return target.clip(start, end).map(hit -> start.distanceToSqr(hit))
             .orElse(Double.POSITIVE_INFINITY);
     }
 

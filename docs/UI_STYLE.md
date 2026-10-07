@@ -40,28 +40,29 @@ left-edge vertical accent strips; selected navigation uses a short bottom rule.
 
 ## MCR physical layout
 
-MCR and Sichuan use the original `TileMesh` dimensions at a fixed physical scale
-of 1.0 for walls, hands, rivers, melds and MCR flowers. The 2.625-block felt
-represents an approximately 815–850 mm automatic table; the .160-block tile
-height represents approximately 50–52 mm Chinese machine tiles. Counts never
-change physical tile size. Riichi retains its own dimensions and layout.
+`TileDimensions` owns two physical envelopes. Riichi and Taiwan share the
+SLIM 33 reference, H33 × W24 × D17.5 mm. With the 2.625-block felt calibrated to
+850 mm, their height/width/depth are .101912/.074118/.054044 blocks. MCR and
+Sichuan retain .160/.104/.0726 blocks. These are independent axis dimensions,
+not a uniform scale. [SLIM 33 specifications](https://rongho.tw/product/0433-folding/)
+and [its Taiwan set](https://rongho.tw/product/mahjong-tw-rongho/) establish the
+shared reference; tile families are also listed by
+[Matsuoka](https://www.mahjong.co.jp/automahjongmachinetop/tile/).
+World meshes, layout spacing, occupied bounds, picking, immersive solids and
+replay table faces read this same envelope. The canonical mesh receives its
+axis transform exactly once, after yaw and pitch.
 Seat-local x runs left to right as seen by the seated player; z increases toward
 that player. Rotate the complete local poses by `TableGeometry.orient`.
 
-The four straight, double-layer walls tilt 12 degrees with the same handedness.
-Stack centers advance along the tilted tangent, and tile yaw follows it; rotate
-both the centers and yaw by successive 90-degree turns. `TiltedWallLayout` owns
-one fixed lift rail and tangent offset, independently of hand positions and stack
-count. Its physical reference is the approximately 85 cm table and 30.5 ± 1 cm
-opposite-wall gap described in [CN107233724B](https://patents.google.com/patent/CN107233724B/zh).
-The client explicitly interprets that gap as the clear distance between opposite
-inner faces, measured perpendicular to the walls. It uses 31.4 cm within that
-tolerance: the inner-edge gap is approximately .970 block, and the lift-rail
-centerline spacing is that gap plus one .160-block tile height. Do not substitute
-seat-local z separation for this normal measurement. This is a documented
-calibration choice; the patent text does not explicitly call its gap a centerline measurement.
-The .50-block tangent offset keeps the full eighteen-stack wall inside the felt.
-Shorter Sichuan walls retain the same rail and center, leaving larger end gaps.
+Riichi retains its native wall arrangement. MCR, Sichuan and Taiwan retain four
+straight, double-layer walls tilted 12 degrees with the same handedness.
+`TiltedWallLayout` calculates the wall half-length from stack count and tile
+width. The tangent offset and normal position jointly leave .012-block corner
+clearance, keep the ends within the felt margin, and leave the center housing
+and first river row clear. The normal clearance also keeps the housing visible
+from the default seated camera. Shorter Sichuan walls and smaller Taiwan tiles
+therefore bring their wall ends inward instead of inheriting an eighteen-stack
+large-tile rail. Opposite-wall distances are measured along the wall normal.
 
 MCR retains eighteen stacks per side and 144 tiles. Sichuan retains 108 tiles and
 thirteen/fourteen stacks according to `eastWestLongWall`. Stack pitch equals tile
@@ -91,11 +92,14 @@ next player right. A chow uses the previous player. MCR kongs use one flat
 four-tile row; Sichuan retains its native added-kong arrangement. Concealed kongs
 retain native visibility during play and reveal after the hand ends.
 
-MCR flowers have a separate public row in front of the right half of the hand;
-they do not displace left-side melds. No seat row is scaled to fit flowers or
-kongs. Public-zone placement checks the actual wall occupancy at fixed tile size.
-The scene preserves source indices and never reconstructs hidden identities.
-`McrView` and `SichuanView` remain the visibility authorities.
+MCR and Taiwan flowers join the same left-side public area as melds. Present
+meld groups are packed intact in order, followed by individual flowers along
+the same baseline. Continue inward on another row when the current row cannot
+fit a complete group. No flowers or absent melds reserve space. The concealed
+hand stays centered and moves right only to clear actual public pieces on its
+row. Taiwan uses the small envelope for sixteen concealed tiles plus a draw and
+up to five meld groups. Actual remaining wall occupancy constrains public and
+river placement; source indices and hidden identities remain unchanged.
 
 Geometry acceptance uses conserved engine positions: complete walls before any
 hands or rivers exist, actual post-deal slots, and multiple openings advanced
@@ -106,7 +110,7 @@ and four river rows are not gameplay space constraints.
 The MCR seat overlay uses the same world camera and tile-box picking as Riichi.
 Its immersive view uses the same fixed 1280 × 800 canvas, perspective solids and
 foreground hand, player plaques, center display and motion as Riichi and Sichuan.
-MCR retains its flower rail and native flat-kong display.
+MCR retains its native flat-kong display in the shared left public area.
 Compact edge cards show player names, winds and scores; the current turn is marked
 with brass. Automatic flower replacement names the player currently replacing.
 Discards come from hand selection, while claims, kongs, wins and pass use localized
@@ -481,12 +485,12 @@ earlier melds away from their corner. Extracted norths form one continuous run o
 the left at the hand's depth, with clearance from the adjacent player's right-corner melds.
 
 Use `RiichiTableScene` and `MeldLayout` for rendering and picking together. Derive
-occupied widths from the real `TileMesh` dimensions, including sideways called
+occupied widths from the rule-selected `TileDimensions`, including sideways called
 tiles and front-aligned added kans. All tiles in a meld share the same bottom
 edge toward their owner. An added-kan tile lies flat immediately in front of
 the sideways called tile, toward the center, at the same height.
 Concealed hand tiles, wall tiles, river tiles and adjacent melds touch edge to
-edge. MCR and Sichuan wall stacks touch along their tilted wall tangent.
+edge. MCR, Sichuan and Taiwan wall stacks touch along their tilted wall tangent.
 Keep the deliberate drawn-tile and hand-to-meld gaps separate from those physical
 contact rules. Keep all four seat orientations and exposed
 hands within the playing surface. A stored box must not cover an active hand.
@@ -519,8 +523,9 @@ normal and immersive toolbars size buttons from their translated captions.
 The top-bar view button or V switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
 retaining the drawn-tile gap and normal selection, discard and riichi controls.
-It uses a stable fourteen-tile rail, anchoring short Riichi hands at the left
-and short Chinese hands at the right to clear the variant's public meld corner.
+Tile width uses a stable fourteen-tile capacity (seventeen for Taiwan). Short Riichi
+hands keep their left anchor; Chinese foreground hands stay centered and move
+right only when actual projected public tiles overlap their screen band.
 The Chinese foreground hand reserves its automation strip throughout play, so
 changes in available controls never move the hand vertically.
 Action buttons stay above it. Switching views preserves world camera orientation;

@@ -177,7 +177,7 @@ class RiichiAnimationTest {
         var pieces = RiichiTableScene.build(update(base, seats, 0)).stream().filter(piece -> piece.area() == RiichiTableScene.Area.MELD).toList();
         assertEquals(7, pieces.stream().map(RiichiTableScene.Piece::index).distinct().count());
         assertTrue(pieces.stream().allMatch(piece -> Math.abs(piece.position().y
-            - TableGeometry.FELT_Y - TileMesh.DEPTH * RiichiTableScene.TILE_SCALE / 2) < 1e-7));
+            - TableGeometry.FELT_Y - TileDimensions.SMALL.depth() / 2) < 1e-7));
     }
 
     @Test void repeatedSnapshotsCannotRewindAnOpeningOrItsViewingPermissions() {

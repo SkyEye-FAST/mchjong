@@ -13,18 +13,18 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** One geometric description drives both the 3D meshes and the interaction anchors. */
 public final class RiichiTableScene {
-    public static final float TILE_SCALE = 0.82f;
+    public static final TileDimensions DIMENSIONS = TileDimensions.SMALL;
     public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - 0.09;
-    public static final double HAND_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
+    public static final double HAND_STEP = DIMENSIONS.width();
     public static final double DRAW_GAP = 0.035;
     public static final double MELD_RIGHT = TableGeometry.FELT_HALF_WIDTH - 1.0 / 16.0;
     public static final double HAND_MELD_GAP = 0.15;
     public static final double WALL_Z = 0.91;
-    public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
-    public static final double RIVER_ROW = (double) TileMesh.HEIGHT * TILE_SCALE;
+    public static final double RIVER_STEP = DIMENSIONS.width();
+    public static final double RIVER_ROW = DIMENSIONS.height();
     public static final double RIVER_Z = 0.355;
     public static final double WALL_STEP = RIVER_STEP;
-    private static final double FLAT_CENTER = TileMesh.DEPTH / 2.0;
+    private static final double FLAT_CENTER = DIMENSIONS.depth() / 2.0;
     public enum Area { HAND, WALL, RIVER, MELD, NORTH, LOOSE }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position, float yaw, boolean flat, boolean back) {}
     private RiichiTableScene() {}
@@ -53,7 +53,7 @@ public final class RiichiTableScene {
             for (Meld meld : player.melds()) {
                 var layout = MeldLayout.of(meld, seat);
                 melds.add(layout);
-                meldLeft -= layout.width() * TILE_SCALE;
+                meldLeft -= layout.width();
             }
             // Stay centered whenever possible; move only far enough to clear the actual meld bounds.
             // Include the actual drawn tile and gap, without reserving empty meld or draw slots.
@@ -72,7 +72,7 @@ public final class RiichiTableScene {
                     && view.focus().seat() == seat && view.focus().index() == i;
                 boolean flat = player.exposed() || declaration || view.openHands();
                 result.add(piece(declaration ? view.focus().tile() : player.hand().get(i), seat, Area.HAND, i,
-                    left + i * HAND_STEP + (drawn ? DRAW_GAP : 0), top + (flat ? FLAT_CENTER : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
+                    left + i * HAND_STEP + (drawn ? DRAW_GAP : 0), top + (flat ? FLAT_CENTER : DIMENSIONS.height() / 2), HAND_Z, 0, flat, false));
             }
             int riverSlot = 0;
             double riverX = -2.5 * RIVER_STEP;
@@ -80,20 +80,20 @@ public final class RiichiTableScene {
                 RiichiDiscard discard = player.river().get(i);
                 if (discard.called()) continue;
                 if (riverSlot % 6 == 0) riverX = -2.5 * RIVER_STEP;
-                double extra = discard.riichi() ? ((double) TileMesh.HEIGHT - TileMesh.WIDTH) * TILE_SCALE : 0;
+                double extra = discard.riichi() ? ((double) DIMENSIONS.height() - DIMENSIONS.width()) : 0;
                 result.add(piece(discard.tile(), seat, Area.RIVER, i, riverX + extra / 2,
-                    top + FLAT_CENTER * TILE_SCALE, RIVER_Z + riverSlot / 6 * RIVER_ROW - extra / 2, discard.riichi() ? 90 : 0, true, false));
+                    top + FLAT_CENTER, RIVER_Z + riverSlot / 6 * RIVER_ROW - extra / 2, discard.riichi() ? 90 : 0, true, false));
                 riverX += RIVER_STEP + extra;
                 riverSlot++;
             }
             double meldRight = MELD_RIGHT;
             for (int meldIndex = 0; meldIndex < melds.size(); meldIndex++) {
                 MeldLayout layout = melds.get(meldIndex);
-                double start = meldRight - layout.width() * TILE_SCALE;
+                double start = meldRight - layout.width();
                 for (int i = 0; i < layout.parts().size(); i++) {
                     var part = layout.parts().get(i);
-                    result.add(piece(part.tile(), seat, Area.MELD, meldIndex * 4 + i, start + part.x() * TILE_SCALE,
-                        top + FLAT_CENTER * TILE_SCALE, HAND_Z + part.z() * TILE_SCALE,
+                    result.add(piece(part.tile(), seat, Area.MELD, meldIndex * 4 + i, start + part.x(),
+                        top + FLAT_CENTER, HAND_Z + part.z(),
                         part.sideways() ? 90 : 0, true, part.back()));
                 }
                 meldRight = start;
@@ -102,7 +102,7 @@ public final class RiichiTableScene {
             double northLeft = -HAND_Z + RIVER_ROW / 2 + .035;
             for (int i = 0; i < player.norths().size(); i++)
                 result.add(piece(player.norths().get(i), seat, Area.NORTH, i, northLeft + (i + .5) * RIVER_STEP,
-                    top + FLAT_CENTER * TILE_SCALE, HAND_Z, 0, true, false));
+                    top + FLAT_CENTER, HAND_Z, 0, true, false));
         }
         int size = view.wall().size();
         if (size > 0) {
@@ -118,7 +118,7 @@ public final class RiichiTableScene {
                 if (old.area() == Area.WALL || !view.seats().get(old.seat()).ready()) continue;
                 int index = collected[old.seat()]++;
                 Vec3 position = TableGeometry.orient((index % 6 - 2.5) * .09,
-                    top + (FLAT_CENTER + index / 18 * TileMesh.DEPTH) * TILE_SCALE,
+                    top + (FLAT_CENTER + index / 18 * DIMENSIONS.depth()),
                     .15 + index / 6 % 3 * .14, old.seat());
                 result.set(i, new Piece(old.tile(), old.seat(), old.area(), old.index(), position,
                     old.yaw(), true, true));
@@ -136,7 +136,7 @@ public final class RiichiTableScene {
             + (view.phase() == RiichiView.Phase.SHUFFLE ? 0 : 3109));
         return new Piece(Tile.HIDDEN, side, Area.LOOSE, index,
             new Vec3((column - 4.5) * .135 + (random.nextDouble() - .5) * .02,
-                TableGeometry.FELT_Y + (FLAT_CENTER + layer * TileMesh.DEPTH) * TILE_SCALE,
+                TableGeometry.FELT_Y + (FLAT_CENTER + layer * DIMENSIONS.depth()),
                 (row - 3) * .17 + (random.nextDouble() - .5) * .02),
             (random.nextFloat() - .5f) * 50, true, true);
     }
@@ -158,6 +158,6 @@ public final class RiichiTableScene {
         // Visibility must not change layers (in particular when both dora and ura are shown).
         boolean upper = mate != Tile.ABSENT && index % 2 == (index < size - 14 ? 0 : 1);
         return piece(tile, seat, Area.WALL, index, (column - (stacksPerSide - 1) / 2.0) * WALL_STEP - 0.08,
-            TableGeometry.FELT_Y + (FLAT_CENTER + (upper ? TileMesh.DEPTH : 0)) * TILE_SCALE, WALL_Z, 0, true, tile < 0);
+            TableGeometry.FELT_Y + (FLAT_CENTER + (upper ? DIMENSIONS.depth() : 0)), WALL_Z, 0, true, tile < 0);
     }
 }

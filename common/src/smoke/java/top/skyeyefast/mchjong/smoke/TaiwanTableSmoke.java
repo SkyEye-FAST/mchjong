@@ -151,8 +151,8 @@ final class TaiwanTableSmoke {
                     var r = t.roomView(player);
                     TableNetworking.receive(player, new TableSessionControlPayload(pos, r.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, r.decision(), false));
                     check(t.taiwanView(player).paused() && t.taiwanView(player).game().actions().isEmpty(), "Exit vote did not pause Taiwan");
-                    var vote = t.roomView(guests.getFirst()).exitVote();
-                    TableNetworking.receive(guests.getFirst(), new TableSessionControlPayload(pos, r.tableId(), TableSessionControlPayload.Operation.ANSWER_EXIT, vote.id(), false));
+                    var vote = t.roomView(guests.get(0)).exitVote();
+                    TableNetworking.receive(guests.get(0), new TableSessionControlPayload(pos, r.tableId(), TableSessionControlPayload.Operation.ANSWER_EXIT, vote.id(), false));
                     for (int i = 0; i < 50 && t.taiwanView(player).game().actions().stream().noneMatch(a -> a.type() == TaiwanAction.Type.DISCARD); i++) driveOne(t, player, pos);
                     t.open(player);
                 }); stage++;
@@ -163,7 +163,7 @@ final class TaiwanTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "taiwan-table.png", client.getMainRenderTarget(), ignored -> {});
                 client.getWindow().setWindowed(1280, 800); client.options.guiScale().set(2); client.resizeDisplay();
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
-                selectedTile = view.game().actions().stream().filter(a -> a.type() == TaiwanAction.Type.DISCARD).findFirst().orElseThrow().tiles().getFirst();
+                selectedTile = view.game().actions().stream().filter(a -> a.type() == TaiwanAction.Type.DISCARD).findFirst().orElseThrow().tiles().get(0);
                 var piece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
                 var pointer = project(client, pos, piece.position());
                 check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Taiwan seated picking failed");
@@ -197,12 +197,11 @@ final class TaiwanTableSmoke {
                 var own = view.game().seats().get(view.game().recipient());
                 var tiles = new ArrayList<>(own.concealed());
                 if (own.drawn() >= 0 && tiles.remove(Integer.valueOf(own.drawn()))) tiles.add(own.drawn());
-                int w = Math.min(58, 1244 / Math.max(14, tiles.size())), gap = own.drawn() < 0 ? 0 : Math.max(18, w / 2);
-                int rail = (1280 - Math.max(14, tiles.size()) * w - Math.max(18, w / 2)) / 2;
-                int left = 1280 - rail - tiles.size() * w - gap;
+                int w = Math.min(58, 1244 / Math.max(17, tiles.size())), gap = own.drawn() < 0 ? 0 : Math.max(18, w / 2);
+                int left = (1280 - tiles.size() * w - gap) / 2;
                 double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
                 double x = (screen.width - 1280 * scale) / 2 + (left + tiles.indexOf(selectedTile) * w + (selectedTile == own.drawn() ? gap : 0) + w / 2.0) * scale;
-                double y = (screen.height - 800 * scale) / 2 + (725 - Math.round(w * TileMesh.HEIGHT / TileMesh.WIDTH) / 2.0) * scale;
+                double y = (screen.height - 800 * scale) / 2 + (725 - Math.round(w * top.skyeyefast.mchjong.client.TileDimensions.SMALL.height() / top.skyeyefast.mchjong.client.TileDimensions.SMALL.width()) / 2.0) * scale;
                 check(screen.mouseClicked(x, y, 0), "Taiwan immersive picking failed");
                 screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 var selectedPiece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
@@ -461,7 +460,7 @@ final class TaiwanTableSmoke {
         var own = view.seats().get(view.recipient()); int best = -1, distance = Integer.MAX_VALUE, support = Integer.MAX_VALUE;
         var kinds = new HashSet<Integer>();
         for (int i = 0; i < actions.size(); i++) if (actions.get(i).type() == TaiwanAction.Type.DISCARD) {
-            int tile = actions.get(i).tiles().getFirst(), kind = Tile.kind(tile); if (!kinds.add(kind)) continue;
+            int tile = actions.get(i).tiles().get(0), kind = Tile.kind(tile); if (!kinds.add(kind)) continue;
             var hand = new ArrayList<>(own.concealed()); hand.remove(Integer.valueOf(tile));
             int d = TaiwanHandAnalyzer.shanten(hand, own.melds(), view.recipient());
             int s = 2 * (int) hand.stream().filter(t -> Tile.kind(t) == kind).count();

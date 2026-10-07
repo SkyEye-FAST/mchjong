@@ -9,7 +9,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Publish the standalone Taiwan library as `top.skyeyefast:taiwan-mahjong:0.1.0` on Maven Central with JVM 17 ABI validation, Dokka/sources artifacts, Apache-2.0 metadata and Java/Kotlin consumer verification; use its formal dependency on all three Minecraft profiles while retaining optional source development and shadow relocation.
+- Calibrate Riichi and Taiwan tiles to the shared 33 × 24 × 17.5 mm envelope while preserving large MCR/Sichuan tiles; tighten tilted walls by their actual lengths, combine flowers and melds in a wrapping left public area, and align physical spacing, picking and display proportions.
+
+- Publish the standalone Taiwan library as `top.skyeyefast:taiwan-mahjong:0.1.0` on Maven Central with JVM 17 ABI validation, Dokka/sources artifacts, Apache-2.0 metadata and Java/Kotlin consumer verification; use its formal dependency on all three Minecraft profiles with shadow relocation and remove the source submodule and composite build.
 - Synchronize complete Taiwan play, persistence, 136/144 stock, packets, fixed-slot rendering, one built-in Bot, Replay, hints and localization into 1.20.1 and 26.1.2, retaining their loader/Java profiles and focused build/client validation.
 
 - Offer one formal Taiwan built-in Bot option, matching MCR/Sichuan; remove ineffective difficulty choices and reject unsupported Taiwan Bot values in private saves.
@@ -27,6 +29,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Add fixed Taiwan wall slots, strict private persistence and recipient-safe projections, plus an independent four-human engine session with four-wind matches, repeat-dealer progression, cumulative scores, clocks and resumable hand acknowledgements.
 
 - Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld analysis, source-qualified tai profiles and the `TaiwanHandAnalyzer` boundary; audit all scoring patterns and provide an independent Taiwan hand with physical wall/dealing, flower replacement, legal calls, passing, kong robbery and balanced settlement. Document the selected match-rule sources and unresolved interpretations; generalize the shared 144-tile stock factory.
+
+### Fixed
+
+- Restore 26.1.2 immersive tabletop rendering within the native GUI clip range and normalize 1.20.1 tile normals after axis scaling.
 
 ## [0.9.1] - 2026-10-03
 

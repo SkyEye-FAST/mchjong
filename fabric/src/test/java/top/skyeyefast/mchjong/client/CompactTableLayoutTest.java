@@ -42,7 +42,7 @@ class CompactTableLayoutTest {
 
     private static double halfWidth(RiichiTableScene.Piece p) {
         boolean sideways = Math.floorMod(Math.round(p.yaw() / 90) - p.seat(), 2) == 1;
-        return (double) (sideways ? TileMesh.HEIGHT : TileMesh.WIDTH) * RiichiTableScene.TILE_SCALE / 2;
+        return (double) (sideways ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width()) / 2;
     }
 
     private static double center(List<RiichiTableScene.Piece> pieces, int concealed) {
@@ -96,7 +96,7 @@ class CompactTableLayoutTest {
             var waiting = scene(v, owner, melds, 7, false, false);
             var drawn = scene(v, owner, melds, 8, true, false);
             assertEquals(0, center(waiting, 7), 1e-9, "An absent draw must not force an otherwise centered hand left");
-            assertTrue(center(drawn, 7) < 0);
+            assertEquals(0, center(drawn, 7), 1e-9, "The smaller tiles leave room for the actual draw");
             assertTrue(center(drawn, 7) > -RiichiTableScene.HAND_STEP - RiichiTableScene.DRAW_GAP);
             var offset = TableGeometry.orient(center(drawn, 7) - center(waiting, 7), 0, 0, owner);
             var before = waiting.stream().filter(p -> p.area() == RiichiTableScene.Area.HAND).toList();

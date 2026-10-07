@@ -21,8 +21,7 @@ The engine declares Maven Central releases `top.skyeyefast:mcr-mahjong:0.1.0`,
 under `top.skyeyefast.mchjong.internal.taiwan` and
 `top.skyeyefast.mchjong.internal.mcr`, together with its private Kotlin runtime.
 Each profile's loaders consume the same `embeddedEngine` artifact with no
-external engine dependency graph. Source development may use the Taiwan submodule;
-`-PtaiwanSource=false` resolves the release independently from Maven Central.
+external engine dependency graph.
 The analysis contracts are described in
 [Architecture](ARCHITECTURE.md#hand-analysis-boundaries).
 

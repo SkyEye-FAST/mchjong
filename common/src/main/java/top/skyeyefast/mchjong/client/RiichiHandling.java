@@ -45,8 +45,8 @@ public final class RiichiHandling {
 
     /** Use the camera-facing long edge so the next tall stack cannot hide a lower single tile. */
     public static Vec3 grip(RiichiTableScene.Piece piece, Vec3 eye) {
-        double height = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE;
-        double depth = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * RiichiTableScene.TILE_SCALE;
+        double height = (piece.flat() ? TileDimensions.SMALL.depth() : TileDimensions.SMALL.height());
+        double depth = (piece.flat() ? TileDimensions.SMALL.height() : TileDimensions.SMALL.depth());
         double yaw = Math.toRadians(piece.yaw());
         Vec3 normal = new Vec3(Math.sin(yaw), 0, Math.cos(yaw));
         double edge = Math.copySign(depth / 2 - .003, eye.subtract(piece.position()).dot(normal));

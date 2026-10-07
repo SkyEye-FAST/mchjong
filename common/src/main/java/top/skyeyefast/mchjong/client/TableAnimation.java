@@ -136,7 +136,7 @@ final class TableAnimation implements TableDeal {
             if (discard.seat() == previous.viewerSeat()) {
                 var tiles = new java.util.ArrayList<>(before.hand());
                 if (before.drawn() >= 0 && tiles.remove(Integer.valueOf(before.drawn()))) tiles.add(before.drawn());
-                var old = new TableHand(tiles, before.drawn(), before.melds(), discard.seat(), TableCanvas.WIDTH, handHeight, 58, true, before.variant());
+                var old = new TableHand(tiles, before.drawn(), before.melds(), before.norths().size(), discard.seat(), TableCanvas.WIDTH, handHeight, 58, true, before.variant());
                 source = old.point(discard.tile()); width = old.tileWidth();
             }
             double opponent = TableImmersiveTable.discardSourceX(before, discard.seat(), previous.viewerSeat(), previous.players(), discard.tile(), discard.tsumogiri());
@@ -147,10 +147,10 @@ final class TableAnimation implements TableDeal {
             var target = hand.point(draw.tile()); if (target == null) return;
             var source = board.drawSource(); double fraction = net.minecraft.util.Mth.clamp((now - draw.started()) / 340.0, 0, 1), progress = ImmersiveMotion.smooth(fraction);
             int width = Math.max(16, (int) Math.round(20 + (hand.tileWidth() - 20) * progress));
-            int height = Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH);
+            int height = Math.round(width * hand.dimensions().ratio());
             int x = (int) Math.round(source.x() + (target.x() - source.x()) * progress);
             int y = (int) Math.round(source.y() + (target.y() - source.y()) * progress - Math.sin(Math.PI * fraction) * 22);
-            TileGui.tileArtwork(g, draw.tile(), x - width / 2, y - height / 2, width, false, false, false, false, Math.max(2, width / 8), preset, material, back, backPreset, artwork);
+            TileGui.tileArtwork(g, draw.tile(), x - width / 2, y - height / 2, width, false, false, false, false, Math.max(2, width / 8), preset, material, back, backPreset, artwork, hand.dimensions());
         }
     }
 }
