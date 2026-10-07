@@ -1,0 +1,143 @@
+{
+  "name": "manual.mchjong.entry.mcr_fan_high.name",
+  "category": "mchjong:mcr",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_1",
+      "anchor": "big_four_winds"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_2",
+      "anchor": "big_three_dragons"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_3",
+      "anchor": "all_green"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_4",
+      "anchor": "nine_gates"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_5",
+      "anchor": "four_kongs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_6",
+      "anchor": "seven_shifted_pairs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_7",
+      "anchor": "thirteen_orphans"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_8",
+      "anchor": "all_terminals"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_9",
+      "anchor": "little_four_winds"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_10",
+      "anchor": "little_three_dragons"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_11",
+      "anchor": "all_honors"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_12",
+      "anchor": "four_concealed_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_13",
+      "anchor": "pure_terminal_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_14",
+      "anchor": "quadruple_chow"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_15",
+      "anchor": "four_pure_shifted_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_16",
+      "anchor": "four_pure_shifted_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_17",
+      "anchor": "three_kongs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_18",
+      "anchor": "all_terminals_and_honors"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_19",
+      "anchor": "seven_pairs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_20",
+      "anchor": "greater_honors_and_knitted_tiles"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_21",
+      "anchor": "all_even_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_22",
+      "anchor": "full_flush"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_23",
+      "anchor": "pure_triple_chow"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_24",
+      "anchor": "pure_shifted_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_25",
+      "anchor": "upper_tiles"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_26",
+      "anchor": "middle_tiles"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.page_27",
+      "anchor": "lower_tiles"
+    }
+  ]
+}

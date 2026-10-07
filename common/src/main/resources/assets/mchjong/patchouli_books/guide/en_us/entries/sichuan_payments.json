@@ -1,0 +1,28 @@
+{
+  "name": "manual.mchjong.entry.sichuan_payments.name",
+  "category": "mchjong:sichuan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_5"
+    }
+  ]
+}

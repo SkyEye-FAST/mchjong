@@ -1,0 +1,143 @@
+{
+  "name": "manual.mchjong.entry.mcr_fan_low.name",
+  "category": "mchjong:mcr",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_1",
+      "anchor": "outside_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_2",
+      "anchor": "fully_concealed_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_3",
+      "anchor": "two_melded_kongs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_4",
+      "anchor": "last_tile"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_5",
+      "anchor": "dragon_pung"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_6",
+      "anchor": "prevalent_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_7",
+      "anchor": "seat_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_8",
+      "anchor": "concealed_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_9",
+      "anchor": "all_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_10",
+      "anchor": "tile_hog"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_11",
+      "anchor": "double_pung"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_12",
+      "anchor": "two_concealed_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_13",
+      "anchor": "concealed_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_14",
+      "anchor": "all_simples"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_15",
+      "anchor": "pure_double_chow"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_16",
+      "anchor": "mixed_double_chow"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_17",
+      "anchor": "short_straight"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_18",
+      "anchor": "two_terminal_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_19",
+      "anchor": "pung_of_terminals_or_honors"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_20",
+      "anchor": "melded_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_21",
+      "anchor": "one_voided_suit"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_22",
+      "anchor": "no_honors"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_23",
+      "anchor": "edge_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_24",
+      "anchor": "closed_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_25",
+      "anchor": "single_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_26",
+      "anchor": "self_drawn"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.page_27",
+      "anchor": "flower_tiles"
+    }
+  ]
+}

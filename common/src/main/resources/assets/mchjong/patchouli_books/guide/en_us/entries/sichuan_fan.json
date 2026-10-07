@@ -1,0 +1,58 @@
+{
+  "name": "manual.mchjong.entry.sichuan_fan.name",
+  "category": "mchjong:sichuan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_1",
+      "anchor": "all_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_2",
+      "anchor": "golden_single_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_3",
+      "anchor": "full_flush"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_4",
+      "anchor": "seven_pairs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_5",
+      "anchor": "root"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_6",
+      "anchor": "kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_7",
+      "anchor": "win_after_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_8",
+      "anchor": "shoot_after_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_9",
+      "anchor": "robbing_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.page_10",
+      "anchor": "under_the_sea"
+    }
+  ]
+}

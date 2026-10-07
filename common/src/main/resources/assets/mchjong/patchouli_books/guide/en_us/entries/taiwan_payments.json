@@ -1,0 +1,24 @@
+{
+  "name": "manual.mchjong.entry.taiwan_payments.name",
+  "category": "mchjong:taiwan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.page_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.page_4"
+    }
+  ]
+}

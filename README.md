@@ -21,7 +21,7 @@ options, plus four-player MCR, Sichuan and Taiwan on automatic tables. See
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
 - Resource-pack tile designs and recorded voices
-- Optional Patchouli handbook with equipment, controls, riichi basics and replay guidance
+- Optional four-language Patchouli handbook with equipment, controls, complete Riichi/MCR/Sichuan/Taiwan rules, award indexes and replay guidance
 
 ## Installation
 

@@ -10,6 +10,10 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.page_1_continued"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.controls.page_2"
     }
   ]

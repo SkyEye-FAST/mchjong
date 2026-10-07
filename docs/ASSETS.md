@@ -98,7 +98,10 @@ The Patchouli handbook uses `ManualArtwork` to generate its original teal and
 brass cover at `textures/item/mahjong_manual.png` and its generated-item model.
 Book pages and categories live under `assets/mchjong/patchouli_books/guide`;
 the book definition lives under `data/mchjong/patchouli_books/guide`. Page text
-uses the four shared language files.
+uses the four shared language files. `ManualArtwork.examples` composes the existing
+Kansai tile faces into regular, seven-pair, knitted, kong, Sichuan and sixteen-tile
+illustrations under `textures/manual`. Images are 256 × 256 with their content
+inside Patchouli's 200 × 200 source area; captions use ordinary localized page text.
 
 ## Mahjong dye items
 

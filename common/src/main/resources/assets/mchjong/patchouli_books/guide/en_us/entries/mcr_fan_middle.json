@@ -1,0 +1,143 @@
+{
+  "name": "manual.mchjong.entry.mcr_fan_middle.name",
+  "category": "mchjong:mcr",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_1",
+      "anchor": "pure_straight"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_2",
+      "anchor": "three_suited_terminal_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_3",
+      "anchor": "pure_shifted_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_4",
+      "anchor": "all_five"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_5",
+      "anchor": "triple_pung"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_6",
+      "anchor": "three_concealed_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_7",
+      "anchor": "lesser_honors_and_knitted_tiles"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_8",
+      "anchor": "knitted_straight"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_9",
+      "anchor": "upper_four"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_10",
+      "anchor": "lower_four"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_11",
+      "anchor": "big_three_winds"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_12",
+      "anchor": "mixed_straight"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_13",
+      "anchor": "reversible_tiles"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_14",
+      "anchor": "mixed_triple_chow"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_15",
+      "anchor": "mixed_shifted_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_16",
+      "anchor": "chicken_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_17",
+      "anchor": "last_tile_draw"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_18",
+      "anchor": "last_tile_claim"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_19",
+      "anchor": "out_with_replacement_tile"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_20",
+      "anchor": "robbing_the_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_21",
+      "anchor": "all_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_22",
+      "anchor": "half_flush"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_23",
+      "anchor": "mixed_shifted_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_24",
+      "anchor": "all_types"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_25",
+      "anchor": "melded_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_26",
+      "anchor": "two_concealed_kongs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.page_27",
+      "anchor": "two_dragons_pungs"
+    }
+  ]
+}

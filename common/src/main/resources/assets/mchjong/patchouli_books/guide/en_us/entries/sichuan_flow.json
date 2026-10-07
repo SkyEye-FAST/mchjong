@@ -1,0 +1,44 @@
+{
+  "name": "manual.mchjong.entry.sichuan_flow.name",
+  "category": "mchjong:sichuan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.page_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.page_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.page_5"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.page_6"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan.png"
+      ],
+      "text": "manual.mchjong.entry.sichuan_flow.sichuan",
+      "border": false
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.notation"
+    }
+  ]
+}
