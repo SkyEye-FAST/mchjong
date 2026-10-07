@@ -108,8 +108,8 @@ interface smoke verify their native config-screen factories.
 tail replacements, exhaustion and conservation across player-owned zones.
 `McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
 and first/third jump sources, front/tail traversal and restored physical cursors.
-`McrLayoutTest` and `SichuanPresentationTest` own fixed-size Chinese geometry:
-12-degree windmill walls, opposite inner-face spacing along the wall normal,
+`McrLayoutTest`, `SichuanPresentationTest` and `TaiwanPresentationTest` own physical Chinese geometry:
+12-degree tilted walls, length-derived corner clearance and opposite spacing along the wall normal,
 physical slots, layer contact, felt bounds, left-side meld chronology, minimal
 hand displacement and six-column rivers. `ChineseGameplayFixtures` uses only
 engine-issued actions and calls engine conservation validation after every
@@ -123,6 +123,15 @@ Run shared checks with:
 gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*SichuanPresentationTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain
 ```
 
+`TableLayoutEvidenceTest` exports equal-scale top views directly from production
+scene poses to `fabric/build/layout-evidence/table-layouts.svg`. It verifies felt
+bounds and oriented intersections on full walls, real dealt/midgame/late positions,
+a conserved MCR four-kong/eight-flower hand, and engine-issued Taiwan play reaching
+five melds. Taiwan hand rays are checked against every scene tile from all four
+seats. Run it with `:fabric:test --tests "*TableLayoutEvidenceTest" --warning-mode fail`.
+`TileMeshTest` and `TilePickingTest` cover the shared three-axis envelope transform;
+`ChinesePickingTest` retains MCR/Sichuan seated visibility as walls empty.
+
 The layout smoke renders the unopened wall and actual engine post-deal, midgame
 and late-game snapshots for MCR, Sichuan SBR and Sichuan TFMJ. All captures include
 the automatic table's central instrument housing. Run:
@@ -134,8 +143,8 @@ gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr
 Inspect fresh `PASS.txt`/`FAIL.txt` and selected images under
 `fabric/build/smoke/mcr-layout-evidence/screenshots`. `mcr-immersive.png` captures
 the same midgame with walls omitted. Check large Chinese tile proportions,
-matching wall yaw, larger Sichuan end gaps, the first river outside the housing,
-later rows in emptied wall space and chronological public groups on the left.
+matching wall yaw, compact Sichuan wall ends, the first river outside the housing,
+later rows in emptied wall space and intact public groups sharing the left area with flowers.
 
 The `smokeMcrAuto` profile supplies `mcr-wall-seated.png`, `mcr-dealt-seated.png`,
 `mcr-midgame-seated.png` and `mcr-late-seated.png`. `smokeSichuan` supplies the
