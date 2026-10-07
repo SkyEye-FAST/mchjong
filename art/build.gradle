@@ -88,6 +88,7 @@ test {
         inputs.files rootProject.fileTree(source) { include '**/*.java', '**/*.kt' }
     }
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')
+    inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/patchouli_books')
     inputs.file rootProject.file('common/src/main/resources/assets/mchjong/sounds.json')
     inputs.dir rootProject.layout.buildDirectory.dir('generated/assets')
     inputs.dir rootProject.layout.buildDirectory.dir('generated/data')

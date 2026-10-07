@@ -1,0 +1,48 @@
+{
+  "name": "manual.mchjong.entry.riichi_flow.name",
+  "category": "mchjong:rules",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.page_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.page_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.page_5"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/regular.png"
+      ],
+      "text": "manual.mchjong.entry.riichi_flow.regular",
+      "border": false
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/pairs.png"
+      ],
+      "text": "manual.mchjong.entry.riichi_flow.pairs",
+      "border": false
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.aborts"
+    }
+  ]
+}

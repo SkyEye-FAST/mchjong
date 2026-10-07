@@ -2,8 +2,8 @@
 
 [Project overview](../README.md) · [Changelog](../CHANGELOG.md)
 
-MChjong is a Minecraft mahjong mod supporting three- and four-player riichi
-gameplay.
+MChjong is a Minecraft mahjong mod supporting three- and four-player Riichi,
+MCR, Sichuan and sixteen-tile Taiwan gameplay.
 
 ## Playing
 
@@ -12,7 +12,7 @@ gameplay.
 | [Playing at a table](PLAYING.md) | Setup, controls, views, settlements and invitations |
 | [Survival equipment and recipes](SURVIVAL.md) | Furniture, boxes, tiles, dice and point sticks |
 | [Create workshop](CREATE.md) | Efficient mechanical production, printing, dyeing and packing |
-| [Rules and presets](RULES.md) | Rule presets, default options and custom settings |
+| [Rules and presets](RULES.md) | Four rule sets, award indexes, settlement, presets and custom settings |
 | [Rooms and permissions](ROOMS.md) | Hosting, visibility, configuration and commands |
 | [Replays](REPLAYS.md) | Playback, privacy, storage and Tenhou export |
 

@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.riichi_sanma.name",
+  "category": "mchjong:rules",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.page_2"
+    }
+  ]
+}

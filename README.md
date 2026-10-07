@@ -22,7 +22,7 @@ options, plus four-player MCR, Sichuan and Taiwan on automatic tables. See
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
 - Resource-pack tile designs and recorded voices
 - Optional Create production lines with efficient cutting, printing, dyeing and packing
-- Optional Patchouli handbook with equipment, controls, riichi basics and replay guidance
+- Optional four-language Patchouli handbook with equipment, controls, complete Riichi/MCR/Sichuan/Taiwan rules, award indexes and replay guidance
 
 ## Installation
 

@@ -1,0 +1,40 @@
+{
+  "name": "manual.mchjong.entry.mcr_special.name",
+  "category": "mchjong:mcr",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_4"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/knitted.png"
+      ],
+      "text": "manual.mchjong.entry.mcr_special.knitted",
+      "border": false
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/kongs.png"
+      ],
+      "text": "manual.mchjong.entry.mcr_special.kongs",
+      "border": false
+    }
+  ]
+}

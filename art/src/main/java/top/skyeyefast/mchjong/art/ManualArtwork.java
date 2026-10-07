@@ -7,6 +7,36 @@ import java.awt.image.BufferedImage;
 final class ManualArtwork {
     private ManualArtwork() {}
 
+    /** Handbook examples reuse the same prepared faces as the playing tiles. */
+    static java.util.Map<String, BufferedImage> examples(java.nio.file.Path presets) throws java.io.IOException {
+        var artwork = new TileArtwork(presets, "kansai");
+        var hands = java.util.Map.of(
+            "regular", new String[]{"123m", "456m", "789p", "234s", "55p"},
+            "taiwan", new String[]{"123m", "456m", "789p", "234s", "678s", "55p"},
+            "pairs", new String[]{"11m", "33m", "55p", "77p", "22s", "44s", "66z"},
+            "knitted", new String[]{"147m", "258p", "369s", "111z", "55z"},
+            "sichuan", new String[]{"1111m", "22m", "33m", "44p", "55p", "66p"},
+            "kongs", new String[]{"1111m", "5555p", "234s", "678s", "22p"});
+        var result = new java.util.TreeMap<String, BufferedImage>();
+        for (var hand : hands.entrySet()) {
+            var image = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
+            var g = image.createGraphics();
+            try {
+                g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                for (int group = 0; group < hand.getValue().length; group++) {
+                    String tiles = hand.getValue()[group];
+                    int base = switch (tiles.charAt(tiles.length() - 1)) { case 'm' -> 0; case 'p' -> 9; case 's' -> 18; default -> 27; };
+                    int x = 4 + group % 2 * 100;
+                    int y = 8 + group / 2 * 46;
+                    for (int i = 0; i < tiles.length() - 1; i++)
+                        g.drawImage(artwork.face(base + tiles.charAt(i) - '1'), x + i * 23, y, 23, 35, null);
+                }
+            } finally { g.dispose(); }
+            result.put(hand.getKey(), image);
+        }
+        return result;
+    }
+
     static BufferedImage texture() {
         var image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
         var g = image.createGraphics();

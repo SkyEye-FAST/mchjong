@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan and Taiwan rule entrances, complete award indexes, tile illustrations, payment examples and preset differences; align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
+
 - Add recipient-safe Taiwan convenience hints with sixteen-tile shanten/effective and discard previews, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination; share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.
 
 - Add independent native Taiwan replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.
