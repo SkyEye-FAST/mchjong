@@ -1,0 +1,83 @@
+{
+  "name": "manual.mchjong.entry.riichi_yakuman.name",
+  "category": "mchjong:rules",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_1",
+      "anchor": "kokushi_musou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_2",
+      "anchor": "kokushi_thirteen_waiting"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_3",
+      "anchor": "suuankou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_4",
+      "anchor": "suuankou_tanki"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_5",
+      "anchor": "daisangen"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_6",
+      "anchor": "shousuushii"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_7",
+      "anchor": "daisuushii"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_8",
+      "anchor": "tsuuiisou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_9",
+      "anchor": "chinroutou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_10",
+      "anchor": "ryuuiisou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_11",
+      "anchor": "chuuren_poutou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_12",
+      "anchor": "chuuren_nine_waiting"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_13",
+      "anchor": "suukantsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_14",
+      "anchor": "tenhou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_15",
+      "anchor": "chihou"
+    }
+  ]
+}

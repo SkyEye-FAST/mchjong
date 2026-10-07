@@ -45,7 +45,15 @@ gradlew.bat :fabric:runSmokeClient -PsmokePatchouli=true --console=plain
 ```
 
 The installed profile checks the one-time starter book, crafting and opening the book item, chapter and entry
-loading, recipes, resource reload and Latin/CJK page rendering. The absent profile
+loading, recipes, resource reload and every spread in `en_us`, `ja_jp`, `zh_cn`
+and `zh_tw`. Category/entry counts follow the resources, with all four rule entrances
+required. Text layout is measured with Patchouli's loaded font and line breaker;
+`manual-layout.txt` reports clipping. Capture any spread with
+`manual-<locale>-<entry>-<even page index>.png`, including award indexes, payment
+examples and generated tile diagrams. `ManualContentTest` checks required entries,
+all 81 MCR fans and the implemented yaku/tai/fan catalogs, translation references,
+internal links/anchors and image resources. `McrResultTest` distinguishes the
+six-point mixed kong label from four-point Two Melded Kongs in result views. The absent profile
 checks recipe exclusion, the automatic chat recommendation, download URL and once-per-session delivery
 without opening a screen. Evidence uses `patchouli-installed-evidence`
 and `patchouli-absent-evidence`. Select `manual-zh_cn.png` or

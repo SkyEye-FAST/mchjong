@@ -1,0 +1,168 @@
+{
+  "name": "manual.mchjong.entry.riichi_yaku.name",
+  "category": "mchjong:rules",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_1",
+      "anchor": "riichi"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_2",
+      "anchor": "double_riichi"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_3",
+      "anchor": "ippatsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_4",
+      "anchor": "menzen_tsumo"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_5",
+      "anchor": "pinhu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_6",
+      "anchor": "tanyao"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_7",
+      "anchor": "iipeikou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_8",
+      "anchor": "seat_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_9",
+      "anchor": "round_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_10",
+      "anchor": "haku"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_11",
+      "anchor": "hatsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_12",
+      "anchor": "chun"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_13",
+      "anchor": "rinshan_kaihou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_14",
+      "anchor": "chankan"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_15",
+      "anchor": "haitei_raoyue"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_16",
+      "anchor": "houtei_raoyui"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_17",
+      "anchor": "chiitoitsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_18",
+      "anchor": "sanshoku_doujun"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_19",
+      "anchor": "ittsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_20",
+      "anchor": "chanta"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_21",
+      "anchor": "toitoi"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_22",
+      "anchor": "sanankou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_23",
+      "anchor": "sanshoku_doukou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_24",
+      "anchor": "sankantsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_25",
+      "anchor": "shousangen"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_26",
+      "anchor": "honroutou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_27",
+      "anchor": "honitsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_28",
+      "anchor": "junchan"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_29",
+      "anchor": "ryanpeikou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_30",
+      "anchor": "chinitsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_31",
+      "anchor": "renhou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.page_32",
+      "anchor": "nagashi_mangan"
+    }
+  ]
+}

@@ -11,8 +11,11 @@ automatic tables. See
 ### In-game handbook
 
 Install the matching optional Patchouli build and use the Mahjong Handbook item
-to open it. The handbook includes equipment recipes, seating, controls, riichi
-basics, settlement, replays and customization in all four supported languages.
+to open it. The handbook includes equipment recipes, seating, controls, settlement,
+replays and customization in all four supported languages. Separate Riichi, MCR,
+Sichuan and Taiwan chapters explain play from dealing to match end, with complete
+award indexes, illustrated hands, payment examples and preset differences. The
+[Rules guide](RULES.md) also collects these player rules.
 Each player receives one on first joining a world with Patchouli installed on the
 server. Craft additional copies with a book, green dye and any mahjong tile, or
 take one from the MChjong creative tab.
@@ -120,7 +123,7 @@ of East, South, West and North to end the match. Exit votes and absence pause th
 room, and saved tables resume with their current decisions and scores.
 Shared room controls provide built-in Bots, native replays and convenience hints;
 see [Rooms](ROOMS.md) and [Replays](REPLAYS.md) for access and operation.
-See [Taiwan rules](RULES.md#taiwan-presets) for preset and payment settings.
+See [Taiwan rules](RULES.md#taiwan) for preset and payment settings.
 
 ## Point-stick payments
 

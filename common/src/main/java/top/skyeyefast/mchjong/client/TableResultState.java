@@ -90,7 +90,7 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
             Component.translatable("mcr.mchjong.flowers", game.seats().get(i).flowers().size()))).toList();
         var wins = new java.util.ArrayList<Win>();
         if (game.result() instanceof McrSettlement.Win w) {
-            var rows = w.score().fans().stream().map(f -> new Row(Component.translatable("mcr.mchjong.fan." + f.id().toLowerCase(Locale.ROOT))
+            var rows = w.score().fans().stream().map(f -> new Row(Component.translatable("mcr.mchjong.fan." + (f.mixedKongPair() ? "mixed_kong_pair" : f.id().toLowerCase(Locale.ROOT)))
                 .append(" ×" + f.count()), Component.literal(Integer.toString(f.points())), null)).toList();
             wins.add(new Win(w.winner(), w.tile(), w.fromSeat() < 0 ? Component.translatable("mcr.mchjong.action.self_drawn")
                 : Component.translatable("ui.mchjong.ron_from", seats.get(w.fromSeat()).name()),

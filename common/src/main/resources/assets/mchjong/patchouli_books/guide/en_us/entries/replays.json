@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.replays.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.replays.exports"
     }
   ]
 }

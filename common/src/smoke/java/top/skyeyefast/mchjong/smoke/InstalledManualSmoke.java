@@ -13,8 +13,9 @@ import vazkii.patchouli.common.book.BookRegistry;
 /** Internal Patchouli inspection is confined to the development-only smoke fixture. */
 final class InstalledManualSmoke {
     private static int stage, language, entry, page, ticks;
-    private static final List<String> LANGUAGES = List.of("en_us", "zh_cn");
+    private static final List<String> LANGUAGES = List.of("en_us", "ja_jp", "zh_cn", "zh_tw");
     private static List<vazkii.patchouli.client.book.BookEntry> entries;
+    private static final java.util.List<String> layoutErrors = new java.util.ArrayList<>();
     private static CompletableFuture<Void> reload;
     private static net.minecraft.world.item.ItemStack crafted;
     private InstalledManualSmoke() {}
@@ -73,9 +74,14 @@ final class InstalledManualSmoke {
             reload.join();
             var book = BookRegistry.INSTANCE.books.get(MahjongContent.id("guide"));
             ManualSmoke.require(book != null && !book.getContents().isErrored(), "Book failed to load");
-            ManualSmoke.require(book.getContents().categories.size() == 5, "Missing manual chapters");
+            var resources = client.getResourceManager();
+            int categories = resources.listResources("patchouli_books/guide/en_us/categories", id -> id.getNamespace().equals("mchjong") && id.getPath().endsWith(".json")).size();
+            ManualSmoke.require(book.getContents().categories.size() == categories, "Missing manual chapters");
+            for (String chapter : List.of("rules", "mcr", "sichuan", "taiwan"))
+                ManualSmoke.require(book.getContents().categories.containsKey(MahjongContent.id(chapter)), "Missing rules entrance: " + chapter);
             entries = book.getContents().entries.values().stream().sorted(java.util.Comparator.comparing(e -> e.getId().toString())).toList();
-            ManualSmoke.require(entries.size() == 14, "Missing manual entries");
+            int expected = resources.listResources("patchouli_books/guide/en_us/entries", id -> id.getNamespace().equals("mchjong") && id.getPath().endsWith(".json")).size();
+            ManualSmoke.require(entries.size() == expected, "Missing manual entries");
             ManualSmoke.require(!book.getBookItem().isEmpty(), "Missing book item");
             ManualSmoke.require(net.minecraft.world.item.ItemStack.matches(crafted, book.getBookItem()), "Recipe produced the wrong handbook");
             client.getSingleplayerServer().submit(() -> {
@@ -99,14 +105,59 @@ final class InstalledManualSmoke {
         ManualSmoke.require(client.screen instanceof GuiBook, "Entry failed to render");
         if (entries.get(entry).getId().getPath().equals("tiles") && page == 0)
             SmokeScreenshots.grab(output.toFile(), "manual-" + LANGUAGES.get(language) + ".png", client.getMainRenderTarget(), message -> {});
+        checkSpread(client);
+        SmokeScreenshots.grab(output.toFile(), "manual-" + LANGUAGES.get(language) + "-" + entries.get(entry).getId().getPath() + "-" + page + ".png", client.getMainRenderTarget(), message -> {});
         page += 2;
         if (page >= entries.get(entry).getPages().size()) { page = 0; entry++; }
         if (entry == entries.size()) {
-            if (++language == LANGUAGES.size()) { client.setScreen(null); return true; }
+            if (++language == LANGUAGES.size()) {
+                try { java.nio.file.Files.write(output.resolve("manual-layout.txt"), layoutErrors); }
+                catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
+                ManualSmoke.require(layoutErrors.isEmpty(), "Handbook clipping: " + String.join("; ", layoutErrors));
+                client.setScreen(null); return true;
+            }
             stage = 1;
         } else show();
         ticks = 0;
         return false;
+    }
+
+    private static void checkSpread(Minecraft client) {
+        var selected = entries.get(entry);
+        for (int index = page; index < Math.min(page + 2, selected.getPages().size()); index++) {
+            var current = selected.getPages().get(index);
+            if (!(current instanceof vazkii.patchouli.client.book.page.abstr.PageWithText)) continue;
+            String location = LANGUAGES.get(language) + ":" + selected.getId() + ":" + index;
+            try {
+                var field = vazkii.patchouli.client.book.page.abstr.PageWithText.class.getDeclaredField("text");
+                field.setAccessible(true);
+                String key = ((vazkii.patchouli.api.IVariable) field.get(current)).as(net.minecraft.network.chat.Component.class).getString();
+                String text = net.minecraft.client.resources.language.I18n.get(key);
+                ManualSmoke.require(!text.startsWith("manual."), "Untranslated page: " + key);
+                var gui = (GuiBook) client.screen;
+                int y = ((vazkii.patchouli.client.book.page.abstr.PageWithText) current).getTextHeight();
+                var parser = new vazkii.patchouli.client.book.text.BookTextParser(gui, gui.book, 0, y,
+                    GuiBook.PAGE_WIDTH, GuiBook.TEXT_LINE_HEIGHT, gui.book.getFontStyle());
+                var layout = new vazkii.patchouli.client.book.text.TextLayouter(gui, 0, y, GuiBook.TEXT_LINE_HEIGHT,
+                    GuiBook.PAGE_WIDTH, vazkii.patchouli.api.PatchouliConfigAccess.TextOverflowMode.OVERFLOW);
+                layout.layout(client.font, parser.parse(net.minecraft.network.chat.Component.literal(text)));
+                var words = layout.getWords();
+                for (Object value : words) {
+                    var word = (vazkii.patchouli.client.book.text.Word) value;
+                    // Patchouli's hitbox width includes the unsplit span; measure rendered text.
+                    var wordText = word.getClass().getDeclaredField("text");
+                    wordText.setAccessible(true);
+                    var renderedText = (net.minecraft.network.chat.Component) wordText.get(word);
+                    int renderedWidth = client.font.width(net.minecraft.network.chat.Component.literal(renderedText.getString().stripTrailing()).withStyle(renderedText.getStyle()));
+                    if (word.x < 0 || word.x + renderedWidth > GuiBook.PAGE_WIDTH || word.y + word.height > GuiBook.PAGE_HEIGHT) {
+                        layoutErrors.add(location + " text bounds " + word.x + "," + word.y + "," + renderedWidth + " text=" + renderedText.getString());
+                        break;
+                    }
+                }
+                if (index == 0 && client.font.width(selected.getName()) > GuiBook.PAGE_WIDTH)
+                    layoutErrors.add(location + " title too wide");
+            } catch (ReflectiveOperationException failure) { throw new IllegalStateException(location, failure); }
+        }
     }
 
     private static void show() {

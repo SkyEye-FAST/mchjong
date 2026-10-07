@@ -1,0 +1,193 @@
+{
+  "name": "manual.mchjong.entry.taiwan_tai.name",
+  "category": "mchjong:taiwan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_1",
+      "anchor": "heavenly_win"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_2",
+      "anchor": "earthly_win"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_3",
+      "anchor": "human_win"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_4",
+      "anchor": "heavenly_ready"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_5",
+      "anchor": "earthly_ready"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_6",
+      "anchor": "eight_flowers"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_7",
+      "anchor": "seven_robs_one"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_8",
+      "anchor": "big_four_winds"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_9",
+      "anchor": "all_honors"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_10",
+      "anchor": "full_flush"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_11",
+      "anchor": "small_four_winds"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_12",
+      "anchor": "big_three_dragons"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_13",
+      "anchor": "five_concealed_triplets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_14",
+      "anchor": "four_concealed_triplets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_15",
+      "anchor": "all_triplets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_16",
+      "anchor": "half_flush"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_17",
+      "anchor": "small_three_dragons"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_18",
+      "anchor": "pinfu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_19",
+      "anchor": "three_concealed_triplets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_20",
+      "anchor": "concealed"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_21",
+      "anchor": "self_draw"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_22",
+      "anchor": "concealed_self_draw"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_23",
+      "anchor": "all_from_others"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_24",
+      "anchor": "half_from_others"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_25",
+      "anchor": "replacement_win"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_26",
+      "anchor": "last_draw"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_27",
+      "anchor": "last_discard"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_28",
+      "anchor": "robbing_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_29",
+      "anchor": "declared_ready"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_30",
+      "anchor": "single_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_31",
+      "anchor": "red_dragon"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_32",
+      "anchor": "green_dragon"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_33",
+      "anchor": "white_dragon"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_34",
+      "anchor": "flower_set"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_35",
+      "anchor": "round_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_36",
+      "anchor": "seat_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.page_37",
+      "anchor": "seat_flower"
+    }
+  ]
+}
