@@ -33,7 +33,7 @@ public final class HeldSupplyArm {
             || !(stack.is(MahjongContent.TILE_ITEM) || stack.is(MahjongContent.POINT_STICK))) return;
 
         var grip = stack.is(MahjongContent.TILE_ITEM)
-            ? new Vector3f(.5f, .5f - TileMesh.HEIGHT * 4.5f / 2, .5f)
+            ? new Vector3f(.5f, .5f - TileDimensions.LARGE.height() * 4.5f / 2, .5f)
             : new Vector3f(.5f + (held.context().leftHand() ? 1 : -1) * FurnitureMesh.STICK_HALF_LENGTH * .75f, .45f, .5f);
         // The special renderer already includes the camera/equip pose and item centering.
         // Recover its local grip before applying the unscaled arm pose, exactly once.

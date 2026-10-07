@@ -10,7 +10,7 @@ public record ChineseMeldLayout(List<Part> parts, double width) {
     public record Part(int tile, double x, double z, boolean sideways, boolean back) {}
     public ChineseMeldLayout { parts = List.copyOf(parts); }
 
-    public static ChineseMeldLayout of(Meld meld, int owner, boolean revealConcealed) {
+    public static ChineseMeldLayout of(Meld meld, int owner, boolean revealConcealed, TileDimensions dimensions) {
         if (owner < 0 || owner > 3) throw new IllegalArgumentException("Invalid Chinese meld owner");
         boolean quad = switch (meld.type()) {
             case SEQUENCE, TRIPLET -> false;
@@ -35,9 +35,9 @@ public record ChineseMeldLayout(List<Part> parts, double width) {
         double x = 0;
         for (int index = 0; index < tiles.size(); index++) {
             boolean sideways = index == called;
-            double width = sideways ? TileMesh.HEIGHT : TileMesh.WIDTH;
+            double width = sideways ? dimensions.height() : dimensions.width();
             result.add(new Part(tiles.get(index), x + width / 2,
-                sideways ? ((double) TileMesh.HEIGHT - TileMesh.WIDTH) / 2 : 0,
+                sideways ? ((double) dimensions.height() - dimensions.width()) / 2 : 0,
                 sideways, meld.closed() && !revealConcealed));
             x += width;
         }

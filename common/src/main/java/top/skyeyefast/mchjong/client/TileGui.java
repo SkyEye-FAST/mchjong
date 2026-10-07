@@ -46,20 +46,27 @@ public final class TileGui {
                                  boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye,
                                  Identifier backPreset) {
         drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, depth, preset, material, dye, backPreset,
-            tile < 0 || back ? -1 : TileMesh.face(tile));
+            tile < 0 || back ? -1 : TileMesh.face(tile), TileDimensions.LARGE);
     }
 
     static void tileArtwork(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                             boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye,
                             Identifier backPreset, java.util.function.IntUnaryOperator artwork) {
         drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, depth, preset, material, dye, backPreset,
-            tile < 0 || back ? -1 : artwork.applyAsInt(tile));
+            tile < 0 || back ? -1 : artwork.applyAsInt(tile), TileDimensions.LARGE);
+    }
+
+    static void tileArtwork(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
+                            boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye,
+                            Identifier backPreset, java.util.function.IntUnaryOperator artwork, TileDimensions dimensions) {
+        drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, depth, preset, material, dye, backPreset,
+            tile < 0 || back ? -1 : artwork.applyAsInt(tile), dimensions);
     }
 
     private static void drawTile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                                  boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye,
-                                 Identifier backPreset, int artwork) {
-        int height = Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH);
+                                 Identifier backPreset, int artwork, TileDimensions dimensions) {
+        int height = Math.round(width * dimensions.ratio());
         int bodyColor = TileMesh.bodyColor(material, dye);
         int backColor = TileMesh.backColor(material, dye);
         graphics.pose().pushMatrix();
@@ -108,7 +115,7 @@ public final class TileGui {
         return meldWidth(MeldLayout.of(meld, owner), tileWidth);
     }
 
-    static int meldWidth(MeldLayout layout, int tileWidth) { return (int) Math.ceil(layout.width() * tileWidth / TileMesh.WIDTH); }
+    static int meldWidth(MeldLayout layout, int tileWidth) { return (int) Math.ceil(layout.width() * tileWidth / layout.dimensions().width()); }
     public static void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int tileWidth, TileFacePreset preset) {
         meld(graphics, meld, owner, x, y, tileWidth, 0, preset, TileMaterial.BONE, null, TileBackPresets.DEFAULT);
     }
@@ -140,16 +147,16 @@ public final class TileGui {
     static void meldArtwork(GuiGraphicsExtractor graphics, MeldLayout layout, int x, int y, int tileWidth, int depth,
                             TileFacePreset preset, TileMaterial material, DyeColor dye, Identifier backPreset,
                             java.util.function.IntUnaryOperator artwork) {
-        double scale = tileWidth / (double) TileMesh.WIDTH;
+        double scale = tileWidth / (double) layout.dimensions().width();
         // Paint the rear added-kan tile first so its body and shadow stay behind the called tile.
         for (var part : layout.parts().stream()
                 .sorted(Comparator.comparingDouble(MeldLayout.Part::z).thenComparingDouble(MeldLayout.Part::x)).toList()) {
-            double span = part.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH;
-            double tileDepth = part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT;
+            double span = part.sideways() ? layout.dimensions().height() : layout.dimensions().width();
+            double tileDepth = part.sideways() ? layout.dimensions().width() : layout.dimensions().height();
             int px = x + (int) Math.round((part.x() - span / 2) * scale);
-            int py = y + (int) Math.round((part.z() + TileMesh.HEIGHT / 2.0 - tileDepth / 2) * scale);
+            int py = y + (int) Math.round((part.z() + layout.dimensions().height() / 2.0 - tileDepth / 2) * scale);
             tileArtwork(graphics, part.tile(), px, py, tileWidth, part.back(), part.sideways(), part.sideways(), false,
-                depth, preset, material, dye, backPreset, artwork);
+                depth, preset, material, dye, backPreset, artwork, layout.dimensions());
         }
     }
 }

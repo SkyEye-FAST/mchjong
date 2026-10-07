@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.client;
 
-import com.mojang.math.Axis;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
@@ -27,6 +26,7 @@ final class TableBoard {
     private final Rect bounds, center;
     private final int viewer, players, actionsTop, riverWidth;
     private final boolean perspective;
+    private final TileDimensions dimensions;
     private final TableImmersiveTable immersive;
     private final int[] riverRows = new int[4];
     private final Map<Integer, Point> tiles = new HashMap<>();
@@ -41,6 +41,7 @@ final class TableBoard {
     }
 
     TableBoard(TableBoardState view, int left, int right, int top, int bottom, int actionsTop, boolean perspective) {
+        dimensions = TileDimensions.of(view.seats().getFirst().variant());
         bounds = new Rect(left, top, Math.max(1, right - left), Math.max(1, bottom - top));
         viewer = view.viewerSeat();
         players = view.players();
@@ -179,12 +180,16 @@ final class TableBoard {
     private void outerTiles(GuiGraphicsExtractor graphics, TableBoardState view, int seat, TileFacePreset preset) {
         var player = view.seats().get(seat);
         int side = side(seat, viewer, players);
+        if (player.variant() != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI) {
+            chineseOuter(graphics, player, seat, side, preset);
+            return;
+        }
         if (seat == viewer) {
             int x = card(seat).right() + 12;
             int width = Math.min(10, Math.max(2, (riverArea(seat).x() - x - 4) / 4));
             int y = bounds.bottom() - tileHeight(width) - 8;
             for (int tile : player.norths()) {
-                TileGui.tileArtwork(graphics, tile, x, y, width, false, false, false, false, 0, preset, material, back, backPreset, artwork);
+                TileGui.tileArtwork(graphics, tile, x, y, width, false, false, false, false, 0, preset, material, back, backPreset, artwork, dimensions);
                 remember(tile, x + width / 2, y + tileHeight(width) / 2);
                 x += width;
             }
@@ -239,6 +244,47 @@ final class TableBoard {
             tile(graphics, tile, x, y, width, false, false, false, false, preset);
             rememberRotated(tile, cx, cy, x + width / 2, y + tileHeight(width) / 2, side, scale);
             x += width;
+        }
+        graphics.pose().popMatrix();
+    }
+
+    private void chineseOuter(GuiGraphicsExtractor graphics, TableBoardState.Seat player, int seat, int side, TileFacePreset preset) {
+        boolean vertical = side % 2 == 1;
+        int length = vertical ? Math.min(bounds.bottom(), actionsTop) - bounds.y() - 8 : bounds.width() - 84;
+        int width = Math.max(2, Math.min(14, (int) (length * dimensions.width() / (2 * top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH))));
+        double scale = width / (double) dimensions.width();
+        var layouts = player.melds().stream().map(meld -> player.layout(meld, seat)).toList();
+        var area = ChineseTableLayout.publicArea(layouts, player.norths().size(), player.hand().size(),
+            player.drawn() != Tile.ABSENT, seat, new java.util.ArrayList<>(), dimensions);
+        double rail = ChineseTableLayout.handZ(dimensions);
+        int cx = vertical ? side == 1 ? bounds.right() : bounds.x() : (bounds.x() + bounds.right()) / 2;
+        int cy = vertical ? (bounds.y() + Math.min(bounds.bottom(), actionsTop)) / 2 : side == 2 ? bounds.y() : bounds.bottom();
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(cx, cy);
+        graphics.pose().rotate((float) Math.toRadians(-90 * side));
+        int baseline = -tileHeight(width) / 2 - 3;
+        if (seat != viewer) for (int index = 0; index < player.hand().size(); index++) {
+            int value = player.hand().get(index);
+            double drawGap = index == player.hand().size() - 1 && player.drawn() != Tile.ABSENT ? RiichiTableScene.DRAW_GAP : 0;
+            int x = (int) Math.round((area.handLeft() + index * dimensions.width() + drawGap) * scale) - width / 2;
+            int y = baseline - tileHeight(width) / 2;
+            tile(graphics, value, x, y, width, value < 0, false, false, false, preset);
+            rememberRotated(value, cx, cy, x + width / 2, baseline, side);
+        }
+        for (int group = 0; group < layouts.size(); group++) {
+            var origin = area.melds().get(group);
+            int x = (int) Math.round(origin.x * scale);
+            int y = baseline + (int) Math.round((origin.z - rail) * scale) - tileHeight(width) / 2;
+            TileGui.meldArtwork(graphics, layouts.get(group), x, y, width, 0, preset, material, back, backPreset, artwork);
+            for (var part : layouts.get(group).parts()) rememberRotated(part.tile(), cx, cy,
+                x + (int) Math.round(part.x() * scale), y + tileHeight(width) / 2 + (int) Math.round(part.z() * scale), side);
+        }
+        for (int index = 0; index < player.norths().size(); index++) {
+            var origin = area.flowers().get(index);
+            int x = (int) Math.round(origin.x * scale) - width / 2;
+            int y = baseline + (int) Math.round((origin.z - rail) * scale) - tileHeight(width) / 2;
+            tile(graphics, player.norths().get(index), x, y, width, false, false, false, false, preset);
+            rememberRotated(player.norths().get(index), cx, cy, x + width / 2, y + tileHeight(width) / 2, side);
         }
         graphics.pose().popMatrix();
     }
@@ -418,11 +464,11 @@ final class TableBoard {
             center.width() - 28, MahjongUi.TEXT, true);
     }
 
-    private static int riverSpan(int width) { return 5 * width + tileHeight(width); }
-    private static int tileHeight(int width) { return Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH); }
+    private int riverSpan(int width) { return 5 * width + tileHeight(width); }
+    private int tileHeight(int width) { return Math.round(width * dimensions.ratio()); }
     private void tile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                       boolean marked, boolean dimmed, TileFacePreset preset) {
-        TileGui.tileArtwork(graphics, tile, x, y, width, back, sideways, marked, dimmed, 0, preset, material, this.back, backPreset, artwork);
+        TileGui.tileArtwork(graphics, tile, x, y, width, back, sideways, marked, dimmed, 0, preset, material, this.back, backPreset, artwork, dimensions);
     }
     private void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int width, TileFacePreset preset) {
         TileGui.meldArtwork(graphics, meld, owner, x, y, width, 0, preset, material, back, backPreset, artwork);

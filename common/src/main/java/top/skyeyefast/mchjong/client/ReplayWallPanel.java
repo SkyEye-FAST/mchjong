@@ -65,7 +65,7 @@ final class ReplayWallPanel extends AbstractWidget {
             var slots = playback.wallSlots().get(side);
             stacksPerSide = slots.size() / 2;
             int tileWidth = Math.clamp((cardWidth - 8) / stacksPerSide - 1, 4, 12);
-            int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+            int tileHeight = Math.round(tileWidth * TileDimensions.of(match.variant()).ratio());
             int rowSpan = stacksPerSide * (tileWidth + 1) - 1;
             int startX = x + (cardWidth - rowSpan) / 2;
             int startY = y + Math.max(15, (cardHeight - tileHeight * 2 - 2) / 2 + 4);
@@ -78,7 +78,7 @@ final class ReplayWallPanel extends AbstractWidget {
                 TileGui.tileArtwork(graphics, wall.get(slot), tx, ty, tileWidth, false, false, false, false, 0,
                     preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null, TileBackPresets.DEFAULT, tile ->
                         match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI ? TileMesh.face(tile)
-                            : top.skyeyefast.mchjong.engine.Tile.isFlower(tile) ? 37 + tile - 136 : top.skyeyefast.mchjong.engine.Tile.kind(tile));
+                            : top.skyeyefast.mchjong.engine.Tile.isFlower(tile) ? 37 + tile - 136 : top.skyeyefast.mchjong.engine.Tile.kind(tile), TileDimensions.of(match.variant()));
                 if (used.contains(wall.get(slot))) graphics.fill(tx, ty, tx + tileWidth, ty + tileHeight, 0x990b1418);
                 int dora = playback.doraSlots().indexOf(slot), ura = playback.uraSlots().indexOf(slot);
                 if (dora >= 0 && dora < revealed) graphics.outline(tx, ty, tileWidth, tileHeight, MahjongUi.ACCENT);

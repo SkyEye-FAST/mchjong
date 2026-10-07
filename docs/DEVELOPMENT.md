@@ -7,20 +7,12 @@
 Use JDK 25 for the Minecraft 26.1.2 development profile.
 
 ```bash
-git clone --recurse-submodules https://github.com/SkyEye-FAST/mchjong.git
+git clone https://github.com/SkyEye-FAST/mchjong.git
 cd mchjong
 ```
 
 Check out `compat/26.1.2` to build the Fabric and NeoForge profiles. Minecraft,
 loader, mappings, and Java versions are selected in `gradle.properties`.
-
-For an existing checkout, run `git submodule update --init --recursive` after
-pulling. The `taiwan-mahjong/` submodule pins the independent
-[Taiwan hand library](https://github.com/SkyEye-FAST/taiwan-mahjong); Gradle uses
-that exact source through a composite build by default. `-PtaiwanSource=false`
-disables source substitution and resolves the engine's declared Maven coordinate. Publish library commits to its
-repository before advancing the submodule pointer in MChjong. CI initializes
-the pinned submodules for snapshot and release builds.
 
 ### Fabric
 

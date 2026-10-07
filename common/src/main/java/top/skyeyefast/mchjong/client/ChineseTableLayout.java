@@ -7,60 +7,76 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Fixed-size public tiles use the space actually vacated by the physical wall. */
 final class ChineseTableLayout {
-    static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - TileMesh.HEIGHT / 2.0 - .015;
     static final double MELD_LEFT = -TableGeometry.FELT_HALF_WIDTH + .015;
-    static final double RIVER_Z = TableIndicator.HALF_WIDTH + TileMesh.HEIGHT / 2.0 + .005;
-    static final double RIVER_X = TileMesh.WIDTH / 2.0;
     record Bounds(Vec3 center, float yaw, double width, double depth) {}
+    record PublicArea(List<Vec3> melds, List<Vec3> flowers, double handLeft) {}
     private ChineseTableLayout() {}
 
-    static Bounds bounds(Vec3 center, float yaw, boolean flat) {
-        return new Bounds(center, yaw, TileMesh.WIDTH, flat ? TileMesh.HEIGHT : TileMesh.DEPTH);
+    static double handZ(TileDimensions size) { return TableGeometry.FELT_HALF_WIDTH - size.height() / 2.0 - .015; }
+    static Bounds bounds(Vec3 center, float yaw, boolean flat, TileDimensions size) {
+        return new Bounds(center, yaw, size.width(), flat ? size.height() : size.depth());
     }
 
-    static List<Vec3> melds(List<MeldLayout> layouts, int seat, List<Bounds> occupied) {
-        var origins = new ArrayList<Vec3>();
-        double left = MELD_LEFT;
-        for (var layout : layouts) {
-            double minZ = layout.parts().stream().mapToDouble(p -> p.z() - (p.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) / 2).min().orElse(0);
-            double maxZ = layout.parts().stream().mapToDouble(p -> p.z() + (p.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) / 2).max().orElse(0);
+    /** Pack present groups and individual flowers along one left-hand baseline, then wrap. */
+    static PublicArea publicArea(List<MeldLayout> layouts, int flowers, int handCount, boolean drawn,
+                                 int seat, List<Bounds> occupied, TileDimensions size) {
+        double w = size.width(), h = size.height(), baseline = handZ(size);
+        double handWidth = handCount * w + (drawn ? RiichiTableScene.DRAW_GAP : 0);
+        double handLeft = -(handWidth - w) / 2;
+        double right = baseline - h / 2 - .025;
+        double leftEdge = -right;
+        double cursor = leftEdge;
+        int row = 0;
+        var meldOrigins = new ArrayList<Vec3>();
+        var flowerOrigins = new ArrayList<Vec3>();
+        for (int group = 0; group < layouts.size() + flowers; group++) {
+            boolean flower = group >= layouts.size();
+            var layout = flower ? null : layouts.get(group);
+            double width = flower ? w : layout.width();
+            double minZ = flower ? -h / 2 : layout.parts().stream()
+                .mapToDouble(part -> part.z() - (part.sideways() ? w : h) / 2).min().orElseThrow();
+            double maxZ = h / 2;
             Vec3 origin = null;
-            search: for (int shift = 0; shift < 24; shift++) {
-                double x = left + shift * TileMesh.WIDTH;
-                for (int row = 0; row < 4; row++) {
-                    double z = HAND_Z - row * (TileMesh.HEIGHT + .04);
-                    if (clear(box(x + layout.width() / 2, z + (minZ + maxZ) / 2, layout.width(), maxZ - minZ, seat), occupied)) {
-                        origin = new Vec3(x, 0, z);
-                        break search;
-                    }
+            for (; row < 5; row++, cursor = leftEdge) {
+                double z = baseline - row * (h + .04);
+                double end = row == 0 && handCount > 0 ? right - handWidth - .04 : .45;
+                for (; cursor + width <= end + 1e-7; cursor += w / 4) {
+                    var bound = box(cursor + width / 2, z + (minZ + maxZ) / 2, width, maxZ - minZ, seat);
+                    if (!clear(bound, occupied)) continue;
+                    origin = new Vec3(cursor, 0, z);
+                    occupied.add(bound);
+                    break;
                 }
+                if (origin != null) break;
             }
-            if (origin == null) throw new IllegalStateException("No fixed-size meld fits for seat " + seat);
-            occupied.add(box(origin.x + layout.width() / 2, origin.z + (minZ + maxZ) / 2, layout.width(), maxZ - minZ, seat));
-            origins.add(origin);
-            left = origin.x + layout.width() + .02;
+            if (origin == null) throw new IllegalStateException("No public group fits for seat " + seat);
+            if (row == 0 && handCount > 0) handLeft = Math.max(handLeft, cursor + width + .04 + w / 2);
+            if (flower) flowerOrigins.add(origin.add(w / 2, 0, 0));
+            else meldOrigins.add(origin);
+            cursor += width + (flower ? 0 : .02);
         }
-        return origins;
+        return new PublicArea(List.copyOf(meldOrigins), List.copyOf(flowerOrigins), handLeft);
     }
 
-    static List<List<Vec3>> rivers(List<Integer> counts, List<Bounds> occupied) {
+    static List<List<Vec3>> rivers(List<Integer> counts, List<Bounds> occupied, TileDimensions size) {
+        double riverZ = TableIndicator.HALF_WIDTH + size.height() / 2.0 + .005;
         var result = new ArrayList<List<Vec3>>();
         for (int seat = 0; seat < 4; seat++) result.add(new ArrayList<>());
-        var nextZ = new double[]{RIVER_Z, RIVER_Z, RIVER_Z, RIVER_Z};
+        var nextZ = new double[]{riverZ, riverZ, riverZ, riverZ};
         int rows = counts.stream().mapToInt(count -> (count + 5) / 6).max().orElse(0);
         for (int row = 0; row < rows; row++) for (int seat = 0; seat < 4; seat++) {
             int count = Math.min(6, counts.get(seat) - row * 6);
             if (count <= 0) continue;
-            double left = RIVER_X - 2.5 * TileMesh.WIDTH;
-            double width = count * (double) TileMesh.WIDTH;
-            double preferred = left + (count - 1) * TileMesh.WIDTH / 2;
+            double left = (size.width() / 2.0) - 2.5 * size.width();
+            double width = count * (double) size.width();
+            double preferred = left + (count - 1) * size.width() / 2;
             Vec3 center = null;
             search: for (int depth = 0; depth < 6; depth++) {
-                double z = nextZ[seat] + depth * TileMesh.HEIGHT;
+                double z = nextZ[seat] + depth * size.height();
                 for (int shift = 0; shift <= 24; shift++) {
                     int offset = shift == 0 ? 0 : (shift % 2 == 1 ? -(shift + 1) / 2 : shift / 2);
-                    double x = preferred + offset * TileMesh.WIDTH;
-                    if (clear(box(x, z, width, TileMesh.HEIGHT, seat), occupied)) {
+                    double x = preferred + offset * size.width();
+                    if (clear(box(x, z, width, size.height(), seat), occupied)) {
                         center = new Vec3(x, 0, z);
                         break search;
                     }
@@ -71,19 +87,19 @@ final class ChineseTableLayout {
             if (center == null) {
                 search: for (int depth = 0; depth < 5; depth++) for (int shift = 0; shift <= 24; shift++) {
                     int offset = shift == 0 ? 0 : (shift % 2 == 1 ? -(shift + 1) / 2 : shift / 2);
-                    double x = preferred + offset * TileMesh.WIDTH;
-                    double z = RIVER_Z + depth * TileMesh.HEIGHT;
-                    if (clear(box(x, z, width, TileMesh.HEIGHT, seat), occupied)) {
+                    double x = preferred + offset * size.width();
+                    double z = riverZ + depth * size.height();
+                    if (clear(box(x, z, width, size.height(), seat), occupied)) {
                         center = new Vec3(x, 0, z);
                         break search;
                     }
                 }
             }
             if (center == null) throw new IllegalStateException("No fixed-size river row fits for seat " + seat + ", row " + row);
-            occupied.add(box(center.x, center.z, width, TileMesh.HEIGHT, seat));
-            nextZ[seat] = center.z + TileMesh.HEIGHT;
+            occupied.add(box(center.x, center.z, width, size.height(), seat));
+            nextZ[seat] = center.z + size.height();
             for (int column = 0; column < count; column++)
-                result.get(seat).add(new Vec3(center.x + (column - (count - 1) / 2.0) * TileMesh.WIDTH, 0, center.z));
+                result.get(seat).add(new Vec3(center.x + (column - (count - 1) / 2.0) * size.width(), 0, center.z));
         }
         return result;
     }

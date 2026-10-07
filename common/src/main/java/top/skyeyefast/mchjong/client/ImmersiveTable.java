@@ -25,8 +25,10 @@ final class ImmersiveTable {
     private static final RenderPipeline GUI_DEPTH = RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
         .withLocation("mchjong/gui_tile_depth")
         .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true)).build();
-    static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
-    static double thickness(double width) { return width * TileMesh.DEPTH / TileMesh.WIDTH; }
+    private final TileDimensions dimensions;
+    private final double ratio;
+    ImmersiveTable(TileDimensions dimensions) { this.dimensions = dimensions; ratio = dimensions.ratio(); }
+    double thickness(double width) { return width * dimensions.depth() / dimensions.width(); }
     private int backColor;
     private int bodyColor;
     private Identifier backTexture;
@@ -105,9 +107,7 @@ final class ImmersiveTable {
             for (int i = 0; i < 4; i++) {
                 points[i] = projection.apply(face.vertices()[i]);
                 if (useDepth) {
-                    var vertex = face.vertices()[i];
-                    // Perspective scale is reciprocal camera distance and interpolates across the face.
-                    depths[i] = (float) (-100 + 100 * (TableProjection.scale(vertex.z(), vertex.h()) - 1));
+                    depths[i] = guiDepth(face.vertices()[i]);
                 }
                 minX = Math.min(minX, points[i].x()); minY = Math.min(minY, points[i].y());
                 maxX = Math.max(maxX, points[i].x()); maxY = Math.max(maxY, points[i].y());
@@ -126,11 +126,17 @@ final class ImmersiveTable {
         faces.clear();
     }
 
-    void tile(int tile, int side, double x, double z, int width, boolean back, boolean sideways, boolean dim, double h) {
-        double w = sideways ? width * RATIO : width, d = sideways ? width : width * RATIO;
+    static float guiDepth(Vertex vertex) {
+        // The GUI model starts at the far plane (-11000); positive Z stays inside its clip range.
+        // Reciprocal camera distance preserves the same near-to-far ordering as the table projection.
+        return (float) (100 * TableProjection.scale(vertex.z(), vertex.h()));
+    }
+
+    void tile(int tile, int side, double x, double z, double width, boolean back, boolean sideways, boolean dim, double h) {
+        double w = sideways ? width * ratio : width, d = sideways ? width : width * ratio;
         double top = h + thickness(width);
-        double scale = thickness(width) / TileMesh.DEPTH;
-        double backLayer = (TileMesh.CORE_BACK + TileMesh.DEPTH / 2) * scale;
+        double scale = thickness(width) / TileDimensions.LARGE.depth();
+        double backLayer = (TileMesh.CORE_BACK + TileDimensions.LARGE.depth() / 2) * scale;
         double bodyLayer = (TileMesh.CORE_FRONT - TileMesh.CORE_BACK) * scale;
         double faceLayer = thickness(width) - backLayer - bodyLayer;
         boolean showBack = back || tile < 0;
@@ -147,9 +153,9 @@ final class ImmersiveTable {
         artwork(face, tile, back, dim);
     }
 
-    void standing(int tile, int side, double x, double z, int w) {
-        double d = thickness(w), h = w * RATIO;
-        double scale = w / (double) TileMesh.WIDTH;
+    void standing(int tile, int side, double x, double z, double w) {
+        double d = thickness(w), h = w * ratio;
+        double scale = thickness(w) / TileDimensions.LARGE.depth();
         double coreBack = TileMesh.CORE_BACK * scale, coreFront = TileMesh.CORE_FRONT * scale;
         contact(side, x, z, w, d);
         box(side, x, z + (coreBack - d / 2) / 2, w, coreBack + d / 2, 0, h, backColor, backColor);

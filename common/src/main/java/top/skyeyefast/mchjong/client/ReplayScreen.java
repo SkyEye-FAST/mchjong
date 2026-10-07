@@ -159,7 +159,7 @@ public final class ReplayScreen extends Screen {
         var frame = frame();
         int controlsTop = height - 78;
         var player = frame.board().replay(viewer).seats().get(viewer);
-        viewerHand = new TableHand(player.hand(), player.drawn(), player.melds(), viewer, width, controlsTop, height < 360 ? 17 : 21, false, match.variant());
+        viewerHand = new TableHand(player.hand(), player.drawn(), player.melds(), player.norths().size(), viewer, width, controlsTop, height < 360 ? 17 : 21, false, match.variant());
         int boardBottom = Math.max(120, viewerHand.top() - 5);
         board = new TableBoard(frame.board().replay(viewer), 8, width - 8, 67, boardBottom, boardBottom);
         result.visible = result.active = frame.settled() && resultExpanded && !wallOpen && !roundsOpen;

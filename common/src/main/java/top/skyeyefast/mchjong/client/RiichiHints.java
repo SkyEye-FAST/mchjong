@@ -62,9 +62,9 @@ final class RiichiHints extends TableHintsButton {
         if (columns < 1) return null;
         int rows = (count + columns - 1) / columns;
         int step = Math.min(20, (available - 12) / columns);
-        int tileWidth = Math.min(step - 4, (int) ((((bottom - topBound) / scale - 20) / rows - 12) * TileMesh.WIDTH / TileMesh.HEIGHT));
+        int tileWidth = Math.min(step - 4, (int) ((((bottom - topBound) / scale - 20) / rows - 12) * TileDimensions.LARGE.width() / TileDimensions.LARGE.height()));
         if (tileWidth < 5) return null;
-        int height = rows * (Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH) + 12) + 20;
+        int height = rows * (Math.round(tileWidth * TileDimensions.LARGE.height() / TileDimensions.LARGE.width()) + 12) + 20;
         int span = Math.max(Math.min(112, available), columns * step + 12);
         return new Layout(leftBound + (rightBound - leftBound - span * scale) / 2, bottom - height * scale,
             span * scale, height * scale, step * scale, tileWidth * scale, columns);
@@ -79,7 +79,7 @@ final class RiichiHints extends TableHintsButton {
         MahjongUi.panel(graphics, 0, 0, box.width() / scale, box.height() / scale);
         MahjongUi.text(graphics, font, heading, 6, 5, box.width() / scale - 12, MahjongUi.ACCENT, false);
         int tileWidth = box.tileWidth() / scale;
-        int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        int tileHeight = Math.round(tileWidth * TileDimensions.LARGE.height() / TileDimensions.LARGE.width());
         for (int index = 0; index < waits.size(); index++) {
             var wait = waits.get(index);
             int x = 6 + index % box.columns() * box.step() / scale;

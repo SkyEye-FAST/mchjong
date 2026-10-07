@@ -13,8 +13,8 @@ final class WallGeometryAssertions {
         for (var center : centers) {
             var local = TableGeometry.orient(center.x, 0, center.z, (4 - seat) % 4);
             double innerEdge = local.dot(normal) - height / 2;
-            assertEquals(30.5 / 85, 2 * innerEdge / (2 * TableGeometry.FELT_HALF_WIDTH), 1.0 / 85,
-                "Opposite inner-face clearance is measured along the tilted wall normal");
+            assertTrue(innerEdge >= TableIndicator.HALF_WIDTH + height,
+                "Leave the housing and a river row clear along the wall normal");
         }
     }
 
@@ -79,15 +79,15 @@ final class WallGeometryAssertions {
     }
 
     static Solid solid(McrTableScene.Piece piece) {
-        return new Solid(piece.position(), piece.yaw(), TileMesh.WIDTH * (double) piece.scale(),
-            (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) piece.scale(),
-            (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) piece.scale());
+        return new Solid(piece.position(), piece.yaw(), TileDimensions.LARGE.width(),
+            (piece.flat() ? TileDimensions.LARGE.depth() : TileDimensions.LARGE.height()),
+            (piece.flat() ? TileDimensions.LARGE.height() : TileDimensions.LARGE.depth()));
     }
 
     static Solid solid(SichuanTableScene.Piece piece) {
-        return new Solid(piece.position(), piece.yaw(), TileMesh.WIDTH * (double) piece.scale(),
-            (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) piece.scale(),
-            (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) piece.scale());
+        return new Solid(piece.position(), piece.yaw(), TileDimensions.LARGE.width(),
+            (piece.flat() ? TileDimensions.LARGE.depth() : TileDimensions.LARGE.height()),
+            (piece.flat() ? TileDimensions.LARGE.height() : TileDimensions.LARGE.depth()));
     }
 
     record PublicPiece(Solid solid, int seat, boolean hand, int group) {}
@@ -98,8 +98,8 @@ final class WallGeometryAssertions {
             var own = pieces.stream().filter(p -> p.seat() == owner).toList();
             var hand = own.stream().filter(PublicPiece::hand).toList();
             double expectedHandEdge = -handWidths.get(seat) / 2;
-            double previousRight = Double.NEGATIVE_INFINITY;
-            for (int group = 0; group < 4; group++) {
+            double previousRight = Double.NEGATIVE_INFINITY, previousZ = Double.POSITIVE_INFINITY;
+            for (int group = 0; group < 12; group++) {
                 int number = group;
                 var meld = own.stream().filter(p -> p.group() == number).toList();
                 if (meld.isEmpty()) continue;
@@ -115,7 +115,10 @@ final class WallGeometryAssertions {
                         expectedHandEdge = Math.max(expectedHandEdge, local.x + halfX + .04);
                 }
                 if (group == 0) assertTrue((left + right) / 2 < 0, "First Chinese meld belongs on the owner's left");
-                assertTrue(left >= previousRight, "Chronological groups extend right");
+                var first = meld.getFirst().solid().position();
+                double rowZ = TableGeometry.orient(first.x, 0, first.z, (4 - seat) % 4).z;
+                if (Math.abs(rowZ - previousZ) < .05) assertTrue(left >= previousRight - 1e-7, "Groups extend right within a row");
+                previousZ = rowZ;
                 previousRight = right;
             }
             if (!hand.isEmpty()) {
