@@ -30,6 +30,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld analysis, source-qualified tai profiles and the `TaiwanHandAnalyzer` boundary; audit all scoring patterns and provide an independent Taiwan hand with physical wall/dealing, flower replacement, legal calls, passing, kong robbery and balanced settlement. Document the selected match-rule sources and unresolved interpretations; generalize the shared 144-tile stock factory.
 
+### Fixed
+
+- Restore 26.1.2 immersive tabletop rendering within the native GUI clip range and normalize 1.20.1 tile normals after axis scaling.
+
 ## [0.9.1] - 2026-10-03
 
 ### Fixed

@@ -473,6 +473,12 @@ and no `FAIL.txt` in that branch's `fabric/build/smoke/taiwan-evidence`.
 The 26.1.2 native server boundary also runs `:neoforge:test --tests
 "*TaiwanIntegrationTest"`. These focused checks do not repeat main's full matrix.
 
+On 26.1.2, `ImmersiveDepthTest` checks table vertices against the native GUI
+projection's clip range and retains near-to-far face ordering. Run
+`:fabric:test --tests "*ImmersiveDepthTest" --warning-mode fail`; inspect
+`taiwan-immersive.png` from the Taiwan client profile to verify the tabletop,
+opponent tiles and center instrument remain visible.
+
 ## Bot checks
 
 Use `:engine:test --tests "*TrainingBotTest"` for decision regressions.
