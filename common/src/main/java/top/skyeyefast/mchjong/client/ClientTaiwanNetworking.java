@@ -16,7 +16,6 @@ public final class ClientTaiwanNetworking {
         if ((room.lifecycle() == TableSession.Lifecycle.LOBBY) != (view == null)
             || view != null && (!view.tableId().equals(room.tableId()) || !view.incarnation().equals(room.incarnation())
                 || view.game().recipient() != room.viewerSeat() || !view.game().rules().equals(payload.settings().rules()))) return;
-        var previous = table.clientTaiwanView();
         var previousRoom = table.clientRoom();
         table.acceptTaiwanView(view, room, payload.deck(), payload.cloth(), payload.settings());
         if (table.clientTableRoom() != room) return;

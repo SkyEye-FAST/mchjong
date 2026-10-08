@@ -12,7 +12,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.engine.RiichiRules;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
@@ -53,9 +52,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
     private boolean presetExpanded;
     private SettingsLayout layout;
 
-    private record Label(Component text, Component tooltip, int x, int y, int width) {
-        Label(Component text, int x, int y, int width) { this(text, text, x, y, width); }
-    }
+    private record Label(Component text, Component tooltip, int x, int y, int width) {}
 
     public RiichiRulesScreen(Screen parent, TableRoomView room, RiichiRoomSettings settings) {
         this(parent, room, settings, false);

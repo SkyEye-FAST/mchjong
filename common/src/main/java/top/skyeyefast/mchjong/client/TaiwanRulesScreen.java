@@ -45,7 +45,6 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
     }
     private void rebuild() {
         clearWidgets(); left = (width - 280) / 2; top = (height - 194) / 2;
-        var room = table().clientTableRoom();
         for (int i = 0; i < 2; i++) {
             int index = i;
             addRenderableWidget(new MahjongButton(left + 8 + i * 134, top + 26, 130, 20,

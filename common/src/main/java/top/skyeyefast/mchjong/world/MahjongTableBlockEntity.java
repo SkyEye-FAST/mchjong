@@ -26,7 +26,6 @@ import top.skyeyefast.mchjong.engine.TaiwanCodec;
 import top.skyeyefast.mchjong.network.TaiwanViewPayload;
 import top.skyeyefast.mchjong.network.TaiwanActionPayload;
 import top.skyeyefast.mchjong.engine.SichuanCodec;
-import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.network.RiichiActionPayload;

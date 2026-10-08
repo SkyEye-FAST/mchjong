@@ -35,7 +35,7 @@ final class TaiwanTableSmoke {
         if (task != null && !task.isDone()) return false;
         if (task != null) { task.join(); task = null; }
         var table = (MahjongTableBlockEntity) client.level.getBlockEntity(pos);
-        var server = client.getSingleplayerServer(); var id = client.player.getUUID();
+        var server = client.getSingleplayerServer();
         var room = table.clientTableRoom(); var view = table.clientTaiwanView();
         switch (stage) {
             case 0 -> { task = server.submit(() -> target(client, pos).sit(main(client), 0)); stage++; }

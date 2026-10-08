@@ -11,15 +11,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayDecisionAnalysis;
-import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
-import top.skyeyefast.mchjong.engine.ReplayPlayback;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Table-oriented replay viewer. Raw recorder details are hidden behind semantic replay steps. */
 public final class ReplayScreen extends Screen {
-    private static final String[] WINDS = {"east", "south", "west", "north"};
     private static final double[] SPEEDS = {0.5, 1.0, 2.0, 4.0};
     private static final TileFacePreset PRESET = TileFacePreset.KANSAI;
     private final Screen parent;
