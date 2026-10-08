@@ -18,7 +18,6 @@ def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 sourceSets {
     smoke {
         java.srcDir '../common/src/smoke/java'
-        java.srcDir '../common/src/testFixtures/java'
         java.include 'top/skyeyefast/mchjong/forge/smoke/**', 'top/skyeyefast/mchjong/smoke/SmokeScreenshots.java'
         compileClasspath += sourceSets.main.output
         runtimeClasspath += sourceSets.main.output
