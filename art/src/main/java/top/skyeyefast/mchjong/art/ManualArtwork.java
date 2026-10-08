@@ -18,64 +18,57 @@ final class ManualArtwork {
         for (var preset : ManualExamples.HANDS.entrySet()) {
             var artwork = new TileArtwork(presets, preset.getKey());
             var faces = new BufferedImage[TileArtwork.FACE_COUNT];
-            for (int face = 0; face < faces.length; face++) {
-                faces[face] = new BufferedImage(23, 35, BufferedImage.TYPE_INT_ARGB);
-                var g = faces[face].createGraphics();
-                try {
-                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                    g.drawImage(artwork.face(face), 0, 0, 23, 35, null);
-                } finally { g.dispose(); }
-            }
+            for (int face = 0; face < faces.length; face++) faces[face] = artwork.face(face);
             for (var hand : preset.getValue().entrySet())
                 result.put(hand.getKey(), example(faces, hand.getValue()));
         }
         return result;
     }
 
-    /** Keep complete groups together, wrapping long special hands within Patchouli's 200-pixel crop. */
+    /** Fit the complete example on one line, scaling tiles and markers together. */
     private static BufferedImage example(BufferedImage[] faces, String notation) {
+        String[] groups = notation.replace(";", " ; ").split("\\s+");
+        int width = -8;
+        for (String group : groups) {
+            if (group.equals("+") || group.equals("/") || group.equals(";")) width += 24;
+            else {
+                if (!group.matches("[0-9]+[mpszq]"))
+                    throw new IllegalArgumentException("Invalid example group: " + group);
+                width += (group.length() - 1) * 23 + 8;
+            }
+        }
         var image = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
         var g = image.createGraphics();
         try {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            double scale = Math.min(1.0, 192.0 / width);
+            g.translate(4, 8);
+            g.scale(scale, scale);
             g.setColor(new Color(0x365851));
-            int x = 4, y = 8;
-            for (String group : notation.replace(";", " ; ").split("\s+")) {
-                if (group.equals("/") || group.equals(";")) {
-                    x = 4;
-                    y += 46;
-                }
+            int x = 0;
+            for (String group : groups) {
                 if (group.equals("+") || group.equals("/") || group.equals(";")) {
-                    // Keep a winning-tile marker on the same row as its single tile.
-                    if (x + (group.equals("+") ? 47 : 16) > 196) { x = 4; y += 46; }
-                    if (y + 35 > 200) throw new IllegalArgumentException("Example exceeds page: " + notation);
                     if (group.equals("+")) {
-                        g.fillRect(x + 1, y + 16, 14, 2);
-                        g.fillRect(x + 7, y + 10, 2, 14);
+                        g.fillRect(x + 1, 16, 14, 2);
+                        g.fillRect(x + 7, 10, 2, 14);
                     } else if (group.equals("/")) {
-                        for (int i = 0; i < 14; i++) g.fillRect(x + 13 - i, y + 10 + i, 2, 2);
+                        for (int i = 0; i < 14; i++) g.fillRect(x + 13 - i, 10 + i, 2, 2);
                     } else {
-                        g.fillRect(x + 7, y + 10, 3, 3);
-                        g.fillRect(x + 7, y + 20, 3, 3);
-                        g.fillRect(x + 6, y + 23, 2, 3);
+                        g.fillRect(x + 7, 10, 3, 3);
+                        g.fillRect(x + 7, 20, 3, 3);
+                        g.fillRect(x + 6, 23, 2, 3);
                     }
                     x += 24;
                     continue;
                 }
-                if (!group.matches("[0-9]+[mpszq]"))
-                    throw new IllegalArgumentException("Invalid example group: " + group);
                 char suit = group.charAt(group.length() - 1);
-                for (int start = 0; start < group.length() - 1; start += 8) {
-                    int end = Math.min(start + 8, group.length() - 1);
-                    int width = (end - start) * 23;
-                    if (x + width > 196) { x = 4; y += 46; }
-                    if (y + 35 > 200) throw new IllegalArgumentException("Example exceeds page: " + notation);
-                    for (int i = start; i < end; i++) {
-                        int face = TileArtwork.FACE_KEYS.indexOf("" + group.charAt(i) + suit);
-                        if (face < 0) throw new IllegalArgumentException("Invalid example tile: " + group);
-                        g.drawImage(faces[face], x + (i - start) * 23, y, null);
-                    }
-                    x += width + 8;
+                for (int i = 0; i < group.length() - 1; i++) {
+                    int face = TileArtwork.FACE_KEYS.indexOf("" + group.charAt(i) + suit);
+                    if (face < 0) throw new IllegalArgumentException("Invalid example tile: " + group);
+                    g.drawImage(faces[face], x, 0, 23, 35, null);
+                    x += 23;
                 }
+                x += 8;
             }
         } finally { g.dispose(); }
         return image;

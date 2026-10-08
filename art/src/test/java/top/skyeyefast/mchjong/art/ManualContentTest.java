@@ -43,11 +43,11 @@ class ManualContentTest {
         assertEquals(175, referenced.size());
     }
 
-    @Test void diagramsUseTheRequestedRegionalFacesAndFitTheImageCrop() throws Exception {
+    @Test void diagramsUseTheRequestedRegionalFacesAndFitOnOneLine() throws Exception {
         Path resources = Path.of(System.getProperty("mchjong.resources")).resolve("assets/mchjong/textures/manual");
         var examples = Map.of("riichi/haku", "kansai", "mcr/dragon_pung", "hong_kong",
-            "sichuan/all_pungs", "sichuan", "taiwan/white_dragon", "taiwan");
-        var firstFaces = Map.of("riichi/haku", 31, "mcr/dragon_pung", 33, "sichuan/all_pungs", 0, "taiwan/white_dragon", 31);
+            "sichuan/kong", "sichuan", "taiwan/white_dragon", "taiwan");
+        var firstFaces = Map.of("riichi/haku", 31, "mcr/dragon_pung", 33, "sichuan/kong", 0, "taiwan/white_dragon", 31);
         for (var example : examples.entrySet()) {
             var face = new TileArtwork(Path.of(System.getProperty("mchjong.artwork")), example.getValue()).face(firstFaces.get(example.getKey()));
             var thumbnail = new java.awt.image.BufferedImage(23, 35, java.awt.image.BufferedImage.TYPE_INT_ARGB);
@@ -66,7 +66,7 @@ class ManualContentTest {
                 for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
                     if ((image.getRGB(x, y) >>> 24) == 0) continue;
                     painted++;
-                    assertTrue(x < 200 && y < 200, path + ":" + x + "," + y);
+                    assertTrue(x < 200 && y < 43, path + ":" + x + "," + y);
                 }
                 assertTrue(painted > 0, path.toString());
             }

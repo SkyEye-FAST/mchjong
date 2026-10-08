@@ -102,8 +102,9 @@ uses the four shared language files. `ManualExamples` defines the tile groups fo
 every yaku, yakuman, fan and tai example. `ManualArtwork.examples` composes Kansai
 faces for Riichi, Hong Kong faces for MCR, Sichuan faces for Sichuan and Taiwan
 faces for Taiwan under `textures/manual/<variant>/`. Each award's text faces its
-image on the same spread. Groups retain gaps; winning tiles, public tiles and
-meld/flower ownership boundaries retain their markers. Images are 256 × 256 with
+image on the same spread. Complete examples fit on one line, uniformly scaling
+the tile faces and markers to the available width. Groups retain gaps; winning
+tiles, public tiles and meld/flower ownership boundaries retain their markers. Images are 256 × 256 with
 their content inside Patchouli's 200 × 200 source area; captions and marker
 explanations use ordinary localized page text.
 
