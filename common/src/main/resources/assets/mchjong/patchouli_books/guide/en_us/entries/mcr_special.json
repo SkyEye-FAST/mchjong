@@ -23,7 +23,7 @@
     {
       "type": "patchouli:image",
       "images": [
-        "mchjong:textures/manual/knitted.png"
+        "mchjong:textures/manual/mcr/knitted_straight.png"
       ],
       "text": "manual.mchjong.entry.mcr_special.knitted",
       "border": false
@@ -31,7 +31,7 @@
     {
       "type": "patchouli:image",
       "images": [
-        "mchjong:textures/manual/kongs.png"
+        "mchjong:textures/manual/mcr/two_melded_kongs.png"
       ],
       "text": "manual.mchjong.entry.mcr_special.kongs",
       "border": false

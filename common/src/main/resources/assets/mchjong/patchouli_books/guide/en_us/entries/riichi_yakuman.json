@@ -10,9 +10,25 @@
       "anchor": "kokushi_musou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/kokushi_musou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_2",
       "anchor": "kokushi_thirteen_waiting"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/kokushi_thirteen_waiting.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -20,9 +36,25 @@
       "anchor": "suuankou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/suuankou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_4",
       "anchor": "suuankou_tanki"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/suuankou_tanki.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -30,9 +62,25 @@
       "anchor": "daisangen"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/daisangen.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_6",
       "anchor": "shousuushii"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/shousuushii.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -40,9 +88,25 @@
       "anchor": "daisuushii"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/daisuushii.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_8",
       "anchor": "tsuuiisou"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/tsuuiisou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -50,9 +114,25 @@
       "anchor": "chinroutou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chinroutou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_10",
       "anchor": "ryuuiisou"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/ryuuiisou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -60,9 +140,25 @@
       "anchor": "chuuren_poutou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chuuren_poutou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_12",
       "anchor": "chuuren_nine_waiting"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chuuren_nine_waiting.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -70,14 +166,38 @@
       "anchor": "suukantsu"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/suukantsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_14",
       "anchor": "tenhou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/tenhou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.page_15",
       "anchor": "chihou"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chihou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     }
   ]
 }

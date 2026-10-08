@@ -1,40 +1,84 @@
 package top.skyeyefast.mchjong.art;
 
 import java.awt.Color;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.TreeMap;
 
 /** Original teal cloth cover with brass binding and an ivory tile emblem. */
 final class ManualArtwork {
     private ManualArtwork() {}
 
     /** Handbook examples reuse the same prepared faces as the playing tiles. */
-    static java.util.Map<String, BufferedImage> examples(java.nio.file.Path presets) throws java.io.IOException {
-        var artwork = new TileArtwork(presets, "kansai");
-        var hands = java.util.Map.of(
-            "regular", new String[]{"123m", "456m", "789p", "234s", "55p"},
-            "taiwan", new String[]{"123m", "456m", "789p", "234s", "678s", "55p"},
-            "pairs", new String[]{"11m", "33m", "55p", "77p", "22s", "44s", "66z"},
-            "knitted", new String[]{"147m", "258p", "369s", "111z", "55z"},
-            "sichuan", new String[]{"1111m", "22m", "33m", "44p", "55p", "66p"},
-            "kongs", new String[]{"1111m", "5555p", "234s", "678s", "22p"});
-        var result = new java.util.TreeMap<String, BufferedImage>();
-        for (var hand : hands.entrySet()) {
-            var image = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
-            var g = image.createGraphics();
-            try {
-                g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                for (int group = 0; group < hand.getValue().length; group++) {
-                    String tiles = hand.getValue()[group];
-                    int base = switch (tiles.charAt(tiles.length() - 1)) { case 'm' -> 0; case 'p' -> 9; case 's' -> 18; default -> 27; };
-                    int x = 4 + group % 2 * 100;
-                    int y = 8 + group / 2 * 46;
-                    for (int i = 0; i < tiles.length() - 1; i++)
-                        g.drawImage(artwork.face(base + tiles.charAt(i) - '1'), x + i * 23, y, 23, 35, null);
-                }
-            } finally { g.dispose(); }
-            result.put(hand.getKey(), image);
+    static Map<String, BufferedImage> examples(Path presets) throws IOException {
+        var result = new TreeMap<String, BufferedImage>();
+        for (var preset : ManualExamples.HANDS.entrySet()) {
+            var artwork = new TileArtwork(presets, preset.getKey());
+            var faces = new BufferedImage[TileArtwork.FACE_COUNT];
+            for (int face = 0; face < faces.length; face++) {
+                faces[face] = new BufferedImage(23, 35, BufferedImage.TYPE_INT_ARGB);
+                var g = faces[face].createGraphics();
+                try {
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                    g.drawImage(artwork.face(face), 0, 0, 23, 35, null);
+                } finally { g.dispose(); }
+            }
+            for (var hand : preset.getValue().entrySet())
+                result.put(hand.getKey(), example(faces, hand.getValue()));
         }
         return result;
+    }
+
+    /** Keep complete groups together, wrapping long special hands within Patchouli's 200-pixel crop. */
+    private static BufferedImage example(BufferedImage[] faces, String notation) {
+        var image = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
+        var g = image.createGraphics();
+        try {
+            g.setColor(new Color(0x365851));
+            int x = 4, y = 8;
+            for (String group : notation.replace(";", " ; ").split("\s+")) {
+                if (group.equals("/") || group.equals(";")) {
+                    x = 4;
+                    y += 46;
+                }
+                if (group.equals("+") || group.equals("/") || group.equals(";")) {
+                    // Keep a winning-tile marker on the same row as its single tile.
+                    if (x + (group.equals("+") ? 47 : 16) > 196) { x = 4; y += 46; }
+                    if (y + 35 > 200) throw new IllegalArgumentException("Example exceeds page: " + notation);
+                    if (group.equals("+")) {
+                        g.fillRect(x + 1, y + 16, 14, 2);
+                        g.fillRect(x + 7, y + 10, 2, 14);
+                    } else if (group.equals("/")) {
+                        for (int i = 0; i < 14; i++) g.fillRect(x + 13 - i, y + 10 + i, 2, 2);
+                    } else {
+                        g.fillRect(x + 7, y + 10, 3, 3);
+                        g.fillRect(x + 7, y + 20, 3, 3);
+                        g.fillRect(x + 6, y + 23, 2, 3);
+                    }
+                    x += 24;
+                    continue;
+                }
+                if (!group.matches("[0-9]+[mpszq]"))
+                    throw new IllegalArgumentException("Invalid example group: " + group);
+                char suit = group.charAt(group.length() - 1);
+                for (int start = 0; start < group.length() - 1; start += 8) {
+                    int end = Math.min(start + 8, group.length() - 1);
+                    int width = (end - start) * 23;
+                    if (x + width > 196) { x = 4; y += 46; }
+                    if (y + 35 > 200) throw new IllegalArgumentException("Example exceeds page: " + notation);
+                    for (int i = start; i < end; i++) {
+                        int face = TileArtwork.FACE_KEYS.indexOf("" + group.charAt(i) + suit);
+                        if (face < 0) throw new IllegalArgumentException("Invalid example tile: " + group);
+                        g.drawImage(faces[face], x + (i - start) * 23, y, null);
+                    }
+                    x += width + 8;
+                }
+            }
+        } finally { g.dispose(); }
+        return image;
     }
 
     static BufferedImage texture() {

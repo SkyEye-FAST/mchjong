@@ -203,12 +203,20 @@ class AssetContractTest {
         var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
                 "plain.png", "cloth_pattern.png", "riichi_stick.png", "stick_icons.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
                 "mahjong_manual.png", "mahjong_printing_plate.png", "incomplete_mahjong_box.png", "creeper.png", "mojang.png"));
-        ManualArtwork.examples(artwork).keySet().forEach(name -> expectedTextures.add(name + ".png"));
+        Path manual = resources.resolve("assets/mchjong/textures/manual");
+        var expectedManual = ManualExamples.HANDS.values().stream().flatMap(hands -> hands.keySet().stream())
+            .map(name -> name + ".png").collect(java.util.stream.Collectors.toSet());
+        try (var textures = Files.walk(manual)) {
+            assertEquals(expectedManual, textures.filter(Files::isRegularFile)
+                .map(file -> manual.relativize(file).toString().replace('\\', '/'))
+                .collect(java.util.stream.Collectors.toSet()), "Only referenced handbook diagrams should ship");
+        }
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         for (int face = 1; face <= 6; face++) expectedTextures.add("dice_" + face + ".png");
         try (var textures = Files.walk(resources.resolve("assets/mchjong/textures"))) {
             assertEquals(expectedTextures, textures.filter(Files::isRegularFile)
+                    .filter(file -> !file.startsWith(manual))
                     .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())
                     .collect(java.util.stream.Collectors.toSet()), "Only textures referenced at runtime should ship");
         }
