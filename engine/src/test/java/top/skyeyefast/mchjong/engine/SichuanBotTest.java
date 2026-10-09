@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.HashSet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import static org.junit.jupiter.api.Assertions.*;
@@ -150,6 +151,38 @@ class SichuanBotTest {
         rich = SichuanRuleOption.ADDED_KONG_PAYMENT.with(rich, 8);
         var richView = withRules(game.view(0), rich);
         assertEquals(DISCARD, richView.actions().get(SichuanBot.choose(richView)).type());
+    }
+
+    @Test @Timeout(5) void dangerUsesEachVoidSuitCappedPaymentsAndRetiredWinners() {
+        var game = turn("1m 2m 3m 1p 2p 3p 7p 8p 9p 3m 4m 6m 5p 5p");
+        var original = game.view(0);
+        var seats = new ArrayList<>(original.seats());
+        var other = seats.get(1);
+        var melds = new ArrayList<Meld>();
+        for (int kind = 6; kind <= 8; kind++) melds.add(new Meld(Meld.Type.TRIPLET, List.of(kind * 4, kind * 4 + 1, kind * 4 + 2), 0, kind * 4));
+        var river = List.of(new SichuanPlayerState.Discard(Tile.parseKind("3m") * 4 + 2, false));
+        seats.set(1, new SichuanView.Seat(Collections.nCopies(4, Tile.HIDDEN), melds, river, 1, false, Tile.ABSENT, Tile.ABSENT));
+        var slots = new ArrayList<>(Collections.nCopies(108, Tile.ABSENT));
+        for (int i = 0; i < 12; i++) slots.set(i, Tile.HIDDEN);
+        var wall = new SichuanView.Wall(slots, original.wall().dealer(), original.wall().die1(), original.wall().die2(), original.wall().eastWestLongWall());
+        var threatened = new SichuanView(original.revision(), original.decision(), original.rules(), original.phase(), original.handNumber(), original.dealer(), original.scores(),
+            0, original.turn(), wall, seats, original.focus(), original.supplier(), original.robbingKong(), false, original.actions(), original.winners(), original.ledger(), null, original.passedFan());
+        var known = new HashSet<>(game.view(0).seats().getFirst().hand());
+        known.addAll(melds.stream().flatMap(meld -> meld.tiles().stream()).toList()); known.add(river.getFirst().tile());
+        var risk = ChineseBotDanger.sichuan(threatened, known);
+        assertEquals(0, risk.against(1, Tile.parseKind("5p")), "Opponent's void suit cannot win");
+        assertTrue(risk.against(1, Tile.parseKind("3m")) > 0, "Sichuan repeats are not furiten-safe");
+        assertTrue(risk.against(1, 5) > risk.against(2, 5));
+        var early = new SichuanView(threatened.revision(), threatened.decision(), threatened.rules(), threatened.phase(), threatened.handNumber(), threatened.dealer(), threatened.scores(),
+            0, threatened.turn(), original.wall(), seats, threatened.focus(), threatened.supplier(), false, false, threatened.actions(), threatened.winners(), threatened.ledger(), null, threatened.passedFan());
+        assertTrue(risk.against(1, 5) > ChineseBotDanger.sichuan(early, known).against(1, 5), "Short walls increase active-opponent threat");
+        assertTrue(risk.against(1, 5) > ChineseBotDanger.sichuan(withRules(threatened, SichuanRuleOption.FAN_CAP.with(game.rules(), 0)), known).against(1, 5));
+        assertEquals(Tile.parseKind("3m"), Tile.kind(threatened.actions().get(SichuanBot.choose(threatened)).tiles().getFirst()));
+        seats.set(1, new SichuanView.Seat(Collections.nCopies(4, Tile.HIDDEN), melds, river, 1, true, Tile.ABSENT, Tile.ABSENT));
+        var retired = new SichuanView(threatened.revision(), threatened.decision(), threatened.rules(), threatened.phase(), threatened.handNumber(), threatened.dealer(), threatened.scores(),
+            0, threatened.turn(), wall, seats, threatened.focus(), threatened.supplier(), false, false, threatened.actions(), threatened.winners(), threatened.ledger(), null, threatened.passedFan());
+        assertEquals(0, ChineseBotDanger.sichuan(retired, known).against(1, 5));
+        assertEquals(Tile.parseKind("6m"), Tile.kind(retired.actions().get(SichuanBot.choose(retired)).tiles().getFirst()));
     }
 
     @Test void hiddenHandsAndFutureWallCannotChangeTheChoice() {

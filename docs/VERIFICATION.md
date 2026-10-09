@@ -211,6 +211,7 @@ scores and dealer succession, queue acknowledgement and altered-record rejection
 Run `gradlew.bat :engine:test --tests "*SichuanReplayTest" --warning-mode fail --console=plain`.
 `SichuanBotTest` owns deterministic void/secret-discard choices, quad-pair efficiency,
 public-copy deduplication, seven-pairs/all-pungs/full-flush retention, capped value,
+per-opponent void-suit danger, late-wall pressure and retired-winner exclusion,
 progress-preserving kong income, conservative calls, recipient privacy, room/policy
 controls, paused/restored scheduling, multi-win Bot replies, inactive Bot clocks,
 automatic confirmations and both presets' complete one-human/three-Bot eight-hand
@@ -286,7 +287,8 @@ and returning from the replay browser by pointer in both views. Opt-in captures 
 `mcr-automation-immersive.png`, `sichuan-automation-seated.png` and
 `sichuan-automation-immersive.png`.
 `McrBotTest` owns shared one-human/three-Bot preparation, world policy, recipient-only
-decisions, minimum-fan wins, discard availability, conservative calls, delayed
+decisions, minimum-fan wins, discard availability, public opponent danger and
+qualification discounts, flower-only payment increments, conservative calls, delayed
 simultaneous responses, restored pauses/votes and a complete sixteen-hand Bot match.
 `McrBotRoutesTest` owns eight-fan route choices against faster low-fan waits,
 special-form retention, calls that destroy required structures and publicly
@@ -429,7 +431,8 @@ paused/restored allowances and exit votes, partial hand acknowledgements,
 exhaustion/repeat dealer, wind progression, guaranteed final-dealer repeat,
 complete four-wind matches for both presets and cumulative-score idempotence.
 The deterministic legal-action test driver is not a production Bot.
-`TaiwanBotTest` owns win priority, shanten/effective-copy ordering, live-wait
+`TaiwanBotTest` owns win priority, bounded shanten/effective-copy/value tradeoffs,
+attainable and publicly exhausted scoring routes, live-wait
 quality and current-rule scoring, conservative and beneficial calls/replacements,
 hidden-hand/wall independence, shared room Bot controls/world policy, delayed
 paused/restored decisions, inactive Bot clocks and automatic hand confirmations.

@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Balance MCR and Sichuan Bot attacks against per-opponent public danger and native payments; let attainable Taiwan scoring routes outweigh limited efficiency differences while preserving live readiness and late-wall speed.
+
 - Link settlement awards and rule settings to brief localized explanations and existing hand examples, with precise optional handbook navigation and keyboard return controls.
 
 - Explain server-checked preparation shortages for the selected rules and briefly mark each human's assigned stool without changing seating controls.
