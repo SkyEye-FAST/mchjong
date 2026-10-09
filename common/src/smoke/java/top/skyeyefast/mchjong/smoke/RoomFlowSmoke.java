@@ -210,9 +210,13 @@ final class RoomFlowSmoke {
             next(18);
         } else if (stage == 18) {
             if (room.seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.POSITIONING) {
-                require(room.viewerSeat() == 2, "West draw did not change the recipient seat");
-                if (room.seats().get(2).presence() == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
-                    require(client.player.isPassenger(), "Changed-seat preparation did not preserve physical mounting");
+                // Automatic tables assign a random wind without exposing a wind draw.
+                require(room.viewerSeat() >= 0, "Seat assignment lost the recipient");
+                if (!table.automatic()) require(room.viewerSeat() == 2, "West draw did not change the recipient seat");
+                if (room.seats().get(room.viewerSeat()).presence() == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
+                    require(client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat
+                        && seat.seat() == room.viewerSeat() && seat.tablePos().equals(table.getBlockPos()),
+                        "Assigned-seat preparation did not mount the matching stool");
                     reassignment.restoreSettings();
                     capture(client, output, "room-reassigned-seated.png");
                     click(client, "room.mchjong.dissolve");
