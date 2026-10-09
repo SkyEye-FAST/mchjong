@@ -41,8 +41,10 @@ final class RoomLobby {
     }
 
     private record Layout(int left, int top, int span, int height, int rail) {
-        static Layout of(int width, int height) {
-            int span = Math.min(420, width - 48), panelHeight = Math.min(238, height - 48);
+        static Layout of(int width, int height, int entries, boolean roster) {
+            int span = Math.min(440, width - 32);
+            int wanted = 58 + entries * (roster ? 32 : 22) + (roster ? 40 : 64);
+            int panelHeight = Math.min(Math.min(300, height - 24), Math.max(180, wanted));
             return new Layout((width - span) / 2, (height - panelHeight) / 2, span, panelHeight,
                 Math.min(88, Math.max(64, span / 5)));
         }
@@ -51,6 +53,7 @@ final class RoomLobby {
         int contentTop() { return top + 58; }
         int footer() { return top + height - 26; }
         int status() { return footer() - 14; }
+        int rosterPitch(int seats) { return Math.min(32, (status() - contentTop() - 4) / seats); }
     }
 
     RoomLobby(Screen parent, BlockPos pos, Runnable rebuild) {
@@ -67,7 +70,7 @@ final class RoomLobby {
     }
 
     List<MahjongButton> build(TableRoomView room, int width, int height) {
-        layout = Layout.of(width, height);
+        layout = Layout.of(width, height, tab == 0 ? room.seats().size() : options(parent, pos, room).size(), tab == 0);
         if (revision != room.revision()) { revision = room.revision(); pending = false; }
         var buttons = new ArrayList<MahjongButton>();
         var client = Minecraft.getInstance();
@@ -132,7 +135,7 @@ final class RoomLobby {
     }
 
     private void buildRoster(List<MahjongButton> buttons, TableRoomView room) {
-        int pitch = layout.height() < 200 ? 26 : 34;
+        int pitch = layout.rosterPitch(room.seats().size());
         for (int seat = 0; seat < room.seats().size(); seat++) {
             int y = layout.contentTop() + seat * pitch;
             var participant = room.seats().get(seat).participant();
@@ -286,7 +289,7 @@ final class RoomLobby {
         var l = layout;
         MahjongUi.panel(graphics, l.left() - 6, l.top(), l.span() + 12, l.height());
         if (tab == 0) {
-            int pitch = l.height() < 200 ? 26 : 34;
+            int pitch = l.rosterPitch(room.seats().size());
             for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat); var player = state.participant();
                 int y = l.contentTop() + seat * pitch;

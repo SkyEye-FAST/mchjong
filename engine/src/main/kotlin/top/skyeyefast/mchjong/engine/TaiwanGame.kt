@@ -170,9 +170,11 @@ class TaiwanGame private constructor(
         val actions = mutableListOf<TaiwanAction>()
         if (drawn != Tile.ABSENT && ordinaryScore(turn, drawn, TaiwanWinContext.Method.SELF_DRAW) != null) actions += TaiwanAction(Type.WIN)
         val discards = if (p.ready == TaiwanWinContext.Ready.NONE) p.hand.sorted() else listOf(drawn)
+        val checkedReadyKinds = mutableSetOf<Int>()
         for (tile in discards) {
             actions += TaiwanAction(Type.DISCARD, listOf(tile))
-            if (p.ready == TaiwanWinContext.Ready.NONE && TaiwanHandAnalyzer.waits(p.hand - tile, p.melds, turn).isNotEmpty()) {
+            if (p.ready == TaiwanWinContext.Ready.NONE && checkedReadyKinds.add(Tile.kind(tile)) &&
+                TaiwanHandAnalyzer.waits(p.hand - tile, p.melds, turn).isNotEmpty()) {
                 actions += TaiwanAction(Type.READY_DISCARD, listOf(tile))
             }
         }

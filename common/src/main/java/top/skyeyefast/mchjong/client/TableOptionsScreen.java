@@ -51,15 +51,7 @@ public final class TableOptionsScreen extends Screen implements TableChildScreen
         if (room == null || world == null) return;
         revision = room.revision();
         policy = world;
-        layout = SettingsLayout.of(width, height);
-        int span = layout.bodyWidth(), left = layout.bodyLeft();
         String[] scopes = {"world", "room", "personal"};
-        for (int i = 0; i < scopes.length; i++) {
-            int index = i;
-            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.scope." + scopes[i]), ignored -> {
-                tab = index; page = 0; init();
-            }).bounds(layout.left(), layout.contentTop() + i * 24, layout.rail(), 22).build().navigation().selected(tab == i));
-        }
         List<Entry> entries = new ArrayList<>();
         if (tab == 0) {
             boolean edit = canEditWorld();
@@ -108,6 +100,14 @@ public final class TableOptionsScreen extends Screen implements TableChildScreen
                 () -> minecraft.setScreen(new TableSettingsScreen(this))));
             entries.add(new Entry(Component.translatable("settings.mchjong.personal_presets"), true,
                 () -> minecraft.setScreen(new PersonalPresetsScreen(this))));
+        }
+        layout = SettingsLayout.of(width, height, scopes.length * 24, entries.size() * 22);
+        int span = layout.bodyWidth(), left = layout.bodyLeft();
+        for (int i = 0; i < scopes.length; i++) {
+            int index = i;
+            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.scope." + scopes[i]), ignored -> {
+                tab = index; page = 0; init();
+            }).bounds(layout.left(), layout.contentTop() + i * 24, layout.rail(), 22).build().navigation().selected(tab == i));
         }
         int rows = layout.rows();
         pages = Math.max(1, (entries.size() + rows - 1) / rows);

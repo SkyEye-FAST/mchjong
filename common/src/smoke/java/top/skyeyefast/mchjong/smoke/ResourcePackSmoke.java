@@ -10,7 +10,6 @@ import net.minecraft.resources.Identifier;
 import top.skyeyefast.mchjong.client.TileFacePresets;
 import top.skyeyefast.mchjong.client.TileBackPresets;
 import top.skyeyefast.mchjong.client.TileMesh;
-import top.skyeyefast.mchjong.client.RiichiStickModel;
 import top.skyeyefast.mchjong.client.RiichiStickPresets;
 import top.skyeyefast.mchjong.client.VoicePresets;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -19,7 +18,7 @@ import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
-/** Real pack selection, native model baking, cosmetic-ID packets and removal/reload. */
+/** Real pack selection, cosmetic-ID packets and removal/reload. */
 final class ResourcePackSmoke {
     private static final TileFacePreset CUSTOM = new TileFacePreset(Identifier.parse("smoke:custom"));
     private static final TileFacePreset SERVER = new TileFacePreset(Identifier.parse("smoke:server"));
@@ -78,11 +77,6 @@ final class ResourcePackSmoke {
             backPattern(pack.resolve("assets/mchjong/textures/tile/back.png"));
             pattern(pack.resolve("assets/mchjong/textures/furniture/cloth_pattern.png"), 256, 256);
             pattern(pack.resolve("assets/mchjong/textures/item/riichi_stick.png"), 384, 32);
-            try (var reader = client.getResourceManager().openAsReader(MahjongContent.id("models/item/riichi_stick.json"))) {
-                var model = com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
-                model.getAsJsonArray("elements").get(0).getAsJsonObject().getAsJsonArray("to").set(1, new com.google.gson.JsonPrimitive(1.2));
-                write(pack, "assets/mchjong/models/item/riichi_stick.json", model.toString());
-            }
             client.getResourcePackRepository().reload();
             var packs = new java.util.ArrayList<>(selected);
             packs.add("file/mchjong-smoke-custom");

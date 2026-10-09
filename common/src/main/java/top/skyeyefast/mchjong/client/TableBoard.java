@@ -379,7 +379,7 @@ final class TableBoard {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
         graphics.pose().pushMatrix();
-        graphics.pose().translate(640, 299);
+        graphics.pose().mul(TableProjection.surface(0, 0, -48, 8.5));
         graphics.pose().scale(2, 2);
         if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
             view.roundLabel(), -42, 1, 84, MahjongUi.ACCENT, true);
@@ -399,12 +399,12 @@ final class TableBoard {
         var font = Minecraft.getInstance().font;
         var indicator = view.indicator();
         if (settings.show(TableSettings.Information.ROUND)) {
-            graphics.pose().pushMatrix(); graphics.pose().translate(640, 326); graphics.pose().scale(1.4f, 1.4f);
+            graphics.pose().pushMatrix(); graphics.pose().mul(TableProjection.surface(0, 0, -14, 8.5)); graphics.pose().scale(1.4f, 1.4f);
             MahjongUi.text(graphics, font, indicator.title(), -40, -5, 80, MahjongUi.MUTED, true);
             graphics.pose().popMatrix();
         }
         if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) {
-            graphics.pose().pushMatrix(); graphics.pose().translate(640, 346); graphics.pose().scale(2, 2);
+            graphics.pose().pushMatrix(); graphics.pose().mul(TableProjection.surface(0, 0, 14, 8.5)); graphics.pose().scale(2, 2);
             MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.remaining.short", view.remaining()), -32, -5, 64, MahjongUi.TEXT, true);
             graphics.pose().popMatrix();
         }
@@ -412,10 +412,10 @@ final class TableBoard {
             ? TableSettings.Information.STATUS : TableSettings.Information.WINDS);
         for (int seat = 0; seat < view.players(); seat++) {
             int side = side(seat, viewer, players);
-            var point = TableProjection.seat(side, 0, 91, 8.5);
             boolean active = seat == view.turn() && settings.show(TableSettings.Information.TURN);
             if (!labels && !active) continue;
-            graphics.pose().pushMatrix(); graphics.pose().translate(point.x(), point.y());
+            graphics.pose().pushMatrix(); graphics.pose().mul(TableProjection.surface(side, 0, 70, 8.5));
+            graphics.pose().scale(2, 2);
             graphics.fill(-22, -6, 22, 7, active ? MahjongUi.SELECTED : MahjongUi.INPUT);
             if (labels && seat == view.dealer()) graphics.fill(-22, -6, -20, 7, MahjongUi.ACCENT);
             if (labels) MahjongUi.text(graphics, font, indicator.seats().get(seat), -20, -4, 40, active ? MahjongUi.ACCENT : MahjongUi.MUTED, true);
@@ -426,6 +426,7 @@ final class TableBoard {
     private void center(GuiGraphicsExtractor graphics, TableBoardState view) {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
+        Component caption = view.indicator() == null ? view.roundLabel() : view.indicator().title();
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
         MahjongUi.panel(graphics, center.x(), center.y(), center.width(), center.height());
         for (int seat = 0; !scoresOnCards() && seat < players; seat++) {
@@ -433,8 +434,10 @@ final class TableBoard {
             int length = side % 2 == 0 ? center.width() : center.height();
             int depth = side % 2 == 0 ? center.height() : center.width();
             Component label = Component.empty();
-            if (settings.show(TableSettings.Information.WINDS)) label = Component.translatable("wind.mchjong."
-                + WINDS[Math.floorMod(seat - view.dealer(), players)] + ".short");
+            boolean labels = settings.show(view.seats().get(seat).variant() == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN
+                ? TableSettings.Information.STATUS : TableSettings.Information.WINDS);
+            if (labels) label = view.indicator() == null ? Component.translatable("wind.mchjong."
+                + WINDS[Math.floorMod(seat - view.dealer(), players)] + ".short") : view.indicator().seats().get(seat);
             if (settings.show(TableSettings.Information.POINTS)) label = label.copy().append(" " + view.seats().get(seat).points());
             graphics.pose().pushMatrix();
             graphics.pose().translate(cx, cy);
@@ -447,7 +450,7 @@ final class TableBoard {
         }
         if (center.height() <= 40) {
             var summary = Component.empty();
-            if (settings.show(TableSettings.Information.ROUND)) summary.append(view.roundLabel());
+            if (settings.show(TableSettings.Information.ROUND)) summary.append(caption);
             if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) {
                 if (!summary.getString().isEmpty()) summary.append("  ");
                 summary.append(Integer.toString(view.remaining()));
@@ -456,7 +459,7 @@ final class TableBoard {
             return;
         }
         if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
-            view.roundLabel(),
+            caption,
             center.x() + 14, cy - 10, center.width() - 28, MahjongUi.ACCENT, true);
         if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
             Component.translatable("ui.mchjong.remaining.short", view.remaining()), center.x() + 14, cy + 2,

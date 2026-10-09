@@ -199,6 +199,24 @@ class TaiwanGameTest {
         game.checkConservation()
     }
 
+    @Test fun readyDiscardsMergeEquivalentCopiesButKeepDifferentFacesAndPhysicalDiscards() {
+        val hand = (0..11).toList() + listOf(27, 27, 27, 28, 28)
+        for (preset in TaiwanPreset.entries) for (kind in hand.distinct()) {
+            val game = fixture(mapOf(0 to hand), rules = preset.rules())
+            val decision = game.decisions().single()
+            val discards = decision.actions.filter { it.type == Type.DISCARD }
+            val ready = decision.actions.filter { it.type == Type.READY_DISCARD }
+            assertEquals(game.player(0).concealed.toSet(), discards.map { it.tiles.single() }.toSet())
+            assertEquals(hand.distinct().sorted(), ready.map { Tile.kind(it.tiles.single()) }.sorted())
+            val index = decision.actions.indexOfFirst { it.type == Type.READY_DISCARD && Tile.kind(it.tiles.single()) == kind }
+            val tile = decision.actions[index].tiles.single()
+            game.submit(0, decision.token, index)
+            assertFalse(tile in game.player(0).concealed)
+            assertEquals(hand.count { it == kind } - 1, game.player(0).concealed.count { Tile.kind(it) == kind })
+            game.checkConservation()
+        }
+    }
+
     @Test fun readyLocksDiscardsAndStaleOrInventedActionsAreAtomic() {
         val game = fixture(mapOf(0 to wait + 30), draws = listOf(31, 31, 31, 32))
         val old = game.decisions().single()

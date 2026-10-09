@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.*;
@@ -54,7 +56,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
             .map(d -> new Discard(d.tile(), d.called(), false, d.tsumogiri())).toList(), s.flowers(), view.result() != null, MahjongVariant.MCR)).toList();
         return new TableBoardState(viewer, 4, view.dealer(), view.handNumber() - 1, -1, -1, view.turn(), view.remaining(), seats,
             view.focus() == null ? null : new Focus(view.focus().tile()), false, false, view.result() != null,
-            Component.translatable("mcr.mchjong.hand", view.handNumber(), view.remaining()),
+            CountedText.of("mcr.mchjong.hand", 1, view.handNumber(), view.remaining()),
             new Indicator(Component.translatable("mcr.mchjong.indicator_round", wind(view.roundWind() - 27), view.handNumber()),
                 java.util.stream.IntStream.range(0, 4).mapToObj(i -> wind(Math.floorMod(i - view.dealer(), 4))).toList()));
     }
@@ -66,7 +68,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
         }).toList();
         return new TableBoardState(view.viewerSeat(), 4, view.dealer(), view.handNumber() - 1, -1, -1, view.turn(), view.wall().remaining(), seats,
             view.focus() < 0 ? null : new Focus(view.focus()), false, false, view.result() != null,
-            Component.translatable("sichuan.mchjong.hand", view.handNumber(), view.rules().matchHands(), view.wall().remaining()),
+            CountedText.of("sichuan.mchjong.hand", 2, view.handNumber(), view.rules().matchHands(), view.wall().remaining()),
             new Indicator(Component.translatable("sichuan.mchjong.indicator_round", view.handNumber(), view.rules().matchHands()),
                 view.seats().stream().map(TableBoardState::voidLabel).toList()));
     }

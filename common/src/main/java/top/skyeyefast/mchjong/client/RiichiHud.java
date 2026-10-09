@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
@@ -52,7 +54,7 @@ final class RiichiHud {
         int headerWidth = board == null ? Math.min(280, Math.max(84, width - 224))
             : Math.min(220, Math.max(110, width - 190));
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(RiichiTableScreen.roundName(view))
-            .append("\n").append(Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()));
+            .append("\n").append(CountedText.of("ui.mchjong.table_deposits", 1, view.honba(), view.riichiSticks()));
         details = details.copy().append("\n").append(Component.translatable("settings.mchjong.hand_visibility",
             Component.translatable("settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))));
         Component title = settings.show(TableSettings.Information.ROUND) ? Component.translatable("ui.mchjong.round.short",
@@ -61,7 +63,7 @@ final class RiichiHud {
             : settings.show(TableSettings.Information.RULES) ? Component.translatable(view.rules().custom()
                 ? "rules.mchjong.custom" : view.rules().preset().presetKey()) : Component.empty();
         Component remaining = settings.show(TableSettings.Information.REMAINING)
-            ? Component.translatable("ui.mchjong.remaining", view.remaining()) : Component.empty();
+            ? CountedText.of("ui.mchjong.remaining", 0, view.remaining()) : Component.empty();
         if (board != null) {
             title = Component.empty();
             remaining = Component.empty();
@@ -127,7 +129,7 @@ final class RiichiHud {
             }
             if (settings.show(TableSettings.Information.POINTS)) {
                 shortLine = shortLine.copy().append(" " + player.points());
-                hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.points", player.points()));
+                hover = hover.copy().append("\n").append(CountedText.of("ui.mchjong.points", 0, player.points()));
             }
             if (settings.show(TableSettings.Information.RANKS)) {
                 long rank = 1 + view.seats().stream().filter(other -> other.points() > player.points()).count();
@@ -199,7 +201,7 @@ final class RiichiHud {
                     disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
                 if (meldSummary) {
                     int tileWidth = summaryWidth;
-                    if (tileWidth == 0) text(font, graphics, Component.translatable("ui.mchjong.meld_groups", player.melds().size()),
+                    if (tileWidth == 0) text(font, graphics, CountedText.of("ui.mchjong.meld_groups", 0, player.melds().size()),
                         x + 5, top + 25, cardWidth - 10, MahjongUi.MUTED);
                     else {
                         int meldX = x + 5;

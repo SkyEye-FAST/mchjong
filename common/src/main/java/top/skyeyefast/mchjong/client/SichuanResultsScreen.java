@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.SichuanGame;
@@ -40,7 +42,7 @@ public final class SichuanResultsScreen extends TableResultsScreen {
         var v = view(); if (v == null || v.game().phase() != SichuanGame.Phase.HAND_END) return Component.empty();
         long elapsed = v.paused() ? 0 : table().clientViewAgeMillis() / 50;
         int seconds = (int) (Math.max(0, v.settlementTicks() - elapsed) + 19) / 20;
-        return Component.translatable("sichuan.mchjong.reading", v.confirmedCount(), 4, seconds);
+        return CountedText.of("sichuan.mchjong.reading", 2, v.confirmedCount(), 4, seconds);
     }
 
 }

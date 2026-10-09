@@ -29,8 +29,10 @@ internal object LegalActions {
         ) actions += RiichiAction(ABORT_NINE)
 
         if (!game.wall.canReplace()) return actions.toList()
-        if (game.rules.sanma()) for (tile in ordered) {
-            if (Tile.kind(tile) == Tile.NORTH && (!player.riichi || tile == player.drawn)) actions += RiichiAction(NUKI, tile)
+        if (game.rules.sanma()) {
+            // North copies are equivalent; issue one declaration, then offer the next after replacement.
+            ordered.firstOrNull { Tile.kind(it) == Tile.NORTH && (!player.riichi || it == player.drawn) }
+                ?.let { actions += RiichiAction(NUKI, it) }
         }
         if (game.kanCount() >= 4) return actions.toList()
         for (kind in 0..<34) {
