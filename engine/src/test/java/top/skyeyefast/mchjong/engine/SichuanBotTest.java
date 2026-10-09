@@ -9,6 +9,8 @@ import java.util.UUID;
 import java.util.HashSet;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import static org.junit.jupiter.api.Assertions.*;
 import static top.skyeyefast.mchjong.engine.SichuanAction.Type.*;
 
@@ -259,62 +261,60 @@ class SichuanBotTest {
         session.tick(); assertEquals(1, session.save().age());
     }
 
-    // Two full matches plus replay reconstruction need headroom on shared CI runners.
-    @Test @Timeout(180) void oneHumanThreeBotsFinishEightHandsWithReplayAndRestorationForBothPresets() {
-        for (var preset : SichuanPreset.values()) {
-            var session = lobby(preset);
-            room(session, RoomAction.Type.FILL_BOTS); start(session);
-            int ended = 0;
-            boolean midHandRestore = false;
-            for (int tick = 0; tick < 50_000 && session.lifecycle() != TableSession.Lifecycle.FINISHED; tick++) {
-                var view = session.view(HUMAN);
-                if (!midHandRestore && tick >= 30) {
-                    session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
-                    assertTrue(session.paused());
-                    session.synchronizeSeats(Map.of(HUMAN, session.seatOf(HUMAN)));
-                    midHandRestore = true; view = session.view(HUMAN);
-                }
-                if (view.game().phase() == SichuanGame.Phase.HAND_END && view.game().handNumber() != ended) {
-                    ended = view.game().handNumber();
-                    assertEquals(3, view.confirmedCount());
-                    assertEquals(ended, session.save().replay().handCount());
-                    session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
-                    session.synchronizeSeats(Map.of(HUMAN, session.seatOf(HUMAN)));
-                    view = session.view(HUMAN);
-                    if (ended % 2 == 1) assertTrue(session.confirmNextHand(HUMAN, session.tableId(), view.incarnation(), view.game().decision()));
-                } else {
-                    // The human uses only issued void/discard/pass/win requests; ticks own Bot and forced-draw actions.
-                    for (int index = 0; index < view.game().actions().size(); index++) {
-                        var type = view.game().actions().get(index).type();
-                        if (type == VOID_SUIT || type == DISCARD || type == PASS || type == WIN) {
-                            assertTrue(session.act(HUMAN, session.tableId(), view.incarnation(), view.game().decision(), index)); break;
-                        }
+    @ParameterizedTest(name = "{0}") @EnumSource(SichuanPreset.class) @Timeout(180)
+    void oneHumanThreeBotsFinishEightHandsWithReplayAndRestoration(SichuanPreset preset) {
+        var session = lobby(preset);
+        room(session, RoomAction.Type.FILL_BOTS); start(session);
+        int ended = 0;
+        boolean midHandRestore = false;
+        for (int tick = 0; tick < 50_000 && session.lifecycle() != TableSession.Lifecycle.FINISHED; tick++) {
+            var view = session.view(HUMAN);
+            if (!midHandRestore && tick >= 30) {
+                session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
+                assertTrue(session.paused());
+                session.synchronizeSeats(Map.of(HUMAN, session.seatOf(HUMAN)));
+                midHandRestore = true; view = session.view(HUMAN);
+            }
+            if (view.game().phase() == SichuanGame.Phase.HAND_END && view.game().handNumber() != ended) {
+                ended = view.game().handNumber();
+                assertEquals(3, view.confirmedCount());
+                assertEquals(ended, session.save().replay().handCount());
+                session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
+                session.synchronizeSeats(Map.of(HUMAN, session.seatOf(HUMAN)));
+                view = session.view(HUMAN);
+                if (ended % 2 == 1) assertTrue(session.confirmNextHand(HUMAN, session.tableId(), view.incarnation(), view.game().decision()));
+            } else {
+                // The human uses only issued void/discard/pass/win requests; ticks own Bot and forced-draw actions.
+                for (int index = 0; index < view.game().actions().size(); index++) {
+                    var type = view.game().actions().get(index).type();
+                    if (type == VOID_SUIT || type == DISCARD || type == PASS || type == WIN) {
+                        assertTrue(session.act(HUMAN, session.tableId(), view.incarnation(), view.game().decision(), index)); break;
                     }
                 }
-                session.tick();
             }
-            assertEquals(TableSession.Lifecycle.FINISHED, session.lifecycle());
-            assertEquals(8, session.game().completedHands().size());
-            session.game().validate();
-            var replay = session.pendingReplays().getFirst();
-            assertTrue(replay.complete()); assertEquals(8, replay.handCount());
-            assertEquals(3, replay.participants().stream().filter(ReplayMatch.Participant::bot).count());
-            assertEquals(session.game().scores(), replay.sichuan().hands().getLast().finalPoints());
-            assertEquals(session.game().scores().stream().map(Integer::doubleValue).toList(), replay.header().finalScores());
-            assertEquals(4, replay.header().finalRanks().size());
-            ReplayCodec.validate(replay);
-            var restored = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
-            assertEquals(session.game().result(), restored.game().result());
-            assertEquals(session.game().scores(), restored.game().scores());
-            assertEquals(List.of(replay), restored.pendingReplays());
-            restored.acknowledgeReplay(replay.id());
-            restored = SichuanCodec.restoreSession(SichuanCodec.saveSession(restored));
-            restored.synchronizeSeats(Map.of(HUMAN, restored.seatOf(HUMAN)));
-            if (preset == SichuanPreset.TFMJ_2024) restored.configureWorld(noBots());
-            room(restored, RoomAction.Type.RETURN_TO_LOBBY);
-            assertTrue(restored.pendingReplays().isEmpty());
-            assertEquals(preset == SichuanPreset.TFMJ_2024 ? 0 : 3, restored.participants().stream().filter(TableParticipant::bot).count());
+            session.tick();
         }
+        assertEquals(TableSession.Lifecycle.FINISHED, session.lifecycle());
+        assertEquals(8, session.game().completedHands().size());
+        session.game().validate();
+        var replay = session.pendingReplays().getFirst();
+        assertTrue(replay.complete()); assertEquals(8, replay.handCount());
+        assertEquals(3, replay.participants().stream().filter(ReplayMatch.Participant::bot).count());
+        assertEquals(session.game().scores(), replay.sichuan().hands().getLast().finalPoints());
+        assertEquals(session.game().scores().stream().map(Integer::doubleValue).toList(), replay.header().finalScores());
+        assertEquals(4, replay.header().finalRanks().size());
+        ReplayCodec.validate(replay);
+        var restored = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
+        assertEquals(session.game().result(), restored.game().result());
+        assertEquals(session.game().scores(), restored.game().scores());
+        assertEquals(List.of(replay), restored.pendingReplays());
+        restored.acknowledgeReplay(replay.id());
+        restored = SichuanCodec.restoreSession(SichuanCodec.saveSession(restored));
+        restored.synchronizeSeats(Map.of(HUMAN, restored.seatOf(HUMAN)));
+        if (preset == SichuanPreset.TFMJ_2024) restored.configureWorld(noBots());
+        room(restored, RoomAction.Type.RETURN_TO_LOBBY);
+        assertTrue(restored.pendingReplays().isEmpty());
+        assertEquals(preset == SichuanPreset.TFMJ_2024 ? 0 : 3, restored.participants().stream().filter(TableParticipant::bot).count());
     }
 
     private static SichuanView withRules(SichuanView view, SichuanRules rules) {
