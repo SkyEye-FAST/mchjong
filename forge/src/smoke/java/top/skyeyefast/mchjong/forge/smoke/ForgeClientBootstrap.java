@@ -55,7 +55,7 @@ public final class ForgeClientBootstrap {
             if (!(IClientItemExtensions.of(item).getCustomRenderer() instanceof MahjongItemRenderer))
                 throw new IllegalStateException("Forge item renderer is missing for " + ItemRegistry.getKey(item));
         var models = client.getModelManager();
-        if (models.getModel(RiichiStickModel.ID) == models.getMissingModel())
+        if (RiichiStickModel.baked() == models.getMissingModel())
             throw new IllegalStateException("Forge additional riichi-stick model is missing");
         var modInfo = ModList.get().getModContainerById(MahjongContent.MOD_ID).orElseThrow().getModInfo();
         var configScreen = ConfigScreenHandler.getScreenFactoryFor(modInfo).orElseThrow().apply(client, client.screen);
