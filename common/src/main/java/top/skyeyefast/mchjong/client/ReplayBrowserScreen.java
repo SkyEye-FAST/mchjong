@@ -59,7 +59,7 @@ public final class ReplayBrowserScreen extends Screen {
     }
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 650);
-        MahjongUi.text(graphics, font, title, 12, 11, width - 24, MahjongUi.TEXT, true);
+        MahjongUi.text(graphics, font, title, matches.getX(), 11, matches.getWidth(), MahjongUi.TEXT, false);
         graphics.drawCenteredString(font, Component.translatable("replay.mchjong.archive_note", index.page() + 1), width / 2, 25, MahjongUi.MUTED);
         super.render(graphics, x, y, partialTick);
     }

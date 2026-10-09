@@ -35,7 +35,13 @@ public final class TableSettingsScreen extends Screen implements TableChildScree
     @Override protected void init() {
         clearWidgets();
         options.clear();
-        layout = SettingsLayout.of(width, height);
+        int count = switch (tab) {
+            case 0 -> TableSettings.Information.values().length;
+            case 1 -> 7;
+            case 2 -> 4;
+            default -> 5;
+        };
+        layout = SettingsLayout.of(width, height, 4 * 22, count * 22);
         int left = layout.bodyLeft(), span = layout.bodyWidth();
         for (int i = 0; i < 4; i++) {
             final int index = i;

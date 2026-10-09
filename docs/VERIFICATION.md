@@ -523,6 +523,10 @@ model transforms. Settlement captures `06-readout-points.png` and
 `06-readout-grade.png` assert points precede the grade by at least 750 ms.
 `UiControlsSmoke` checks visible settings rectangles for bounds and overlap at
 320 × 240, 640 × 400 and 1280 × 800, retaining native keyboard behavior.
+`InterfaceLayoutTest` checks content-sized panels and reclaimed empty navigation.
+Run it with `:fabric:test --tests '*InterfaceLayoutTest'`.
+The interface smoke includes `35-rules-320x240.png`, `35-rule-presets-320x240.png`
+and `35-rules-wide.png`; personal presets use `33-personal-presets-320x240.png`.
 
 The shared presentation is checked on all three Minecraft profiles with
 `buildAll --warning-mode fail` and the Fabric `smokeMcrAuto`, `smokeSichuan`,

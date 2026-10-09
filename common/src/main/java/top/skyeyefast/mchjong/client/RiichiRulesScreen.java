@@ -93,7 +93,12 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
     @Override protected void init() {
         clearWidgets(); editors.clear(); labels.clear(); redButtons.clear(); redAvailability.clear();
         presetButtons.clear(); presetAvailability.clear(); apply = null;
-        layout = SettingsLayout.of(width, height);
+        var options = (mode == Mode.PRESET ? OVERVIEW.stream() : Arrays.stream(RiichiRuleOption.values())
+            .filter(option -> option.group() == group))
+            .filter(option -> option.visible(draft)).toList();
+        var presets = Arrays.stream(RiichiPreset.values()).filter(rule -> rule.players() == draft.players()).toList();
+        layout = SettingsLayout.of(width, height, presetExpanded || mode == Mode.PRESET ? 0 : RiichiRuleOption.Group.values().length * 22,
+            presetExpanded ? 24 + presets.size() * 24 : 48 + options.size() * 24 + 14);
         int span = layout.bodyWidth(), left = layout.bodyLeft();
         Component preset = Component.translatable("rules.mchjong.preset", Component.translatable(draft.preset().presetKey()))
             .append(presetExpanded ? " ▲" : " ▼");
@@ -102,14 +107,13 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
         }).bounds(left, layout.contentTop(), span, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help"))).build());
         editors.add(presetButton);
         if (presetExpanded) {
-            var presets = Arrays.stream(RiichiPreset.values()).filter(rule -> rule.players() == draft.players()).toList();
             for (int i = 0; i < presets.size(); i++) {
                 var rule = presets.get(i);
                 var name = Component.translatable(rule.presetKey());
                 var choice = addRenderableWidget(MahjongButton.create(name, ignored -> {
                     draft = draft.withPreset(rule); mode = Mode.PRESET; numbers.clear(); page = 0; rejected = false;
                     presetExpanded = false; init();
-                }).bounds(left + 12, layout.top() + 62 + i * 24, span - 12, 20).build().selected(draft.preset() == rule));
+                }).bounds(left, layout.contentTop() + 24 + i * 24, span, 20).build().selected(draft.preset() == rule));
                 presetButtons.put(rule, choice);
             }
             addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
@@ -121,7 +125,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
         for (var section : Mode.values()) {
             var text = Component.translatable(section.key());
             addRenderableWidget(MahjongButton.create(text, ignored -> { mode = section; page = 0; init(); })
-                .bounds(left + section.ordinal() * (tabWidth + 4), layout.top() + 62, tabWidth, 20)
+                .bounds(left + section.ordinal() * (tabWidth + 4), layout.contentTop() + 24, tabWidth, 20)
                 .tooltip(Tooltip.create(text)).build().selected(mode == section));
         }
         var groups = RiichiRuleOption.Group.values();
@@ -132,16 +136,13 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
                 .bounds(layout.left(), layout.contentTop() + i * 22, layout.rail(), 20)
                 .tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
-        var options = (mode == Mode.PRESET ? OVERVIEW.stream() : Arrays.stream(RiichiRuleOption.values())
-            .filter(option -> option.group() == group))
-            .filter(option -> option.visible(draft)).toList();
-        int rows = Math.max(1, (layout.height() - 160) / 24);
+        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 48 - 14) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows);
         page = Math.clamp(page, 0, pages - 1);
         int optionSpan = span - 24;
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
-            int y = layout.top() + 92 + i * 24;
+            int y = layout.contentTop() + 48 + i * 24;
             var label = option.floatingPlayers() < 0 ? Component.translatable(option.translationKey(), option.placementRank())
                 : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
             var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())

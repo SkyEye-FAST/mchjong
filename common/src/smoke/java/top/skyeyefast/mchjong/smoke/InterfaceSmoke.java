@@ -234,7 +234,23 @@ final class InterfaceSmoke {
             checkBounds(client);
             capture(client, output, "35-seats-320x240.png");
             client.screen.onClose();
+            client.setScreen(new top.skyeyefast.mchjong.client.RiichiRulesScreen(settingsParent, table.clientRoom(), table.clientRiichiSettings()));
+            settingsStage = 17; settingsTicks = 0;
+        } else if (settingsStage == 17 && settingsTicks > 10) {
+            checkBounds(client);
+            capture(client, output, "35-rules-320x240.png");
+            client.setScreen(new top.skyeyefast.mchjong.client.RiichiRulesScreen(settingsParent, table.clientRoom(), table.clientRiichiSettings(), true));
+            settingsStage = 18; settingsTicks = 0;
+        } else if (settingsStage == 18 && settingsTicks > 10) {
+            checkBounds(client);
+            capture(client, output, "35-rule-presets-320x240.png");
             restoreWindow(client);
+            client.setScreen(new top.skyeyefast.mchjong.client.RiichiRulesScreen(settingsParent, table.clientRoom(), table.clientRiichiSettings()));
+            settingsStage = 19; settingsTicks = 0;
+        } else if (settingsStage == 19 && settingsTicks > 10) {
+            checkBounds(client);
+            capture(client, output, "35-rules-wide.png");
+            client.screen.onClose();
             settingsStage = 9; settingsTicks = 0;
         } else if (settingsStage == 9 && settingsTicks > 10) {
             restoreWindow(client);
