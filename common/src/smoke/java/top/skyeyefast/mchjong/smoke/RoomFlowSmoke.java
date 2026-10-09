@@ -17,6 +17,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 final class RoomFlowSmoke {
     private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
+    private final RoomPreparationSmoke reassignment = new RoomPreparationSmoke(2);
     private int stage, ticks, locale, hand;
     private CompletableFuture<?> work;
     private top.skyeyefast.mchjong.engine.RiichiPreset originalPreset;
@@ -197,6 +198,31 @@ final class RoomFlowSmoke {
                 require(ticks < 40, "Dissolved room retained the physical seat");
                 return false;
             }
+            var id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            work = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).sit(player, 0);
+            });
+            next(17);
+        } else if (stage == 17 && room.viewerSeat() == 0) {
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
+            next(18);
+        } else if (stage == 18) {
+            if (room.seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.POSITIONING) {
+                require(room.viewerSeat() == 2, "West draw did not change the recipient seat");
+                if (room.seats().get(2).presence() == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
+                    require(client.player.isPassenger(), "Changed-seat preparation did not preserve physical mounting");
+                    reassignment.restoreSettings();
+                    capture(client, output, "room-reassigned-seated.png");
+                    click(client, "room.mchjong.dissolve");
+                    next(19);
+                    return false;
+                }
+            }
+            reassignment.tick(client, table, output, "room-reassigned");
+        } else if (stage == 19 && room.seats().stream().noneMatch(seat -> seat.participant().id() != null)
+            && !client.player.isPassenger()) {
             return true;
         }
         return false;

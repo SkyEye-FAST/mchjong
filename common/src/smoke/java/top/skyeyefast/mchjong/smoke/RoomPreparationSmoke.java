@@ -15,6 +15,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Drives the actual client controls and physical remount after the room lottery. */
 final class RoomPreparationSmoke {
+    private final int wind;
     private CompletableFuture<Integer> serverWork;
     private int ticks;
     private int windSlot = -1;
@@ -26,14 +27,19 @@ final class RoomPreparationSmoke {
     private Boolean originalAutoSeat;
     private int cueUntil = -1;
 
+    RoomPreparationSmoke() { this(0); }
+    RoomPreparationSmoke(int wind) { this.wind = wind; }
+
+    void restoreSettings() { if (originalAutoSeat != null) TableSettings.get().autoSeat = originalAutoSeat; }
+
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
         var view = table.clientView();
         if (originalAutoSeat == null) {
             originalAutoSeat = TableSettings.get().autoSeat;
-            TableSettings.get().autoSeat = table.automatic() && !prefix.equals("room");
+            TableSettings.get().autoSeat = table.automatic() && !prefix.startsWith("room");
         }
         if (view != null) {
-            TableSettings.get().autoSeat = originalAutoSeat;
+            restoreSettings();
             return true;
         }
         if (++ticks > 400) throw new IllegalStateException("Seat preparation timed out: " + table.clientRoom());
@@ -103,14 +109,14 @@ final class RoomPreparationSmoke {
                 var id = client.player.getUUID();
                 var pos = table.getBlockPos();
                 // Only the server-side test fixture reads this; the normal snapshot hides the bag.
-                // Choosing east keeps subsequent manual-dealing and drawer fixtures on seat zero.
+                // Normal dealing fixtures choose east; the reassignment check chooses west.
                 serverWork = client.getSingleplayerServer().submit(() -> {
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                     var game = serverTable.participantSession(player);
                     var bag = TableNetworking.JSON.toJsonTree(game).getAsJsonObject().getAsJsonObject("seating").getAsJsonArray("concealed");
-                    for (int slot = 0; slot < bag.size(); slot++) if (bag.get(slot).getAsInt() == 0) return slot;
-                    throw new IllegalStateException("Wind bag has no east");
+                    for (int slot = 0; slot < bag.size(); slot++) if (bag.get(slot).getAsInt() == wind) return slot;
+                    throw new IllegalStateException("Wind bag is missing " + wind);
                 });
             } else if (windSlot >= 0) click(client, "room.mchjong.wind_tile", windSlot + 1);
         } else if (room.viewerSeat() >= 0) {
@@ -119,7 +125,7 @@ final class RoomPreparationSmoke {
                 AutomationControlsSmoke.checkBounds(client);
                 capture(client, output, prefix + "-assigned-seats.png");
                 capturedPositioning = true;
-                if (prefix.equals("room") && state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
+                if (prefix.startsWith("room") && state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
                     var stool = top.skyeyefast.mchjong.world.TableGeometry.stool(table.getBlockPos(), room.viewerSeat());
                     var direction = net.minecraft.world.phys.Vec3.atCenterOf(stool).subtract(client.player.getEyePosition());
                     client.player.setYRot((float) Math.toDegrees(Math.atan2(-direction.x, direction.z)));
