@@ -168,11 +168,11 @@ final class SettlementSmoke {
         } else if (ticks == 30) {
             checkBounds(client);
             capture(client, output, "10-settlement-small.png");
-            click(client, "View table");
+            click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.view_table").getString());
         } else if (ticks == 35) {
             if (client.screen.children().stream().anyMatch(TableResults.class::isInstance))
                 throw new IllegalStateException("Settlement could not be collapsed");
-            click(client, "Show results");
+            click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.view_results").getString());
         } else if (ticks == 40) {
             TableResults panel = panel(client);
             client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
@@ -188,28 +188,28 @@ final class SettlementSmoke {
                 throw new IllegalStateException("Settlement viewport was not 320x240");
             checkBounds(client);
             capture(client, output, "15-settlement-smallest.png");
-            click(client, "Point changes");
+            click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.1").getString());
             checkSettledPoints(client);
-            click(client, "Point changes");
+            click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.1").getString());
             checkSettledPoints(client);
             ((RiichiTableScreen) client.screen).receivedView();
         } else if (ticks == 55) {
             checkBounds(client);
             checkSettledPoints(client);
             capture(client, output, "16-settlement-smallest-points.png");
-            click(client, "Final standings");
+            click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.2").getString());
         } else if (ticks == 60) {
             checkBounds(client);
             capture(client, output, "17-settlement-smallest-ranking.png");
             client.getWindow().setWindowed(1280, 800);
             client.options.guiScale().set(2);
             client.resizeDisplay();
-            click(client, "Point changes");
+            click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.1").getString());
             checkSettledPoints(client);
         } else if (ticks == 70) {
             checkBounds(client);
             capture(client, output, "12-settlement-points.png");
-            click(client, "Final standings");
+            click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.2").getString());
         } else if (ticks == 80) {
             capture(client, output, "13-settlement-ranking.png");
             var win = new RiichiView.Win(0, 2, 126, new HandScore(78, 0, 6, 288000, 0, 0,
