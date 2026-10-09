@@ -29,7 +29,8 @@ final class TableHud {
         if (!immersive && (settings.show(TableSettings.Information.ROUND) || settings.show(TableSettings.Information.REMAINING))) {
             int header = Math.min(280, Math.max(84, width - 224));
             MahjongUi.panel(g, 8, 7, header, 26);
-            if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(g, font, state.roundLabel(), 12, 10, header - 8, MahjongUi.TEXT, false);
+            if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(g, font,
+                state.indicator() == null ? state.roundLabel() : state.indicator().title(), 12, 10, header - 8, MahjongUi.TEXT, false);
             if (settings.show(TableSettings.Information.REMAINING)) MahjongUi.text(g, font,
                 Component.translatable("ui.mchjong.remaining.short", state.remaining()), 12, 22, header - 8, MahjongUi.MUTED, false);
         }

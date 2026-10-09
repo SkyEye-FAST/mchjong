@@ -20,4 +20,20 @@ class InterfaceLayoutTest {
             }
         }
     }
+
+    @Test void windDisplayBaselinesFollowProjectedSeatEdgesAndTopsFaceTheCenter() {
+        for (int side = 0; side < 4; side++) {
+            var transform = TableProjection.surface(side, 0, 70, 8.5);
+            var left = TableProjection.seat(side, -22, 70, 8.5);
+            var right = TableProjection.seat(side, 22, 70, 8.5);
+            var start = transform.transformPosition(new org.joml.Vector3f(-22, 0, 0));
+            var end = transform.transformPosition(new org.joml.Vector3f(22, 0, 0));
+            double cross = (end.x - start.x) * (right.y() - left.y()) - (end.y - start.y) * (right.x() - left.x());
+            assertEquals(0, cross, .1, "Font baseline must follow the table plane at seat " + side);
+            var center = TableProjection.project(0, 0, 8.5);
+            var origin = transform.transformPosition(new org.joml.Vector3f());
+            var top = transform.transformDirection(new org.joml.Vector3f(0, -1, 0));
+            assertTrue(top.x * (center.x() - origin.x) + top.y * (center.y() - origin.y) > 0);
+        }
+    }
 }

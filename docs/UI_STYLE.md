@@ -592,7 +592,9 @@ English winds use E/S/W/N; Chinese and Japanese use their localized characters.
 Scores use a .048-block digit height, with width fitting only for unusually long
 values. Each score display faces its owner, with glyph tops pointing toward the
 table center. The wind characters use the resource-pack font, keeping explanatory
-labels off the felt and the riichi-deposit lanes clear.
+labels off the felt and the riichi-deposit lanes clear. Immersive center labels
+use the same projected table-plane axes as the housing, including seat rotation,
+shear and foreshortening; glyph tops point toward the center.
 
 ## Visual acceptance
 

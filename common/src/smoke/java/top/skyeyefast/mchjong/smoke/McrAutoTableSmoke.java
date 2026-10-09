@@ -276,8 +276,11 @@ final class McrAutoTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), message -> {});
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
                 double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
-                double x = (screen.width - 1280 * scale) / 2 + 289 * scale;
-                double y = (screen.height - 800 * scale) / 2 + 666 * scale;
+                var tileTarget = screen.children().stream().filter(child -> child instanceof MahjongButton
+                    && child.getClass().getSimpleName().equals("HandTarget")).map(child -> (MahjongButton) child)
+                    .filter(target -> target.active && target.getX() > 0).findFirst().orElseThrow();
+                double x = (screen.width - 1280 * scale) / 2 + (tileTarget.getX() + tileTarget.getWidth() / 2.0) * scale;
+                double y = (screen.height - 800 * scale) / 2 + (tileTarget.getY() + tileTarget.getHeight() / 2.0) * scale;
                 firstDecision = view.game().decision();
                 check(screen.mouseClicked(x, y, 0), "Immersive hand did not accept canvas coordinates");
                 screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
