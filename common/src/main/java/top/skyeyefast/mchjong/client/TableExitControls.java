@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -66,7 +68,7 @@ final class TableExitControls {
             graphics.drawCenteredString(font, line, width / 2, requesterY, MahjongUi.TEXT);
             requesterY += 10;
         }
-        graphics.drawCenteredString(font, Component.translatable("ui.mchjong.exit_status",
+        graphics.drawCenteredString(font, CountedText.of("ui.mchjong.exit_status", 2,
             vote.agreed().size(), vote.required(), vote.secondsLeft()), width / 2, top + 50, MahjongUi.ACCENT);
         int y = top + 65;
         for (var line : font.split(Component.translatable("ui.mchjong.exit_paused"), span - 12)) {

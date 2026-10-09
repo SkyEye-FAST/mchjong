@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
@@ -72,7 +74,7 @@ final class TableHints extends TableHintsButton {
         var rows = new ArrayList<Entry>();
         net.minecraft.network.chat.MutableComponent summary;
         if (!preview.voidTiles().isEmpty()) {
-            summary = Component.translatable("hints.mchjong.sichuan.void_tiles",
+            summary = CountedText.of("hints.mchjong.sichuan.void_tiles", 1,
                 Component.translatable("sichuan.mchjong.suit." + preview.voidSuit()), preview.voidTiles().size());
             if (preview.discard()) summary = Component.translatable("hints.mchjong.after_discard", summary);
             preview.voidTiles().stream().map(Tile::kind).distinct().sorted().forEach(kind -> rows.add(new Entry(kind,

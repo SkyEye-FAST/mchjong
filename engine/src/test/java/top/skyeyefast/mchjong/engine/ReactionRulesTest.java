@@ -347,6 +347,57 @@ class ReactionRulesTest {
     }
 
     @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})
+    void equivalentNorthCopiesOfferOneDeclarationAtATime(RiichiPreset rules) {
+        for (int count = 2; count <= 4; count++) {
+            Fixture f = new Fixture(rules);
+            f.hand(0, "4".repeat(count) + "z");
+            int drawn = f.take("1p").getFirst();
+            f.game.players[0].hand.add(drawn);
+            f.start(0, drawn);
+            for (int extracted = 0; extracted < count; extracted++) {
+                var actions = f.game.view(f.game.players[0].member.id).actions();
+                var norths = actions.stream().filter(a -> a.type() == RiichiAction.Type.NUKI).toList();
+                assertEquals(1, norths.size());
+                assertEquals(count - extracted, actions.stream()
+                    .filter(a -> a.type() == RiichiAction.Type.DISCARD && Tile.kind(a.tiles().getFirst()) == Tile.NORTH).count());
+                int north = norths.getFirst().tiles().getFirst();
+                f.act(0, RiichiAction.Type.NUKI, north);
+                f.passOthers();
+                assertEquals(extracted + 1, f.game.players[0].norths.size());
+                assertTrue(f.game.players[0].norths.contains(north));
+                assertFalse(f.game.players[0].hand.contains(north));
+                assertEquals(extracted + 1, f.game.wall.replacementIndex);
+                assertEquals(RiichiGame.Phase.TURN, f.game.phase());
+                f.game.validate();
+            }
+            assertTrue(f.game.view(f.game.players[0].member.id).actions().stream()
+                .noneMatch(a -> a.type() == RiichiAction.Type.NUKI));
+        }
+    }
+
+    @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})
+    void riichiNorthChoiceOnlyConsumesTheDrawnNorth(RiichiPreset rules) {
+        for (String draw : List.of("4z", "2s")) {
+            Fixture f = new Fixture(rules);
+            f.hand(0, "123456789p444z1s");
+            int drawn = f.take(draw).getFirst();
+            f.game.players[0].hand.add(drawn);
+            f.riichi(0);
+            f.start(0, drawn);
+            var norths = f.game.view(f.game.players[0].member.id).actions().stream()
+                .filter(a -> a.type() == RiichiAction.Type.NUKI).toList();
+            if (Tile.kind(drawn) == Tile.NORTH) {
+                assertEquals(List.of(new RiichiAction(RiichiAction.Type.NUKI, drawn)), norths);
+                f.act(0, RiichiAction.Type.NUKI, drawn);
+                f.passOthers();
+                assertEquals(List.of(drawn), f.game.players[0].norths);
+                assertEquals(3, f.game.players[0].hand.stream().filter(t -> Tile.kind(t) == Tile.NORTH).count());
+                f.game.validate();
+            } else assertTrue(norths.isEmpty());
+        }
+    }
+
+    @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})
     void automaticNorthUsesTheLegalDeclarationAndReplacementDraw(RiichiPreset rules) {
         Fixture f = new Fixture(rules);
         f.hand(0, "147p258s19m11235z");

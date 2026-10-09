@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
@@ -122,7 +124,7 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
                 Component.translatable("sichuan.mchjong.fan_value", w.score().fan(), w.score().value()), List.copyOf(rows), Component.empty(), null, List.of(), List.of());
         }).toList();
         var payments = result.ledger().stream().<Component>map(entry -> {
-            Component text = Component.translatable("sichuan.mchjong.payment_row", entry.id() + 1,
+            Component text = CountedText.of("sichuan.mchjong.payment_row", 4, entry.id() + 1,
                 Component.translatable("sichuan.mchjong.payment." + entry.type().name().toLowerCase(Locale.ROOT)), participants.get(entry.payer()).name(),
                 entry.recipient() < 0 ? Component.translatable("sichuan.mchjong.competition") : seats.get(entry.recipient()).name(), entry.amount());
             if (entry.relatedEntry() >= 0) text = Component.translatable("ui.mchjong.annotation", text,

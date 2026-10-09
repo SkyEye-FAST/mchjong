@@ -17,6 +17,8 @@ class TranslationReferenceTest {
         Path languages = Path.of(System.getProperty("mchjong.languages"));
         Pattern key = Pattern.compile("\"([A-Za-z]+\\.mchjong\\.[A-Za-z0-9_.]+)\"");
         var used = new TreeSet<String>();
+        var counted = new TreeSet<String>();
+        var direct = new TreeSet<String>();
         for (String directory : List.of("common/src/main", "engine/src/main", "fabric/src/main", "forge/src/main", "neoforge/src/main")) {
             Path target = root.resolve(directory);
             if (!Files.exists(target)) continue;
@@ -24,7 +26,12 @@ class TranslationReferenceTest {
                 for (Path path : paths.filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".kt")
                         || path.toString().endsWith(".json") && path.toString().contains("patchouli_books")).toList()) {
-                    var matches = key.matcher(Files.readString(path));
+                    String source = Files.readString(path);
+                    Pattern.compile("CountedText\\.of\\(\"([^\"]+)\"").matcher(source).results()
+                        .forEach(match -> counted.add(match.group(1)));
+                    Pattern.compile("Component\\.translatable\\(\"([^\"]+)\"").matcher(source).results()
+                        .forEach(match -> direct.add(match.group(1)));
+                    var matches = key.matcher(source);
                     while (matches.find()) {
                         String value = matches.group(1);
                         if (!value.endsWith(".") && !value.endsWith("_")) used.add(value);
@@ -32,6 +39,9 @@ class TranslationReferenceTest {
                 }
             }
         }
+        used.removeAll(counted);
+        for (String value : counted) { used.add(value + ".one"); used.add(value + ".other"); }
+        for (String value : counted) assertFalse(direct.contains(value), "Quantity bypasses CountedText: " + value);
         for (RiichiPreset rules : RiichiPreset.values()) { used.add(rules.translationKey()); used.add(rules.presetKey()); }
         for (var option : top.skyeyefast.mchjong.engine.RiichiRuleOption.values()) {
             used.add(option.translationKey());

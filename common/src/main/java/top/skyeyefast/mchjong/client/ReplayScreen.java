@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.ArrayList;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
@@ -329,7 +331,7 @@ public final class ReplayScreen extends Screen {
             int inset = PlayerPortrait.draw(graphics, false, participant.bot(), participant.name(), card.x() + 4, card.y() + 3, 10);
             MahjongUi.text(graphics, font, Component.literal(participant.name()), card.x() + 5 + inset, card.y() + 4,
                 card.width() - 9 - inset, MahjongUi.TEXT, false);
-            if (board.scoresOnCards()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.points", player.points()),
+            if (board.scoresOnCards()) MahjongUi.text(graphics, font, CountedText.of("ui.mchjong.points", 0, player.points()),
                 card.x() + 5, card.y() + 17, card.width() - 10, MahjongUi.MUTED, false);
         }
     }

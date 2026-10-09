@@ -156,8 +156,10 @@ Reserve the final geometry before any reveal.
 
 Keep necessary titles, body and navigation visually distinct. Lobby and settings
 screens use compact centered floating panels, leaving the world visible around
-them without a full-screen dim layer. Their bounds follow the content and paginate
-at small sizes. Do not repeat the mod name, selected category or ordinary preparation
+them without a full-screen dim layer. Their height follows the actual option and
+navigation rows, with a 30-pixel title area and pagination at small sizes. Reserve
+a category column only when that page has categories; the Riichi preset overview
+and expanded preset list use the full body width. Do not repeat the mod name, selected category or ordinary preparation
 stage as a heading or status line. In the table view, compact HUD cards belong near
 the edges so the physical hand stays clear.
 Actions remain separate from informational labels. Settings use explicit category
@@ -225,9 +227,9 @@ in the World tab through permission-checked server commands; other players see
 read-only values with a short administrator-only explanation. Room controls
 are paginated separately from local presentation options; ownership transfer stays
 in the lobby roster and the shared participant page under Settings → Room.
-Rule editors and personal preset pages use the same compact panel, category rail,
-option area and aligned footer. Settings retain a persistent left category rail
-and flat option rows beneath one concise page title. The selected navigation item
+Rule editors and personal preset pages share compact panels, option rows and
+aligned footers. Settings with multiple categories retain a populated left rail
+beneath one concise page title. The selected navigation item
 already identifies the section; show inline notices only for pending submissions,
 permission restrictions or errors. Labels align left, values align right, and boolean
 options use square indicators. Keep borders for keyboard focus and footer actions.
@@ -235,9 +237,9 @@ Personal presentation enum values open explicit choice lists and return to their
 category. Restore category defaults affects only the current presentation category;
 personal stick/voice presets are managed on their own page. Changes apply immediately
 and are saved when leaving the personal settings page.
-Personal preset navigation groups indented Server/Local entries beneath each
-stick/voice category. Mark the active child with selected fill and a bottom rule. Narrow windows
-retain this hierarchy and paginate the content area.
+Personal presets use a full-width Stick/Voice tab row followed by a Server/Local
+source row. Mark both active choices with selected fill and a bottom rule. The
+list begins immediately below the source row and paginates at narrow sizes.
 Settlement score tables use compact rows, quiet horizontal separators and a leading
 accent for the local player. Numeric headings and values share right-aligned column
 edges; the player heading aligns with names after their portraits.
@@ -590,7 +592,15 @@ English winds use E/S/W/N; Chinese and Japanese use their localized characters.
 Scores use a .048-block digit height, with width fitting only for unusually long
 values. Each score display faces its owner, with glyph tops pointing toward the
 table center. The wind characters use the resource-pack font, keeping explanatory
-labels off the felt and the riichi-deposit lanes clear.
+labels off the felt and the riichi-deposit lanes clear. Immersive center labels
+use the same projected table-plane axes as the housing, including seat rotation,
+shear and foreshortening; glyph tops point toward the center.
+
+English quantity phrases use explicit `.one` and `.other` translations selected
+by `CountedText` from the relevant numeric argument. Preserve nested components
+and language reloads. Traditional Chinese joins translated Chinese words without
+spaces, retains spaces around numeric values, and quotes variable player names
+so both Chinese and Latin names have unambiguous boundaries.
 
 ## Visual acceptance
 

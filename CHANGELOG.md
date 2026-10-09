@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Fit settings and lobby panels to their contents and reclaim empty preset navigation space.
+
+- Align immersive wind-panel labels with the table plane and keep round labels within their displays.
+
+- Correct English quantity forms and Traditional Chinese variable spacing.
+
 - Balance MCR and Sichuan Bot attacks against per-opponent public danger and native payments; let attainable Taiwan scoring routes outweigh limited efficiency differences while preserving live readiness and late-wall speed.
 
 - Link settlement awards and rule settings to brief localized explanations and existing hand examples, with precise optional handbook navigation and keyboard return controls.
@@ -41,6 +47,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld analysis, source-qualified tai profiles and the `TaiwanHandAnalyzer` boundary; audit all scoring patterns and provide an independent Taiwan hand with physical wall/dealing, flower replacement, legal calls, passing, kong robbery and balanced settlement. Document the selected match-rule sources and unresolved interpretations; generalize the shared 144-tile stock factory.
 
 ### Fixed
+
+- Merge equivalent Taiwan ready-discard choices while retaining distinct tile faces and every physical ordinary discard.
+
+- Offer one north-extraction action at a time when a three-player Riichi hand contains multiple norths, preserving replacement draws and drawn-north restrictions after Riichi.
 
 - Fix Fabric and NeoForge IDE imports requiring an ungenerated Ponder source folder and duplicate Fabric gameplay fixture types; package generated resources from their task and compile shared fixtures once for tests and client smokes.
 

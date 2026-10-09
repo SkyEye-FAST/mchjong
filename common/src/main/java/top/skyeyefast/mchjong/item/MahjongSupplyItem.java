@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.item;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -30,7 +32,7 @@ public class MahjongSupplyItem extends Item {
         }
         int points = MahjongComponents.points(stack);
         if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK)) {
-            lines.add(points == 0 ? Component.translatable("item.mchjong.unmarked") : Component.translatable("item.mchjong.denomination", points));
+            lines.add(points == 0 ? Component.translatable("item.mchjong.unmarked") : CountedText.of("item.mchjong.denomination", 0, points));
         }
         if (MahjongSupplies.back(stack) != null && !stack.is(top.skyeyefast.mchjong.world.MahjongContent.CLOTH_ITEM))
             lines.add(Component.translatable("color.minecraft." + MahjongSupplies.color(stack).getName()));

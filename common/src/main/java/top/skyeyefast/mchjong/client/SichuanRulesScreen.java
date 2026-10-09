@@ -72,7 +72,8 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
 
     @Override protected void init() {
         clearWidgets(); editors.clear(); labels.clear();
-        layout = SettingsLayout.of(width, height);
+        var options = Arrays.stream(SichuanRuleOption.values()).filter(option -> option.group() == group).toList();
+        layout = SettingsLayout.of(width, height, SichuanRuleOption.Group.values().length * 22, 24 + options.size() * 24 + 14);
         int span = layout.bodyWidth(), left = layout.bodyLeft();
         var matched = SichuanPreset.match(draft);
         var presets = SichuanPreset.values();
@@ -89,12 +90,11 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
             addRenderableWidget(MahjongButton.create(text, ignored -> { group = category; page = 0; init(); })
                 .bounds(layout.left(), layout.contentTop() + category.ordinal() * 22, layout.rail(), 20).tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
-        var options = Arrays.stream(SichuanRuleOption.values()).filter(option -> option.group() == group).toList();
-        int rows = Math.max(1, (layout.height() - 136) / 24);
+        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 24 - 14) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows); page = net.minecraft.util.Mth.clamp(page, 0, pages - 1);
         for (int offset = 0; offset < rows && page * rows + offset < options.size(); offset++) {
             var option = options.get(page * rows + offset);
-            int top = layout.top() + 68 + offset * 24;
+            int top = layout.contentTop() + 24 + offset * 24;
             var caption = Component.translatable(option.translationKey());
             var description = Component.translatable(option.descriptionKey());
             addRenderableWidget(RuleHelp.setting(this, option, caption, description, left + span - 20, top));

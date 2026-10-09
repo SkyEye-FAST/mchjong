@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -59,7 +61,7 @@ public final class ReplayBrowserScreen extends Screen {
     }
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 650);
-        MahjongUi.text(graphics, font, title, 12, 11, width - 24, MahjongUi.TEXT, true);
+        MahjongUi.text(graphics, font, title, matches.getX(), 11, matches.getWidth(), MahjongUi.TEXT, false);
         graphics.drawCenteredString(font, Component.translatable("replay.mchjong.archive_note", index.page() + 1), width / 2, 25, MahjongUi.MUTED);
         super.render(graphics, x, y, partialTick);
     }
@@ -124,7 +126,7 @@ public final class ReplayBrowserScreen extends Screen {
                 MahjongUi.text(graphics, font, label(i), getX() + 9, y + 7, width - 22, MahjongUi.TEXT, false);
                 String date = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withZone(ZoneId.systemDefault())
                     .format(Instant.ofEpochMilli(match.startedAt()));
-                var info = Component.translatable("replay.mchjong.entry", date, match.hands(),
+                var info = CountedText.of("replay.mchjong.entry", 1, date, match.hands(),
                     Component.translatable(match.complete() ? "replay.mchjong.finished" : "replay.mchjong.ongoing"));
                 MahjongUi.text(graphics, font, info, getX() + 9, y + 21, width - 22, MahjongUi.MUTED, false);
                 graphics.drawString(font, Component.translatable(switch (match.variant()) {
