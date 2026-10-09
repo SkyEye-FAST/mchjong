@@ -27,7 +27,7 @@
     {
       "type": "patchouli:image",
       "images": [
-        "mchjong:textures/manual/taiwan.png"
+        "mchjong:textures/manual/taiwan/concealed.png"
       ],
       "text": "manual.mchjong.entry.taiwan_flow.taiwan",
       "border": false

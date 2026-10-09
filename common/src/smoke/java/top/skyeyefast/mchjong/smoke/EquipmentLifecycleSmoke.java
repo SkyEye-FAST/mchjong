@@ -17,8 +17,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
@@ -49,6 +47,7 @@ final class EquipmentLifecycleSmoke {
         var rule = player.serverLevel().getGameRules().getRule(GameRules.RULE_TNT_EXPLOSION_DROP_DECAY);
         boolean decay = rule.get();
         try {
+            verifyPreparationProblems();
             player.closeContainer();
             player.setGameMode(GameType.SURVIVAL);
             rule.set(false, player.server);
@@ -65,6 +64,38 @@ final class EquipmentLifecycleSmoke {
             rule.set(decay, player.server);
             player.teleportTo(player.serverLevel(), position.x, position.y, position.z, 0, 0);
         }
+    }
+
+    private static void verifyPreparationProblems() {
+        var table = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        var riichi = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(),
+            top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config().with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES, 0), 1);
+        var mcr = new top.skyeyefast.mchjong.engine.McrSession(java.util.UUID.randomUUID(), 1);
+        var sichuan = new top.skyeyefast.mchjong.engine.SichuanSession(java.util.UUID.randomUUID(), 1);
+        var box = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
+        table.boxes().setItem(0, box);
+        check(table.preparationProblems(riichi, true).equals(List.of(top.skyeyefast.mchjong.engine.PreparationProblem.CLOTH)), "Missing cloth diagnosis");
+        table.installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));
+        check(table.preparationProblems(riichi, true).isEmpty(), "Complete Riichi set rejected");
+        check(table.preparationProblems(mcr, true).equals(List.of(top.skyeyefast.mchjong.engine.PreparationProblem.FLOWERS)), "Missing flowers diagnosis");
+        check(table.preparationProblems(sichuan, true).isEmpty() && top.skyeyefast.mchjong.item.SichuanDeck.select(box) != null
+            && top.skyeyefast.mchjong.item.McrDeck.select(box) == null, "Variant stock admission disagrees with diagnosis");
+        var contents = MahjongSupplies.contents(box);
+        MahjongComponents.color(contents.get(0), DyeColor.RED);
+        MahjongSupplies.setContents(box, contents); table.boxes().setItem(0, box);
+        check(table.preparationProblems(riichi, true).equals(List.of(top.skyeyefast.mchjong.engine.PreparationProblem.BACK))
+            && table.deck() == null, "Mixed backs admitted");
+        table.boxes().setItem(1, MahjongSupplies.completeBox(TileMaterial.GLASS));
+        check(table.preparationProblems(riichi, true).isEmpty(), "Spare mismatched case blocked valid stock");
+        table.boxes().setItem(1, ItemStack.EMPTY);
+        MahjongComponents.color(contents.get(0), DyeColor.BLUE);
+        MahjongComponents.tile(contents.get(0), new TileData(0, TileMaterial.GLASS, false));
+        MahjongSupplies.setContents(box, contents); table.boxes().setItem(0, box);
+        check(table.preparationProblems(riichi, true).equals(List.of(top.skyeyefast.mchjong.engine.PreparationProblem.MATERIAL)), "Mixed material diagnosis");
+        MahjongComponents.tile(contents.get(0), new TileData(0, TileMaterial.BONE, false)); contents.get(0).shrink(1);
+        MahjongSupplies.setContents(box, contents); table.boxes().setItem(0, box);
+        check(table.preparationProblems(riichi, true).equals(List.of(top.skyeyefast.mchjong.engine.PreparationProblem.TILES)), "Missing tile diagnosis");
+        check(table.preparationProblems(riichi, false).contains(top.skyeyefast.mchjong.engine.PreparationProblem.POINT_STICKS), "Manual supplies diagnosis");
     }
 
     private static void verifyTable(ServerPlayer player, MahjongTableBlock block, int destruction) {
@@ -164,6 +195,8 @@ final class EquipmentLifecycleSmoke {
         TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
         check(installed.isEmpty() && countInventory(player, firstExpected) == 1, "Moving the cases lost or duplicated their contents");
         check(!table.participantSession(player).equipped(), "Table started without a cloth");
+        check(table.roomView(player).equipmentProblems().contains(top.skyeyefast.mchjong.engine.PreparationProblem.CLOTH),
+            "Server projection omitted the missing cloth");
         var green = new ItemStack(MahjongContent.CLOTH_ITEM);
         var greenExpected = green.copy();
         table.useEquipment(player, green);

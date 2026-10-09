@@ -12,7 +12,7 @@ import top.skyeyefast.mchjong.item.TileMaterial;
 final class TableHand {
     record Point(int x, int y) {}
     private final List<Integer> tiles;
-    private final int drawn, left, y, tileWidth, tileHeight, gap, span;
+    private final int left, y, tileWidth, tileHeight, gap, span;
     private final List<top.skyeyefast.mchjong.engine.Meld> melds;
     private final int right, owner;
     private final boolean perspective;
@@ -33,7 +33,6 @@ final class TableHand {
         this.perspective = perspective;
         right = width - (perspective ? 24 : 8);
         this.tiles = tiles;
-        this.drawn = drawn;
         tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / Math.max(variant == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN ? 17 : 14, tiles.size())));
         tileHeight = Math.round(tileWidth * TileDimensions.of(variant).ratio());
         gap = drawn == Tile.ABSENT || tiles.isEmpty() || tiles.get(tiles.size() - 1) != drawn ? 0 : Math.max(18, tileWidth / 2);

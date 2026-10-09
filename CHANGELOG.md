@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Balance MCR and Sichuan Bot attacks against per-opponent public danger and native payments; let attainable Taiwan scoring routes outweigh limited efficiency differences while preserving live readiness and late-wall speed.
+
+- Link settlement awards and rule settings to brief localized explanations and existing hand examples, with precise optional handbook navigation and keyboard return controls.
+
+- Explain server-checked preparation shortages for the selected rules and briefly mark each human's assigned stool without changing seating controls.
+
+- Replace all four Mahjong Manual award indexes' text tile examples with facing-page images, using Kansai faces for Riichi, Hong Kong for MCR, and native Sichuan/Taiwan faces; fit each example on one line and preserve winning tiles, public tiles and group boundaries in all four languages.
+
 - Calibrate Riichi and Taiwan tiles to the shared 33 × 24 × 17.5 mm envelope while preserving large MCR/Sichuan tiles; tighten tilted walls by their actual lengths, combine flowers and melds in a wrapping left public area, and align physical spacing, picking and display proportions.
 
 - Publish the standalone Taiwan library as `top.skyeyefast:taiwan-mahjong:0.1.0` on Maven Central with JVM 17 ABI validation, Dokka/sources artifacts, Apache-2.0 metadata and Java/Kotlin consumer verification; use its formal dependency on all three Minecraft profiles with shadow relocation and remove the source submodule and composite build.
@@ -33,6 +41,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld analysis, source-qualified tai profiles and the `TaiwanHandAnalyzer` boundary; audit all scoring patterns and provide an independent Taiwan hand with physical wall/dealing, flower replacement, legal calls, passing, kong robbery and balanced settlement. Document the selected match-rule sources and unresolved interpretations; generalize the shared 144-tile stock factory.
 
 ### Fixed
+
+- Fix Fabric and NeoForge IDE imports requiring an ungenerated Ponder source folder and duplicate Fabric gameplay fixture types; package generated resources from their task and compile shared fixtures once for tests and client smokes.
+
+- Remove unused Java imports and members across gameplay, tests and client smokes; dispatch automation smoke clicks through native screen input.
 
 - Restore 26.1.2 immersive tabletop rendering within the native GUI clip range and normalize 1.20.1 tile normals after axis scaling.
 

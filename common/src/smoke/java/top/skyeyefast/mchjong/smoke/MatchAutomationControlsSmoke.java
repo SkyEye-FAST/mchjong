@@ -39,7 +39,10 @@ final class MatchAutomationControlsSmoke {
             case 3 -> {
                 if (!room.automation().win() || !option(client).active) return false;
                 require(client.screen.getFocused() == option(client), "Automation lost focus on acknowledgement");
-                option(client).onClick(option(client).getX() + 2, option(client).getY() + 2);
+                var button = option(client);
+                double x = button.getX() + 2, y = button.getY() + 2;
+                require(client.screen.mouseClicked(x, y, 0), "Automation control rejected pointer input");
+                client.screen.mouseReleased(x, y, 0);
                 next();
             }
             case 4 -> {

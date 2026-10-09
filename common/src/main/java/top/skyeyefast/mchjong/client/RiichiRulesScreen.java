@@ -12,7 +12,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.engine.RiichiRules;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
@@ -53,9 +52,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
     private boolean presetExpanded;
     private SettingsLayout layout;
 
-    private record Label(Component text, Component tooltip, int x, int y, int width) {
-        Label(Component text, int x, int y, int width) { this(text, text, x, y, width); }
-    }
+    private record Label(Component text, Component tooltip, int x, int y, int width) {}
 
     public RiichiRulesScreen(Screen parent, TableRoomView room, RiichiRoomSettings settings) {
         this(parent, room, settings, false);
@@ -141,6 +138,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
         int rows = Math.max(1, (layout.height() - 160) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows);
         page = net.minecraft.util.Mth.clamp(page, 0, pages - 1);
+        int optionSpan = span - 24;
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
             int y = layout.top() + 92 + i * 24;
@@ -148,15 +146,16 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
                 : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
             var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())
                 : Component.translatable(option.descriptionKey(), option.floatingPlayers(), option.placementRank());
+            addRenderableWidget(RuleHelp.setting(this, option, label, description, left + span - 20, y));
             boolean editable = mode == Mode.CUSTOM || mode == Mode.PRESET && draft.preset().adjustable(option);
             if (!editable) {
                 Component value = option.toggle() ? Component.translatable(draft.enabled(option) ? "rules.mchjong.yes" : "rules.mchjong.no")
                     : option == RiichiRuleOption.RED_FIVES ? Component.translatable(draft.redFives().translationKey())
                     : !option.choices().isEmpty() ? Component.translatable(option.translationKey() + "." + draft.get(option))
                     : Component.literal(Integer.toString(draft.get(option)));
-                labels.add(new Label(Component.translatable("settings.mchjong.toggle", label, value), description, left, y + 6, span));
+                labels.add(new Label(Component.translatable("settings.mchjong.toggle", label, value), description, left, y + 6, optionSpan));
             } else if (option == RiichiRuleOption.RED_FIVES) {
-                int caption = Math.min(92, span / 4), choiceWidth = (span - caption - 8) / 3;
+                int caption = Math.min(92, optionSpan / 4), choiceWidth = (optionSpan - caption - 8) / 3;
                 labels.add(new Label(label, description, left, y + 6, caption - 4));
                 for (var reds : RedFives.values()) {
                     var text = Component.translatable(reds.translationKey());
@@ -170,7 +169,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
                 }
             } else if (!option.choices().isEmpty()) {
                 var choices = option.choices();
-                int caption = Math.min(92, span / 4), choiceWidth = (span - caption - (choices.size() - 1) * 4) / choices.size();
+                int caption = Math.min(92, optionSpan / 4), choiceWidth = (optionSpan - caption - (choices.size() - 1) * 4) / choices.size();
                 labels.add(new Label(label, description, left, y + 6, caption - 4));
                 for (int index = 0; index < choices.size(); index++) {
                     int value = choices.get(index);
@@ -187,11 +186,11 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
                 var toggle = addRenderableWidget(MahjongButton.create(text, ignored -> {
                     draft = draft.with(option, (draft.get(option) + 1) % (option.max() + 1));
                     rejected = false; init();
-                }).bounds(left, y, span, 20).tooltip(Tooltip.create(description)).build().selected(draft.enabled(option)));
+                }).bounds(left, y, optionSpan, 20).tooltip(Tooltip.create(description)).build().selected(draft.enabled(option)));
                 editors.add(toggle);
             } else {
-                labels.add(new Label(label, description, left, y + 6, span - 116));
-                var field = new MahjongEditBox(font, left + span - 108, y, 108, 20, label);
+                labels.add(new Label(label, description, left, y + 6, optionSpan - 116));
+                var field = new MahjongEditBox(font, left + optionSpan - 108, y, 108, 20, label);
                 field.setMaxLength(8);
                 field.setFilter(value -> value.matches("-?[0-9]*"));
                 field.setValue(numbers.getOrDefault(option, Integer.toString(draft.get(option))));

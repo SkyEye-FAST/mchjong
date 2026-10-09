@@ -11,7 +11,6 @@ import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Settlement stays on the same table canvas, with shared receipt, points and standings tabs. */

@@ -186,6 +186,12 @@ Small receipts reserve their body for the hand and yaku; the Point changes page
 provides the complete score table. Reserve both badge and text
 space before the readout begins. Do not reflow the hand or restart the readout
 on a resize or snapshot refresh.
+Award rows provide short hover text, a quiet `?` cue and a clickable explanation.
+The focused receipt uses Up/Down and Enter for explanations; winner selection
+retains Left/Right. Rule editors keep their draft while a separate `?` opens help.
+The shared compact help panel paginates text, reuses handbook diagrams and offers
+Back plus an optional Handbook button. Closing the book returns through the same
+parent chain, including when synchronized table state changes.
 All four variants share the table, player-card, action-grid, camera, settings
 and settlement design. All four share replay presentation. Rule adapters supply native winds,
 flowers, void suits, yaku/fan and payment data. Receipts retain native win methods;
@@ -254,6 +260,10 @@ stool when allocation finishes. Turning it off keeps the coordinate-guided manua
 seating flow; ordinary presence updates never force a player back onto a stool.
 Room timing and invitations live in Settings → Room;
 the Ready control reflects server-confirmed presence at the assigned stool.
+Equipment failures use a short footer caption, concise hover list and a paginated
+help page accessible by native pointer or keyboard activation. The server chooses
+the applicable requirements. A recipient-only brass particle cue at the actual
+assigned stool lasts three seconds; it does not replace walking or stool interaction.
 The room Hand visibility control cycles through Visible only to self, Visible to
 riichi players, Visible to all players and Open hands; Shift cycles backward. Only
 the host can change it before play. Open hands lays tiles face up; the other

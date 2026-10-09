@@ -4,10 +4,10 @@ import top.skyeyefast.mchjong.engine.McrAction.Type.*
 
 /** One deterministic policy. Its entire information boundary is the recipient-safe view. */
 object McrBot {
-    private data class Evaluation(val progress: McrHandAnalyzer.Progress, val routes: McrBotRoutes.Assessment) {
+    private data class Evaluation(val progress: McrHandAnalyzer.Progress, val routes: McrBotRoutes.Assessment, val danger: Double = 0.0) {
         fun utility(anchor: String?): Double = -0.75 * progress.shanten + 4.0 * routes.best +
             0.18 * routes.retention(anchor) + 0.3 * (progress.remainingCount / 40.0).coerceAtMost(1.0) +
-            0.08 * progress.effectiveKinds.size / 34.0
+            0.08 * progress.effectiveKinds.size / 34.0 - danger
     }
 
     private data class Key(val hand: List<Int>, val melds: List<Meld>, val visible: Set<Int>)
@@ -34,6 +34,13 @@ object McrBot {
             view.focus()?.let { add(it.tile()) }
         }
         val routes = McrBotRoutes(view.viewerSeat(), own.wind(), view.roundWind())
+        val danger = ChineseBotDanger.mcr(view, known)
+        fun defend(evaluation: Evaluation, loss: Double): Evaluation {
+            val qualified = evaluation.progress.shanten == 0 && evaluation.routes.qualifyingCopies > 0
+            val weight = (if (qualified) 0.25 else if (evaluation.progress.shanten <= 1) 0.55 else 1.0) *
+                (if (view.remaining() < 12 && !qualified) 1.4 else 1.0)
+            return evaluation.copy(danger = loss * weight)
+        }
         val cache = HashMap<Key, Evaluation>()
         fun evaluate(hand: List<Int>, melds: List<Meld>, visible: Set<Int> = known): Evaluation {
             val owned = (hand + melds.flatMap { it.tiles() }).toSet()
@@ -44,7 +51,7 @@ object McrBot {
         }
 
         val discards = actions.withIndex().filter { it.value.type() == DISCARD }
-            .associate { it.index to evaluate(own.hand() - it.value.tiles().single(), own.melds()) }
+            .associate { it.index to defend(evaluate(own.hand() - it.value.tiles().single(), own.melds()), danger.expectedLoss(Tile.kind(it.value.tiles().single()))) }
         val unchanged = if (discards.isEmpty()) evaluate(own.hand(), own.melds()) else null
         // Reconstruct commitment from retained structure, without private state or a saved plan.
         val anchor = (discards.values + listOfNotNull(unchanged)).flatMap { it.routes.routes }
@@ -53,7 +60,7 @@ object McrBot {
             .thenBy { it.progress.shanten }.thenByDescending { it.progress.remainingCount }
             .thenByDescending { it.progress.effectiveKinds.size }
         fun bestDiscard(hand: List<Int>, melds: List<Meld>, visible: Set<Int> = known): Evaluation {
-            val candidates = hand.distinctBy(Tile::kind).map { tile -> evaluate(hand - tile, melds, visible) }
+            val candidates = hand.distinctBy(Tile::kind).map { tile -> defend(evaluate(hand - tile, melds, visible), danger.expectedLoss(Tile.kind(tile))) }
             val fastest = candidates.minOf { it.progress.shanten }
             return candidates.filter { it.progress.shanten <= fastest + 1 }.minWith(order)
         }
@@ -98,7 +105,9 @@ object McrBot {
                 if (order.compare(evaluate(hand, melds), best) >= 0) continue
                 (0 until 34).mapNotNull { kind ->
                     (kind * 4 until kind * 4 + 4).firstOrNull { it !in known }
-                }.map { tile -> evaluate(hand, melds, known + tile) }.maxWithOrNull(order) ?: continue
+                }.map { tile -> defend(evaluate(hand, melds, known + tile), danger.expectedLoss(Tile.kind(tile)) +
+                    if (action.type() == MELDED_KONG && action.tiles().size == 1) danger.expectedLoss(Tile.kind(action.tiles().single())) else 0.0) }
+                    .maxWithOrNull(order) ?: continue
             }
             if (progress.progress.shanten > best.progress.shanten + 1) continue
             if (order.compare(progress, best) < 0) {

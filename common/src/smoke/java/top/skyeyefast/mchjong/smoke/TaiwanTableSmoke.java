@@ -33,7 +33,7 @@ final class TaiwanTableSmoke {
         if (task != null && !task.isDone()) return false;
         if (task != null) { task.join(); task = null; }
         var table = (MahjongTableBlockEntity) client.level.getBlockEntity(pos);
-        var server = client.getSingleplayerServer(); var id = client.player.getUUID();
+        var server = client.getSingleplayerServer();
         var room = table.clientTableRoom(); var view = table.clientTaiwanView();
         switch (stage) {
             case 0 -> { task = server.submit(() -> target(client, pos).sit(main(client), 0)); stage++; }
@@ -74,6 +74,16 @@ final class TaiwanTableSmoke {
             case 30 -> {
                 if (++captures < 12) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-rules.png", client.getMainRenderTarget(), ignored -> {});
+                RuleExplanationSmoke.check(client, net.minecraft.network.chat.Component.translatable("taiwan.mchjong.preset.pocket_common"));
+                press(client, "taiwan.mchjong.payment_rules");
+                var payment = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
+                    .map(net.minecraft.client.gui.components.EditBox.class::cast).findFirst().orElseThrow();
+                payment.setValue("");
+                RuleExplanationSmoke.check(client, net.minecraft.network.chat.Component.translatable("taiwan.mchjong.payment.base"));
+                payment = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
+                    .map(net.minecraft.client.gui.components.EditBox.class::cast).findFirst().orElseThrow();
+                check(payment.getValue().isEmpty(), "Explanation lost incomplete payment input");
+                payment.setValue("1"); press(client, "taiwan.mchjong.presets");
                 press(client, "taiwan.mchjong.preset.southern_common"); press(client, "gui.done"); stage = 5;
             }
             case 5 -> {

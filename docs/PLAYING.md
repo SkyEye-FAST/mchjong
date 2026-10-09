@@ -16,6 +16,12 @@ replays and customization in all four supported languages. Separate Riichi, MCR,
 Sichuan and Taiwan chapters explain play from dealing to match end, with complete
 award indexes, illustrated hands, payment examples and preset differences. The
 [Rules guide](RULES.md) also collects these player rules.
+Click an award in a settlement to read its explanation and illustrated example.
+With the receipt focused, Up/Down selects an explanation and Enter opens it;
+Left/Right still selects the winner. Rule settings offer a `?` beside each option.
+These explanations work without Patchouli. When installed, the Handbook button
+opens the corresponding entry and page; closing the book returns to the explanation,
+and Back or Escape returns to the original screen.
 Each player receives one on first joining a world with Patchouli installed on the
 server. Craft additional copies with a book, green dye and any mahjong tile, or
 take one from the MChjong creative tab.

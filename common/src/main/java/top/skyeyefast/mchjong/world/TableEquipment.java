@@ -10,6 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.item.DeckAdmission;
+import top.skyeyefast.mchjong.engine.PreparationProblem;
 
 /** Removable physical equipment and a strictly public appearance projection. Never holds game state. */
 public final class TableEquipment {
@@ -113,12 +115,36 @@ public final class TableEquipment {
     }
 
     public boolean manualSuppliesReady() {
-        return preparedSupplies() != null;
+        return preparedSupplies().problems().isEmpty();
+    }
+
+    public java.util.List<PreparationProblem> preparationProblems(top.skyeyefast.mchjong.engine.TableSession session, boolean automatic) {
+        var problems = new java.util.ArrayList<PreparationProblem>();
+        if (!hasCloth()) problems.add(PreparationProblem.CLOTH);
+        var riichi = session instanceof top.skyeyefast.mchjong.engine.RiichiSession r ? r : null;
+        boolean flowers = session.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR
+            || session instanceof top.skyeyefast.mchjong.engine.TaiwanSession t && t.rules().getFlowers() != top.skyeyefast.mchjong.engine.TaiwanRules.Flowers.NONE;
+        var required = DeckAdmission.requirements(riichi != null && riichi.rules().sanma(),
+            riichi == null ? top.skyeyefast.mchjong.engine.RedFives.NONE : riichi.rules().redFives(),
+            session.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN, flowers);
+        DeckAdmission.Check best = null;
+        for (int slot = 0; slot < BOX_SLOTS; slot++) {
+            var check = DeckAdmission.inspect(boxes.getItem(slot), required);
+            if (best == null || check.missing() < best.missing()
+                || check.missing() == best.missing() && !boxes.getItem(slot).isEmpty()) best = check;
+            if (check.appearance() != null) { best = check; break; }
+        }
+        problems.addAll(best.problems());
+        if (!automatic) {
+            if (riichi == null) problems.add(PreparationProblem.AUTOMATIC_TABLE);
+            else problems.addAll(preparedSupplies().problems());
+        }
+        return java.util.List.copyOf(problems);
     }
 
     public boolean prepareMatch() {
         var prepared = preparedSupplies();
-        if (prepared == null) return false;
+        if (!prepared.problems().isEmpty()) return false;
         loading = true;
         try {
             for (int slot = 0; slot < BOX_SLOTS; slot++) boxes.setItem(slot, prepared.boxes().get(slot));
@@ -145,9 +171,12 @@ public final class TableEquipment {
         return java.util.Collections.unmodifiableMap(kit);
     }
 
-    private record Supplies(java.util.List<ItemStack> boxes, java.util.List<java.util.List<ItemStack>> drawers) {}
+    private record Supplies(java.util.List<ItemStack> boxes, java.util.List<java.util.List<ItemStack>> drawers, java.util.List<PreparationProblem> problems) {
+        static Supplies rejected(java.util.List<PreparationProblem> problems) { return new Supplies(java.util.List.of(), java.util.List.of(), java.util.List.copyOf(problems)); }
+    }
 
     private Supplies preparedSupplies() {
+        var problems = new java.util.ArrayList<PreparationProblem>();
         int dice = 0;
         var boxCopies = new java.util.ArrayList<ItemStack>();
         var contents = new java.util.ArrayList<java.util.List<ItemStack>>();
@@ -158,7 +187,7 @@ public final class TableEquipment {
             contents.add(items);
             if (!items.isEmpty()) dice += items.get(MahjongSupplies.DICE_SLOT).getCount();
         }
-        if (dice < 2) return null;
+        if (dice < 2) problems.add(PreparationProblem.DICE);
         var copies = new java.util.ArrayList<java.util.List<ItemStack>>();
         for (int seat = 0; seat < 4; seat++) {
             var row = new java.util.ArrayList<ItemStack>();
@@ -171,8 +200,12 @@ public final class TableEquipment {
             int available = 0;
             for (var items : contents) for (int slot = MahjongSupplies.TILE_SLOTS; !items.isEmpty() && slot < MahjongSupplies.DYE_SLOT; slot++)
                 if (denomination(items.get(slot)) == entry.getKey()) available += items.get(slot).getCount();
-            if (available < entry.getValue() * rules.players()) return null;
+            if (available < entry.getValue() * rules.players()) {
+                var problem = entry.getKey() < 0 ? PreparationProblem.BUST_STICKS : PreparationProblem.POINT_STICKS;
+                if (!problems.contains(problem)) problems.add(problem);
+            }
         }
+        if (!problems.isEmpty()) return Supplies.rejected(problems);
         for (int seat = 0; seat < rules.players(); seat++) {
             var row = copies.get(seat);
             for (var entry : kit.entrySet()) {
@@ -193,12 +226,12 @@ public final class TableEquipment {
                         }
                     }
                 }
-                if (missing > 0) return null;
+                if (missing > 0) return Supplies.rejected(java.util.List.of(PreparationProblem.DRAWER_SPACE));
             }
         }
         for (int slot = 0; slot < BOX_SLOTS; slot++) if (!contents.get(slot).isEmpty())
             MahjongSupplies.setContents(boxCopies.get(slot), contents.get(slot));
-        return new Supplies(boxCopies, copies);
+        return new Supplies(boxCopies, copies, java.util.List.of());
     }
 
     private static int denomination(ItemStack stack) {

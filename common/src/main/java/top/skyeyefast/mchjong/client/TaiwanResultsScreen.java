@@ -2,7 +2,6 @@ package top.skyeyefast.mchjong.client;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.TaiwanGame;
 import top.skyeyefast.mchjong.engine.TaiwanSession;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TaiwanNextHandPayload;

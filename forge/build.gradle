@@ -157,7 +157,6 @@ sourceSets.main {
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
-    resources.srcDir layout.buildDirectory.dir('generated/ponder')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/create-forge')
 }
 
@@ -183,6 +182,7 @@ mixin {
 }
 
 processResources {
+    from tasks.named('generatePonder')
     dependsOn ':art:generateAssets', ':art:generateData', ':art:generateCreateForgeData', 'generatePonder'
     def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version,
         jei_version: jei_version, emi_version: emi_version, rei_version: rei_version, ponder_version: ponder_version,

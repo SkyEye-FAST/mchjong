@@ -31,7 +31,7 @@
     {
       "type": "patchouli:image",
       "images": [
-        "mchjong:textures/manual/sichuan.png"
+        "mchjong:textures/manual/sichuan/seven_pairs.png"
       ],
       "text": "manual.mchjong.entry.sichuan_flow.sichuan",
       "border": false

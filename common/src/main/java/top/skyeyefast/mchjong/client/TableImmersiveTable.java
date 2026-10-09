@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
-import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 

@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.item;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
@@ -16,23 +15,7 @@ public record SichuanDeck(TileMaterial material, DyeColor back, TileFacePreset p
     public List<Integer> tiles() { return Tile.sichuanSet(); }
     public TileData tile(int id) { return new TileData(Tile.kind(id), material, false); }
     public static SichuanDeck select(ItemStack box) {
-        if (!MahjongSupplies.validBox(box)) return null;
-        var stocks = new LinkedHashMap<SichuanDeck, int[]>();
-        var contents = MahjongSupplies.contents(box);
-        for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++) {
-            var stack = contents.get(slot);
-            if (stack.isEmpty()) continue;
-            var data = MahjongSupplies.tile(stack);
-            if (data.blank() || data.red() || data.face() >= 27) continue;
-            var appearance = new SichuanDeck(data.material(), MahjongSupplies.back(stack),
-                MahjongSupplies.facePreset(stack), MahjongSupplies.backPreset(stack));
-            stocks.computeIfAbsent(appearance, ignored -> new int[27])[data.face()] += stack.getCount();
-        }
-        for (var stock : stocks.entrySet()) {
-            boolean complete = true;
-            for (int count : stock.getValue()) if (count < 4) complete = false;
-            if (complete) return stock.getKey();
-        }
-        return null;
+        var appearance = DeckAdmission.inspect(box, DeckAdmission.requirements(false, top.skyeyefast.mchjong.engine.RedFives.NONE, true, false)).appearance();
+        return appearance == null ? null : new SichuanDeck(appearance.material(), appearance.back(), appearance.face(), appearance.backPreset());
     }
 }

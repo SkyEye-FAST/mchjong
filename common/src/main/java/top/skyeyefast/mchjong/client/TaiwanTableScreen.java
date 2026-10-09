@@ -14,7 +14,6 @@ import top.skyeyefast.mchjong.engine.TaiwanSession;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.network.TaiwanActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Seated world interaction and the fixed immersive canvas share server-issued Taiwan decisions. */
@@ -92,7 +91,6 @@ public final class TaiwanTableScreen extends Screen {
             TableExitControls.voteButtons(pos, room, uiWidth(), uiHeight(), contentScale()).forEach(this::addRenderableWidget);
             return;
         }
-        int s = contentScale(), w = uiWidth();
         turnClock = addRenderableWidget(new TableTurnClock());
         TableToolbar.build(this, pos, room, uiWidth(), immersive(), this::toggleView)
             .forEach(this::addRenderableWidget);

@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.item;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
@@ -38,25 +37,7 @@ public record McrDeck(TileMaterial material, DyeColor back, TileFacePreset prese
 
     /** Extra tiles remain in the case. Red markings cannot replace missing ordinary fives. */
     public static McrDeck select(ItemStack box) {
-        if (!MahjongSupplies.validBox(box)) return null;
-        var stocks = new LinkedHashMap<McrDeck, int[]>();
-        var items = MahjongSupplies.contents(box);
-        for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++) {
-            ItemStack stack = items.get(slot);
-            if (stack.isEmpty()) continue;
-            TileData data = MahjongSupplies.tile(stack);
-            if (data.blank() || data.red()) continue;
-            var appearance = new McrDeck(data.material(), MahjongSupplies.back(stack),
-                MahjongSupplies.facePreset(stack), MahjongSupplies.backPreset(stack));
-            int[] stock = stocks.computeIfAbsent(appearance, ignored -> new int[TileData.FIRST_FLOWER + TileData.FLOWER_COUNT]);
-            stock[data.face()] += stack.getCount();
-        }
-        for (var stock : stocks.entrySet()) {
-            boolean complete = true;
-            for (int face = 0; face < stock.getValue().length && complete; face++)
-                complete = stock.getValue()[face] >= (face < TileData.FIRST_FLOWER ? 4 : 1);
-            if (complete) return stock.getKey();
-        }
-        return null;
+        var appearance = DeckAdmission.inspect(box, DeckAdmission.requirements(false, top.skyeyefast.mchjong.engine.RedFives.NONE, false, true)).appearance();
+        return appearance == null ? null : new McrDeck(appearance.material(), appearance.back(), appearance.face(), appearance.backPreset());
     }
 }

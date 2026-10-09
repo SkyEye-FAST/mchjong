@@ -12,7 +12,6 @@ import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
 import top.skyeyefast.mchjong.engine.RiichiDiscard;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;

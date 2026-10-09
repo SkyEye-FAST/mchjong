@@ -16,7 +16,6 @@ public final class ClientTaiwanNetworking {
         if ((room.lifecycle() == TableSession.Lifecycle.LOBBY) != (view == null)
             || view != null && (!view.tableId().equals(room.tableId()) || !view.incarnation().equals(room.incarnation())
                 || view.game().recipient() != room.viewerSeat() || !view.game().rules().equals(payload.settings().rules()))) return;
-        var previous = table.clientTaiwanView();
         var previousRoom = table.clientRoom();
         table.acceptTaiwanView(view, room, payload.deck(), payload.cloth(), payload.settings());
         if (table.clientTableRoom() != room) return;
@@ -33,16 +32,17 @@ public final class ClientTaiwanNetworking {
         }
         if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId())) client.setScreen(null);
         var rootScreen = TableChildScreen.root(client.screen);
+        var rulesScreen = TableChildScreen.find(client.screen, TaiwanRulesScreen.class);
         var active = TaiwanTableScreen.active(client.screen);
         boolean showing = active != null && active.tablePos().equals(payload.pos())
             || rootScreen instanceof TaiwanLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
-            || client.screen instanceof TaiwanRulesScreen rules && rules.tablePos().equals(payload.pos())
-            || client.screen instanceof TaiwanResultsScreen results && results.tablePos().equals(payload.pos());
+            || rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())
+            || rootScreen instanceof TaiwanResultsScreen results && results.tablePos().equals(payload.pos());
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
             && payload.room().lobby() && showing) { client.setScreen(null); return; }
         if (view == null) {
-            if (!payload.open() && client.screen instanceof TaiwanRulesScreen rules && rules.tablePos().equals(payload.pos())) {
-                rules.receivedView(payload.controlReply());
+            if (!payload.open() && rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())) {
+                rulesScreen.receivedView(payload.controlReply());
                 return;
             }
             if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.taiwanLobby() != null
@@ -57,12 +57,12 @@ public final class ClientTaiwanNetworking {
         }
         if (!payload.open() && !showing) return;
         if (view.game().result() != null) {
-            if (client.screen instanceof TaiwanResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
+            if (rootScreen instanceof TaiwanResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
             else client.setScreen(new TaiwanResultsScreen(payload.pos(), active != null && active.immersive()));
         } else if (active != null && active.tablePos().equals(payload.pos())) {
             active.receivedView();
         }
-        else if (client.screen instanceof TaiwanResultsScreen results && results.tablePos().equals(payload.pos()))
+        else if (rootScreen instanceof TaiwanResultsScreen results && results.tablePos().equals(payload.pos()))
             client.setScreen(new TaiwanTableScreen(payload.pos(), results.immersive()));
         else client.setScreen(new TaiwanTableScreen(payload.pos()));
     }

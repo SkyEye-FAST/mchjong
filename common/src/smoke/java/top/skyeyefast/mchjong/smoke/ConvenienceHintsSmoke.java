@@ -76,7 +76,7 @@ final class ConvenienceHintsSmoke {
         client.options.guiScale().set(sample == 0 ? 3 : 2); client.resizeDisplay(); ticks = 0;
         var fixtureRoom = new TableRoomView(room.tableId(), room.incarnation(), Long.MAX_VALUE / 4 + sample,
             room.decision(), room.variant(), room.lifecycle(), room.host(), room.viewerSeat(), false, true, false,
-            room.seating(), List.of(), room.seats(), List.of(), null, false, true, true, room.automation());
+            room.seating(), List.of(), room.seats(), List.of(), null, false, true, true, room.automation(), List.of());
         int viewer = room.viewerSeat();
         if (mcrRule) {
             var base = mcr.game();

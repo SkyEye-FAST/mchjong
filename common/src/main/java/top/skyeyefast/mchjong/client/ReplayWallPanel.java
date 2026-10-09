@@ -8,10 +8,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
-import top.skyeyefast.mchjong.engine.ReplayPlayback;
-import top.skyeyefast.mchjong.engine.WallLayout;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Initial physical wall with consumption state projected from a replay frame. */
