@@ -208,7 +208,8 @@ final class TableControlSmoke {
             click(client, RedFives.FOUR.translationKey());
             var label = Component.translatable("rules.mchjong.option.kuitan").getString();
             var kuitan = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
+                .filter(widget -> !(widget.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+                    && text.getKey().equals("rules.mchjong.explanation")) && widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
             client.screen.mouseClicked(kuitan.getX() + 5, kuitan.getY() + 5, 0);
             capture(client, output, "25i-red-stock-options.png");
             click(client, "rules.mchjong.apply");
@@ -244,7 +245,8 @@ final class TableControlSmoke {
         } else if (stage == 14 && ticks > 5) {
             String label = Component.translatable("rules.mchjong.option.ippatsu").getString();
             var toggle = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
+                .filter(widget -> !(widget.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+                    && text.getKey().equals("rules.mchjong.explanation")) && widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
             client.screen.mouseClicked(toggle.getX() + 5, toggle.getY() + 5, 0);
             originalWidth = client.getWindow().getScreenWidth(); originalHeight = client.getWindow().getScreenHeight();
             originalScale = client.options.guiScale().get();
@@ -265,7 +267,8 @@ final class TableControlSmoke {
             click(client, "rules.mchjong.group.flow");
             String label = Component.translatable("rules.mchjong.option.bankruptcy").getString();
             var bankruptcy = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
+                .filter(widget -> !(widget.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+                    && text.getKey().equals("rules.mchjong.explanation")) && widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
             client.screen.mouseClicked(bankruptcy.getX() + 5, bankruptcy.getY() + 5, 0);
             click(client, "rules.mchjong.apply");
             next(17);
@@ -289,7 +292,8 @@ final class TableControlSmoke {
         } else if (stage == 26 && ticks > 10) {
             String label = Component.translatable("settings.mchjong.invitation_teleport").getString();
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
+                .filter(widget -> !(widget.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+                    && text.getKey().equals("rules.mchjong.explanation")) && widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
             require(button.active, "Administrator cannot edit invitation teleport in the World tab");
             AutomationControlsSmoke.checkBounds(client);
             capture(client, output, "25k-world-settings.png");
