@@ -29,6 +29,14 @@ final class ManualSmoke {
         int count = messages.size();
         ManualClient.tick(false);
         require(messages(client).size() == count, "Recommendation repeated in same session");
+        for (String key : List.of("yaku.mchjong.riichi", "mcr.mchjong.fan.big_four_winds", "sichuan.mchjong.fan.all_pungs", "taiwan.mchjong.pattern.heavenly_win")) {
+            top.skyeyefast.mchjong.client.RuleHelp.openAward(null, Component.translatable(key));
+            require(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen, "Basic explanation needs Patchouli: " + key);
+            require(client.screen.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
+                .map(net.minecraft.client.gui.components.AbstractWidget.class::cast).noneMatch(widget -> widget.getMessage().getString().equals(
+                    Component.translatable("rules.mchjong.manual").getString())), "Absent handbook button was offered");
+            client.screen.onClose(); require(client.screen == null, "Basic explanation did not close");
+        }
         SmokeScreenshots.grab(output.toFile(), "manual-recommendation.png", client.getMainRenderTarget(), 1, message -> {});
         return true;
     }

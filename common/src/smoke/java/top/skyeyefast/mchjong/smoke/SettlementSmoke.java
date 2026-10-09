@@ -84,6 +84,26 @@ final class SettlementSmoke {
                     throw new IllegalStateException("Settlement locale viewport was not 320x240");
                 checkBounds(client);
                 capture(client, output, "18-settlement-" + LANGUAGES[locale] + ".png");
+                var parent = client.screen;
+                var panel = panel(client);
+                parent.setFocused(panel); panel.setFocused(true);
+                parent.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0));
+                parent.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+                if (!(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen)) throw new IllegalStateException("Keyboard result explanation did not open");
+                checkBounds(client);
+                return false;
+            }
+            if (localeTicks < 12) return false;
+            if (localeTicks == 12) {
+                capture(client, output, "20-result-explanation-" + LANGUAGES[locale] + ".png");
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE, 0, 0));
+                if (!(client.screen instanceof RiichiTableScreen)) throw new IllegalStateException("Explanation did not return to settlement");
+                return false;
+            }
+            if (localeTicks == 13) {
+                clickAward(client);
+                if (!(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen)) throw new IllegalStateException("Mouse result explanation did not open");
+                client.screen.onClose();
                 click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.2").getString());
                 return false;
             }
@@ -252,6 +272,17 @@ final class SettlementSmoke {
     private static TableResults panel(Minecraft client) {
         return client.screen.children().stream().filter(TableResults.class::isInstance).map(TableResults.class::cast)
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing settlement panel"));
+    }
+    private static void clickAward(Minecraft client) {
+        try {
+            var panel = panel(client);
+            var field = TableResults.class.getDeclaredField("awardHits"); field.setAccessible(true);
+            var hit = ((List<?>) field.get(panel)).getFirst();
+            var x = hit.getClass().getDeclaredMethod("x"); x.setAccessible(true);
+            var y = hit.getClass().getDeclaredMethod("y"); y.setAccessible(true);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(panel.getX() + (int) x.invoke(hit) + 1,
+                panel.getY() + (int) y.invoke(hit) + 1, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+        } catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
     }
 
     private void checkSettledPoints(Minecraft client) {

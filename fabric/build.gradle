@@ -86,7 +86,6 @@ sourceSets.main {
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
-    resources.srcDir layout.buildDirectory.dir('generated/ponder')
 }
 
 // Native Minecraft NBT APIs, isolated from the mod's main compilation and packaging.
@@ -110,6 +109,7 @@ tasks.register('generatePonder', JavaExec) {
 }
 
 processResources {
+    from tasks.named('generatePonder')
     dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
     def properties = [
         version: project.version,
@@ -133,17 +133,23 @@ tasks.withType(JavaCompile).configureEach {
     options.release = java_version.toInteger()
 }
 
-tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder' }
+tasks.named('sourcesJar') {
+    dependsOn ':art:generateAssets', ':art:generateData'
+    from tasks.named('generatePonder')
+}
 jar { from(rootProject.file('LICENSE')) }
 
-// This mod is loaded only by the visual smoke run, never packaged for players.
+// Compile shared fixtures once; the visual smoke mod is never packaged for players.
 sourceSets {
+    fixtures {
+        java.srcDir '../common/src/testFixtures/java'
+        compileClasspath += sourceSets.main.compileClasspath
+    }
     smoke {
         java.srcDir '../common/src/smoke/java'
-        java.srcDir '../common/src/testFixtures/java'
         resources.srcDir '../common/src/smoke/resources'
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.fixtures.output.classesDirs
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath + sourceSets.fixtures.output.classesDirs
     }
 }
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
@@ -233,4 +239,7 @@ tasks.named('runSmokeClient') {
     }
 }
 
-sourceSets.test.java.srcDir '../common/src/testFixtures/java'
+sourceSets.test {
+    compileClasspath += sourceSets.fixtures.output.classesDirs
+    runtimeClasspath += sourceSets.fixtures.output.classesDirs
+}

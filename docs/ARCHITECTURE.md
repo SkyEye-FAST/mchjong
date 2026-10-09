@@ -678,6 +678,13 @@ Patchouli resources define `mchjong:guide`, using the ordinary language files
 for chapter, entry and page text. The handbook reads client resources and has no
 gameplay authority. The presence-guarded server adapter gives each player a starter
 book once, recording recipient UUIDs in overworld saved data.
+`RuleHelp` indexes the shared handbook JSON and translation keys during resource
+reload. Award anchors identify exact entry/page destinations and adjacent generated
+images; rule options map to the owning pages and reuse their existing descriptions.
+The basic `TableHelpScreen` has no optional API dependency. `ManualLinks` registers
+book navigation after presence detection. Its parent is retained in the shared
+screen chain so view packets update the owning table/results/editor without replacing
+the explanation or book; leaving the table still closes the chain.
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's
@@ -728,6 +735,11 @@ Rules without bankruptcy also require one reserved −10000 stick per player.
 Surplus tiles remain untouched. Subset selection groups stock by
 appearance, counts ordinary and red faces separately and never combines boxes.
 The engine receives exactly 136 or 108 physical identities for the selected mode.
+`DeckAdmission` shares copy requirements between all physical selectors and preparation
+diagnostics. `TableEquipment` combines that single-case check with cloth and the ordinary
+table's atomic supply plan. The Minecraft room projection publishes only failure categories;
+the same checks govern preparation admission. Assigned-stool cues are recipient-only,
+expire after three seconds and use `TableGeometry.stool` without modifying mounts.
 Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual checks.
 
 The server owns the wall, hands, legal actions and settlement. Requests contain an

@@ -26,7 +26,6 @@ import top.skyeyefast.mchjong.engine.TaiwanCodec;
 import top.skyeyefast.mchjong.network.TaiwanViewPayload;
 import top.skyeyefast.mchjong.network.TaiwanActionPayload;
 import top.skyeyefast.mchjong.engine.SichuanCodec;
-import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.network.RiichiActionPayload;
@@ -74,6 +73,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private long nextArchiveRetry;
     private final TableEquipment equipment = new TableEquipment(this::equipmentChanged);
     private boolean syncingEquipment;
+    private final java.util.Map<UUID, Integer> hintedSeats = new java.util.HashMap<>();
+    private final java.util.Map<UUID, Integer> seatHintEnds = new java.util.HashMap<>();
 
     public TableEquipment equipment() { return equipment; }
     public boolean automatic() { return getBlockState().is(MahjongContent.AUTO_TABLE); }
@@ -163,6 +164,36 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
                 mounted.put(player.getUUID(), seat.seat());
         }
         session.synchronizeSeats(mounted, connected);
+    }
+
+    /** Recipient-only, short-lived cue at the actual furniture; never moves or mounts a player. */
+    private void tickSeatHints() {
+        var session = host.session();
+        if (!session.lobby() || session.roomView(null).seating() != top.skyeyefast.mchjong.engine.RoomSeating.Stage.POSITIONING) {
+            hintedSeats.clear(); seatHintEnds.clear(); return;
+        }
+        var serverLevel = (ServerLevel) level;
+        for (var player : serverLevel.players()) {
+            int seat = session.seatOf(player.getUUID());
+            if (seat < 0) { hintedSeats.remove(player.getUUID()); seatHintEnds.remove(player.getUUID()); continue; }
+            if (!java.util.Objects.equals(hintedSeats.put(player.getUUID(), seat), seat)) seatHintEnds.put(player.getUUID(), ticks + 60);
+            if (ticks >= seatHintEnds.getOrDefault(player.getUUID(), 0) || ticks % 5 != 0) continue;
+            var stool = TableGeometry.stool(worldPosition, seat);
+            if (!level.getBlockState(stool).is(MahjongContent.STOOL) || mountedAt(player, seat)) continue;
+            var particle = new net.minecraft.core.particles.DustParticleOptions(0xE3BF82, 0.65f);
+            for (int corner = 0; corner < 4; corner++) serverLevel.sendParticles(player, particle, false, false,
+                stool.getX() + (corner % 2 == 0 ? 0.18 : 0.82), stool.getY() + 1.05,
+                stool.getZ() + (corner / 2 == 0 ? 0.18 : 0.82), 1, 0, 0.04, 0, 0);
+        }
+    }
+
+    private boolean mountedAt(ServerPlayer player, int seat) {
+        return player.getVehicle() instanceof SeatEntity mount && mount.tablePos().equals(worldPosition) && mount.seat() == seat;
+    }
+
+    private top.skyeyefast.mchjong.engine.TableRoomView projectedRoom(UUID viewer) {
+        var room = host.session().roomView(viewer);
+        return room.withEquipmentProblems(room.lobby() ? equipment.preparationProblems(host.session(), automatic()) : java.util.List.of());
     }
 
     public RiichiView clientView() { return clientView; }
@@ -263,6 +294,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         table.flushExperience();
         table.synchronizeEquipment();
         table.ticks++;
+        table.tickSeatHints();
         table.flushReplays();
         var worldPolicy = WorldSettings.of(level.getServer()).policy();
         if (host.session().revision() != table.sentRevision || !worldPolicy.equals(table.sentWorldPolicy) || table.ticks % 40 == 0) {
@@ -332,7 +364,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         RiichiView snapshot = viewer == null ? session.spectatorView(policy.spectatorHandVisibility()) : session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(
             new RiichiViewPayload(worldPosition, snapshot == null ? "" : TableNetworking.JSON.toJson(snapshot), open, controlReply,
-                session.leaveDecision(player.getUUID()), equipment.redOptions(), session.roomView(viewer),
+                session.leaveDecision(player.getUUID()), equipment.redOptions(), projectedRoom(viewer),
                 session.roomSettings(), host.botState(), policy,
                 session.variant())));
     }
@@ -345,7 +377,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var snapshot = session.view(player.getUUID());
         player.connection.send(PayloadPackets.clientbound(new McrViewPayload(worldPosition,
             snapshot == null ? "" : McrCodec.encodeSessionView(snapshot),
-            session.roomView(authorizedViewer(player)),
+            projectedRoom(authorizedViewer(player)),
             stock == null ? null : stock.deck(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.timeControl(), WorldSettings.of(level.getServer()).policy())));
     }
 
@@ -356,7 +388,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         UUID viewer = authorizedViewer(player);
         var snapshot = session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new SichuanViewPayload(worldPosition,
-            snapshot == null ? "" : SichuanCodec.encodeSessionView(snapshot), session.roomView(viewer),
+            snapshot == null ? "" : SichuanCodec.encodeSessionView(snapshot), projectedRoom(viewer),
             equipment.sichuanStock(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.roomSettings(), WorldSettings.of(level.getServer()).policy())));
     }
 
@@ -367,7 +399,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         UUID viewer = authorizedViewer(player);
         var snapshot = session.lobby() ? null : session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new TaiwanViewPayload(worldPosition,
-            snapshot == null ? "" : TaiwanCodec.encodeSessionView(snapshot), session.roomView(viewer),
+            snapshot == null ? "" : TaiwanCodec.encodeSessionView(snapshot), projectedRoom(viewer),
             equipment.taiwanStock(session.rules()), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.roomSettings(), WorldSettings.of(level.getServer()).policy())));
     }
 
@@ -777,7 +809,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public top.skyeyefast.mchjong.engine.TableRoomView roomView(ServerPlayer player) {
         TableSession session = serverSession();
-        return session == null || player.level() != level ? null : session.roomView(authorizedViewer(player));
+        return session == null || player.level() != level ? null : projectedRoom(authorizedViewer(player));
     }
 
     public void configureVariant(ServerPlayer player, TableVariantPayload payload) {

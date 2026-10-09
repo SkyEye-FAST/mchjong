@@ -39,7 +39,11 @@ final class MatchAutomationControlsSmoke {
             case 3 -> {
                 if (!room.automation().win() || !option(client).active) return false;
                 require(client.screen.getFocused() == option(client), "Automation lost focus on acknowledgement");
-                option(client).onClick(new net.minecraft.client.input.MouseButtonEvent(option(client).getX() + 2, option(client).getY() + 2, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+                var button = option(client);
+                double x = button.getX() + 2, y = button.getY() + 2;
+                var pointer = new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0));
+                require(client.screen.mouseClicked(pointer, false), "Automation control rejected pointer input");
+                client.screen.mouseReleased(pointer);
                 next();
             }
             case 4 -> {

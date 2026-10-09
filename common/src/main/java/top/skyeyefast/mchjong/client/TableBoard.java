@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -469,9 +468,6 @@ final class TableBoard {
     private void tile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                       boolean marked, boolean dimmed, TileFacePreset preset) {
         TileGui.tileArtwork(graphics, tile, x, y, width, back, sideways, marked, dimmed, 0, preset, material, this.back, backPreset, artwork, dimensions);
-    }
-    private void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int width, TileFacePreset preset) {
-        TileGui.meldArtwork(graphics, meld, owner, x, y, width, 0, preset, material, back, backPreset, artwork);
     }
     private void rememberRotated(int tile, int cx, int cy, int x, int y, int side) {
         rememberRotated(tile, cx, cy, x, y, side, 1);

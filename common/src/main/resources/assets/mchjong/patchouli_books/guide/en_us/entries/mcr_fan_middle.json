@@ -10,9 +10,25 @@
       "anchor": "pure_straight"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/pure_straight.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_2",
       "anchor": "three_suited_terminal_chows"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/three_suited_terminal_chows.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -20,9 +36,25 @@
       "anchor": "pure_shifted_chows"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/pure_shifted_chows.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_4",
       "anchor": "all_five"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/all_five.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -30,9 +62,25 @@
       "anchor": "triple_pung"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/triple_pung.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_6",
       "anchor": "three_concealed_pungs"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/three_concealed_pungs.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -40,9 +88,25 @@
       "anchor": "lesser_honors_and_knitted_tiles"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/lesser_honors_and_knitted_tiles.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_8",
       "anchor": "knitted_straight"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/knitted_straight.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -50,9 +114,25 @@
       "anchor": "upper_four"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/upper_four.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_10",
       "anchor": "lower_four"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/lower_four.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -60,9 +140,25 @@
       "anchor": "big_three_winds"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/big_three_winds.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_12",
       "anchor": "mixed_straight"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/mixed_straight.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -70,9 +166,25 @@
       "anchor": "reversible_tiles"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/reversible_tiles.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_14",
       "anchor": "mixed_triple_chow"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/mixed_triple_chow.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -80,9 +192,25 @@
       "anchor": "mixed_shifted_pungs"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/mixed_shifted_pungs.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_16",
       "anchor": "chicken_hand"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/chicken_hand.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -90,9 +218,25 @@
       "anchor": "last_tile_draw"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/last_tile_draw.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_18",
       "anchor": "last_tile_claim"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/last_tile_claim.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -100,9 +244,25 @@
       "anchor": "out_with_replacement_tile"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/out_with_replacement_tile.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_20",
       "anchor": "robbing_the_kong"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/robbing_the_kong.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -110,9 +270,25 @@
       "anchor": "all_pungs"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/all_pungs.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_22",
       "anchor": "half_flush"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/half_flush.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -120,9 +296,25 @@
       "anchor": "mixed_shifted_chows"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/mixed_shifted_chows.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_24",
       "anchor": "all_types"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/all_types.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -130,14 +322,38 @@
       "anchor": "melded_hand"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/melded_hand.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_26",
       "anchor": "two_concealed_kongs"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/two_concealed_kongs.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.page_27",
       "anchor": "two_dragons_pungs"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/mcr/two_dragons_pungs.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     }
   ]
 }

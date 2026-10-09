@@ -45,7 +45,7 @@ final class SurvivalSmoke {
             var packet = table.getUpdatePacket();
             check(packet != null && packet.getTag().equals(table.getUpdateTag(level.registryAccess())), "Wrong appearance packet");
             check(!packet.getTag().contains("session") && !packet.getTag().contains("boxes") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
-            check("glass".equals(packet.getTag().getString("tile_material")), "Missing glass appearance");
+            check("glass".equals(packet.getTag().getString("tile_material").orElseThrow()), "Missing glass appearance");
         }
         var stool = new FurnitureBlockEntity(BlockPos.ZERO, MahjongContent.STOOL.defaultBlockState());
         stool.setLevel(level);

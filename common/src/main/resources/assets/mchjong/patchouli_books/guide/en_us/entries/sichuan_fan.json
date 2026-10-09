@@ -10,9 +10,25 @@
       "anchor": "all_pungs"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/all_pungs.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_fan.page_2",
       "anchor": "golden_single_wait"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/golden_single_wait.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -20,9 +36,25 @@
       "anchor": "full_flush"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/full_flush.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_fan.page_4",
       "anchor": "seven_pairs"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/seven_pairs.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -30,9 +62,25 @@
       "anchor": "root"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/root.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_fan.page_6",
       "anchor": "kong"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/kong.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -40,9 +88,25 @@
       "anchor": "win_after_kong"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/win_after_kong.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_fan.page_8",
       "anchor": "shoot_after_kong"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/shoot_after_kong.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -50,9 +114,25 @@
       "anchor": "robbing_kong"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/robbing_kong.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_fan.page_10",
       "anchor": "under_the_sea"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/sichuan/under_the_sea.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     }
   ]
 }

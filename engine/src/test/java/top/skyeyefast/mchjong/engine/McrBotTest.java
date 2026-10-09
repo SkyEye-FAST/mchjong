@@ -3,6 +3,8 @@ package top.skyeyefast.mchjong.engine;
 import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.List;
+import java.util.HashSet;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -97,6 +99,46 @@ class McrBotTest {
         assertEquals(PASS, choice(exposed, 1).type());
         var added = addedKongPosition();
         assertEquals(DISCARD, choice(added, 1).type());
+    }
+
+    @Test @Timeout(5) void publicOpponentThreatTradesWidthForSaferQualifyingWaitsWithoutFuriten() {
+        var game = fixed(8, new Fixture().hand(0, "123m123p123s346s11z").build());
+        var original = game.view(0);
+        assertEquals(Tile.parseKind("6s"), Tile.kind(choice(game, 0).tiles().getFirst()));
+        var seats = new ArrayList<>(original.seats());
+        var other = seats.get(1);
+        var melds = new ArrayList<Meld>();
+        for (int kind = 24; kind <= 26; kind++) melds.add(new Meld(Meld.Type.TRIPLET, List.of(kind * 4, kind * 4 + 1, kind * 4 + 2), 0, kind * 4));
+        var river = List.of(new McrDiscard(Tile.parseKind("3s") * 4 + 2, false, false));
+        seats.set(1, new McrView.Seat(other.wind(), other.points(), java.util.Collections.nCopies(4, Tile.HIDDEN), Tile.ABSENT, melds, river, List.of(), false));
+        var wall = new ArrayList<>(java.util.Collections.nCopies(144, Tile.ABSENT));
+        for (int i = 0; i < 12; i++) wall.set(i, Tile.HIDDEN);
+        var threatened = new McrView(original.revision(), original.decision(), original.handNumber(), original.phase(), original.viewerSeat(),
+            original.dealer(), original.roundWind(), original.turn(), 12, original.opening(), wall, original.focus(), seats,
+            original.actions(), original.responded(), original.qualifyingWin(), original.result(), original.penalties());
+        var known = new HashSet<>(game.hand(0));
+        known.addAll(melds.stream().flatMap(meld -> meld.tiles().stream()).toList()); known.add(river.getFirst().tile());
+        var risk = ChineseBotDanger.mcr(threatened, known);
+        assertTrue(risk.against(1, Tile.parseKind("6s")) > risk.against(2, Tile.parseKind("6s")));
+        assertTrue(risk.against(1, Tile.parseKind("3s")) > 0, "MCR repeats are not furiten-safe");
+        var early = new McrView(threatened.revision(), threatened.decision(), threatened.handNumber(), threatened.phase(), 0, threatened.dealer(), threatened.roundWind(), threatened.turn(),
+            original.remaining(), threatened.opening(), original.wall(), threatened.focus(), seats, threatened.actions(), false, threatened.qualifyingWin(), null, threatened.penalties());
+        assertTrue(risk.against(1, 23) > ChineseBotDanger.mcr(early, known).against(1, 23), "Short walls increase public threat");
+        var selected = threatened.actions().get(McrBot.choose(threatened)).tiles().getFirst();
+        assertEquals(Tile.parseKind("3s"), Tile.kind(selected));
+        var kept = new ArrayList<>(game.hand(0)); kept.remove(selected);
+        assertEquals(0, McrHandAnalyzer.analyze(kept, List.of(), 0, known.stream().filter(tile -> !kept.contains(tile)).toList()).shanten(), "A live qualifying attack should keep readiness");
+        var flowerSeat = seats.get(1);
+        seats.set(1, new McrView.Seat(flowerSeat.wind(), flowerSeat.points(), flowerSeat.hand(), flowerSeat.drawn(), flowerSeat.melds(), flowerSeat.river(), List.of(136, 137, 138), false));
+        var flowers = new McrView(threatened.revision(), threatened.decision(), threatened.handNumber(), threatened.phase(), 0, threatened.dealer(), threatened.roundWind(), threatened.turn(),
+            threatened.remaining(), threatened.opening(), threatened.wall(), threatened.focus(), seats, threatened.actions(), false, threatened.qualifyingWin(), null, threatened.penalties());
+        assertEquals(risk.against(1, 23) * 19 / 16, ChineseBotDanger.mcr(flowers, known).against(1, 23), 1e-9, "Flowers affect exposure, not minimum-fan qualification");
+        var mixed = List.of(6, 15, 24).stream().map(kind -> new Meld(Meld.Type.SEQUENCE, List.of(kind * 4, (kind + 1) * 4, (kind + 2) * 4), 0, kind * 4)).toList();
+        seats.set(1, new McrView.Seat(other.wind(), other.points(), java.util.Collections.nCopies(4, Tile.HIDDEN), Tile.ABSENT, mixed, river, List.of(), false));
+        var mixedView = new McrView(threatened.revision(), threatened.decision(), threatened.handNumber(), threatened.phase(), 0, threatened.dealer(), threatened.roundWind(), threatened.turn(),
+            threatened.remaining(), threatened.opening(), threatened.wall(), threatened.focus(), seats, threatened.actions(), false, threatened.qualifyingWin(), null, threatened.penalties());
+        var mixedKnown = new HashSet<>(game.hand(0)); mixedKnown.add(river.getFirst().tile()); mixedKnown.addAll(mixed.stream().flatMap(meld -> meld.tiles().stream()).toList());
+        assertTrue(ChineseBotDanger.mcr(mixedView, mixedKnown).against(1, Tile.parseKind("3s")) < risk.against(1, Tile.parseKind("3s")), "Unproven eight-fan routes get less exposure than a strong same-suit signal");
     }
 
     @Test void hiddenHandAndFutureWallPermutationsCannotAffectTheDecision() {

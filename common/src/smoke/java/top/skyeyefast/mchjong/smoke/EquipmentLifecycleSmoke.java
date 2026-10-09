@@ -19,8 +19,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
@@ -166,6 +164,8 @@ final class EquipmentLifecycleSmoke {
         TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
         check(installed.isEmpty() && countInventory(player, firstExpected) == 1, "Moving the cases lost or duplicated their contents");
         check(!table.participantSession(player).equipped(), "Table started without a cloth");
+        check(table.roomView(player).equipmentProblems().contains(top.skyeyefast.mchjong.engine.PreparationProblem.CLOTH),
+            "Server projection omitted the missing cloth");
         var green = new ItemStack(MahjongContent.CLOTH_ITEM);
         var greenExpected = green.copy();
         table.useEquipment(player, green);

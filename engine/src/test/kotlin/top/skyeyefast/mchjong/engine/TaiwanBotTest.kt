@@ -72,8 +72,8 @@ class TaiwanBotTest {
     @Test fun equalLiveWaitsUseCurrentScorerValuesRatherThanPresetNames() {
         for (preset in TaiwanPreset.entries) {
             val base = preset.rules()
-            fun selected(red: Int, green: Int): Int {
-                val values = base.values + mapOf(TaiwanRules.Pattern.RED_DRAGON to red, TaiwanRules.Pattern.GREEN_DRAGON to green)
+            fun selected(white: Int, green: Int): Int {
+                val values = base.values + mapOf(TaiwanRules.Pattern.WHITE_DRAGON to white, TaiwanRules.Pattern.GREEN_DRAGON to green)
                 val rules = TaiwanRules(base.name, values, base.exclusions, base.sources, base.flowers, base.flowerSets,
                     base.pinfu, base.replacements, base.taiLimit, base.reserve, base.payment)
                 val hand = (0..5).toList() + (9..11) + (18..20) + listOf(31, 31, 31, 32, 32)
@@ -112,6 +112,39 @@ class TaiwanBotTest {
         repeat(3) { act(game, game.turn, Type.DISCARD, 32); pass(game) }
         assertTrue(game.view(1).actions().any { it.type() == Type.ADDED_KONG })
         assertTrue(choice(game.view(1)).type() in listOf(Type.DISCARD, Type.READY_DISCARD))
+    }
+
+    @Test @org.junit.jupiter.api.Timeout(5) fun attainableValueCanOutweighMoreEffectiveCopiesButExhaustedRoutesCannot() {
+        val base = TaiwanPreset.POCKET_COMMON.rules()
+        val values = base.values + (TaiwanRules.Pattern.WHITE_DRAGON to 100)
+        val rules = TaiwanRules(base.name, values, base.exclusions, base.sources, base.flowers, base.flowerSets,
+            base.pinfu, base.replacements, null, base.reserve, base.payment)
+        val kinds = (0..5).toList() + (9..11) + (18..20) + listOf(24, 25, 31, 32, 33)
+        fun position(publicWhite: Int): TaiwanView {
+            val original = fixture(mapOf(0 to kinds), rules = rules).view(0)
+            val seats = original.seats().toMutableList()
+            val other = seats[1]
+            seats[1] = TaiwanView.Seat(other.concealedCount(), other.concealed(), other.drawn(), other.melds(), other.flowers(),
+                (1..publicWhite).map { Tile.WHITE * 4 + it }, other.ready())
+            return TaiwanView(original.revision(), original.decision(), original.rules(), original.opening(), original.roundWind(), original.continuation(),
+                original.phase(), original.turn(), original.recipient(), original.drawable(), original.reserve(), original.wall(), seats,
+                original.focus(), original.actions(), original.responded(), original.passedWin(), original.result())
+        }
+        val view = position(1)
+        val own = view.seats()[0]
+        val analyses = TaiwanHandAnalyzer.discards(own.concealed().dropLast(1), own.melds(), 0, own.concealed().last(), own.concealed() + view.seats()[1].river())
+        val selected = Tile.kind(choice(view).tiles().single())
+        assertNotEquals(31, selected, "Keep the attainable high-value dragon route")
+        val kept = analyses.single { it.kind == selected }.analysis
+        val widest = analyses.filter { it.analysis.shanten == kept.shanten }.maxOf { it.analysis.effectiveTiles.sumOf { tile -> tile.remaining } }
+        assertTrue(kept.effectiveTiles.sumOf { it.remaining } < widest, "Value must affect a real efficiency tradeoff")
+        assertEquals(31, Tile.kind(choice(position(3)).tiles().single()), "All missing dragon copies are public; release the dead route")
+        // A terminal route really awards these tai under the current scorer, including its exclusions.
+        val counts = IntArray(34)
+        val target = ((0..5).toList() + (9..11) + (18..20) + listOf(31, 31, 31, 33)).map { it * 4 + counts[it]++ }
+        val context = TaiwanWinContext(TaiwanWinContext.Method.DISCARD, Tile.EAST, Tile.EAST, 1, emptySet(),
+            TaiwanWinContext.DrawOrigin.ORDINARY, false, TaiwanWinContext.Opening.NONE, TaiwanWinContext.Ready.NONE)
+        assertTrue(TaiwanHandAnalyzer.score(target, emptyList(), 0, 33 * 4 + 1, context, rules)!!.tai >= 100)
     }
 
     @Test fun equallyLiveWaitsPreferMoreKindsBeforeTai() {

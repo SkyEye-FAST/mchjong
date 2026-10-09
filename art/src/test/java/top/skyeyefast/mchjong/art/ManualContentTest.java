@@ -15,6 +15,64 @@ class ManualContentTest {
     private final Path book = languages.getParent().resolve("patchouli_books/guide/en_us");
     private JsonObject read(Path path) throws Exception { return JsonParser.parseString(Files.readString(path)).getAsJsonObject(); }
 
+    @Test void everyAwardHasAFacingTileImageInsteadOfTextNotation() throws Exception {
+        var referenced = new HashSet<String>();
+        var notation = Pattern.compile("\\$\\(br2\\)(?:Example:|牌例：|例牌：)");
+        for (String id : List.of("riichi_yaku", "riichi_yakuman", "mcr_fan_high", "mcr_fan_middle",
+                "mcr_fan_low", "sichuan_fan", "taiwan_tai")) {
+            var pages = read(book.resolve("entries/" + id + ".json")).getAsJsonArray("pages");
+            assertEquals(0, pages.size() % 2, id);
+            for (int i = 0; i < pages.size(); i += 2) {
+                var description = pages.get(i).getAsJsonObject();
+                var example = pages.get(i + 1).getAsJsonObject();
+                assertEquals("patchouli:text", description.get("type").getAsString());
+                assertEquals("patchouli:image", example.get("type").getAsString());
+                String image = id.substring(0, id.indexOf('_')) + "/" + description.get("anchor").getAsString();
+                assertEquals(List.of("mchjong:textures/manual/" + image + ".png"),
+                    example.getAsJsonArray("images").asList().stream().map(JsonElement::getAsString).toList());
+                assertTrue(referenced.add(image), image);
+                for (String locale : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {
+                    String text = read(languages.resolve(locale + ".json")).get(description.get("text").getAsString()).getAsString();
+                    assertFalse(notation.matcher(text).find(), locale + ":" + image);
+                }
+            }
+        }
+        var generated = new HashSet<String>();
+        for (var hands : ManualExamples.HANDS.values()) generated.addAll(hands.keySet());
+        assertEquals(generated, referenced);
+        assertEquals(175, referenced.size());
+    }
+
+    @Test void diagramsUseTheRequestedRegionalFacesAndFitOnOneLine() throws Exception {
+        Path resources = Path.of(System.getProperty("mchjong.resources")).resolve("assets/mchjong/textures/manual");
+        var examples = Map.of("riichi/haku", "kansai", "mcr/dragon_pung", "hong_kong",
+            "sichuan/kong", "sichuan", "taiwan/white_dragon", "taiwan");
+        var firstFaces = Map.of("riichi/haku", 31, "mcr/dragon_pung", 33, "sichuan/kong", 0, "taiwan/white_dragon", 31);
+        for (var example : examples.entrySet()) {
+            var face = new TileArtwork(Path.of(System.getProperty("mchjong.artwork")), example.getValue()).face(firstFaces.get(example.getKey()));
+            var thumbnail = new java.awt.image.BufferedImage(23, 35, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            var g = thumbnail.createGraphics();
+            try {
+                g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g.drawImage(face, 0, 0, 23, 35, null);
+            } finally { g.dispose(); }
+            var image = javax.imageio.ImageIO.read(resources.resolve(example.getKey() + ".png").toFile());
+            assertArrayEquals(thumbnail.getRGB(0, 0, 23, 35, null, 0, 23), image.getRGB(4, 8, 23, 35, null, 0, 23), example.getKey());
+        }
+        try (var files = Files.walk(resources)) {
+            for (var path : files.filter(p -> p.toString().endsWith(".png")).toList()) {
+                var image = javax.imageio.ImageIO.read(path.toFile());
+                int painted = 0;
+                for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+                    if ((image.getRGB(x, y) >>> 24) == 0) continue;
+                    painted++;
+                    assertTrue(x < 200 && y < 43, path + ":" + x + "," + y);
+                }
+                assertTrue(painted > 0, path.toString());
+            }
+        }
+    }
+
     @Test void chaptersEntriesTranslationsLinksAndPatternCoverageAreComplete() throws Exception {
         var entries = new TreeMap<String, JsonObject>();
         var categories = new TreeSet<String>();

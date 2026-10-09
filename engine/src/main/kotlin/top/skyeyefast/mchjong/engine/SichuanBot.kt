@@ -34,6 +34,15 @@ object SichuanBot {
                 SichuanHandAnalyzer.analyze(hand, melds, suit, known.toList())
             }
         val value = if (own.voidSuit() >= 0) SichuanBotValue(view.rules(), own.voidSuit(), known) else null
+        val danger = ChineseBotDanger.sichuan(view, known)
+        val activePayers = view.seats().count { !it.won() } - 1
+        fun defend(evaluation: SichuanBotValue.Evaluation, loss: Double): SichuanBotValue.Evaluation {
+            val ready = evaluation.progress.shanten == 0 && evaluation.progress.remainingCount > 0
+            val weight = if (ready) if (view.wall().remaining() <= 8) 0.35 else 0.55 else if (evaluation.progress.shanten == 1) 0.85 else 1.3
+            // Self-draw collects from each active payer, including its native bonus; a draw also rewards readiness.
+            val leverage = 1.0 + 0.15 * (activePayers - 1).coerceAtLeast(0) + 0.08 * view.rules().selfDrawBonus()
+            return evaluation.copy(utility = evaluation.utility - loss * weight / leverage)
+        }
         val evaluations = mutableMapOf<Pair<List<Int>, List<Meld>>, SichuanBotValue.Evaluation>()
         fun evaluate(hand: List<Int>, melds: List<Meld>): SichuanBotValue.Evaluation =
             evaluations.getOrPut(hand.map(Tile::kind).sorted() to melds) {
@@ -45,7 +54,7 @@ object SichuanBot {
             val missing = hand.any { Tile.kind(it) / 9 == own.voidSuit() }
             val choices = hand.filter { (!missing || Tile.kind(it) / 9 == own.voidSuit())
                 && (own.firstDiscard() == Tile.ABSENT || own.river().isNotEmpty() || it == own.firstDiscard()) }
-            val candidates = choices.distinctBy(Tile::kind).map { evaluate(hand - it, melds) }
+            val candidates = choices.distinctBy(Tile::kind).map { defend(evaluate(hand - it, melds), danger.expectedLoss(Tile.kind(it))) }
             val fastest = candidates.minOf { it.progress.shanten }
             return candidates.filter { it.progress.shanten <= fastest + 1 }.minWith(valueOrder)
         }
@@ -88,7 +97,7 @@ object SichuanBot {
         var selected = actions.indexOfFirst { it.type() == PASS || it.type() == DRAW }
         var baseline: SichuanBotValue.Evaluation? = null
         val discards = actions.indices.filter { actions[it].type() == DISCARD }
-            .associateWith { evaluate(own.hand() - actions[it].tiles().single(), own.melds()) }
+            .associateWith { defend(evaluate(own.hand() - actions[it].tiles().single(), own.melds()), danger.expectedLoss(Tile.kind(actions[it].tiles().single()))) }
         val fastest = discards.values.minOfOrNull { it.progress.shanten }
         for ((index, evaluation) in discards) {
             val action = actions[index]
@@ -118,7 +127,8 @@ object SichuanBot {
                     (action.tiles() + view.focus()).sorted(), view.supplier(), view.focus())
             }
             // For a kong, discarding the unknown replacement always preserves this 13-tile remainder.
-            val evaluation = if (action.type() == PUNG) bestDiscard(hand, melds) else evaluate(hand, melds)
+            val evaluation = if (action.type() == PUNG) bestDiscard(hand, melds) else defend(evaluate(hand, melds),
+                danger.replacementLoss(known, 27) + if (action.type() == ADDED_KONG) danger.expectedLoss(Tile.kind(action.tiles().single())) else 0.0)
             val income = when (action.type()) {
                 DISCARD_KONG -> view.rules().discardKongPayment()
                 CONCEALED_KONG -> view.rules().concealedKongPayment()

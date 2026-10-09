@@ -176,16 +176,30 @@ final class RoomLobby {
                 x += (span + 4) / 2; span = (span - 4) / 2;
             }
             key = action >= 0 ? room.manual() ? "room.mchjong.start_manual" : "room.mchjong.start_auto"
-                : !room.equipped() && host(room) ? room.manual() ? "ui.mchjong.manual_equipment_needed" : "ui.mchjong.equipment_needed"
+                : !room.equipmentProblems().isEmpty() ? room.equipmentProblems().getFirst().translationKey()
                 : host(room) ? "lobby.mchjong.wait_players" : "room.mchjong.wait_host";
         } else {
             boolean ready = room.viewerSeat() >= 0 && room.seats().get(room.viewerSeat()).participant().ready();
             key = action >= 0 ? ready ? "action.mchjong.unready" : "action.mchjong.ready"
-                : !room.equipped() ? room.manual() ? "ui.mchjong.manual_equipment_needed" : "ui.mchjong.equipment_needed" : "room.mchjong.take_seats";
+                : !room.equipmentProblems().isEmpty() ? room.equipmentProblems().getFirst().translationKey() : "room.mchjong.take_seats";
         }
         int index = action;
-        var primary = RoomLobbyControls.button(Component.translatable(key), x, y, span, () -> send(room, index)).primary();
-        primary.active = action >= 0 && !pending;
+        boolean help = !room.equipmentProblems().isEmpty();
+        var primary = RoomLobbyControls.button(Component.translatable(key), x, y, span, () -> {
+            if (help) Minecraft.getInstance().setScreen(new TableHelpScreen(parent, Component.translatable("room.mchjong.equipment.title"),
+                () -> table() == null ? List.of() : table().clientTableRoom().equipmentProblems().stream().map(p -> (Component) Component.translatable(p.translationKey())
+                    .append("\n").append(Component.translatable(p.translationKey() + ".description"))).toList()));
+            else send(room, index);
+        }).primary();
+        if (help) {
+            var details = Component.empty();
+            for (var problem : room.equipmentProblems()) {
+                if (!details.getString().isEmpty()) details.append("\n");
+                details.append(Component.translatable(problem.translationKey()));
+            }
+            primary.setTooltip(Tooltip.create(details));
+        }
+        primary.active = (help || action >= 0) && !pending;
         buttons.add(primary);
     }
 

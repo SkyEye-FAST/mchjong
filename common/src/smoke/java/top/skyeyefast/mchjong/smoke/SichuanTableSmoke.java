@@ -160,6 +160,10 @@ final class SichuanTableSmoke {
                     .map(net.minecraft.client.gui.components.EditBox.class::cast).filter(box -> box.getMessage().getString().equals(label))
                     .findFirst().orElseThrow();
                 field.setValue("9");
+                RuleExplanationSmoke.check(client, Component.translatable("sichuan.mchjong.rules.fan_cap"));
+                field = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
+                    .map(net.minecraft.client.gui.components.EditBox.class::cast).filter(box -> box.getMessage().getString().equals(label)).findFirst().orElseThrow();
+                require(field.getValue().equals("9"), "Explanation lost the incomplete rule draft");
                 var applyLabel = Component.translatable("rules.mchjong.apply").getString();
                 require(client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                     .filter(button -> button.getMessage().getString().equals(applyLabel)).noneMatch(button -> button.active),

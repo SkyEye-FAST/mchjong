@@ -9,17 +9,24 @@ import top.skyeyefast.mchjong.client.TableSettings;
 /** The absent-dependency path deliberately contains no Patchouli API references. */
 public final class ManualClient {
     private static boolean recommended;
+    private static boolean linked;
 
     private ManualClient() {}
 
     public static void tick(boolean installed) {
+        if (installed && !linked) {
+            top.skyeyefast.mchjong.client.RuleHelp.handbook(ManualLinks::open, ManualLinks::isOpen);
+            linked = true;
+        }
         Minecraft client = Minecraft.getInstance();
+        if (installed) top.skyeyefast.mchjong.client.RuleHelp.tickHandbook();
         if (client.player == null || client.level == null || client.screen != null) return;
         if (!installed && !recommended && TableSettings.get().recommendPatchouli) {
             recommended = true;
             recommend(client);
         }
     }
+
 
     private static void recommend(Minecraft client) {
         client.gui.getChat().addClientSystemMessage(Component.translatable("manual.mchjong.recommend.text")

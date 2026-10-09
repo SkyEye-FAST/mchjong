@@ -16,7 +16,6 @@ import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.ExitVote;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TimeControl;
 import top.skyeyefast.mchjong.engine.RiichiView;
@@ -65,7 +64,7 @@ final class TableInterfaceSmoke {
             table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(),
                 view.revision(), view.decision(), room.variant(), top.skyeyefast.mchjong.engine.TableSession.Lifecycle.PLAYING,
                 room.host(), view.viewerSeat(), room.manual(), room.equipped(), false, room.seating(),
-                room.availableWinds(), room.seats(), List.of(), view.exitVote(), false, room.convenienceHints(), room.allowConvenienceHints(), view.viewerSeat() < 0 ? null : top.skyeyefast.mchjong.engine.MatchAutomation.DEFAULT));
+                room.availableWinds(), room.seats(), List.of(), view.exitVote(), false, room.convenienceHints(), room.allowConvenienceHints(), view.viewerSeat() < 0 ? null : top.skyeyefast.mchjong.engine.MatchAutomation.DEFAULT, List.of()));
             SettlementSmoke.acceptFixture(table, view);
             var settings = TableSettings.get();
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);

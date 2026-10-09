@@ -101,6 +101,7 @@ final class InstalledManualSmoke {
                 return false;
             }
             ticks = 0; stage = 3;
+            checkExplanationLinks(client);
             show();
             return false;
         }
@@ -167,5 +168,25 @@ final class InstalledManualSmoke {
         var selected = entries.get(entry);
         ManualSmoke.require(!selected.getName().getString().startsWith("manual."), "Untranslated manual entry");
         PatchouliAPI.get().openBookEntry(MahjongContent.id("guide"), selected.getId(), page);
+    }
+    private static void checkExplanationLinks(Minecraft client) {
+        var parent = client.screen;
+        String[] keys = {"yaku.mchjong.double_riichi", "mcr.mchjong.fan.big_three_dragons", "sichuan.mchjong.fan.golden_single_wait", "taiwan.mchjong.pattern.earthly_win"};
+        String[] targets = {"riichi_yaku", "mcr_fan_high", "sichuan_fan", "taiwan_tai"};
+        for (int i = 0; i < keys.length; i++) {
+            top.skyeyefast.mchjong.client.RuleHelp.openAward(parent, net.minecraft.network.chat.Component.translatable(keys[i]));
+            ManualSmoke.require(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen, "Missing basic explanation: " + keys[i]);
+            var help = client.screen;
+            var button = help.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
+                .map(net.minecraft.client.gui.components.AbstractWidget.class::cast).filter(widget -> widget.getMessage().getString().equals(
+                    net.minecraft.network.chat.Component.translatable("rules.mchjong.manual").getString())).findFirst().orElseThrow();
+            help.setFocused(button); help.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+            ManualSmoke.require(client.screen instanceof vazkii.patchouli.client.book.gui.GuiBookEntry, "Explanation did not open handbook");
+            var entryScreen = (vazkii.patchouli.client.book.gui.GuiBookEntry) client.screen;
+            ManualSmoke.require(entryScreen.getEntry().getId().equals(MahjongContent.id(targets[i])) && entryScreen.getSpread() == 1, "Incorrect handbook destination: " + keys[i]);
+            client.screen.onClose(); ManualClient.tick(true);
+            ManualSmoke.require(client.screen == help, "Handbook did not return to explanation");
+            help.onClose(); ManualSmoke.require(client.screen == parent, "Explanation did not return to its parent");
+        }
     }
 }

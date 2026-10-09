@@ -27,7 +27,7 @@
     {
       "type": "patchouli:image",
       "images": [
-        "mchjong:textures/manual/regular.png"
+        "mchjong:textures/manual/riichi/menzen_tsumo.png"
       ],
       "text": "manual.mchjong.entry.riichi_flow.regular",
       "border": false
@@ -35,7 +35,7 @@
     {
       "type": "patchouli:image",
       "images": [
-        "mchjong:textures/manual/pairs.png"
+        "mchjong:textures/manual/riichi/chiitoitsu.png"
       ],
       "text": "manual.mchjong.entry.riichi_flow.pairs",
       "border": false

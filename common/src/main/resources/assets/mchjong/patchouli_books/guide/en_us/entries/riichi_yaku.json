@@ -10,9 +10,25 @@
       "anchor": "riichi"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/riichi.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_2",
       "anchor": "double_riichi"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/double_riichi.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -20,9 +36,25 @@
       "anchor": "ippatsu"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/ippatsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_4",
       "anchor": "menzen_tsumo"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/menzen_tsumo.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -30,9 +62,25 @@
       "anchor": "pinhu"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/pinhu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_6",
       "anchor": "tanyao"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/tanyao.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -40,9 +88,25 @@
       "anchor": "iipeikou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/iipeikou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_8",
       "anchor": "seat_wind"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/seat_wind.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -50,9 +114,25 @@
       "anchor": "round_wind"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/round_wind.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_10",
       "anchor": "haku"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/haku.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -60,9 +140,25 @@
       "anchor": "hatsu"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/hatsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_12",
       "anchor": "chun"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chun.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -70,9 +166,25 @@
       "anchor": "rinshan_kaihou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/rinshan_kaihou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_14",
       "anchor": "chankan"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chankan.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -80,9 +192,25 @@
       "anchor": "haitei_raoyue"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/haitei_raoyue.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_16",
       "anchor": "houtei_raoyui"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/houtei_raoyui.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -90,9 +218,25 @@
       "anchor": "chiitoitsu"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chiitoitsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_18",
       "anchor": "sanshoku_doujun"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/sanshoku_doujun.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -100,9 +244,25 @@
       "anchor": "ittsu"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/ittsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_20",
       "anchor": "chanta"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chanta.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -110,9 +270,25 @@
       "anchor": "toitoi"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/toitoi.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_22",
       "anchor": "sanankou"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/sanankou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -120,9 +296,25 @@
       "anchor": "sanshoku_doukou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/sanshoku_doukou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_24",
       "anchor": "sankantsu"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/sankantsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -130,9 +322,25 @@
       "anchor": "shousangen"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/shousangen.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_26",
       "anchor": "honroutou"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/honroutou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -140,9 +348,25 @@
       "anchor": "honitsu"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/honitsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_28",
       "anchor": "junchan"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/junchan.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -150,9 +374,25 @@
       "anchor": "ryanpeikou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/ryanpeikou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_30",
       "anchor": "chinitsu"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/chinitsu.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     },
     {
       "type": "patchouli:text",
@@ -160,9 +400,25 @@
       "anchor": "renhou"
     },
     {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/renhou.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yaku.page_32",
       "anchor": "nagashi_mangan"
+    },
+    {
+      "type": "patchouli:image",
+      "images": [
+        "mchjong:textures/manual/riichi/nagashi_mangan.png"
+      ],
+      "text": "manual.mchjong.example.description",
+      "border": false
     }
   ]
 }

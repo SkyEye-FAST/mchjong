@@ -45,7 +45,7 @@ public final class ClientMcrNetworking {
         var active = McrTableScreen.active(client.screen);
         boolean showing = active != null && active.tablePos().equals(payload.pos())
             || rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
-            || client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos());
+            || rootScreen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos());
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
             && payload.room().lobby() && showing) { client.setScreen(null); return; }
         if (view == null) {
@@ -63,13 +63,13 @@ public final class ClientMcrNetworking {
         if (!payload.open() && !showing) return;
         boolean ended = view.game().phase() == McrGame.Phase.HAND_END || view.game().phase() == McrGame.Phase.MATCH_END;
         if (ended) {
-            if (client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
+            if (rootScreen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
             else client.setScreen(new McrResultsScreen(payload.pos(), active != null && active.immersive()));
         } else if (active != null && active.tablePos().equals(payload.pos())) {
             active.receivedView();
             if (payload.controlReply()) active.receivedControlReply();
         }
-        else if (client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())) {
+        else if (rootScreen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())) {
             client.setScreen(new McrTableScreen(payload.pos(), results.immersive()));
         } else client.setScreen(new McrTableScreen(payload.pos()));
     }

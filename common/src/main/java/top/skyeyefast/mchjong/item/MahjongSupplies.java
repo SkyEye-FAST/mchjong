@@ -350,29 +350,8 @@ public final class MahjongSupplies {
 
     /** Select a uniform subset without consuming, recoloring, or combining physical boxes. */
     private static Deck selectDeck(List<ItemStack> items, boolean sanma, RedFives reds) {
-        var stocks = new java.util.LinkedHashMap<Deck, int[]>();
-        for (ItemStack stack : items) {
-            if (stack.isEmpty()) continue;
-            if (dyeSlotItem(stack)) continue;
-            if (!storable(stack)) return null;
-            if (stack.is(MahjongContent.POINT_STICK)) continue;
-            TileData data = tile(stack);
-            if (!data.valid()) return null;
-            if (data.blank() || data.flower()) continue;
-            var appearance = new Deck(data.material(), back(stack), facePreset(stack), backPreset(stack), reds, sanma);
-            stocks.computeIfAbsent(appearance, ignored -> new int[68])[data.face() * 2 + (data.red() ? 1 : 0)] += stack.getCount();
-        }
-        for (var stock : stocks.entrySet()) {
-            boolean enough = true;
-            for (int face = 0; face < 34 && enough; face++) {
-                if (sanma && face > 0 && face < 8) continue;
-                int red = face < 27 && face % 9 == 4 ? reds.count(face / 9) : 0;
-                enough = stock.getValue()[face * 2 + 1] >= red
-                    && stock.getValue()[face * 2] >= 4 - red;
-            }
-            if (enough) return stock.getKey();
-        }
-        return null;
+        var appearance = DeckAdmission.inspect(items, DeckAdmission.requirements(sanma, reds, false, false)).appearance();
+        return appearance == null ? null : new Deck(appearance.material(), appearance.back(), appearance.face(), appearance.backPreset(), reds, sanma);
     }
 
     public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset,

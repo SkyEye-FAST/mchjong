@@ -23,6 +23,8 @@ public final class MchjongNeoForgeClient {
     @SubscribeEvent public static void resources(net.neoforged.neoforge.client.event.AddClientReloadListenersEvent event) {
         event.addListener(MahjongContent.id("tile_face_presets"), (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
             top.skyeyefast.mchjong.client.TileFacePresets::reload);
+        event.addListener(MahjongContent.id("rule_help"), (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
+            top.skyeyefast.mchjong.client.RuleHelp::reload);
     }
     @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
         event.registerCategory(top.skyeyefast.mchjong.client.TableKeys.CATEGORY);

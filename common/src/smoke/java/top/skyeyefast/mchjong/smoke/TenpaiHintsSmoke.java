@@ -139,7 +139,7 @@ final class TenpaiHintsSmoke {
         var room = originalRoom;
         table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(), fixture.revision(),
             room.decision(), room.variant(), room.lifecycle(), room.host(), room.viewerSeat(), room.manual(), room.equipped(), room.paused(),
-            room.seating(), room.availableWinds(), room.seats(), room.actions(), room.exitVote(), room.leaveDecision(), true, true, room.automation()));
+            room.seating(), room.availableWinds(), room.seats(), room.actions(), room.exitVote(), room.leaveDecision(), true, true, room.automation(), List.of()));
         table.acceptView(fixture); client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         if (preview) {
             client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));

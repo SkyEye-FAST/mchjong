@@ -43,16 +43,17 @@ public final class ClientSichuanNetworking {
         }
         if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId())) client.setScreen(null);
         var rootScreen = TableChildScreen.root(client.screen);
+        var rulesScreen = TableChildScreen.find(client.screen, SichuanRulesScreen.class);
         var active = SichuanTableScreen.active(client.screen);
         boolean showing = active != null && active.tablePos().equals(payload.pos())
             || rootScreen instanceof SichuanLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
-            || client.screen instanceof SichuanRulesScreen rules && rules.tablePos().equals(payload.pos())
-            || client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos());
+            || rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())
+            || rootScreen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos());
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
             && payload.room().lobby() && showing) { client.setScreen(null); return; }
         if (view == null) {
-            if (!payload.open() && client.screen instanceof SichuanRulesScreen rules && rules.tablePos().equals(payload.pos())) {
-                rules.receivedView(payload.controlReply());
+            if (!payload.open() && rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())) {
+                rulesScreen.receivedView(payload.controlReply());
                 return;
             }
             if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.sichuanScreen() != null
@@ -66,13 +67,13 @@ public final class ClientSichuanNetworking {
         }
         if (!payload.open() && !showing) return;
         if (view.game().result() != null) {
-            if (client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
+            if (rootScreen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
             else client.setScreen(new SichuanResultsScreen(payload.pos(), active != null && active.immersive()));
         } else if (active != null && active.tablePos().equals(payload.pos())) {
             active.receivedView();
             if (payload.controlReply()) active.receivedControlReply();
         }
-        else if (client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos()))
+        else if (rootScreen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos()))
             client.setScreen(new SichuanTableScreen(payload.pos(), results.immersive()));
         else client.setScreen(new SichuanTableScreen(payload.pos()));
     }

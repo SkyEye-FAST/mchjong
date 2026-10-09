@@ -493,7 +493,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
             viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
             convenienceHints, worldPolicy.allowConvenienceHints(),
-            viewer < 0 || manual || lobby() || participants[viewer].bot ? null : automation.get(viewer));
+            viewer < 0 || manual || lobby() || participants[viewer].bot ? null : automation.get(viewer), List.of());
     }
 
     protected final List<RoomAction> roomActions(int seat) {

@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -275,13 +274,16 @@ public final class TableClientSmoke {
                     return;
                 }
                 client.screen.onClose();
+                client.gameMode.useItem(client.player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                step = 49; entered = ticks;
+            } else if (step == 49 && ticks - entered > 15
+                    && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen) {
                 UUID id = client.player.getUUID();
                 client.getSingleplayerServer().execute(() -> {
                     try {
                         var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         var box = player.getMainHandItem();
                         require(box.is(MahjongContent.BOX_ITEM), "Box fixture was not synchronized into the main hand");
-                        box.getItem().use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
                         require(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongBoxMenu, "Box did not open its real menu");
                         var menu = player.containerMenu;
                         require(menu.slots.size() == top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 36, "Box compartment layout differs");

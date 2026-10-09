@@ -53,7 +53,7 @@ final class TableHost {
                     }
             boolean changed = equipment.selectRules(riichi.rules());
             if (riichi.lobby()) riichi.configureEquipment(!automatic,
-                !equipment.hasCloth() || equipment.deck() == null || !automatic && !equipment.manualSuppliesReady()
+                !equipment.preparationProblems(session, automatic).isEmpty()
                     ? List.of() : equipment.deck().tiles());
             yield changed;
         }
@@ -61,21 +61,21 @@ final class TableHost {
             var mcr = (McrSession) session;
             var stock = equipment.mcrStock();
             if (mcr.lobby()) mcr.configureEquipment(false,
-                automatic && equipment.hasCloth() && stock != null ? stock.deck().tiles() : List.of());
+                equipment.preparationProblems(session, automatic).isEmpty() ? stock.deck().tiles() : List.of());
             yield false;
         }
         case TAIWAN -> {
             var taiwan = (TaiwanSession) session;
             var stock = equipment.taiwanStock(taiwan.rules());
             if (taiwan.lobby()) taiwan.configureEquipment(false,
-                automatic && equipment.hasCloth() && stock != null ? stock.tiles() : List.of());
+                equipment.preparationProblems(session, automatic).isEmpty() ? stock.tiles() : List.of());
             yield false;
         }
         case SICHUAN -> {
             var sichuan = (SichuanSession) session;
             var stock = equipment.sichuanStock();
             if (sichuan.lobby()) sichuan.configureEquipment(false,
-                automatic && equipment.hasCloth() && stock != null ? stock.tiles() : List.of());
+                equipment.preparationProblems(session, automatic).isEmpty() ? stock.tiles() : List.of());
             yield false;
         }
         };

@@ -16,7 +16,6 @@ import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiRoomSettings;
 import top.skyeyefast.mchjong.engine.RiichiRules;
@@ -236,7 +235,8 @@ public final class RiichiTableScreen extends Screen {
 
     public void receivedControlReply() {
         automation.receivedControlReply();
-        if (minecraft.screen instanceof RiichiRulesScreen rules && rules.tableScreen() == this) rules.receivedReply();
+        var rules = TableChildScreen.find(minecraft.screen, RiichiRulesScreen.class);
+        if (rules != null && rules.tableScreen() == this) rules.receivedReply();
     }
 
     private void refreshDecision(RiichiView view) {

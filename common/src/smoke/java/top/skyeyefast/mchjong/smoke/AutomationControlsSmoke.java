@@ -8,8 +8,6 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.engine.RiichiAutoPlay;
 import top.skyeyefast.mchjong.engine.MatchAutomation;
-import top.skyeyefast.mchjong.engine.RiichiView;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Exercise every preference through its real button, C2S packet and authoritative S2C snapshot. */

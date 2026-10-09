@@ -9,18 +9,24 @@ repeat dealers. External Bots are unavailable for Taiwan.
 
 `TaiwanBot.choose` accepts only its recipient-safe `TaiwanView` and returns an
 issued action index. Legal wins take priority. Discards use
-`TaiwanHandAnalyzer.discards/analyze` in this order: lowest shanten, most remaining
-effective copies, most live wait kinds, remaining-copy-weighted scorable tai,
-modest rule-valued shape potential, openness and lowest physical tile ID.
+`TaiwanHandAnalyzer.discards/analyze`, balancing shanten, public effective copies,
+live wait kinds and remaining-copy-weighted scorable tai against attainable shape
+potential and openness. Value can outweigh some effective copies. Discard retreats
+are limited to one shanten, and are excluded when a ready shape is available
+or fewer than 24 drawable tiles remain. Equal evaluations use the lowest physical ID.
 Availability deduplicates the Bot's tiles, public rivers, exposed melds and focus.
 Covered opponent kongs, opponent hands, future wall identities and seeds never
 enter analysis. A simulated discard remains publicly known.
 
 Live waits use the current scorer for ordinary discard and self-draw, current
 winds, flowers and ready declaration. Caps and exclusions come from the rules;
-preset names do not select behavior. Incomplete hands use small copy-aware honor,
-triplet, flush and concealment support estimates. These estimates are tie-break
-evidence, not awarded tai or a search through scoring routes. A legal ready
+preset names do not select behavior. Incomplete hands use copy-aware honor,
+triplet, flush and concealment support estimates. Pung fits reserve a separate head;
+flush fits use a six-target beam with physical copy budgets and five group slots.
+Missing and scarce copies discount routes, and exhausted targets are excluded.
+Alternatives compete without adding hypothetical awards; only live waits use
+actual combined scorer tai. These estimates influence the bounded speed/value
+tradeoff. A legal ready
 discard competes with ordinary discards and wins an otherwise equal comparison.
 
 Chows and pongs simulate their best legal mandatory discard. They require a
@@ -68,6 +74,14 @@ melds and the offered tile. Concealed opponents and wall identities never enter
 evaluation. Route fitting uses a bounded beam and a missing-copy cutoff; its
 feasibility is heuristic evidence, not a calibrated probability or an exhaustive
 search of every winning hand.
+`ChineseBotDanger` estimates each opponent's loss exposure from public melds,
+discard history, ordinary copy availability and wall count. Flowers increase
+exposure but never supply the eight-fan qualification gate. MCR ron charges every
+nonwinner eight, so defence prices the discarder-only fan increment. A live
+scorer-qualified ready attack discounts danger; weak or late attacks weigh it more.
+Opponent flush and pung signals estimate possible value with a qualification
+discount; incomplete public melds do not prove a completed scoring pattern.
+Rivers provide modest evidence and never establish Riichi furiten or suji safety.
 
 Chows and pungs use the same evaluation after their best mandatory discard and
 require strict improvement over passing. Kongs must improve a guaranteed
@@ -107,6 +121,14 @@ efficiency and then the lowest physical ID. Public availability deduplicates the
 Bot's tiles, rivers, melds and focus; a simulated discard remains visible. The
 revealed middle tiles of a concealed kong identify all four copies. Opponent hands
 and future wall identities stay hidden.
+Public danger is tracked separately for each active opponent. Their void suit
+cannot win; retired winners contribute no danger. Exposed groups and late walls
+increase threat, with loss capped by current `fanCap`. Attack leverage accounts
+for the remaining self-draw payers and `selfDrawBonus`; preserving ready shape near
+the wall end also protects against the native draw settlement. An opponent's own
+discard does not establish absolute safety. The same danger adjustment applies
+to ordinary discards and mandatory post-pung discards. Kongs also account for
+publicly possible replacement-discard risk and added-kong robbery exposure.
 
 Legal wins are accepted. Pungs must improve the same evaluation after their best
 mandatory discard. Kongs compare the concealed remainder before replacement, so
