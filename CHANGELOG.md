@@ -48,6 +48,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Offer one north-extraction action at a time when a three-player Riichi hand contains multiple norths, preserving replacement draws and drawn-north restrictions after Riichi.
+
 - Fix Fabric and NeoForge IDE imports requiring an ungenerated Ponder source folder and duplicate Fabric gameplay fixture types; package generated resources from their task and compile shared fixtures once for tests and client smokes.
 
 - Remove unused Java imports and members across gameplay, tests and client smokes; dispatch automation smoke clicks through native screen input.
