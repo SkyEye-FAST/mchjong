@@ -2,16 +2,19 @@ package top.skyeyefast.mchjong.smoke;
 
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.audio.OggAudioStream;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongSounds;
 
 /** Verify native registration, resource resolution and decoding of every original effect. */
 final class AudioEffectsSmoke {
     static void verify(Minecraft client) throws java.io.IOException {
+        var sounds = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY).registryOrThrow(Registries.SOUND_EVENT);
         for (String name : MahjongSounds.EFFECTS) {
             var id = MahjongContent.id("table." + name);
-            require(BuiltInRegistries.SOUND_EVENT.containsKey(id), "Unregistered effect: " + id);
+            require(sounds.containsKey(id), "Unregistered effect: " + id);
             var event = client.getSoundManager().getSoundEvent(id);
             require(event != null && event.getWeight() > 0, "Unresolved effect: " + id);
             try (var input = client.getResourceManager().open(MahjongContent.id("sounds/table/" + name + ".ogg"));

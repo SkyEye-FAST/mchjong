@@ -15,7 +15,6 @@ import java.util.zip.ZipOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import top.skyeyefast.mchjong.item.TileFacePreset;
-import net.minecraft.resources.ResourceLocation;
 
 class PresetArchivesTest {
     @org.junit.jupiter.api.BeforeAll static void bootstrapMinecraft() {

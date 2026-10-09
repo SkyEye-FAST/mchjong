@@ -17,7 +17,6 @@ import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
-import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Forge registration, exact-NBT ingredients and capability inventory reads. */

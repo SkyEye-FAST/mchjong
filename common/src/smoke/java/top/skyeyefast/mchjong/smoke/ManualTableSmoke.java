@@ -23,7 +23,6 @@ import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.FurnitureWood;
-import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;

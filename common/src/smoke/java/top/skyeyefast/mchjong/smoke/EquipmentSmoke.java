@@ -20,7 +20,6 @@ import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.FurnitureWood;
-import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.network.RiichiRulesPayload;

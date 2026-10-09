@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.SichuanRuleOption;
+import top.skyeyefast.mchjong.platform.ResourceIds;
 
 /** Short help and precise handbook destinations share the handbook's existing resource pages. */
 public final class RuleHelp {
@@ -78,7 +79,7 @@ public final class RuleHelp {
             ResourceLocation image = null;
             if (index + 1 < values.size()) {
                 var next = values.get(index + 1).getAsJsonObject();
-                if (page.has("anchor") && next.has("images")) image = new ResourceLocation(next.getAsJsonArray("images").get(0).getAsString());
+                if (page.has("anchor") && next.has("images")) image = ResourceIds.of(next.getAsJsonArray("images").get(0).getAsString());
             }
             var topic = new Topic(page.get("text").getAsString(), entry, index, image);
             pages.put(entry + ":" + index, topic);

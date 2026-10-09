@@ -12,12 +12,8 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.DyeColor;
-import top.skyeyefast.mchjong.item.FurnitureWood;
-import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplyItem;
 import top.skyeyefast.mchjong.item.MahjongBoxItem;
-import top.skyeyefast.mchjong.item.TileData;
 
 /** Object creation is shared; each loader registers these exact instances. */
 public final class MahjongContent {

@@ -7,7 +7,6 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import top.skyeyefast.mchjong.item.FurnitureWood;
-import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.world.FurnitureBlockEntity;

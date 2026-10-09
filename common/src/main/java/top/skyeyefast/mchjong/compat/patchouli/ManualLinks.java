@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.compat.patchouli;
 
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.resources.ResourceLocation;
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import vazkii.patchouli.api.PatchouliAPI;
 import vazkii.patchouli.client.book.gui.GuiBook;
 
@@ -9,7 +9,7 @@ import vazkii.patchouli.client.book.gui.GuiBook;
 final class ManualLinks {
     private ManualLinks() {}
     static void open(String entry, int page) {
-        PatchouliAPI.get().openBookEntry(new ResourceLocation("mchjong:guide"), new ResourceLocation("mchjong:" + entry), page);
+        PatchouliAPI.get().openBookEntry(ResourceIds.of("mchjong", "guide"), ResourceIds.of("mchjong", entry), page);
     }
     static boolean isOpen(Screen screen) { return screen instanceof GuiBook; }
 }

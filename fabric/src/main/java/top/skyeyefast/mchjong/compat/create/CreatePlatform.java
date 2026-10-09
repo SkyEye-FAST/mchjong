@@ -14,7 +14,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Fabric registration, exact-NBT ingredients and transactional inventory reads. */

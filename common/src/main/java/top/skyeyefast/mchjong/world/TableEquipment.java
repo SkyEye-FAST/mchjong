@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.world;
 
 import top.skyeyefast.mchjong.platform.ResourceIds;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.SimpleContainer;

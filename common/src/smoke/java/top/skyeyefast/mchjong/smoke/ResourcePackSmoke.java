@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.client.TileFacePresets;
 import top.skyeyefast.mchjong.client.TileBackPresets;
 import top.skyeyefast.mchjong.client.TileMesh;

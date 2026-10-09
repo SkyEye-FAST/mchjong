@@ -9,7 +9,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import top.skyeyefast.mchjong.item.FurnitureWood;
-import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Exercises both actual maid head-item entry points, including simultaneous skull equipment. */
