@@ -157,7 +157,6 @@ class SichuanBotTest {
         var game = turn("1m 2m 3m 1p 2p 3p 7p 8p 9p 3m 4m 6m 5p 5p");
         var original = game.view(0);
         var seats = new ArrayList<>(original.seats());
-        var other = seats.get(1);
         var melds = new ArrayList<Meld>();
         for (int kind = 6; kind <= 8; kind++) melds.add(new Meld(Meld.Type.TRIPLET, List.of(kind * 4, kind * 4 + 1, kind * 4 + 2), 0, kind * 4));
         var river = List.of(new SichuanPlayerState.Discard(Tile.parseKind("3m") * 4 + 2, false));
