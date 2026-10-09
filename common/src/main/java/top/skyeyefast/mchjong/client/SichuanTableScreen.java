@@ -414,7 +414,7 @@ public final class SichuanTableScreen extends Screen {
             if (view.game().actions().get(actionIndex).type() == SichuanAction.Type.PASS) { send(view, actionIndex); return; }
     }
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scanCode = event.scancode(), modifiers = event.modifiers();
+        int key = event.key();
         if (presentation.keyPressed(event, this::toggleView, this::resetView)) return true;
         if (TableKeys.PASS.matches(event)) { pass(); return true; }
         if (key == GLFW.GLFW_KEY_ESCAPE && selected >= 0) { cancelSelection(); return true; }
@@ -425,7 +425,6 @@ public final class SichuanTableScreen extends Screen {
         return super.keyPressed(event);
     }
     @Override public boolean keyReleased(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scanCode = event.scancode(), modifiers = event.modifiers();
         return presentation.keyReleased(event) || super.keyReleased(event);
     }
     private final class HandTarget extends MahjongButton {

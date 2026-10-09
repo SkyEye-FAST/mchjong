@@ -373,7 +373,7 @@ public final class ReplayScreen extends Screen {
     }
 
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scan = event.scancode(), modifiers = event.modifiers();
+        int key = event.key();
         switch (key) {
             case GLFW.GLFW_KEY_LEFT -> seek(cursor - 1);
             case GLFW.GLFW_KEY_RIGHT -> seek(cursor + 1);

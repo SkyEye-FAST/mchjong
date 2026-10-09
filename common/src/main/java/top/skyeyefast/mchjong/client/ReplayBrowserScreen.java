@@ -76,7 +76,7 @@ public final class ReplayBrowserScreen extends Screen {
     void delete(java.util.UUID id) { ClientReplays.delete(id, index.search(), index.oldestFirst()); }
 
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scan = event.scancode(), modifiers = event.modifiers();
+        int key = event.key();
         if (search.isFocused() && (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER)) {
             refresh(0, index.oldestFirst());
             return true;
@@ -148,8 +148,7 @@ public final class ReplayBrowserScreen extends Screen {
             }
         }
         @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
-        double mouseX = event.x(), mouseY = event.y();
-        int button = event.button();
+            double mouseX = event.x(), mouseY = event.y();
             if (!super.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(mouseX, mouseY, event.buttonInfo()), doubleClick)) return false;
             int entry = (int) (mouseY - getY() + scroll) / ROW;
             if (entry >= 0 && entry < index.matches().size()) {
@@ -167,7 +166,7 @@ public final class ReplayBrowserScreen extends Screen {
             return true;
         }
         @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scan = event.scancode(), modifiers = event.modifiers();
+            int key = event.key();
             if (!isFocused()) return false;
             switch (key) {
                 case GLFW.GLFW_KEY_UP -> move(-1);

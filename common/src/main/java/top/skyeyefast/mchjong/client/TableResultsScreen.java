@@ -133,11 +133,10 @@ abstract class TableResultsScreen extends Screen {
         return camera.scroll(vertical, MahjongUi.shiftDown());
     }
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scan = event.scancode(), modifiers = event.modifiers();
+        int key = event.key();
         return camera.keyPressed(event, this::toggleView, this::resetView) || getFocused() == null && camera.lookPressed(key) || super.keyPressed(event);
     }
     @Override public boolean keyReleased(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scan = event.scancode(), modifiers = event.modifiers();
         return camera.keyReleased(event) || super.keyReleased(event);
     }
 }

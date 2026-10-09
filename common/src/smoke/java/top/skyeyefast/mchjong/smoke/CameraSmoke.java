@@ -12,14 +12,12 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 final class CameraSmoke {
     private int sample = -1, ticks, originalFov;
     private net.minecraft.client.CameraType originalType;
-    private boolean originalActive;
     private int originalWidth, originalHeight, originalScale;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         if (sample < 0) {
             originalFov = client.options.fov().get();
             originalType = client.options.getCameraType();
-            originalActive = client.isWindowActive();
             originalWidth = client.getWindow().getScreenWidth();
             originalHeight = client.getWindow().getScreenHeight();
             originalScale = client.options.guiScale().get();

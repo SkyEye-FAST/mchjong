@@ -437,7 +437,7 @@ public final class TableResults extends AbstractWidget {
         return true;
     }
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scanCode = event.scancode(), modifiers = event.modifiers();
+        int key = event.key();
         if (page == Page.HAND && !awardHits.isEmpty()) {
             helpRow = Math.clamp(helpRow, 0, awardHits.size() - 1);
             if (key == GLFW.GLFW_KEY_UP || key == GLFW.GLFW_KEY_DOWN) {

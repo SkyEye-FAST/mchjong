@@ -17,7 +17,6 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 public final class MahjongTableRenderer

@@ -1318,7 +1318,7 @@ public final class RiichiTableScreen extends Screen {
         return super.mouseDragged(new net.minecraft.client.input.MouseButtonEvent(mouseX, mouseY, event.buttonInfo()), dx, dy);
     }
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scanCode = event.scancode(), modifiers = event.modifiers();
+        int key = event.key();
         RiichiView view = view();
         if (key == GLFW.GLFW_KEY_ESCAPE && handlingDrag != null) { handlingDrag = null; handlingStart = null; return true; }
         if (key == GLFW.GLFW_KEY_ESCAPE && handDrag != null) { handDrag = null; return true; }
@@ -1342,7 +1342,6 @@ public final class RiichiTableScreen extends Screen {
     }
 
     @Override public boolean keyReleased(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key(), scanCode = event.scancode(), modifiers = event.modifiers();
         return presentation.keyReleased(event) || super.keyReleased(event);
     }
 

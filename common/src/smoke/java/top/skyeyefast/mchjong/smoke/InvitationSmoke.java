@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.smoke;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.UUID;
-import net.minecraft.network.Connection;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
