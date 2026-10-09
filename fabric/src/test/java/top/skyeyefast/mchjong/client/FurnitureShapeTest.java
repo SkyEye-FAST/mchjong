@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
+import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FurnitureShapeTest {
@@ -94,6 +95,19 @@ class FurnitureShapeTest {
             var base = pose.last().pose().transformPosition(new Vector3f());
             var top = pose.last().pose().transformPosition(new Vector3f(0, 1, 0));
             assertEquals(.5f, base.x, 1e-5);
+            if (context == net.minecraft.world.item.ItemDisplayContext.FIXED
+                || context == net.minecraft.world.item.ItemDisplayContext.ON_SHELF
+                || context == net.minecraft.world.item.ItemDisplayContext.NONE) {
+                float width = table ? (float) (2 * TableGeometry.OUTER_HALF_WIDTH) : .78125f;
+                float height = table ? 1 : (float) TableGeometry.STOOL_HEIGHT;
+                var left = pose.last().pose().transformPosition(new Vector3f(-width / 2, height / 2, 0));
+                var right = pose.last().pose().transformPosition(new Vector3f(width / 2, height / 2, 0));
+                assertEquals(.05f, left.x, 1e-5, context.name());
+                assertEquals(.95f, right.x, 1e-5, context.name());
+                assertEquals(.5f, left.y, 1e-5, context.name());
+                assertEquals(.5f, left.z, 1e-5, context.name());
+                assertTrue(top.y > base.y, context.name());
+            }
             if (context == net.minecraft.world.item.ItemDisplayContext.HEAD) {
                 assertEquals(.5f, base.z, 1e-5);
                 assertTrue(top.y > base.y, "Item-up maps to model-up through the native head layer");

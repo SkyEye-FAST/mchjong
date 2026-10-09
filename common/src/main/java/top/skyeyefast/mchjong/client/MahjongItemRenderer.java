@@ -78,7 +78,7 @@ public final class MahjongItemRenderer implements SpecialModelRenderer<MahjongIt
         pose.translate(.5, .5, .5);
         float scale;
         switch (context) {
-            case GUI, FIXED, NONE -> {
+            case GUI, FIXED, ON_SHELF, NONE -> {
                 pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(context == net.minecraft.world.item.ItemDisplayContext.GUI ? 15 : 0));
                 pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(context == net.minecraft.world.item.ItemDisplayContext.GUI ? 225 : 0));
                 scale = (context == net.minecraft.world.item.ItemDisplayContext.GUI && !table ? .5f : .9f) / width;
