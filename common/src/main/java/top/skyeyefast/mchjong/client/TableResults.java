@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -225,7 +227,7 @@ public final class TableResults extends AbstractWidget {
         // Reserve the complete receipt from the first frame, so new rows never move the hand.
         boolean hasGrade = !win.grade().getString().isEmpty();
         long gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()).longValue() : 0;
-        Component points = Component.translatable("ui.mchjong.points", gain);
+        Component points = CountedText.of("ui.mchjong.points", 0, gain);
         Component grade = win.grade();
         int gradeWidth = !hasGrade ? 0 : 2 * (font.width(grade) + 8);
         boolean beside = compact && hasGrade && 2 * font.width(points) + gradeWidth + 8 <= span;
@@ -331,7 +333,7 @@ public final class TableResults extends AbstractWidget {
                     : i == 1 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT;
                 tableNumber(graphics, Component.literal(value), x + ends[i] + 4, textY, ends[i + 1] - ends[i] - 8, color);
             }
-            hits.add(new Hit(x, cy, span, rowHeight, name.copy().append("  ").append(Component.translatable("ui.mchjong.points", player.points()))));
+            hits.add(new Hit(x, cy, span, rowHeight, name.copy().append("  ").append(CountedText.of("ui.mchjong.points", 0, player.points()))));
         }
     }
 
@@ -460,7 +462,7 @@ public final class TableResults extends AbstractWidget {
         var summary = getMessage().copy();
         for (int seat = 0; seat < view.seats().size(); seat++)
             summary.append(". ").append(view.name(seat)).append(" ")
-                .append(Component.translatable("ui.mchjong.points", view.seats().get(seat).points()));
+                .append(CountedText.of("ui.mchjong.points", 0, view.seats().get(seat).points()));
         for (var win : view.wins()) summary.append(". ").append(winnerSummary(win));
         output.add(NarratedElementType.TITLE, summary);
         output.add(NarratedElementType.USAGE, Component.translatable("ui.mchjong.result_help"));

@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -65,13 +67,13 @@ final class TableHud {
             text(font, g, score, x + (immersive ? 8 + inset : 5), y + (immersive ? 27 : 14), w - (immersive ? inset + 18 : 10),
                 disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED, immersive ? 2 : 1);
             if (!immersive && summary) {
-                if (meldWidth == 0) MahjongUi.text(g, font, Component.translatable("ui.mchjong.meld_groups", p.melds().size()), x + 5, y + 25, w - 10, MahjongUi.MUTED, false);
+                if (meldWidth == 0) MahjongUi.text(g, font, CountedText.of("ui.mchjong.meld_groups", 0, p.melds().size()), x + 5, y + 25, w - 10, MahjongUi.MUTED, false);
                 else { int mx = x + 5; for (var meld : p.melds()) { TileGui.meldArtwork(g, p.layout(meld, seat), mx, y + 27, meldWidth, 0, preset, material, back, backPreset, artwork); mx += TileGui.meldWidth(p.layout(meld, seat), meldWidth) + 2; } }
             }
             if (member.presence() == PlayerPresence.AWAY) g.renderOutline(x + w - 12, y + 20, 6, 6, MahjongUi.MUTED);
             if (disconnected) g.fill(x + w - 12, y + 20, x + w - 6, y + 26, MahjongUi.NEGATIVE);
             if (mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h) {
-                Component hover = Component.literal(member.participant().name()).append("\n").append(Component.translatable("ui.mchjong.points", p.points()))
+                Component hover = Component.literal(member.participant().name()).append("\n").append(CountedText.of("ui.mchjong.points", 0, p.points()))
                     .append("\n").append(statuses.get(seat));
                 if (settings.show(TableSettings.Information.RANKS)) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.rank", 1 + state.seats().stream().filter(other -> other.points() > p.points()).count()));
                 if (settings.show(TableSettings.Information.COUNTS)) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.counts", p.hand().size(), p.river().size(), p.norths().size()));

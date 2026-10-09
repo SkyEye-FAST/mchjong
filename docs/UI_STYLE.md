@@ -596,6 +596,12 @@ labels off the felt and the riichi-deposit lanes clear. Immersive center labels
 use the same projected table-plane axes as the housing, including seat rotation,
 shear and foreshortening; glyph tops point toward the center.
 
+English quantity phrases use explicit `.one` and `.other` translations selected
+by `CountedText` from the relevant numeric argument. Preserve nested components
+and language reloads. Traditional Chinese joins translated Chinese words without
+spaces, retains spaces around numeric values, and quotes variable player names
+so both Chinese and Latin names have unambiguous boundaries.
+
 ## Visual acceptance
 
 Update this document and the shared tokens together when intentionally changing

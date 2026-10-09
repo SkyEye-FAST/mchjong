@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -123,8 +125,8 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         int sticks = items.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).mapToInt(stack -> stack.getCount()).sum();
         var deck = MahjongSupplies.deck(items);
         boolean ready = deck != null;
-        MahjongUi.text(graphics, font, Component.translatable("box.mchjong.tiles", tiles), 196, 18, 94, MahjongUi.TEXT, false);
-        MahjongUi.text(graphics, font, Component.translatable("box.mchjong.sticks", sticks), 196, 34, 94, MahjongUi.MUTED, false);
+        MahjongUi.text(graphics, font, CountedText.of("box.mchjong.tiles", 0, tiles), 196, 18, 94, MahjongUi.TEXT, false);
+        MahjongUi.text(graphics, font, CountedText.of("box.mchjong.sticks", 0, sticks), 196, 34, 94, MahjongUi.MUTED, false);
         MahjongUi.text(graphics, font, ready ? Component.translatable(deck.sanma() ? "box.mchjong.sanma_set" : "box.mchjong.set", Component.translatable(deck.redFives().translationKey()))
             : Component.translatable("box.mchjong.incomplete"), 196, 50, 94,
             ready ? MahjongUi.POSITIVE : MahjongUi.ACCENT, false);

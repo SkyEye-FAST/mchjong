@@ -13,6 +13,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Align immersive wind-panel labels with the table plane and keep round labels within their displays.
 
+- Correct English quantity forms and Traditional Chinese variable spacing.
+
 - Balance MCR and Sichuan Bot attacks against per-opponent public danger and native payments; let attainable Taiwan scoring routes outweigh limited efficiency differences while preserving live readiness and late-wall speed.
 
 - Link settlement awards and rule settings to brief localized explanations and existing hand examples, with precise optional handbook navigation and keyboard return controls.

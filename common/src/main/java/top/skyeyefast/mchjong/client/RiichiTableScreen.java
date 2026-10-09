@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.text.CountedText;
+
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.Util;
@@ -1119,7 +1121,7 @@ public final class RiichiTableScreen extends Screen {
             if (y > top + 38) break;
             graphics.drawCenteredString(font, line, layoutWidth / 2, y, 0xffe0eade); y += 10;
         }
-        graphics.drawCenteredString(font, Component.translatable("ui.mchjong.exit_status", vote.agreed().size(), vote.required(), vote.secondsLeft()),
+        graphics.drawCenteredString(font, CountedText.of("ui.mchjong.exit_status", 2, vote.agreed().size(), vote.required(), vote.secondsLeft()),
             layoutWidth / 2, top + 50, 0xffffd487);
         y = top + 65;
         for (var line : font.split(Component.translatable("ui.mchjong.exit_paused"), span - 12)) {
