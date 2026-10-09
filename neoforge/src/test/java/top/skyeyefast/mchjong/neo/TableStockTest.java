@@ -20,6 +20,41 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
 class TableStockTest {
+    @Test void diagnosesUseTheSameVariantSubsetAndSingleCaseAdmission(MinecraftServer server) {
+        var table = new TableEquipment(() -> {});
+        var riichi = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(),
+            RiichiPreset.MAHJONG_SOUL_4.config().with(RiichiRuleOption.RED_FIVES, 0), 1);
+        var mcr = new top.skyeyefast.mchjong.engine.McrSession(java.util.UUID.randomUUID(), 1);
+        var sichuan = new top.skyeyefast.mchjong.engine.SichuanSession(java.util.UUID.randomUUID(), 1);
+        var box = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
+        table.boxes().setItem(0, box);
+        assertEquals(java.util.List.of(top.skyeyefast.mchjong.engine.PreparationProblem.CLOTH), table.preparationProblems(riichi, true));
+        table.installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));
+        assertTrue(table.preparationProblems(riichi, true).isEmpty());
+        assertEquals(java.util.List.of(top.skyeyefast.mchjong.engine.PreparationProblem.FLOWERS), table.preparationProblems(mcr, true));
+        assertTrue(table.preparationProblems(sichuan, true).isEmpty());
+        assertNotNull(top.skyeyefast.mchjong.item.SichuanDeck.select(box));
+        assertNull(top.skyeyefast.mchjong.item.McrDeck.select(box));
+        var contents = MahjongSupplies.contents(box);
+        contents.getFirst().set(DataComponents.BASE_COLOR, DyeColor.RED);
+        MahjongSupplies.setContents(box, contents);
+        table.boxes().setItem(0, box);
+        assertEquals(java.util.List.of(top.skyeyefast.mchjong.engine.PreparationProblem.BACK), table.preparationProblems(riichi, true));
+        assertNull(table.deck());
+        table.boxes().setItem(1, MahjongSupplies.completeBox(TileMaterial.GLASS));
+        assertTrue(table.preparationProblems(riichi, true).isEmpty(), "A spare mismatched case cannot block a valid case");
+        table.boxes().setItem(1, ItemStack.EMPTY);
+        contents.getFirst().set(DataComponents.BASE_COLOR, DyeColor.BLUE);
+        contents.getFirst().set(MahjongComponents.TILE, new top.skyeyefast.mchjong.item.TileData(0, TileMaterial.GLASS, false));
+        MahjongSupplies.setContents(box, contents); table.boxes().setItem(0, box);
+        assertEquals(java.util.List.of(top.skyeyefast.mchjong.engine.PreparationProblem.MATERIAL), table.preparationProblems(riichi, true));
+        contents.getFirst().set(MahjongComponents.TILE, new top.skyeyefast.mchjong.item.TileData(0, TileMaterial.BONE, false));
+        contents.getFirst().shrink(1);
+        MahjongSupplies.setContents(box, contents); table.boxes().setItem(0, box);
+        assertEquals(java.util.List.of(top.skyeyefast.mchjong.engine.PreparationProblem.TILES), table.preparationProblems(riichi, true));
+        assertTrue(table.preparationProblems(riichi, false).contains(top.skyeyefast.mchjong.engine.PreparationProblem.POINT_STICKS));
+    }
+
     @Test void fixedKitsTopUpAtomicallyAndRestoreToDrawers(MinecraftServer server) {
         assertEquals(Map.of(100, 10, 1000, 4, 5000, 2, 10000, 1), TableEquipment.startingKit(25000));
         assertEquals(Map.of(100, 10, 1000, 4, 5000, 3, 10000, 1), TableEquipment.startingKit(30000));

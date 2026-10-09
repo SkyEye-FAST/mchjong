@@ -254,6 +254,10 @@ stool when allocation finishes. Turning it off keeps the coordinate-guided manua
 seating flow; ordinary presence updates never force a player back onto a stool.
 Room timing and invitations live in Settings → Room;
 the Ready control reflects server-confirmed presence at the assigned stool.
+Equipment failures use a short footer caption, concise hover list and a paginated
+help page accessible by native pointer or keyboard activation. The server chooses
+the applicable requirements. A recipient-only brass particle cue at the actual
+assigned stool lasts three seconds; it does not replace walking or stool interaction.
 The room Hand visibility control cycles through Visible only to self, Visible to
 riichi players, Visible to all players and Open hands; Shift cycles backward. Only
 the host can change it before play. Open hands lays tiles face up; the other

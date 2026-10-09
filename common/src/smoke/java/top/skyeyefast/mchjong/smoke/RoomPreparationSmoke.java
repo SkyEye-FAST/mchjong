@@ -24,12 +24,13 @@ final class RoomPreparationSmoke {
     private int botSeat = -1;
     private int botCycle;
     private Boolean originalAutoSeat;
+    private int cueUntil = -1;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
         var view = table.clientView();
         if (originalAutoSeat == null) {
             originalAutoSeat = TableSettings.get().autoSeat;
-            TableSettings.get().autoSeat = table.automatic();
+            TableSettings.get().autoSeat = table.automatic() && !prefix.equals("room");
         }
         if (view != null) {
             TableSettings.get().autoSeat = originalAutoSeat;
@@ -44,6 +45,16 @@ final class RoomPreparationSmoke {
         }
         var room = table.clientRoom();
         if (room == null) return false;
+        if (cueUntil >= 0) {
+            var stool = top.skyeyefast.mchjong.world.TableGeometry.stool(table.getBlockPos(), room.viewerSeat());
+            var direction = net.minecraft.world.phys.Vec3.atCenterOf(stool).add(0, 0.6, 0).subtract(client.player.getEyePosition());
+            client.player.setYRot((float) Math.toDegrees(Math.atan2(-direction.x, direction.z)));
+            client.player.setXRot((float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z))));
+            if (ticks < cueUntil) return false;
+            capture(client, output, prefix + "-stool-cue.png");
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
+            cueUntil = -1;
+        }
         if (RiichiTableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
             var roster = LobbySmoke.find(client, Component.translatable("room.mchjong.participants").getString());
@@ -108,11 +119,20 @@ final class RoomPreparationSmoke {
                 AutomationControlsSmoke.checkBounds(client);
                 capture(client, output, prefix + "-assigned-seats.png");
                 capturedPositioning = true;
+                if (prefix.equals("room") && state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
+                    var stool = top.skyeyefast.mchjong.world.TableGeometry.stool(table.getBlockPos(), room.viewerSeat());
+                    var direction = net.minecraft.world.phys.Vec3.atCenterOf(stool).subtract(client.player.getEyePosition());
+                    client.player.setYRot((float) Math.toDegrees(Math.atan2(-direction.x, direction.z)));
+                    client.player.setXRot((float) -Math.toDegrees(Math.atan2(direction.y, Math.hypot(direction.x, direction.z))));
+                    client.setScreen(null);
+                    cueUntil = ticks + 12;
+                    return false;
+                }
             }
             if (state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
                 if (room.actions().stream().anyMatch(action -> action.type() == RoomAction.Type.READY))
                     throw new IllegalStateException("Unseated player can ready up");
-                if (table.automatic()) return false;
+                if (TableSettings.get().autoSeat) return false;
                 var id = client.player.getUUID();
                 var pos = table.getBlockPos();
                 serverWork = client.getSingleplayerServer().submit(() -> {

@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Explain server-checked preparation shortages for the selected rules and briefly mark each human's assigned stool without changing seating controls.
+
 - Replace all four Mahjong Manual award indexes' text tile examples with facing-page images, using Kansai faces for Riichi, Hong Kong for MCR, and native Sichuan/Taiwan faces; fit each example on one line and preserve winning tiles, public tiles and group boundaries in all four languages.
 
 - Calibrate Riichi and Taiwan tiles to the shared 33 × 24 × 17.5 mm envelope while preserving large MCR/Sichuan tiles; tighten tilted walls by their actual lengths, combine flowers and melds in a wrapping left public area, and align physical spacing, picking and display proportions.

@@ -48,6 +48,15 @@ final class RoomFlowSmoke {
         } else if (stage == 3 && ticks > 10) {
             check(client);
             capture(client, output, "lobby-" + LANGUAGES[locale] + "-small.png");
+            if (!room.equipmentProblems().isEmpty()) {
+                var help = buttonOrNull(client, room.equipmentProblems().getFirst().translationKey());
+                require(help != null && help.active, "Missing preparation explanation");
+                client.screen.setFocused(help);
+                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
+                require(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen, "Keyboard equipment help failed");
+                check(client);
+                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE, 0, 0);
+            }
             for (var key : List.of("rules.mchjong.title", "ui.mchjong.clock_settings", "ui.mchjong.invite", "settings.mchjong.scopes")) {
                 click(client, key);
                 require(!(client.screen instanceof RiichiTableScreen), "Room shortcut failed: " + key);
@@ -96,8 +105,16 @@ final class RoomFlowSmoke {
         } else if (stage == 9 && room.seats().stream().allMatch(seat -> seat.participant().id() != null)) {
             require(table.clientRoom().actions().stream().noneMatch(action -> action.type()
                 == top.skyeyefast.mchjong.engine.RoomAction.Type.BEGIN_SEATING), "Empty box allowed seat confirmation");
-            var blocked = buttonOrNull(client, "ui.mchjong.equipment_needed");
-            require(blocked != null && !blocked.active, "Lobby did not explain missing equipment");
+            require(!room.equipmentProblems().isEmpty(), "Lobby omitted server equipment reasons");
+            var blocked = buttonOrNull(client, room.equipmentProblems().getFirst().translationKey());
+            require(blocked != null && blocked.active, "Lobby did not expose equipment help");
+            blocked.onPress();
+            require(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen, "Equipment help did not open");
+            next(90);
+        } else if (stage == 90 && ticks > 10) {
+            capture(client, output, "equipment-help.png");
+            client.screen.onClose();
+            require(client.screen instanceof RiichiTableScreen, "Equipment help did not return to lobby");
             check(client);
             capture(client, output, "equipment-needed.png");
             var id = client.player.getUUID();

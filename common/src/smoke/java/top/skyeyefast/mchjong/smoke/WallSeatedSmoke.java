@@ -76,7 +76,7 @@ public final class WallSeatedSmoke {
         client.options.hideGui = unopened || hideGui;
         var fixtureRoom = new TableRoomView(room.tableId(), room.incarnation(), Long.MAX_VALUE / 4 + sample,
             room.decision(), room.variant(), room.lifecycle(), room.host(), room.viewerSeat(), false, true, false,
-            room.seating(), List.of(), room.seats(), List.of(), null, false, false, true, room.automation());
+            room.seating(), List.of(), room.seats(), List.of(), null, false, false, true, room.automation(), List.of());
         var clocks = Collections.nCopies(4, new TimeControl.Clock(0, 0, false));
         if (mcrRule) {
             var base = mcr.game();

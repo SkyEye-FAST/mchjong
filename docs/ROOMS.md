@@ -186,6 +186,12 @@ the south-side stool; the other winds follow the physical table order. The inter
 shows each destination's coordinates so wind assignments cannot be confused with
 world compass directions.
 
+If equipment blocks preparation, the footer names the first server-checked problem.
+Hover for the missing requirements, or activate the footer with the mouse or keyboard
+to read their short explanations. Only the selected variant's requirements appear;
+stock must fit inside one case. After assignment, a brief brass particle cue marks
+your actual stool while you move to it. The cue is visible only to you.
+
 Assignment keeps the host, personal preferences and bot choice attached to
 their respective participants. A player whose stool changed is dismounted and
 must sit on the assigned stool. The server verifies actual mounts, including after

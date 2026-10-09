@@ -728,6 +728,11 @@ Rules without bankruptcy also require one reserved −10000 stick per player.
 Surplus tiles remain untouched. Subset selection groups stock by
 appearance, counts ordinary and red faces separately and never combines boxes.
 The engine receives exactly 136 or 108 physical identities for the selected mode.
+`DeckAdmission` shares copy requirements between all physical selectors and preparation
+diagnostics. `TableEquipment` combines that single-case check with cloth and the ordinary
+table's atomic supply plan. The Minecraft room projection publishes only failure categories;
+the same checks govern preparation admission. Assigned-stool cues are recipient-only,
+expire after three seconds and use `TableGeometry.stool` without modifying mounts.
 Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual checks.
 
 The server owns the wall, hands, legal actions and settlement. Requests contain an
