@@ -56,8 +56,24 @@ keys and format specifiers, two-space indentation, LF and alphabetical key order
 Use hierarchical dot-separated snake_case keys, `.description` and `.short`
 suffixes. Rule titles use standard Riichi terminology; mechanics go in descriptions.
 Do not use middle dots (`·`) as generic UI separators. Use natural localized
-phrasing, appropriate punctuation or separate lines. Follow vanilla Minecraft's
-spacing and punctuation conventions for each locale, including new strings.
+phrasing, appropriate punctuation or separate lines. Consult vanilla Minecraft's
+language files to align terminology, phrasing,
+punctuation and spacing conventions for each locale:
+- `zh_cn`: Strictly no spaces between CJK and ASCII alphanumeric characters or
+  format specifiers. Fullwidth punctuation (`：`, `（）`, `……`), curly double
+  quotes `“”` (never corner quotes `「」` or straight `"`). Follow vanilla Simplified
+  Chinese terminology and second-person address `你`.
+- `zh_tw`: Strictly add spaces between CJK and ASCII alphanumeric characters or
+  format specifiers. Fullwidth punctuation directly precedes format placeholders
+  without space. Corner quotes `「」` and `『』` (never curly `“”` or straight `"`),
+  fullwidth parentheses `（）`. Follow vanilla Traditional Chinese (Taiwan) terminology.
+- `ja_jp`: Strictly no spaces between Japanese kana/kanji and ASCII alphanumeric
+  or format specifiers. Corner quotes `「」` (never curly `“”` or straight `"`),
+  fullwidth colon `：`, fullwidth parentheses `（）`, fullwidth slash `／`. Follow
+  vanilla Japanese terminology.
+- `en_us`: Title Case for screen titles, button labels, tabs, categories, slider
+  labels, item and block names. Sentence case for descriptions, explanations,
+  subtitles, and tooltips. Direct imperatives for player actions. Follow vanilla terminology.
 Resource paths/generation follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md).
 
 Guides describe current capabilities, permissions and privacy, not retired features,

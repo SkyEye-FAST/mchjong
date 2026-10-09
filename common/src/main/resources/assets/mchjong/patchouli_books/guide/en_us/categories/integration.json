@@ -1,6 +1,6 @@
 {
   "name": "manual.mchjong.category.integration.name",
   "description": "manual.mchjong.category.integration.description",
-  "icon": "minecraft:chain",
+  "icon": "minecraft:iron_chain",
   "sortnum": 4
 }
