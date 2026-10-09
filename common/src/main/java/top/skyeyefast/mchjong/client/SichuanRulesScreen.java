@@ -83,7 +83,7 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
             matched == null ? -1 : matched.ordinal(), index -> { draft = presets[index].config(); numbers.clear(); rejected = false; })))
             .bounds(left, layout.contentTop(), span, 20).tooltip(Tooltip.create(label)).build());
         editors.add(preset);
-        int contentLeft = left, contentWidth = span;
+        int contentLeft = left, contentWidth = span - 24;
         for (var category : SichuanRuleOption.Group.values()) {
             var text = Component.translatable(category.translationKey());
             addRenderableWidget(MahjongButton.create(text, ignored -> { group = category; page = 0; init(); })
@@ -97,6 +97,7 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
             int top = layout.top() + 68 + offset * 24;
             var caption = Component.translatable(option.translationKey());
             var description = Component.translatable(option.descriptionKey());
+            addRenderableWidget(RuleHelp.setting(this, option, caption, description, left + span - 20, top));
             labels.add(new Label(caption, description, contentLeft, top, contentWidth));
             if (option.toggle()) {
                 boolean enabled = option.get(draft) != 0;

@@ -47,7 +47,9 @@ gradlew.bat :fabric:runSmokeClient -PsmokePatchouli=true --console=plain
 The installed profile checks the one-time starter book, crafting and opening the book item, chapter and entry
 loading, recipes, resource reload and every spread in `en_us`, `ja_jp`, `zh_cn`
 and `zh_tw`. Category/entry counts follow the resources, with all four rule entrances
-required. Text layout is measured with Patchouli's loaded font and line breaker;
+required. Text layout is measured with Patchouli's loaded font and line breaker.
+The installed smoke also opens explanations for all four variants, checks exact
+award entry/spread destinations, and closes book → explanation → parent in each locale.
 `manual-layout.txt` reports clipping. Capture any spread with
 `manual-<locale>-<entry>-<even page index>.png`, including award indexes, payment
 examples and generated tile diagrams. `ManualContentTest` checks required entries,
@@ -104,7 +106,7 @@ Use the following flags with `:fabric:runSmokeClient` and `:neoforge:runSmokeCli
 | Flag | Existing fixture and evidence |
 | --- | --- |
 | `-PsmokeRoom=true` | Lobby, four-language layouts, countdowns, final standings, retained members, leave/dissolve packets; `room-evidence` |
-| `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language standings with uma, resizing and result navigation; `settlement-evidence` |
+| `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language award explanations and standings with uma, resizing and result navigation; `settlement-evidence` |
 | `-PsmokeInterface=true` | Box transactions, carrier synchronization, personal mod settings and preset navigation, explicit input choices, category-only reset, keyboard/disabled states, immersive controls; `interface-evidence` |
 | `-PsmokeSeating=true` | Mounts, private deals, camera clearance, inspect/reset and rebound input, dragging, focus loss, immersive selection, closed-screen camera and third-person stool; `seating-evidence` |
 | `-PsmokeVisibility=true` | Three participant visibility modes, private packets and independently redacted unmounted spectators; `visibility-evidence` |

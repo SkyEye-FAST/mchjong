@@ -235,7 +235,8 @@ public final class RiichiTableScreen extends Screen {
 
     public void receivedControlReply() {
         automation.receivedControlReply();
-        if (minecraft.screen instanceof RiichiRulesScreen rules && rules.tableScreen() == this) rules.receivedReply();
+        var rules = TableChildScreen.find(minecraft.screen, RiichiRulesScreen.class);
+        if (rules != null && rules.tableScreen() == this) rules.receivedReply();
     }
 
     private void refreshDecision(RiichiView view) {

@@ -61,6 +61,9 @@ final class RoomFlowSmoke {
                 click(client, key);
                 require(!(client.screen instanceof RiichiTableScreen), "Room shortcut failed: " + key);
                 AutomationControlsSmoke.checkBounds(client);
+                if (client.screen instanceof top.skyeyefast.mchjong.client.RiichiRulesScreen) {
+                    RuleExplanationSmoke.check(client, Component.translatable(top.skyeyefast.mchjong.engine.RiichiRuleOption.KUITAN.translationKey()));
+                }
                 client.screen.onClose();
                 require(client.screen instanceof RiichiTableScreen, "Room shortcut lost its parent: " + key);
             }

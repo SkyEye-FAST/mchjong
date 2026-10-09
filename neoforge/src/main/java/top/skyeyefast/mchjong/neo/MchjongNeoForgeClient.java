@@ -22,6 +22,8 @@ public final class MchjongNeoForgeClient {
     @SubscribeEvent public static void resources(net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent event) {
         event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener)
             top.skyeyefast.mchjong.client.TileFacePresets::reload);
+        event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener)
+            top.skyeyefast.mchjong.client.RuleHelp::reload);
     }
     @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(event::register);

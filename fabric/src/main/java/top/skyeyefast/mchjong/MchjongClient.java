@@ -24,6 +24,7 @@ public final class MchjongClient implements ClientModInitializer {
                 @Override public net.minecraft.resources.ResourceLocation getFabricId() { return MahjongContent.id("tile_face_presets"); }
                 @Override public void onResourceManagerReload(net.minecraft.server.packs.resources.ResourceManager resources) {
                     top.skyeyefast.mchjong.client.TileFacePresets.reload(resources);
+                    top.skyeyefast.mchjong.client.RuleHelp.reload(resources);
                 }
             });
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper::registerKeyBinding);

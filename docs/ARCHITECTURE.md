@@ -678,6 +678,13 @@ Patchouli resources define `mchjong:guide`, using the ordinary language files
 for chapter, entry and page text. The handbook reads client resources and has no
 gameplay authority. The presence-guarded server adapter gives each player a starter
 book once, recording recipient UUIDs in overworld saved data.
+`RuleHelp` indexes the shared handbook JSON and translation keys during resource
+reload. Award anchors identify exact entry/page destinations and adjacent generated
+images; rule options map to the owning pages and reuse their existing descriptions.
+The basic `TableHelpScreen` has no optional API dependency. `ManualLinks` registers
+book navigation after presence detection. Its parent is retained in the shared
+screen chain so view packets update the owning table/results/editor without replacing
+the explanation or book; leaving the table still closes the chain.
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's

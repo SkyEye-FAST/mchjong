@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Link settlement awards and rule settings to brief localized explanations and existing hand examples, with precise optional handbook navigation and keyboard return controls.
+
 - Explain server-checked preparation shortages for the selected rules and briefly mark each human's assigned stool without changing seating controls.
 
 - Replace all four Mahjong Manual award indexes' text tile examples with facing-page images, using Kansai faces for Riichi, Hong Kong for MCR, and native Sichuan/Taiwan faces; fit each example on one line and preserve winning tiles, public tiles and group boundaries in all four languages.
