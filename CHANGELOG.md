@@ -52,6 +52,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Draw Bot portraits on integer pixel boundaries so both eyes stay the same size at small UI scales.
+
 - Merge equivalent Taiwan ready-discard choices while retaining distinct tile faces and every physical ordinary discard.
 
 - Offer one north-extraction action at a time when a three-player Riichi hand contains multiple norths, preserving replacement draws and drawn-north restrictions after Riichi.
