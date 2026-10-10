@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Update the embedded mcr-mahjong library to 0.1.1 across all three Minecraft profiles.
+
 - Fit settings and lobby panels to their contents and reclaim empty preset navigation space.
 
 - Align immersive wind-panel labels with the table plane and keep round labels within their displays.
