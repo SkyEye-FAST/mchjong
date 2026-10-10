@@ -26,7 +26,7 @@ class CountedTextTest {
             assertEquals("Confirmed 2/4 (1 second left)", CountedText.of("sichuan.mchjong.reading", 2, 2, 4, 1).getString());
             var round = Component.translatable("taiwan.mchjong.round", Component.translatable("wind.mchjong.east.short"), 1, 0);
             load("zh_tw");
-            assertEquals("東風 1 局，連莊 0", round.getString());
+            assertEquals("東風 1 局，連莊 0 次", round.getString());
             assertEquals("赤五萬", Component.translatable("tile.mchjong.red", Component.translatable("tile.mchjong.5m")).getString());
             assertEquals("東家座位：1, 2, 3", Component.translatable("room.mchjong.position", Component.translatable("wind.mchjong.east.short"), 1, 2, 3).getString());
             assertEquals("輪到「小明」", Component.translatable("ui.mchjong.turn", "小明").getString());
