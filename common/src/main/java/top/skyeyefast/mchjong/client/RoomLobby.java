@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -16,13 +17,15 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
-/** One preparation flow for every rule, with a horizontal variant row and a single next step. */
+/** One preparation flow for every rule, with independent variant navigation and a single next step. */
 final class RoomLobby {
     private final Screen parent;
     private final BlockPos pos;
     private final Runnable rebuild;
     private int tab;
     private int page;
+    private int variantScroll;
+    private MahjongVariant selectedVariant;
     private long revision = -1;
     private boolean pending;
     private Layout layout;
@@ -47,8 +50,9 @@ final class RoomLobby {
             int panelHeight = Math.min(Math.min(304, height - 24), Math.max(216, wanted));
             return new Layout((width - span) / 2, (height - panelHeight) / 2, span, panelHeight);
         }
-        int bodyLeft() { return left; }
-        int bodyWidth() { return span; }
+        int sidebarWidth() { return Math.clamp(span / 4, 84, 112); }
+        int bodyLeft() { return left + sidebarWidth() + 8; }
+        int bodyWidth() { return span - sidebarWidth() - 8; }
         int contentTop() { return top + 80; }
         int footer() { return top + height - 26; }
         int status() { return footer() - 14; }
@@ -68,12 +72,12 @@ final class RoomLobby {
         return client.level != null && client.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table ? table : null;
     }
 
-    List<MahjongButton> build(TableRoomView room, int width, int height) {
+    List<AbstractWidget> build(TableRoomView room, int width, int height) {
         layout = Layout.of(width, height, tab == 0 ? room.seats().size() : options(parent, pos, room).size(), tab == 0);
         if (revision != room.revision()) { revision = room.revision(); pending = false; }
-        var buttons = new ArrayList<MahjongButton>();
+        var buttons = new ArrayList<AbstractWidget>();
         var client = Minecraft.getInstance();
-        if (room.exitVote() != null) return TableExitControls.voteButtons(pos, room, width, height);
+        if (room.exitVote() != null) return new ArrayList<>(TableExitControls.voteButtons(pos, room, width, height));
         int body = layout.bodyLeft(), span = layout.bodyWidth(), top = layout.top();
         int toolbarWidth = 48, toolbarLeft = body + span - 3 * toolbarWidth - 8;
         buttons.add(RoomLobbyControls.button(Component.translatable("settings.mchjong.scopes"), toolbarLeft, top + 6, toolbarWidth,
@@ -88,15 +92,20 @@ final class RoomLobby {
                 TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)).shortCaption(Component.translatable("room.mchjong.dissolve.short"));
         close.active = host(room) && !pending;
         buttons.add(close);
-        int variantRow = 0;
+        var variants = new ArrayList<MahjongButton>();
         for (var variant : MahjongVariant.values()) {
-            int cell = (span + 4) / MahjongVariant.values().length;
-            var button = RoomLobbyControls.variantButton(pos, room, variant, layout.left() + variantRow++ * cell, top + 32,
-                cell - 4, !room.manual(), () -> { pending = true; rebuild.run(); }).navigation();
+            var button = RoomLobbyControls.variantButton(pos, room, variant, 0, 0,
+                layout.sidebarWidth(), !room.manual(), () -> { pending = true; rebuild.run(); }).navigation();
             button.active &= !pending;
-            buttons.add(button);
+            variants.add(button);
         }
-        int linkWidth = width < 480 ? 52 : 62;
+        var variantList = new RoomVariantList(layout.left(), top + 32, layout.sidebarWidth(), layout.status() - top - 38,
+            variants, variantScroll, value -> variantScroll = value);
+        if (selectedVariant != room.variant()) variantList.reveal(room.variant().ordinal());
+        selectedVariant = room.variant();
+        buttons.add(variantList);
+        buttons.addAll(variants);
+        int linkWidth = (span - 4) / 2;
         var replays = RoomLobbyControls.button(Component.translatable("replay.mchjong.title"), body + span - linkWidth, top + 56, linkWidth,
             () -> ClientReplays.list(0, "", false)).navigation().shortCaption(Component.translatable("replay.mchjong.title.short"));
         replays.active = table() != null && table().clientWorldPolicy().replaysEnabled();
@@ -106,10 +115,10 @@ final class RoomLobby {
         invite.active = room.viewerSeat() >= 0 && room.lobby() && table().clientWorldPolicy().invitationsEnabled();
         buttons.add(invite);
         String[] tabs = {"room.mchjong.participants", "lobby.mchjong.match_settings"};
-        int tabWidth = (span - 2 * linkWidth - 16) / 2;
+        int tabWidth = (span - 4) / 2;
         for (int index = 0; index < tabs.length; index++) {
             int selected = index;
-            buttons.add(RoomLobbyControls.button(Component.translatable(tabs[index]), body + index * (tabWidth + 4), top + 56,
+            buttons.add(RoomLobbyControls.button(Component.translatable(tabs[index]), body + index * (tabWidth + 4), top + 32,
                 tabWidth, () -> { tab = selected; page = 0; rebuild.run(); }).navigation().selected(tab == index).shortCaption(Component.translatable(tabs[index] + ".short")));
         }
         if (tab == 0) buildRoster(buttons, room);
@@ -136,7 +145,7 @@ final class RoomLobby {
         return buttons;
     }
 
-    private void buildRoster(List<MahjongButton> buttons, TableRoomView room) {
+    private void buildRoster(List<AbstractWidget> buttons, TableRoomView room) {
         int pitch = layout.rosterPitch(room.seats().size());
         for (int seat = 0; seat < room.seats().size(); seat++) {
             int y = layout.contentTop() + seat * pitch + (pitch - 20) / 2;
@@ -159,8 +168,8 @@ final class RoomLobby {
         }
     }
 
-    private void buildStage(List<MahjongButton> buttons, TableRoomView room) {
-        int x = layout.bodyLeft(), y = layout.footer(), span = layout.bodyWidth();
+    private void buildStage(List<AbstractWidget> buttons, TableRoomView room) {
+        int x = layout.left(), y = layout.footer(), span = layout.span();
         if (room.seating() == RoomSeating.Stage.DRAWING) {
             int cell = (span - (room.seats().size() - 1) * 4) / room.seats().size();
             for (int slot = 0; slot < room.seats().size(); slot++) {
@@ -295,6 +304,7 @@ final class RoomLobby {
         MahjongUi.text(graphics, font, Component.translatable("lobby.mchjong.stage." + room.seating().name().toLowerCase(java.util.Locale.ROOT)),
             l.left() + 4, l.top() + 11, l.span() - 164, MahjongUi.TEXT, false);
         graphics.fill(l.left(), l.footer() - 18, l.left() + l.span(), l.footer() - 17, MahjongUi.EDGE);
+        graphics.fill(l.bodyLeft() - 5, l.top() + 32, l.bodyLeft() - 4, l.footer() - 22, MahjongUi.EDGE);
         if (tab == 0) {
             int pitch = l.rosterPitch(room.seats().size());
             for (int seat = 0; seat < room.seats().size(); seat++) {
@@ -333,9 +343,9 @@ final class RoomLobby {
             if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages, l.bodyLeft() + l.bodyWidth() / 2, l.status() - 18, MahjongUi.MUTED);
         }
         if (pending) MahjongUi.text(graphics, font, Component.translatable("rules.mchjong.pending"),
-            l.bodyLeft(), l.status(), l.bodyWidth(), MahjongUi.ACCENT, false);
+            l.left(), l.status(), l.span(), MahjongUi.ACCENT, false);
         else MahjongUi.text(graphics, font, Component.translatable("lobby.mchjong.guide." + room.seating().name().toLowerCase(java.util.Locale.ROOT)),
-            l.bodyLeft(), l.status(), l.bodyWidth(), MahjongUi.MUTED, false);
+            l.left(), l.status(), l.span(), MahjongUi.MUTED, false);
         TableExitControls.renderVote(graphics, font, room, width, height);
     }
 }

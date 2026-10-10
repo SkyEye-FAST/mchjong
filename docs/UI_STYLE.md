@@ -207,15 +207,20 @@ Taiwan uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
 are shared. Its lobby exposes human and built-in Bot seats, presets,
 payment/reserve rules, clocks, shared Replay navigation and convenience hints.
-All four variants share one lobby layout. Horizontal tabs select Riichi, MCR,
-Sichuan or Taiwan; variant selection never appears among that variant's settings. The body
-has Players and bots and Match settings tabs. Keep the roster visible on arrival,
-with per-seat Bot and ownership controls. Match settings paginate player count,
-presets, detailed rules, visibility, timing and convenience hints. Invitation and
-replay navigation sit beside the body tabs. The header names the current preparation
-stage and the footer supplies one brief next-step instruction. Leave and host dissolution stay
-distinct in the toolbar. Fill empty seats is a separate secondary action beside
-the prominent seat-preparation action; drawing winds and readiness reuse its footer.
+All variants share one lobby layout. A left sidebar selects the rule variant;
+its width and row height are independent of the number of variants. Overflow
+scrolls by whole rows using the wheel or a visible, draggable scrollbar. Hidden
+rows cannot receive pointer input, and a newly selected variant is brought into
+view. Variant selection never appears among that variant's settings. The right
+body has Players and bots and Match settings tabs, with invitation and replay
+navigation on a separate row below. Keep the roster visible on arrival, with
+per-seat Bot and ownership controls. Match settings paginate player count,
+presets, detailed rules, visibility, timing and convenience hints. The footer
+spans the full panel so primary actions retain their space at small sizes.
+The header names the current preparation stage and the footer supplies one brief
+next-step instruction. Leave and host dissolution stay distinct in the toolbar.
+Emphasize Fill empty seats while players are missing, then seat preparation when
+available; drawing winds and readiness reuse the same footer.
 Settlement uses a top action with the server's countdown in parentheses beside
 the view selector (and the ordinary table's point-stick drawer), and
 automatically opens final standings at the match's second stage. The roster

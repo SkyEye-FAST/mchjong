@@ -511,7 +511,7 @@ unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
 `ClientMcrNetworking`, `ClientSichuanNetworking` and `ClientTaiwanNetworking` decode and apply their respective views.
-`RoomLobby` owns the shared horizontal variant tabs, roster, settings and stage footer.
+`RoomLobby` owns the shared scrollable variant sidebar, roster, settings and stage footer.
 `RiichiTableScreen`, `McrLobbyScreen`, `SichuanLobbyScreen` and `TaiwanLobbyScreen` adapt their confirmed
 rule state to that component. `TableToolbar`, `TableOptionsScreen`,
 `TableParticipantsScreen` and `TableInviteScreen` share navigation across variants;

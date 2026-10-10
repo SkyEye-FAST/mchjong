@@ -56,7 +56,7 @@ dismount with Minecraft's sneak control after closing it.
 
 ### Automatic-table MCR
 
-In the automatic-table lobby, the host selects MCR from the top rule tabs. Fill
+In the automatic-table lobby, the host selects MCR from the rule sidebar. Fill
 all four seats with humans and built-in Bots, and store a complete standard
 144-tile box with eight flowers and a cloth. Assign seats; each human takes their
 assigned stool and presses Ready. Bots are ready automatically. For one human
