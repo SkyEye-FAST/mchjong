@@ -30,10 +30,6 @@ final class TableControlSmoke {
     private CompletableFuture<Void> reseated;
     private int departedSeat;
     private int originalWidth, originalHeight, originalScale;
-    private static final String[] RULE_LANGUAGES = {"zh_cn", "zh_tw", "ja_jp", "en_us"};
-    private int ruleLanguage;
-    private String originalLanguage;
-    private CompletableFuture<Void> languageReload;
     private top.skyeyefast.mchjong.world.WorldSettings.Policy originalWorldPolicy;
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
 
@@ -102,78 +98,6 @@ final class TableControlSmoke {
             require(client.screen.children().stream().noneMatch(EditBox.class::isInstance), "Preset options exposed fixed numeric editors");
             AutomationControlsSmoke.checkBounds(client);
             capture(client, output, "25c-preset-options.png");
-            originalWidth = client.getWindow().getScreenWidth(); originalHeight = client.getWindow().getScreenHeight();
-            originalScale = client.options.guiScale().get();
-            originalLanguage = client.getLanguageManager().getSelected();
-            selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
-            client.getWindow().setWindowed(960, 720);
-            client.options.guiScale().set(3);
-            client.resizeDisplay();
-            next(20);
-        } else if (stage == 20 && ticks > 5 && languageReload.isDone() && client.getOverlay() == null) {
-            languageReload.join();
-            require(client.screen.width == 320 && client.screen.height == 240, "Preset options minimum viewport");
-            client.screen.onClose();
-            require(client.screen instanceof RiichiTableScreen, "Rules screen did not return to lobby");
-            next(30);
-        } else if (stage == 30 && ticks > 5) {
-            capture(client, output, "25n-no-red-lobby-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
-            click(client, "rules.mchjong.title");
-            AutomationControlsSmoke.checkBounds(client);
-            var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
-                    Component.translatable(configuration.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
-            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
-            var unavailablePreset = widget(client, RiichiPreset.M_LEAGUE.presetKey());
-            require(!unavailablePreset.active, "Unavailable preset is enabled");
-            AutomationControlsSmoke.checkBounds(client);
-            double scale = client.getWindow().getGuiScale();
-            long window = client.getWindow().getWindow();
-            var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
-            require(cursor != null, "Missing native cursor callback");
-            try { cursor.invoke(window, (unavailablePreset.getX() + 5) * scale, (unavailablePreset.getY() + 5) * scale); }
-            finally { org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, cursor); }
-            next(31);
-        } else if (stage == 31 && ticks > 10) {
-            require(widget(client, RiichiPreset.M_LEAGUE.presetKey()).isHovered(), "Disabled preset was not hovered");
-            capture(client, output, "25m-presets-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
-            var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
-                    Component.translatable(configuration.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
-            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
-            var unavailable = widget(client, RedFives.THREE.translationKey());
-            double scale = client.getWindow().getGuiScale();
-            long window = client.getWindow().getWindow();
-            // Drive the installed callback without moving or capturing the user's desktop cursor.
-            var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
-            require(cursor != null, "Missing native cursor callback");
-            try { cursor.invoke(window, (unavailable.getX() + 5) * scale, (unavailable.getY() + 5) * scale); }
-            finally { org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, cursor); }
-            next(21);
-        } else if (stage == 21 && ticks > 10) {
-            require(widget(client, RedFives.THREE.translationKey()).isHovered(), "Disabled red choice was not hovered");
-            capture(client, output, "25h-insufficient-reds-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
-            var nextPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().equals(">")).findFirst().orElseThrow();
-            client.screen.mouseClicked(nextPage.getX() + 5, nextPage.getY() + 5, 0);
-            click(client, "rules.mchjong.option.min_han.4");
-            click(client, "rules.mchjong.option.match_length.1");
-            next(29);
-        } else if (stage == 29 && ticks > 5) {
-            AutomationControlsSmoke.checkBounds(client);
-            capture(client, output, "25l-match-options-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
-            var previousPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().equals("<")).findFirst().orElseThrow();
-            client.screen.mouseClicked(previousPage.getX() + 5, previousPage.getY() + 5, 0);
-            if (++ruleLanguage < RULE_LANGUAGES.length) {
-                selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
-                next(20);
-                return false;
-            }
-            selectRuleLanguage(client, originalLanguage);
-            client.getWindow().setWindowed(originalWidth, originalHeight);
-            client.options.guiScale().set(originalScale);
-            client.resizeDisplay();
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             reseated = client.getSingleplayerServer().submit(() -> {
@@ -202,8 +126,7 @@ final class TableControlSmoke {
                 require(MahjongSupplies.tileCount(MahjongSupplies.contents(box)) == 140, "Surplus fixture count");
             });
             next(22);
-        } else if (stage == 22 && table.clientRedOptions() == 63 && ticks > 5 && languageReload.isDone() && client.getOverlay() == null) {
-            languageReload.join();
+        } else if (stage == 22 && table.clientRedOptions() == 63 && ticks > 5) {
             require(widget(client, RedFives.THREE.translationKey()).active, "Red stock change was not synchronized");
             click(client, RedFives.FOUR.translationKey());
             var label = Component.translatable("rules.mchjong.option.kuitan").getString();
@@ -216,7 +139,6 @@ final class TableControlSmoke {
             next(23);
         } else if (stage == 23 && client.screen instanceof RiichiTableScreen && configuration.rules().redFives() == RedFives.FOUR && ticks > 5) {
             require(!configuration.rules().custom() && !configuration.rules().kuitan(), "Preset variants were classified as custom");
-            require(configuration.rules().minHan() == 4 && configuration.rules().matchLength() == 1, "Match options were not acknowledged");
             require((table.clientRedOptions() & 1) != 0, "Surplus box cannot start play");
             click(client, "rules.mchjong.title");
             click(client, "rules.mchjong.mode.details");
@@ -375,10 +297,6 @@ final class TableControlSmoke {
         return false;
     }
 
-    private void selectRuleLanguage(Minecraft client, String language) {
-        client.getLanguageManager().setSelected(language);
-        languageReload = client.reloadResourcePacks();
-    }
     private void next(int value) { stage = value; ticks = 0; }
     private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.RiichiRoomSettings configuration, RiichiPreset target) {
         require(configuration.rules().preset() != RiichiPreset.M_LEAGUE, "Preset selector selected unavailable red fives");

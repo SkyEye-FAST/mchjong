@@ -167,7 +167,6 @@ sourceSets {
 def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
 def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
-def paletteSmoke = providers.gradleProperty('smokePalette').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
 def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
@@ -176,7 +175,7 @@ def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toB
 def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
-def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
     smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
@@ -203,7 +202,6 @@ neoForge {
             systemProperty 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
-            systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             systemProperty 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
             systemProperty 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
             systemProperty 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()

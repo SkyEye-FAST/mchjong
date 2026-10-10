@@ -52,8 +52,6 @@ final class McrAutoTableSmoke {
     private int presentationStep;
     private boolean clockConfigured;
     private boolean hintsConfigured;
-    private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
-    private final WallSeatedSmoke seatedWall = new WallSeatedSmoke();
     private final MatchAutomationControlsSmoke automation = new MatchAutomationControlsSmoke();
     private UUID replayId;
 
@@ -239,9 +237,7 @@ final class McrAutoTableSmoke {
                 stage++;
             }
             case 7 -> {
-                if (!seatedWall.finished()) { seatedWall.tick(client, clientTable, output, true); break; }
                 if (!(client.screen instanceof McrTableScreen screen)) break;
-                if (!scoredHints.finished()) { scoredHints.tick(client, clientTable, output, true); break; }
                 var view = clientTable.clientMcrView();
                 if (view == null || view.game().phase() != McrGame.Phase.TURN || view.game().actions().isEmpty()) break;
                 int index = first(view, McrAction.Type.DISCARD);

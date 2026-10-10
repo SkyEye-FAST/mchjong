@@ -329,11 +329,6 @@ printed face plates, material-colored blank fronts, picking and exact wall/river
 discard in an isolated Fabric world, then reloads the resources. It checks that
 filtering and resource bytes survive reload.
 Screenshots and the final result are written beneath `fabric/build/smoke/evidence`.
-`00-material-palette.png` shows the sixteen tile materials, four dyes, furniture item
-models and six dice faces together through the real client resource and item pipelines.
-For a focused inventory check on both loaders, run `:fabric:runSmokeClient -PsmokePalette=true`
-and `:neoforge:runSmokeClient -PsmokePalette=true`. Their screenshots and pass markers
-are under each loader's `build/smoke/palette-evidence`.
 The held-item screenshots cover both main-hand preferences at 1280 by 800. Real table views
 additionally exercise the world render paths.
 `:neoforge:runSmokeClient` runs the same assertions and screenshots under

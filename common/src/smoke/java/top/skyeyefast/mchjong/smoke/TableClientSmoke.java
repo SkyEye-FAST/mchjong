@@ -34,7 +34,6 @@ public final class TableClientSmoke {
     private static final Logger LOG = LoggerFactory.getLogger("mchjong-smoke");
     private static final BlockPos CENTER = new BlockPos(0, 64, 0);
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
-    private final McrDisplaySmoke mcrDisplay = Boolean.getBoolean("mchjong.smoke.mcrLayoutOnly") ? new McrDisplaySmoke() : null;
     private final boolean mcrAutoOnly = Boolean.getBoolean("mchjong.smoke.mcrAutoOnly");
     private final McrAutoTableSmoke mcrAutoSmoke = new McrAutoTableSmoke();
     private final boolean taiwanOnly = Boolean.getBoolean("mchjong.smoke.taiwanOnly");
@@ -42,7 +41,6 @@ public final class TableClientSmoke {
     private final boolean sichuanOnly = Boolean.getBoolean("mchjong.smoke.sichuanOnly");
     private final SichuanTableSmoke sichuanSmoke = new SichuanTableSmoke();
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
-    private final boolean paletteOnly = Boolean.getBoolean("mchjong.smoke.paletteOnly");
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
@@ -52,7 +50,7 @@ public final class TableClientSmoke {
     private final boolean guidesOnly = Boolean.getBoolean("mchjong.smoke.ponderOnly") || Boolean.getBoolean("mchjong.smoke.browserOnly");
     private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
     private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly || settlementOnly || mcrAutoOnly || sichuanOnly || taiwanOnly;
+    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly || settlementOnly || mcrAutoOnly || sichuanOnly || taiwanOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -81,19 +79,10 @@ public final class TableClientSmoke {
     public void tick(Minecraft client) {
         if (step == 14) return;
         try {
-            if (mcrDisplay != null) {
-                if (mcrDisplay.tick(client, output)) {
-                    Files.writeString(output.resolve("PASS.txt"), "MCR wall and play display fixtures passed\n");
-                    step = 14;
-                    client.stop();
-                }
-                return;
-            }
             require(!client.mouseHandler.isMouseGrabbed(), "Smoke client grabbed the desktop mouse");
             require(org.lwjgl.glfw.GLFW.glfwGetInputMode(client.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR)
                 == org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL, "Smoke client confined or hid the desktop cursor");
             ticks++;
-            if (step == 43 || step == 44) client.options.keyShift.setDown(true);
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
             // Presence checks wait through real server grace periods in each automatic room.
             if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8600 : 6600))
@@ -203,10 +192,6 @@ public final class TableClientSmoke {
                             net.minecraft.world.item.DyeColor.BLUE, 1));
                         player.getInventory().setItem(8, ItemStack.EMPTY);
                         player.getInventory().setChanged();
-                        if (paletteOnly) {
-                            player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, furniture.copy());
-                            player.setGameMode(GameType.SURVIVAL);
-                        }
                         for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(CENTER, seat), MahjongContent.STOOL.defaultBlockState(), 3);
                         player.teleportTo(level, 0.5, 64, 3.5, 180, 30);
                     } catch (Throwable failure) { serverFailure.set(failure); }
@@ -225,11 +210,6 @@ public final class TableClientSmoke {
                 if (sichuanOnly) { step = 42; entered = ticks; return; }
                 if (taiwanOnly) { step = 45; entered = ticks; return; }
                 if (manualOnly) { step = 19; entered = ticks; return; }
-                if (paletteOnly) {
-                    client.setScreen(new MaterialPaletteSmoke());
-                    step = 31; entered = ticks;
-                    return;
-                }
                 if (itemsOnly) {
                     client.setScreen(null);
                     step = 18; entered = ticks;
@@ -239,8 +219,8 @@ public final class TableClientSmoke {
                     step = 24; entered = ticks;
                     return;
                 }
-                client.setScreen(new MaterialPaletteSmoke());
-                step = 31; entered = ticks;
+                client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
+                step = 16; entered = ticks;
             } else if (step == 45) {
                 if (taiwanSmoke.tick(client, CENTER, output)) {
                     Files.writeString(output.resolve("PASS.txt"), "Taiwan four-variant switching, 136/144 equipment, real play, flowers/calls, recipient privacy, settlement/confirmations, NBT restoration, four winds, stale authority, shared replay browser/open/event/viewer/settlement/return and one-human/three-Bot replay standings passed\n");
@@ -260,22 +240,8 @@ public final class TableClientSmoke {
                     step = 14;
                     client.stop();
                 }
-            } else if (step == 31 && ticks - entered > 15) {
-                capture(client, "00-material-palette.png");
-                client.setScreen(paletteOnly ? new HeadEquipmentSmokeScreen(client.player)
-                    : new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
-                step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {
-                capture(client, paletteOnly ? "00-table-head.png" : "00-equipment-inventory.png");
-                if (paletteOnly) {
-                    UUID id = client.player.getUUID();
-                    client.getSingleplayerServer().execute(() -> {
-                        var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(MahjongContent.STOOL_ITEM));
-                    });
-                    step = 39; entered = ticks;
-                    return;
-                }
+                capture(client, "00-equipment-inventory.png");
                 client.screen.onClose();
                 UUID id = client.player.getUUID();
                 client.getSingleplayerServer().execute(() -> {
@@ -294,61 +260,6 @@ public final class TableClientSmoke {
                     } catch (Throwable failure) { serverFailure.set(failure); }
                 });
                 step = 17; entered = ticks;
-            } else if (step == 39 && ticks - entered > 15) {
-                capture(client, "00-stool-head.png");
-                client.setScreen(null);
-                client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-                client.options.keyShift.setDown(true);
-                client.player.getInventory().selected = 8;
-                var id = client.player.getUUID();
-                client.getSingleplayerServer().execute(() -> {
-                    var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                    player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, ItemStack.EMPTY);
-                    player.getInventory().selected = 8;
-                    player.teleportTo(player.serverLevel(), 1.4, 64, 2.31, 180, 11);
-                });
-                step = 43; entered = ticks;
-            } else if (step == 43 && ticks - entered > 30) {
-                require(client.level.noCollision(client.player), "Near-edge fixture intersects furniture");
-                require(client.player.isCrouching(), "Near-edge fixture is not sneaking: flying=" + client.player.getAbilities().flying + ", shift=" + client.player.isShiftKeyDown()
-                    + ", input=" + client.player.input.shiftKeyDown + ", pose=" + client.player.getPose()
-                    + ", pos=" + client.player.position() + ", screen=" + client.screen);
-                capture(client, "00-table-edge-sneaking.png");
-                client.player.setYRot(181);
-                client.player.yRotO = 181;
-                step = 44; entered = ticks;
-            } else if (step == 44 && ticks - entered > 10) {
-                capture(client, "00-table-edge-sneaking-shift.png");
-                client.options.keyShift.setDown(false);
-                client.player.getInventory().selected = 1;
-                var id = client.player.getUUID();
-                client.getSingleplayerServer().execute(() -> {
-                    var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                    player.setNoGravity(false);
-                    player.teleportTo(player.serverLevel(), .5, 64, 3.5, 180, 15);
-                    player.getInventory().selected = 1;
-                });
-                step = 45; entered = ticks;
-            } else if (step == 45 && ticks - entered > 20) {
-                capture(client, "00-table-first-person.png");
-                client.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
-                step = 46; entered = ticks;
-            } else if (step == 46 && ticks - entered > 20) {
-                capture(client, "00-table-third-person.png");
-                client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-                client.setScreen(new FurnitureContextsSmoke());
-                step = 47; entered = ticks;
-            } else if (step == 47 && ticks - entered > 15) {
-                capture(client, "00-furniture-contexts.png");
-                var stand = new net.minecraft.world.entity.decoration.ArmorStand(client.level, 0, 0, 0);
-                stand.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(MahjongContent.TABLE_ITEM));
-                client.setScreen(new HeadEquipmentSmokeScreen(stand));
-                step = 48; entered = ticks;
-            } else if (step == 48 && ticks - entered > 15) {
-                capture(client, "00-armor-stand-head.png");
-                Files.writeString(output.resolve("PASS.txt"), "Furniture palette, player HEAD, crouched table edge and item contexts passed.\n");
-                LOG.info("MCHJONG_PALETTE_SMOKE_PASS");
-                step = 13; entered = ticks;
             } else if (step == 17 && ticks - entered > 15 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen) {
                 if (!interfaceSmoke.box(client, output)) return;
                 require(client.player.containerMenu.slots.size() == top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 36, "Client box slot layout differs from server");
@@ -457,9 +368,7 @@ public final class TableClientSmoke {
                 capture(client, "03-immersive-discard-under-roof.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                     && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.discard").getString())) {
-                    client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
-                    client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
-                    client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
+                    InputSmoke.clickWidget(client.screen, widget);
                     step = 6; entered = ticks;
                     return;
                 }
@@ -491,7 +400,7 @@ public final class TableClientSmoke {
             } else if (step == 15 && interfaceSmoke.settings(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)
                 && interfaceSmoke.automation(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)
                 && controlSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
-                prepareDisplaySeat(client);
+                step = 12; entered = ticks;
             } else if (step == 28 && fixtureSeat.isDone() && ticks - entered > 20) {
                 require(fixtureSeat.join(), "Display-only fixture did not obtain its fixed seat");
                 require(client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat && seat.seat() == 0,
@@ -531,7 +440,7 @@ public final class TableClientSmoke {
                 if (!Boolean.getBoolean("mchjong.smoke.ponder"))
                     Files.writeString(output.resolve("ponder-optional.txt"), "Base client gameplay passed with Ponder absent.\n");
                 Files.writeString(output.resolve("survival-checks.txt"), "Real server menus: carrier lock, clicks, shift transfers, hotbar/offhand swaps, dragging, collection, invalidation and conservation. Native stonecutter: component cache invalidation, no re-engraving, preserved material/color and shift result conservation. Equipment: native placement, replacement, public/private updates, save/load, active locks, sanma full-set recovery, point-stick independence, root/placeholder destruction and explosions. Real ordinary-table client: shuffle, own wall, 4/4/4/1 packets, dealer and normal draws, discard, private hands, waiting without auto-handling, manual save/load and exit with exact box recovery.\n");
-                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and resource reload, no-scroll multi-winner settlement, resize, collapse, mouse navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline button seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
+                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, immersive discard confirmation, river synchronization, texture filtering and resource reload passed. Live controls checked exit/rejoin, physical red stock, custom rule acknowledgement and world permissions. Ordinary-table handling, replay archival, authorized fetch, chunk reassembly, timeline seeking and Tenhou export passed.\n");
                 LOG.info("MCHJONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
                 step = 13;

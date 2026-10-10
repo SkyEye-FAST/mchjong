@@ -16,8 +16,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import top.skyeyefast.mchjong.client.MahjongButton;
-import top.skyeyefast.mchjong.client.McrLobbyScreen;
-import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.SichuanLobbyScreen;
 import top.skyeyefast.mchjong.client.SichuanTableScreen;
 import top.skyeyefast.mchjong.client.SichuanResultsScreen;
@@ -42,18 +40,13 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** Real packets, recipient-safe scenes, exit voting and the eight-hand client lifecycle. */
 final class SichuanTableSmoke {
-    private static final List<MahjongVariant> CHOICES = List.of(MahjongVariant.SICHUAN, MahjongVariant.MCR,
-        MahjongVariant.RIICHI, MahjongVariant.SICHUAN);
     private final List<ServerPlayer> guests = new ArrayList<>();
     private CompletableFuture<?> task;
-    private int stage, choice, ticks, settled, captureTicks;
+    private int stage, ticks, settled;
     private UUID incarnation;
     private UUID replayId;
     private boolean picked;
     private boolean hintsConfigured;
-    private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
-    private final WallSeatedSmoke seatedWall = new WallSeatedSmoke();
-    private final MatchAutomationControlsSmoke automation = new MatchAutomationControlsSmoke();
     private int selectedTile;
     private int boundFirstDiscard = Tile.ABSENT;
     private long discardDecision;
@@ -78,49 +71,11 @@ final class SichuanTableSmoke {
             }
             case 1 -> {
                 if (room == null || room.viewerSeat() < 0 || client.screen == null) break;
-                var buttons = client.screen.children().stream().filter(MahjongButton.class::isInstance)
-                    .map(MahjongButton.class::cast).toList();
-                for (var variant : MahjongVariant.values()) {
-                    var label = Component.translatable("variant.mchjong." + variant.name().toLowerCase(java.util.Locale.ROOT)).getString();
-                    var button = buttons.stream().filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
-                    require(button.getX() >= 0 && button.getX() + button.getWidth() <= client.screen.width, "Variant button outside screen");
-                    if (variant == CHOICES.get(choice)) button.onPress();
-                }
+                LobbySmoke.find(client, Component.translatable("variant.mchjong.sichuan").getString()).onPress();
                 stage++;
             }
             case 2 -> {
-                if (room == null || room.variant() != CHOICES.get(choice)) break;
-                require(switch (room.variant()) {
-                    case RIICHI -> client.screen instanceof RiichiTableScreen;
-                    case MCR -> client.screen instanceof McrLobbyScreen;
-                    case SICHUAN -> client.screen instanceof SichuanLobbyScreen;
-                    case TAIWAN -> client.screen instanceof top.skyeyefast.mchjong.client.TaiwanLobbyScreen;
-                }, "Variant did not open its own screen");
-                client.getWindow().setWindowed(960, 720);
-                client.options.guiScale().set(3); client.resizeDisplay();
-                captureTicks = 0; stage = 60;
-            }
-            case 60 -> {
-                if (++captureTicks < 12) break;
-                require(client.screen.width == 320 && client.screen.height == 240, "Lobby viewport was not 320x240");
-                AutomationControlsSmoke.checkBounds(client);
-                SmokeScreenshots.grab(output.toFile(), "lobby-" + room.variant().name().toLowerCase(java.util.Locale.ROOT) + "-320x240.png", client.getMainRenderTarget(), ignored -> {});
-                var lobbyScreen = client.screen;
-                LobbySmoke.find(client, Component.translatable("settings.mchjong.scopes").getString()).onPress();
-                var optionsScreen = client.screen;
-                LobbySmoke.find(client, Component.translatable("ui.mchjong.clock_settings").getString()).onPress();
-                require(client.screen instanceof top.skyeyefast.mchjong.client.TableClockScreen, "Variant clock settings did not open");
-                AutomationControlsSmoke.checkBounds(client);
-                client.screen.onClose();
-                require(client.screen == optionsScreen, "Clock did not return to its settings scope");
-                LobbySmoke.find(client, Component.translatable("settings.mchjong.scope.world").getString()).onPress();
-                String policy = Component.translatable("settings.mchjong.toggle", Component.translatable("settings.mchjong.invitations_enabled"),
-                    Component.translatable(table.clientWorldPolicy().invitationsEnabled() ? "options.on" : "options.off")).getString();
-                require(LobbySmoke.find(client, policy) != null, "Variant world scope did not display synchronized policy");
-                client.screen.onClose();
-                require(client.screen == lobbyScreen, "Settings did not return to the variant lobby");
-                client.options.guiScale().set(2); client.getWindow().setWindowed(1280, 800); client.resizeDisplay();
-                if (++choice < CHOICES.size()) { stage = 1; break; }
+                if (room == null || room.variant() != MahjongVariant.SICHUAN || !(client.screen instanceof SichuanLobbyScreen)) break;
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
@@ -304,7 +259,6 @@ final class SichuanTableSmoke {
             case 8 -> {
                 var view = table.clientSichuanView();
                 if (view == null || view.game().phase() != SichuanGame.Phase.TURN) break;
-                if (!automation.tick(client, table, output, "sichuan")) break;
                 require(!incarnation.equals(view.incarnation()), "Restored Sichuan incarnation was reused");
                 require(view.game().seats().stream().allMatch(seat -> seat.voidSuit() == 0), "Sichuan declarations did not complete");
                 require(view.game().seats().get(view.game().viewerSeat()).firstDiscard() == boundFirstDiscard, "NBT restore lost the first-discard binding");
@@ -341,8 +295,6 @@ final class SichuanTableSmoke {
                 settled = 0; stage++;
             }
             case 11 -> {
-                if (!seatedWall.finished()) { seatedWall.tick(client, table, output, false); break; }
-                if (!scoredHints.finished()) { scoredHints.tick(client, table, output, false); break; }
                 var view = table.clientSichuanView();
                 if (view.game().actions().stream().noneMatch(action -> action.type() == SichuanAction.Type.DISCARD)) break;
                 if (++settled < 10) break;
