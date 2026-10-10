@@ -79,7 +79,7 @@ and JDK collections, and return ordinary kind sets or `McrHandScore` records.
 Explicit named mappings translate all 34 kinds, meld shapes, called chow positions,
 suppliers and winds. Physical IDs are validated and deduplicated before conversion.
 
-The engine declares `top.skyeyefast:mcr-mahjong:0.1.0` from Maven Central and
+The engine declares `top.skyeyefast:mcr-mahjong:0.1.1` from Maven Central and
 relocates its `top.skyeyefast.mcr` package to `top.skyeyefast.mchjong.internal.mcr`.
 The library's MIT license and upstream attribution remain in the bundled archive.
 `RiichiGame`, `RiichiRules`, `RiichiView` and `RiichiAction` own the Riichi match contract.
