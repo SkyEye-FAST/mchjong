@@ -191,7 +191,7 @@ final class TaiwanTableSmoke {
                 if (++captures < 6) break;
                 check(hint(screen).isFocused(), "Taiwan seated hints lost focus");
                 SmokeScreenshots.grab(output.toFile(), "taiwan-hints-seated.png", client.getMainRenderTarget(), ignored -> {});
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0); captures = 0; stage = 13;
+                InputSmoke.switchView(screen); captures = 0; stage = 13;
             }
             case 13 -> {
                 if (!(client.screen instanceof TaiwanTableScreen screen) || !screen.immersive()) break;
@@ -213,10 +213,10 @@ final class TaiwanTableSmoke {
                 double x = (screen.width - 1280 * scale) / 2 + (left + tiles.indexOf(selectedTile) * w + (selectedTile == own.drawn() ? gap : 0) + w / 2.0) * scale;
                 double y = (screen.height - 800 * scale) / 2 + (725 - Math.round(w * top.skyeyefast.mchjong.client.TileDimensions.SMALL.height() / top.skyeyefast.mchjong.client.TileDimensions.SMALL.width()) / 2.0) * scale;
                 check(screen.mouseClicked(x, y, 0), "Taiwan immersive picking failed");
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.switchView(screen);
                 var selectedPiece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
                 check(screen.selected(selectedPiece), "Taiwan immersive selected wrong tile");
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.switchView(screen);
                 task = server.submit(() -> setHintsPolicy(server, false)); stage = 53;
             }
             case 53 -> {
@@ -230,7 +230,7 @@ final class TaiwanTableSmoke {
                 var screen = (TaiwanTableScreen) client.screen;
                 check(!room.convenienceHints() && !hint(screen).visible, "Disabled room hints reappeared after world policy restored");
                 screen.setFocused(null);
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); sentDecision = view.game().decision(); stage = 14;
+                InputSmoke.click(screen, "taiwan.mchjong.action.discard"); sentDecision = view.game().decision(); stage = 14;
             }
             case 14 -> {
                 if (view.game().decision() == sentDecision) break;
@@ -309,12 +309,12 @@ final class TaiwanTableSmoke {
                 check(replay.match().id().equals(replayId) && replay.match().variant() == MahjongVariant.TAIWAN
                     && replay.match().complete() && replay.match().header().taiwanScores().size() == 4,"Browser did not retrieve native Taiwan match");
                 check(replay.cursor() == 0,"Taiwan replay did not start at opening");
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT,0,0);
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT,0,0);
+                InputSmoke.nextReplay(replay);
+                InputSmoke.nextReplay(replay);
                 check(replay.cursor() == 2,"Taiwan replay event stepping failed");
                 int viewer = replay.viewerSeat();
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V,0,0);
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V,0,0);
+                InputSmoke.click(replay, "replay.mchjong.view");
+                InputSmoke.click(replay, "replay.mchjong.view");
                 check(replay.viewerSeat() == (viewer+2)%4,"Taiwan replay viewpoint switching failed");
                 var frames = TaiwanReplayPlayback.timeline(replay.match(),0).frames();
                 int flower = -1;
@@ -330,7 +330,7 @@ final class TaiwanTableSmoke {
                 if (!(client.screen instanceof ReplayScreen replay)) break;
                 if (++captures < 12) break;
                 SmokeScreenshots.grab(output.toFile(),"taiwan-replay.png",client.getMainRenderTarget(),ignored -> {});
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END,0,0);
+                InputSmoke.click(replay, ">|");
                 press(client,"ui.mchjong.result_page.0"); captures = 0; stage++;
             }
             case 43 -> {

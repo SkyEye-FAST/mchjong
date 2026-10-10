@@ -10,7 +10,23 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_1.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_2.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_2.continued_2"
     },
     {
       "type": "patchouli:text",
@@ -18,7 +34,19 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_3.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_3.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.page_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_4.continued_1"
     },
     {
       "type": "patchouli:text",
@@ -26,11 +54,31 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_5.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.page_6"
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_6.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_6.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.page_7"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_7.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.page_7.continued_2"
     }
   ]
 }

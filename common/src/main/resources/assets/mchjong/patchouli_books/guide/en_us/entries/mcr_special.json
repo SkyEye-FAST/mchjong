@@ -10,7 +10,19 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_1.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_special.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_2.continued_1"
     },
     {
       "type": "patchouli:text",
@@ -18,23 +30,43 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_3.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.page_3.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_special.page_4"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/mcr/knitted_straight.png"
-      ],
-      "text": "manual.mchjong.entry.mcr_special.knitted",
-      "border": false
+      "type": "patchouli:empty",
+      "draw_filler": false
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/mcr/two_melded_kongs.png"
-      ],
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.mcr_special.knitted",
+      "tiles": "147m 258p 369s 111z 55z",
+      "face": "mchjong:hong_kong"
+    },
+    {
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.mcr_special.knitted",
+      "tiles": "147m 258p 369s 111z 55z",
+      "face": "mchjong:hong_kong"
+    },
+    {
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.mcr_special.kongs",
-      "border": false
+      "tiles": "1111m 5555p",
+      "face": "mchjong:hong_kong"
+    },
+    {
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.mcr_special.kongs",
+      "tiles": "1111m 5555p",
+      "face": "mchjong:hong_kong"
     }
   ]
 }

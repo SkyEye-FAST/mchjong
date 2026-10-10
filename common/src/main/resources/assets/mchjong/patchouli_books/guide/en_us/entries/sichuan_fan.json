@@ -5,134 +5,134 @@
   "sortnum": 1,
   "pages": [
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_1",
-      "anchor": "all_pungs"
+      "anchor": "all_pungs",
+      "tiles": "111m 333p 555m 777p 22m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/all_pungs.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_1",
+      "tiles": "111m 333p 555m 777p 22m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_2",
-      "anchor": "golden_single_wait"
+      "anchor": "golden_single_wait",
+      "tiles": "111m 333p 555m 777p / 2m + 2m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/golden_single_wait.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_2",
+      "tiles": "111m 333p 555m 777p / 2m + 2m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_3",
-      "anchor": "full_flush"
+      "anchor": "full_flush",
+      "tiles": "123m 345m 678m 999m 22m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/full_flush.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_3",
+      "tiles": "123m 345m 678m 999m 22m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_4",
-      "anchor": "seven_pairs"
+      "anchor": "seven_pairs",
+      "tiles": "1111m 22m 33m 44p 55p 66p",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/seven_pairs.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_4",
+      "tiles": "1111m 22m 33m 44p 55p 66p",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_5",
-      "anchor": "root"
+      "anchor": "root",
+      "tiles": "111m 123m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/root.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_5",
+      "tiles": "111m 123m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_6",
-      "anchor": "kong"
+      "anchor": "kong",
+      "tiles": "1111m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/kong.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_6",
+      "tiles": "1111m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_7",
-      "anchor": "win_after_kong"
+      "anchor": "win_after_kong",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/win_after_kong.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_7",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_8",
-      "anchor": "shoot_after_kong"
+      "anchor": "shoot_after_kong",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/shoot_after_kong.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_8",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_9",
-      "anchor": "robbing_kong"
+      "anchor": "robbing_kong",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/robbing_kong.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_9",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_fan.page_10",
-      "anchor": "under_the_sea"
+      "anchor": "under_the_sea",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/sichuan/under_the_sea.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.sichuan_fan.page_10",
+      "tiles": "23m + 1m",
+      "face": "mchjong:sichuan"
     }
   ]
 }

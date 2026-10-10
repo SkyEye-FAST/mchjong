@@ -2,6 +2,6 @@
   "required": true,
   "package": "top.skyeyefast.mchjong.smoke.mixin",
   "compatibilityLevel": "JAVA_17",
-  "client": ["SmokeMouseMixin", "SmokeWallMixin"],
+  "client": ["SmokeMouseMixin"],
   "injectors": {"defaultRequire": 1}
 }

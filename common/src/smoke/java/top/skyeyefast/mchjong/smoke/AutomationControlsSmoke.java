@@ -60,14 +60,14 @@ final class AutomationControlsSmoke {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            InputSmoke.switchView(client.screen);
             next(2);
         } else if (stage == 2 && ticks > 12) {
             checkBounds(client);
             require(client.screen.width == 320 && client.screen.height == 240, "Automatic controls did not reach 320x240");
             require(((RiichiTableScreen) client.screen).immersive(), "Small viewport disabled the fixed immersive canvas");
             capture(client, output, "53", "expanded-small-letterbox");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            InputSmoke.switchView(client.screen);
             next(3);
         } else if (stage == 3 && ticks > 2) {
             int option = toggle / 2;

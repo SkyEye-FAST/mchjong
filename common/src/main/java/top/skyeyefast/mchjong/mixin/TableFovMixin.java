@@ -23,6 +23,6 @@ public abstract class TableFovMixin {
         if (window.getWidth() <= 0 || window.getHeight() <= 0) return;
         double fov = TableSettings.get().cameraFov(callback.getReturnValue(),
             (double) window.getWidth() / window.getHeight());
-        callback.setReturnValue(TableSettings.get().camera().fov(fov));
+        callback.setReturnValue(fov);
     }
 }

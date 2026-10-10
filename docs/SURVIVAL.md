@@ -262,8 +262,7 @@ back presets supply a transparent pattern selected in the mahjong box.
 See [ASSETS.md](ASSETS.md).
 
 Ordinary tables have four wooden drawers below their side rails. Open a drawer
-by interacting with its front, including from the seated overlay. The native
-inventory shortcut E also opens your own drawer while seated. The
+by interacting with its front, including from the seated overlay. The
 container exposes nine scoring slots and a separate final reserve slot per player.
 The black −10000 bust stick shares the red 10000 stick's markings and is crafted
 from eight blank sticks and black dye. It has no value in the reserve slot; moving it

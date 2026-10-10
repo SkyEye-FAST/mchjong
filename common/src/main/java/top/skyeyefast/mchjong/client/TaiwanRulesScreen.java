@@ -59,13 +59,13 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
             for (var preset : TaiwanPreset.values()) {
                 var rules = TaiwanGameState.Rules.of(preset.rules());
                 var label = Component.translatable("taiwan.mchjong.preset." + preset.name().toLowerCase(java.util.Locale.ROOT));
-                addRenderableWidget(RuleHelp.setting(this, label, RuleHelp.pageDescription("taiwan_payments", 3), "taiwan_payments", 3, left + 252, top + 56 + row * 24));
+                addRenderableWidget(RuleHelp.setting(this, label, RuleHelp.pageDescription("manual.mchjong.entry.taiwan_payments.page_4"), "manual.mchjong.entry.taiwan_payments.page_4", left + 252, top + 56 + row * 24));
                 var button = addRenderableWidget(new MahjongButton(left + 8, top + 56 + row++ * 24, 240, 20,
                     label, ignored -> { draft = rules; java.util.Arrays.fill(paymentText, null); rebuild(); }).selected(draft.equals(rules)));
                 button.active = editable();
             }
             addRenderableWidget(RuleHelp.setting(this, Component.translatable("taiwan.mchjong.reserve." + draft.reserve().name().toLowerCase(java.util.Locale.ROOT)),
-                RuleHelp.pageDescription("taiwan_flow", 3), "taiwan_flow", 3, left + 252, top + 110));
+                RuleHelp.pageDescription("manual.mchjong.entry.taiwan_flow.page_4"), "manual.mchjong.entry.taiwan_flow.page_4", left + 252, top + 110));
             var reserve = addRenderableWidget(new MahjongButton(left + 8, top + 110, 240, 20,
                 Component.translatable("taiwan.mchjong.reserve." + draft.reserve().name().toLowerCase(java.util.Locale.ROOT)), ignored -> {
                     draft = new TaiwanGameState.Rules(draft.name(), draft.values(), draft.exclusions(), draft.sources(), draft.flowers(), draft.flowerSets(), draft.pinfu(), draft.replacements(), draft.taiLimit(),
@@ -81,7 +81,7 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
             String[] keys = {"base", "per_tai", "dealer", "repeat"};
             for (int i = 0; i < keys.length; i++) addRenderableWidget(RuleHelp.setting(this,
                 Component.translatable("taiwan.mchjong.payment." + keys[i]), Component.translatable("taiwan.mchjong.payment." + keys[i] + ".description"),
-                "taiwan_payments", 0, left + 116 + i % 2 * 136, top + 50 + i / 2 * 48));
+                "manual.mchjong.entry.taiwan_payments.page_1", left + 116 + i % 2 * 136, top + 50 + i / 2 * 48));
         }
         apply = addRenderableWidget(new MahjongButton(left + 8, top + 166, 130, 20, Component.translatable("gui.done"), ignored -> {
             if (page == 1 && readPayment() == null) return;

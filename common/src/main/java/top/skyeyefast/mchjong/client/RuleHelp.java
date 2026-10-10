@@ -19,9 +19,9 @@ import top.skyeyefast.mchjong.platform.ResourceIds;
 
 /** Short help and precise handbook destinations share the handbook's existing resource pages. */
 public final class RuleHelp {
-    record Topic(String textKey, String entry, int page, ResourceLocation image) {
+    record Topic(List<String> textKeys, String entry, int page, TileDiagram diagram) {
         Component description(boolean award) {
-            String text = Component.translatable(textKey).getString();
+            String text = textKeys.stream().map(key -> Component.translatable(key).getString()).collect(java.util.stream.Collectors.joining("$(br2)"));
             if (award && text.startsWith("$(bold)") && text.contains("$(br2)")) text = text.substring(text.indexOf("$(br2)") + 6);
             return Component.literal(plain(text));
         }
@@ -61,11 +61,11 @@ public final class RuleHelp {
                 } catch (IOException failure) { throw new IllegalStateException("Cannot read rule help " + id, failure); }
             });
         alias(nextAwards, "mcr.mchjong.fan.mixed_kong_pair", nextAwards.get("mcr.mchjong.fan.two_melded_kongs"));
-        alias(nextAwards, "sichuan.mchjong.fan.root_with_kong", nextPages.get("sichuan_payments:2"));
-        alias(nextAwards, "sichuan.mchjong.fan.basic", nextPages.get("sichuan_flow:2"));
+        alias(nextAwards, "sichuan.mchjong.fan.root_with_kong", nextPages.get("manual.mchjong.entry.sichuan_payments.page_3"));
+        alias(nextAwards, "sichuan.mchjong.fan.basic", nextPages.get("manual.mchjong.entry.sichuan_flow.page_3"));
         for (String bonus : List.of("dora", "ura_dora", "red_dora", "nuki_dora"))
-            alias(nextAwards, "yaku.mchjong." + bonus, nextPages.get("riichi_points:5"));
-        alias(nextAwards, "ui.mchjong.dora", nextPages.get("riichi_points:5"));
+            alias(nextAwards, "yaku.mchjong." + bonus, nextPages.get("manual.mchjong.entry.riichi_points.page_6"));
+        alias(nextAwards, "ui.mchjong.dora", nextPages.get("manual.mchjong.entry.riichi_points.page_6"));
         pages = Map.copyOf(nextPages); awards = Map.copyOf(nextAwards);
     }
 
@@ -76,13 +76,19 @@ public final class RuleHelp {
         for (int index = 0; index < values.size(); index++) {
             var page = values.get(index).getAsJsonObject();
             if (!page.has("text")) continue;
-            ResourceLocation image = null;
-            if (index + 1 < values.size()) {
-                var next = values.get(index + 1).getAsJsonObject();
-                if (page.has("anchor") && next.has("images")) image = ResourceIds.of(next.getAsJsonArray("images").get(0).getAsString());
+            String key = page.get("text").getAsString();
+            if (key.contains(".continued_") || page.has("tiles") && !page.has("anchor")) continue;
+            var textKeys = new java.util.ArrayList<String>();
+            textKeys.add(key);
+            for (int next = index + 1; next < values.size(); next++) {
+                var continuation = values.get(next).getAsJsonObject();
+                if (!continuation.has("text") || !continuation.get("text").getAsString().startsWith(key + ".continued_")) break;
+                textKeys.add(continuation.get("text").getAsString());
             }
-            var topic = new Topic(page.get("text").getAsString(), entry, index, image);
-            pages.put(entry + ":" + index, topic);
+            TileDiagram diagram = page.has("tiles") ? TileDiagram.parse(page.get("tiles").getAsString(),
+                new top.skyeyefast.mchjong.item.TileFacePreset(ResourceIds.of(page.get("face").getAsString()))) : null;
+            var topic = new Topic(List.copyOf(textKeys), entry, index, diagram);
+            pages.put(key, topic);
             if (prefix != null && page.has("anchor")) awards.put(prefix + page.get("anchor").getAsString(), topic);
         }
     }
@@ -101,11 +107,11 @@ public final class RuleHelp {
         if (topic != null) open(parent, label, topic.description(true), topic);
     }
     private static void open(Screen parent, Component label, Component description, Topic topic) {
-        Minecraft.getInstance().setScreen(new TableHelpScreen(parent, label, () -> List.of(description), topic == null ? null : topic.image(),
+        Minecraft.getInstance().setScreen(new TableHelpScreen(parent, label, () -> List.of(description), topic == null ? null : topic.diagram(),
             topic != null && handbook != null ? () -> openManual(topic) : null));
     }
-    static MahjongButton setting(Screen parent, Component label, Component description, String entry, int page, int x, int y) {
-        var topic = pages.get(entry + ":" + page);
+    static MahjongButton setting(Screen parent, Component label, Component description, String target, int x, int y) {
+        var topic = target == null ? null : pages.get(target);
         var name = Component.translatable("rules.mchjong.explanation", label);
         var button = new MahjongButton(x, y, 20, 20, name, ignored -> open(parent, label, description, topic)).shortCaption(Component.literal("?"));
         button.setTooltip(Tooltip.create(label.copy().append("\n").append(description)));
@@ -113,44 +119,39 @@ public final class RuleHelp {
     }
     static MahjongButton setting(Screen parent, RiichiRuleOption option, Component label, Component description, int x, int y) {
         String target = switch (option) {
-            case STARTING_POINTS, RETURN_POINTS, UMA_1, UMA_2, UMA_3, UMA_4 -> "riichi_presets:1";
-            case TARGET_POINTS, DOUBLE_YAKUMAN, AGARI_YAME, EXTENSION -> "riichi_presets:2";
-            case FLOATING_PLACEMENT, ROUND_SHARED_PLACEMENT -> "riichi_presets:4";
-            case SHARED_RANKS, AWARD_FINAL_DEPOSITS, RENHOU_MANGAN, HEAD_BUMP -> "riichi_presets:5";
-            case KUITAN, MIN_HAN, IPPATSU_COUNTS_TOWARD_MINIMUM -> "riichi_presets:0";
-            case URA_DORA, KAN_DORA, RED_FIVES, DELAYED_OPEN_KAN_DORA -> "riichi_points:5";
-            case KAZOE_YAKUMAN, COMPOUND_YAKUMAN -> "riichi_points:4";
+            case STARTING_POINTS, RETURN_POINTS, UMA_1, UMA_2, UMA_3, UMA_4 -> "manual.mchjong.entry.riichi_presets.page_2";
+            case TARGET_POINTS, DOUBLE_YAKUMAN, AGARI_YAME, EXTENSION -> "manual.mchjong.entry.riichi_presets.page_3";
+            case FLOATING_PLACEMENT, ROUND_SHARED_PLACEMENT -> "manual.mchjong.entry.riichi_presets.page_5";
+            case SHARED_RANKS, AWARD_FINAL_DEPOSITS, RENHOU_MANGAN, HEAD_BUMP -> "manual.mchjong.entry.riichi_presets.page_6";
+            case KUITAN, MIN_HAN, IPPATSU_COUNTS_TOWARD_MINIMUM -> "manual.mchjong.entry.riichi_presets.page_1";
+            case URA_DORA, KAN_DORA, RED_FIVES, DELAYED_OPEN_KAN_DORA -> "manual.mchjong.entry.riichi_points.page_6";
+            case KAZOE_YAKUMAN, COMPOUND_YAKUMAN -> "manual.mchjong.entry.riichi_points.page_5";
             case KIRIAGE_MANGAN, DOUBLE_WIND_PAIR_FU, RIICHI_KAN_KEEPS_MELDS, RIICHI_KAN_KEEPS_YAKU,
-                SUUKANTSU_PAO, WHOLE_HAND_PAO, PAO_RON_HONBA_BY_DISCARDER, PAO_TSUMO_HONBA_SHARED -> "riichi_presets:6";
-            case IPPATSU, MIN_RIICHI_WALL, NEEDS_RIICHI_DEPOSIT -> "riichi:0";
-            case CALLS_CLEAR_FURITEN, YAKULESS_FURITEN -> "riichi:1";
-            case MATCH_LENGTH -> "riichi_flow:3";
-            case BANKRUPTCY, TRIPLE_RON_DRAW, FORMAL_TENPAI_IGNORES_MELDS -> "riichi_flow:2";
-            case ABORTIVE_DRAWS, NAGASHI_MANGAN, NAGASHI_ALLOWS_CALLS -> "riichi_flow:7";
-            case ROB_CONCEALED_KAN -> "riichi_flow:1";
-            case REPLACEMENT_CAPACITY -> "riichi_flow:0";
+                SUUKANTSU_PAO, WHOLE_HAND_PAO, PAO_RON_HONBA_BY_DISCARDER, PAO_TSUMO_HONBA_SHARED -> "manual.mchjong.entry.riichi_presets.page_7";
+            case IPPATSU, MIN_RIICHI_WALL, NEEDS_RIICHI_DEPOSIT -> "manual.mchjong.entry.riichi.page_1";
+            case CALLS_CLEAR_FURITEN, YAKULESS_FURITEN -> "manual.mchjong.entry.riichi.page_2";
+            case MATCH_LENGTH -> "manual.mchjong.entry.riichi_flow.page_4";
+            case BANKRUPTCY, TRIPLE_RON_DRAW, FORMAL_TENPAI_IGNORES_MELDS -> "manual.mchjong.entry.riichi_flow.page_3";
+            case ABORTIVE_DRAWS, NAGASHI_MANGAN, NAGASHI_ALLOWS_CALLS -> "manual.mchjong.entry.riichi_flow.page_8";
+            case ROB_CONCEALED_KAN -> "manual.mchjong.entry.riichi_flow.page_2";
+            case REPLACEMENT_CAPACITY -> "manual.mchjong.entry.riichi_flow.page_1";
             case ROB_NORTH_WITHOUT_KOKUSHI -> null;
-            default -> "riichi_presets:4"; // Floating placement matrix entries.
+            default -> "manual.mchjong.entry.riichi_presets.page_5"; // Floating placement matrix entries.
         };
         return setting(parent, label, description, target, x, y);
     }
     static MahjongButton setting(Screen parent, SichuanRuleOption option, Component label, Component description, int x, int y) {
         String target = switch (option) {
-            case FAN_CAP, SELF_DRAW_BONUS -> "sichuan_flow:4";
-            case MATCH_HANDS -> "sichuan_flow:5";
-            case SELECT_FIRST_DISCARD -> "sichuan_flow:1";
-            case CONCEALED_KONG_PAYMENT, DISCARD_KONG_PAYMENT, ADDED_KONG_PAYMENT -> "sichuan_payments:0";
-            case TRANSFER_KONG_ON_SHOOT -> "sichuan_payments:1";
-            case SEPARATE_KONG_FAN, ADDED_KONG_AFTER_KONG_IS_SHOOT, EAST_WEST_LONG_WALL -> "sichuan_payments:2";
-            case REFUND_KONG_WHEN_NOT_READY -> "sichuan_payments:3";
-            case ACTIVE_FLOWER_PIG_PENALTY -> "sichuan_payments:4";
+            case FAN_CAP, SELF_DRAW_BONUS -> "manual.mchjong.entry.sichuan_flow.page_5";
+            case MATCH_HANDS -> "manual.mchjong.entry.sichuan_flow.page_6";
+            case SELECT_FIRST_DISCARD -> "manual.mchjong.entry.sichuan_flow.page_2";
+            case CONCEALED_KONG_PAYMENT, DISCARD_KONG_PAYMENT, ADDED_KONG_PAYMENT -> "manual.mchjong.entry.sichuan_payments.page_1";
+            case TRANSFER_KONG_ON_SHOOT -> "manual.mchjong.entry.sichuan_payments.page_2";
+            case SEPARATE_KONG_FAN, ADDED_KONG_AFTER_KONG_IS_SHOOT, EAST_WEST_LONG_WALL -> "manual.mchjong.entry.sichuan_payments.page_3";
+            case REFUND_KONG_WHEN_NOT_READY -> "manual.mchjong.entry.sichuan_payments.page_4";
+            case ACTIVE_FLOWER_PIG_PENALTY -> "manual.mchjong.entry.sichuan_payments.page_5";
         };
         return setting(parent, label, description, target, x, y);
     }
-    private static MahjongButton setting(Screen parent, Component label, Component description, String target, int x, int y) {
-        int separator = target == null ? -1 : target.indexOf(':');
-        return setting(parent, label, description, separator < 0 ? "" : target.substring(0, separator),
-            separator < 0 ? -1 : Integer.parseInt(target.substring(separator + 1)), x, y);
-    }
-    static Component pageDescription(String entry, int page) { return pages.get(entry + ":" + page).description(false); }
+    static Component pageDescription(String target) { return pages.get(target).description(false); }
 }

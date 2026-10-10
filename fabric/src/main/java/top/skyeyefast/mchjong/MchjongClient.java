@@ -27,7 +27,6 @@ public final class MchjongClient implements ClientModInitializer {
                     top.skyeyefast.mchjong.client.RuleHelp.reload(resources);
                 }
             });
-        top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper::registerKeyBinding);
         top.skyeyefast.mchjong.client.HeldSupplyArm.initialize((model, context, pose, leftHand) ->
             model.getTransforms().getTransform(context).apply(leftHand, pose));
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ponder"))

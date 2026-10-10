@@ -27,16 +27,16 @@ final class PlayerPortrait {
             if (entityBot) {
                 graphics.blit(MAID_ICON, x, y, size, size, 16, 16, 32, 32, 64, 64);
             } else if (bot) {
-                graphics.pose().pushPose();
-                graphics.pose().translate(x, y, 0);
-                graphics.pose().scale(size / 8f, size / 8f, 1);
-                graphics.fill(1, 2, 7, 8, MahjongUi.SURFACE);
-                graphics.renderOutline(1, 2, 6, 6, MahjongUi.EDGE);
-                graphics.fill(3, 0, 5, 2, MahjongUi.ACCENT);
-                graphics.fill(2, 4, 3, 5, MahjongUi.TEXT);
-                graphics.fill(5, 4, 6, 5, MahjongUi.TEXT);
-                graphics.fill(3, 6, 5, 7, MahjongUi.ACCENT);
-                graphics.pose().popPose();
+                int pixel = Math.max(1, size / 8);
+                int top = y + size / 4;
+                int eye = size / 4;
+                int middle = x + (size - 2 * pixel) / 2;
+                graphics.fill(x + pixel, top, x + size - pixel, y + size, MahjongUi.EDGE);
+                graphics.fill(x + 2 * pixel, top + pixel, x + size - 2 * pixel, y + size - pixel, MahjongUi.SURFACE);
+                graphics.fill(middle, y, middle + 2 * pixel, top, MahjongUi.ACCENT);
+                graphics.fill(x + eye, y + size / 2, x + eye + pixel, y + size / 2 + pixel, MahjongUi.TEXT);
+                graphics.fill(x + size - eye - pixel, y + size / 2, x + size - eye, y + size / 2 + pixel, MahjongUi.TEXT);
+                graphics.fill(middle, y + size * 3 / 4, middle + 2 * pixel, y + size * 3 / 4 + pixel, MahjongUi.ACCENT);
             } else {
                 var connection = Minecraft.getInstance().getConnection();
                 var info = connection == null ? null : connection.getPlayerInfo(name);

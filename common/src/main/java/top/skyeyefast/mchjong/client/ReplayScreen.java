@@ -11,7 +11,6 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayDecisionAnalysis;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -371,23 +370,6 @@ public final class ReplayScreen extends Screen {
         return false;
     }
 
-    @Override public boolean keyPressed(int key, int scan, int modifiers) {
-        switch (key) {
-            case GLFW.GLFW_KEY_LEFT -> seek(cursor - 1);
-            case GLFW.GLFW_KEY_RIGHT -> seek(cursor + 1);
-            case GLFW.GLFW_KEY_UP -> changeHand(-1);
-            case GLFW.GLFW_KEY_DOWN -> changeHand(1);
-            case GLFW.GLFW_KEY_HOME -> seek(0);
-            case GLFW.GLFW_KEY_END -> seek(steps());
-            case GLFW.GLFW_KEY_SPACE -> togglePlay();
-            case GLFW.GLFW_KEY_V -> cycleViewer(1);
-            case GLFW.GLFW_KEY_W -> toggleWall();
-            case GLFW.GLFW_KEY_LEFT_BRACKET -> jumpDecision(-1);
-            case GLFW.GLFW_KEY_RIGHT_BRACKET -> jumpDecision(1);
-            default -> { return super.keyPressed(key, scan, modifiers); }
-        }
-        return true;
-    }
 
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 

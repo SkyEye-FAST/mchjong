@@ -43,10 +43,10 @@ final class ManualTableSmoke {
             .filter(widget -> widget.getMessage().getString().equals(Component.translatable("ui.mchjong.view_immersive").getString()))
             .findFirst().orElseThrow();
         check(button.active, "Immersive button disabled during preparation");
-        client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        check(((RiichiTableScreen) client.screen).immersive(), "View shortcut unavailable during preparation");
-        client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        check(!((RiichiTableScreen) client.screen).immersive(), "View shortcut failed to return to seated play");
+        InputSmoke.switchView(client.screen);
+        check(((RiichiTableScreen) client.screen).immersive(), "View button unavailable during preparation");
+        InputSmoke.switchView(client.screen);
+        check(!((RiichiTableScreen) client.screen).immersive(), "View button failed to return to seated play");
     }
     private static final BlockPos CENTER = new BlockPos(10, 64, 0);
     private int stage, ticks, totalTicks, packets, remaining;
@@ -125,7 +125,12 @@ final class ManualTableSmoke {
                 check(table.equipment().drawer(0).isEmpty(),
                     "Private drawer contents leaked through the appearance update");
                 capture(client, output, "30-manual-lobby.png");
-                client.screen.keyPressed(GLFW.GLFW_KEY_E, 0, 0);
+                client.screen.onClose();
+                var drawer = top.skyeyefast.mchjong.world.TableGeometry.world(CENTER,
+                    top.skyeyefast.mchjong.world.TableGeometry.drawerBounds(0).getCenter());
+                client.gameMode.useItemOn(client.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new net.minecraft.world.phys.BlockHitResult(drawer, top.skyeyefast.mchjong.world.TableGeometry.SIDES[0],
+                        net.minecraft.core.BlockPos.containing(drawer), false));
                 next(16);
             }
             case 16 -> {
@@ -135,6 +140,7 @@ final class ManualTableSmoke {
                     && menu.totalPoints(0) == 3000 && menu.slots.size() == 76, "Native drawer screen did not synchronize all four rows");
                 capture(client, output, "30a-point-drawers.png");
                 client.screen.onClose();
+                client.setScreen(new RiichiTableScreen(CENTER));
                 serverWork = onServer(client, player -> PointStickMenuSmoke.stockDrawers((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER)));
                 next(17);
             }
@@ -222,7 +228,7 @@ final class ManualTableSmoke {
                 if (view.phase() != RiichiView.Phase.TURN || view.turn() != 0 || RiichiAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return false;
                 check(view.seats().get(0).hand().size() == 14 && view.remaining() == remaining - 1, "Explicit dealer draw changed the wrong number of tiles");
                 capture(client, output, "35-manual-dealer-draw.png");
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.switchView(client.screen);
                 check(((RiichiTableScreen) client.screen).immersive(), "Immersive view remained locked after dealing");
                 next(23);
             }
@@ -233,7 +239,7 @@ final class ManualTableSmoke {
                         view.handling().diceOne(), view.handling().diceTwo(), view.handling().diceOne() + view.handling().diceTwo()).getString())),
                     "Immersive view retained the dice hover target");
                 capture(client, output, "35a-manual-immersive.png");
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.switchView(client.screen);
                 next(24);
             }
             case 24 -> {
@@ -414,7 +420,12 @@ final class ManualTableSmoke {
     private static boolean offered(RiichiView view, RiichiAction.Type type) { return view.actions().stream().anyMatch(action -> action.type() == type); }
     private void next(int value) { stage = value; ticks = 0; }
     private static boolean hasControl(Minecraft client, String key) {
-        if (!(client.screen instanceof RiichiTableScreen)) return false;
+        if (!(client.screen instanceof RiichiTableScreen screen)) return false;
+        var table = (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER);
+        var view = table.clientView();
+        int physical = top.skyeyefast.mchjong.client.RiichiHandling.action(view);
+        if (!screen.immersive() && physical >= 0 && view.actions().get(physical).translationKey().equals(key))
+            return !RiichiAnimation.of(table).moving(net.minecraft.Util.getMillis());
         String label = Component.translatable(key).getString();
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .anyMatch(button -> button.getMessage().getString().equals(label) && button.active && button.visible);

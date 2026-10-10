@@ -14,7 +14,15 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.page_2.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_points.page_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.page_3.continued_1"
     },
     {
       "type": "patchouli:text",
@@ -22,11 +30,23 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.page_4.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_points.page_5"
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.page_5.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_points.page_6"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.page_6.continued_1"
     }
   ]
 }

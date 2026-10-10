@@ -9,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.ClientRiichiNetworking;
 import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
@@ -29,7 +28,7 @@ final class TableInterfaceSmoke {
     private record Sample(String language, int state, boolean immersive, boolean small) {}
     private static final Sample[] SAMPLES = {
         new Sample("en_us", 0, true, false),
-        new Sample("zh_cn", 1, true, true),
+        new Sample("zh_cn", 1, false, true),
         new Sample("en_us", 2, true, false),
         new Sample("zh_cn", 3, false, true),
         new Sample("en_us", 4, false, false),
@@ -70,7 +69,7 @@ final class TableInterfaceSmoke {
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
             if (!immersive && state == 3) settings.camera().look(0, 85 - settings.camera().pitch());
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));
-            if (immersive) client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+            if (immersive) InputSmoke.switchView(client.screen);
             require(((RiichiTableScreen) client.screen).immersive() == immersive, "Fixture entered wrong table view");
             if (state == 1) {
                 RiichiTableScreen opened = (RiichiTableScreen) client.screen;
@@ -78,8 +77,8 @@ final class TableInterfaceSmoke {
                     TableNetworking.JSON.toJson(table.clientView()), true, false, false,
                     table.clientRedOptions(), table.clientRoom(), table.clientRiichiSettings(),
                     table.clientBotService(), table.clientWorldPolicy(), table.clientVariant()));
-                require(client.screen == opened && opened.immersive(),
-                    "Opening the exit vote replaced the immersive table screen");
+                require(client.screen == opened && opened.immersive() == immersive,
+                    "Opening the exit vote replaced the table screen");
             }
             if (state == 0) button(client, "action.mchjong.riichi").onPress();
         }

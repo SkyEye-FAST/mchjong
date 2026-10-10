@@ -33,7 +33,6 @@ abstract class TableResultsScreen extends Screen {
     }
     public BlockPos tablePos() { return pos; }
     public boolean immersive() { return camera.immersive(); }
-    public boolean inspecting() { return camera.inspecting(); }
     public void resetView() { camera.reset(); }
     protected MahjongTableBlockEntity table() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity t ? t : null;
@@ -111,14 +110,13 @@ abstract class TableResultsScreen extends Screen {
         } finally { c.end(g); }
     }
     @Override public boolean mouseClicked(double x, double y, int button) {
-        if (camera.mouseBinding(button, this::toggleView, this::resetView)) return true;
         if (!canvas().contains(x, y)) return false;
         if (super.mouseClicked(canvas().localX(x), canvas().localY(y), button)) return true;
         if (button == 1 && camera.cameraEnabled()) { camera.startDrag(); return true; }
         return false;
     }
     @Override public boolean mouseReleased(double x, double y, int button) {
-        if (camera.releaseInspect(button) || camera.releaseDrag(button, () -> {})) return true;
+        if (camera.releaseDrag(button, () -> {})) return true;
         return super.mouseReleased(canvas().localX(x), canvas().localY(y), button);
     }
     @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
@@ -128,11 +126,5 @@ abstract class TableResultsScreen extends Screen {
         if (!canvas().contains(x, y)) return false;
         if (super.mouseScrolled(canvas().localX(x), canvas().localY(y), vertical)) return true;
         return camera.scroll(vertical, hasShiftDown());
-    }
-    @Override public boolean keyPressed(int key, int scan, int modifiers) {
-        return camera.keyPressed(key, scan, this::toggleView, this::resetView) || getFocused() == null && camera.lookPressed(key) || super.keyPressed(key, scan, modifiers);
-    }
-    @Override public boolean keyReleased(int key, int scan, int modifiers) {
-        return camera.keyReleased(key, scan) || super.keyReleased(key, scan, modifiers);
     }
 }

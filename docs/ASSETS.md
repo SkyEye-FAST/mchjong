@@ -98,15 +98,14 @@ The Patchouli handbook uses `ManualArtwork` to generate its original teal and
 brass cover at `textures/item/mahjong_manual.png` and its generated-item model.
 Book pages and categories live under `assets/mchjong/patchouli_books/guide`;
 the book definition lives under `data/mchjong/patchouli_books/guide`. Page text
-uses the four shared language files. `ManualExamples` defines the tile groups for
-every yaku, yakuman, fan and tai example. `ManualArtwork.examples` composes Kansai
-faces for Riichi, Hong Kong faces for MCR, Sichuan faces for Sichuan and Taiwan
-faces for Taiwan under `textures/manual/<variant>/`. Each award's text faces its
-image on the same spread. Complete examples fit on one line, uniformly scaling
-the tile faces and markers to the available width. Groups retain gaps; winning
-tiles, public tiles and meld/flower ownership boundaries retain their markers. Images are 256 × 256 with
-their content inside Patchouli's 200 × 200 source area; captions and marker
-explanations use ordinary localized page text.
+uses the four shared language files. Each example page declares its tile notation
+and regional face preset. `TileDiagram` renders directly from the playing atlas;
+`HandbookExample` presents the description and tiles across facing Patchouli pages.
+The 100-pixel tile area leaves eight logical pixels at both page edges. Short
+examples occupy one row; full hands continue across the spread, preferring group
+boundaries. Long examples wrap at a minimum tile width of twelve logical pixels.
+Winning tiles, public tiles and meld/flower boundaries retain their markers.
+Ordinary text is paginated in resources, without Patchouli's text shrinking.
 
 ## Mahjong dye items
 
@@ -327,11 +326,6 @@ printed face plates, material-colored blank fronts, picking and exact wall/river
 discard in an isolated Fabric world, then reloads the resources. It checks that
 filtering and resource bytes survive reload.
 Screenshots and the final result are written beneath `fabric/build/smoke/evidence`.
-`00-material-palette.png` shows the sixteen tile materials, four dyes, furniture item
-models and six dice faces together through the real client resource and item pipelines.
-For a focused inventory check on both loaders, run `:fabric:runSmokeClient -PsmokePalette=true`
-and `:forge:runSmokeClient -PsmokePalette=true`. Their screenshots and pass markers
-are under each loader's `build/smoke/palette-evidence`.
 The held-item screenshots cover both main-hand preferences at 1280 by 800. Real table views
 additionally exercise the world render paths.
 `:forge:runSmokeClient` runs the same assertions and screenshots under

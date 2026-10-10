@@ -65,10 +65,6 @@ final class InputSmoke {
         client.setScreen(screen);
         TableSettings.get().animations = false;
         screen.resetView();
-        screen.keyPressed(GLFW.GLFW_KEY_C, 0, 0);
-        require(screen.inspecting(), "Holding C did not inspect the seated view");
-        screen.keyReleased(GLFW.GLFW_KEY_C, 0, 0);
-        require(!screen.inspecting(), "Releasing C retained inspect input");
         if (client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat) {
             var before = TableSettings.get().cameraPosition(seat);
             float pitch = TableSettings.get().camera().pitch();
@@ -81,37 +77,11 @@ final class InputSmoke {
             require(TableSettings.get().cameraPosition(seat).distanceTo(before) < 1e-6, "Free look moved the eye");
             screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 2);
             require(TableSettings.get().cameraPosition(seat).distanceTo(before) > .1, "Wheel did not move the eye");
-            float yaw = TableSettings.get().camera().yaw(seat.seat());
-            screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
-            for (int i = 0; i < 3; i++) screen.tick();
-            screen.keyReleased(GLFW.GLFW_KEY_RIGHT, 0, 0);
-            require(TableSettings.get().camera().yaw(seat.seat()) > yaw + 2, "Held arrow did not continuously turn");
-            yaw = TableSettings.get().camera().yaw(seat.seat());
-            screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
-            client.setWindowActive(false);
-            screen.tick();
-            client.setWindowActive(true);
-            screen.tick();
-            require(TableSettings.get().camera().yaw(seat.seat()) == yaw, "Unfocused camera retained held arrows");
-            require(fixture.seats().get(0).hand().stream().noneMatch(tile -> selected(screen, fixture, tile)), "Arrow selected a tile");
-            screen.keyPressed(GLFW.GLFW_KEY_HOME, 0, 0);
-            require(TableSettings.get().cameraPosition(seat).distanceTo(before) < 1e-6, "Home did not restore the eye");
-            require(TableSettings.get().camera().pitch() == pitch, "Home did not restore pitch");
+            screen.resetView();
+            require(TableSettings.get().cameraPosition(seat).distanceTo(before) < 1e-6, "Reset did not restore the eye");
         }
-        for (var mapping : top.skyeyefast.mchjong.client.TableKeys.ALL)
-            require(java.util.Arrays.asList(client.options.keyMappings).contains(mapping), "Unregistered table binding: " + mapping.getName());
-        var inspectKey = top.skyeyefast.mchjong.client.TableKeys.INSPECT;
-        inspectKey.setKey(com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_I));
-        net.minecraft.client.KeyMapping.resetMapping();
-        screen.keyPressed(GLFW.GLFW_KEY_C, 0, 0);
-        require(!screen.inspecting(), "Old inspect binding still active");
-        screen.keyPressed(GLFW.GLFW_KEY_I, 0, 0);
-        require(screen.inspecting(), "Rebound inspect key did not work");
-        screen.keyReleased(GLFW.GLFW_KEY_I, 0, 0);
-        inspectKey.setKey(inspectKey.getDefaultKey());
-        net.minecraft.client.KeyMapping.resetMapping();
-        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
+        switchView(screen);
+        click(screen, "action.mchjong.riichi");
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi selection is not discoverable");
         clickHand(screen, fixture, 8);
         require(!selected(screen, fixture, 8), "Riichi selection accepted an illegal discard");
@@ -125,15 +95,11 @@ final class InputSmoke {
         screen.mouseClicked(cancelPoint.x(), cancelPoint.y(), 1);
         screen.mouseReleased(cancelPoint.x(), cancelPoint.y(), 1);
         require(!selected(screen, fixture, 13), "Right-click failed to cancel the selected tile");
-        screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
+        click(screen, "action.mchjong.riichi");
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi could not be reopened after cancellation");
-        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        switchView(screen);
         require(!screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Switching view lost riichi selection mode");
-        screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
-        screen.tick();
-        screen.keyReleased(GLFW.GLFW_KEY_RIGHT, 0, 0);
-        require(button(screen, "ui.mchjong.cancel_riichi"), "Camera arrow cancelled riichi selection mode");
-        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        switchView(screen);
         require(screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Returning to immersive lost riichi selection mode");
         screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
         screen.resetView();
@@ -142,6 +108,44 @@ final class InputSmoke {
     static void clickHand(RiichiTableScreen screen, RiichiView view, int tile) {
         var point = screenPoint(screen, handPoint(screen, view, tile));
         screen.mouseClicked(point.x(), point.y(), 0);
+    }
+
+    static void switchView(net.minecraft.client.gui.screens.Screen screen) {
+        clickWidget(screen, screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+                && (text.getKey().startsWith("ui.mchjong.view_immersive") || text.getKey().startsWith("ui.mchjong.view_seated")))
+            .findFirst().orElseThrow());
+    }
+
+    static void click(net.minecraft.client.gui.screens.Screen screen, String key) {
+        clickWidget(screen, screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.visible && widget.active && (widget.getMessage().getString().equals(Component.translatable(key).getString())
+                || widget.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text && text.getKey().equals(key)))
+            .findFirst().orElseThrow(() -> new IllegalStateException("Missing button: " + key)));
+    }
+
+    static void clickWidget(net.minecraft.client.gui.screens.Screen screen, AbstractWidget widget) {
+        double x = widget.getX() + widget.getWidth() / 2.0, y = widget.getY() + widget.getHeight() / 2.0;
+        boolean immersive = screen instanceof RiichiTableScreen table && table.immersive()
+            || screen instanceof top.skyeyefast.mchjong.client.McrTableScreen mcr && mcr.immersive()
+            || screen instanceof top.skyeyefast.mchjong.client.SichuanTableScreen sichuan && sichuan.immersive()
+            || screen instanceof top.skyeyefast.mchjong.client.TaiwanTableScreen taiwan && taiwan.immersive()
+            || screen instanceof top.skyeyefast.mchjong.client.McrResultsScreen mcrResults && mcrResults.immersive()
+            || screen instanceof top.skyeyefast.mchjong.client.SichuanResultsScreen sichuanResults && sichuanResults.immersive()
+            || screen instanceof top.skyeyefast.mchjong.client.TaiwanResultsScreen taiwanResults && taiwanResults.immersive();
+        if (immersive) {
+            double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
+            x = (screen.width - 1280 * scale) / 2 + x * scale;
+            y = (screen.height - 800 * scale) / 2 + y * scale;
+        }
+        screen.mouseClicked(x, y, 0);
+        screen.mouseReleased(x, y, 0);
+    }
+
+    static void nextReplay(net.minecraft.client.gui.screens.Screen screen) {
+        clickWidget(screen, screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.visible && widget.active && widget.getY() == screen.height - 52 && widget.getMessage().getString().equals(">"))
+            .findFirst().orElseThrow());
     }
 
     static void pointerHand(Minecraft client, RiichiTableScreen screen, RiichiView view, int tile) {

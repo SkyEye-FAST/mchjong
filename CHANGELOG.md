@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Redesign lobby and settings hierarchy with horizontal rule tabs, clearer primary actions and mouse-first controls; remove table and replay shortcuts and redundant checks, retain immersive table geometry and custom cloth, and render handbook examples directly from tile atlases with readable facing pages and inset margins.
+
 - Update the embedded mcr-mahjong library to 0.1.1 across all three Minecraft profiles.
 
 - Fit settings and lobby panels to their contents and reclaim empty preset navigation space.
@@ -49,6 +51,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld analysis, source-qualified tai profiles and the `TaiwanHandAnalyzer` boundary; audit all scoring patterns and provide an independent Taiwan hand with physical wall/dealing, flower replacement, legal calls, passing, kong robbery and balanced settlement. Document the selected match-rule sources and unresolved interpretations; generalize the shared 144-tile stock factory.
 
 ### Fixed
+
+- Draw Bot portraits on integer pixel boundaries so both eyes stay the same size at small UI scales.
 
 - Merge equivalent Taiwan ready-discard choices while retaining distinct tile faces and every physical ordinary discard.
 

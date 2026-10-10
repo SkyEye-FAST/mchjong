@@ -47,7 +47,7 @@ final class MatchAutomationControlsSmoke {
             }
             case 4 -> {
                 if (room.automation().win() || !option(client).active) return false;
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0); next();
+                InputSmoke.switchView(client.screen); next();
             }
             case 5 -> {
                 require(immersive(client), "Automation lost the immersive view");
@@ -71,7 +71,7 @@ final class MatchAutomationControlsSmoke {
             }
             case 8 -> {
                 require(immersive(client), "Replay browser lost its immersive parent");
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.switchView(client.screen);
                 press(client, "replay.mchjong.title.short"); next();
             }
             case 9 -> {
@@ -116,7 +116,7 @@ final class MatchAutomationControlsSmoke {
     private static void bounds(Minecraft client) {
         int width = immersive(client) ? 1280 : client.screen.width, height = immersive(client) ? 800 : client.screen.height;
         var widgets = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-            .filter(widget -> widget.visible && !widget.getClass().getSimpleName().equals("HandTarget")
+            .filter(widget -> widget.visible
                 && !widget.getClass().getSimpleName().equals("TableHints")).toList();
         for (int index = 0; index < widgets.size(); index++) {
             var a = widgets.get(index);

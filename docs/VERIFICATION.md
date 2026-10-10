@@ -80,10 +80,6 @@ brain-driven seating with vehicle following disabled, client mount synchronizati
 saved entity recovery, assigned mounts, legal computer
 play and cleanup after a task change.
 Selected screenshots and results use `build/smoke/maid-evidence`.
-`maid-furniture-head.png` and `maid-gecko-furniture-head.png` render the actual
-maid through the Bedrock and Gecko head layers. Each sheet compares ordinary and
-automatic tables with stools in the equipment and display slots, including dyed
-components and simultaneous skull equipment; neither uses a player-model substitute.
 
 ### Create and Ponder
 
@@ -108,11 +104,10 @@ Use the following flags with `:fabric:runSmokeClient` and `:forge:runSmokeClient
 | `-PsmokeRoom=true` | Lobby, four-language layouts, countdowns, final standings, retained members, leave/dissolve packets, east-to-west reassignment and actual stool mounting; `room-evidence` |
 | `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language award explanations and standings with uma, resizing and result navigation; `settlement-evidence` |
 | `-PsmokeInterface=true` | Box transactions, carrier synchronization, personal mod settings and preset navigation, explicit input choices, category-only reset, keyboard/disabled states, immersive controls; `interface-evidence` |
-| `-PsmokeSeating=true` | Mounts, private deals, camera clearance, inspect/reset and rebound input, dragging, focus loss, immersive selection, closed-screen camera and third-person stool; `seating-evidence` |
+| `-PsmokeSeating=true` | Mounts, private deals, camera clearance, mouse camera adjustment/reset, dragging, immersive selection, closed-screen camera and third-person stool; `seating-evidence` |
 | `-PsmokeVisibility=true` | Three participant visibility modes, private packets and independently redacted unmounted spectators; `visibility-evidence` |
 | `-PsmokeManual=true` | Physical shuffle, wall building, dice, packet dealing, draws, save/reload and exit; `manual-evidence` |
 | `-PsmokeItems=true` | Native held/dropped supplies and exact inventory changes; `items-evidence` |
-| `-PsmokePalette=true` | Material, dye, furniture, native player head-slot, crouched table edge and item-context presentation; `palette-evidence` |
 
 Use `:fabric:runSmokeClient -PsmokeInterface=true -PwithModMenu=true` to
 exercise the installed Mod Menu config factory. The base Fabric interface run
@@ -140,36 +135,8 @@ Run shared checks with:
 gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*SichuanPresentationTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain
 ```
 
-`TableLayoutEvidenceTest` exports equal-scale top views directly from production
-scene poses to `fabric/build/layout-evidence/table-layouts.svg`. It verifies felt
-bounds and oriented intersections on full walls, real dealt/midgame/late positions,
-a conserved MCR four-kong/eight-flower hand, and engine-issued Taiwan play reaching
-five melds. Taiwan hand rays are checked against every scene tile from all four
-seats. Run it with `:fabric:test --tests "*TableLayoutEvidenceTest" --warning-mode fail`.
 `TileMeshTest` and `TilePickingTest` cover the shared three-axis envelope transform;
 `ChinesePickingTest` retains MCR/Sichuan seated visibility as walls empty.
-
-The layout smoke renders the unopened wall and actual engine post-deal, midgame
-and late-game snapshots for MCR, Sichuan SBR and Sichuan TFMJ. All captures include
-the automatic table's central instrument housing. Run:
-
-```text
-gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr-wall.png,mcr-dealt.png,mcr-midgame.png,mcr-late.png,sichuan-wall-east-west.png,sichuan-dealt-east-west.png,sichuan-midgame-east-west.png,sichuan-late-east-west.png,sichuan-wall-north-south.png,sichuan-dealt-north-south.png,sichuan-midgame-north-south.png,sichuan-late-north-south.png" --warning-mode fail --console=plain
-```
-
-Inspect fresh `PASS.txt`/`FAIL.txt` and selected images under
-`fabric/build/smoke/mcr-layout-evidence/screenshots`. `mcr-immersive.png` captures
-the same midgame with walls omitted. Check large Chinese tile proportions,
-matching wall yaw, compact Sichuan wall ends, the first river outside the housing,
-later rows in emptied wall space and intact public groups sharing the left area with flowers.
-
-The `smokeMcrAuto` profile supplies `mcr-wall-seated.png`, `mcr-dealt-seated.png`,
-`mcr-midgame-seated.png` and `mcr-late-seated.png`. `smokeSichuan` supplies the
-same four phases as `sichuan-{wall,dealt,midgame,late}-{east-west,north-south}-seated.png`.
-These use the real seated world camera and active center panel. Empty-hand full
-walls establish neither wall/hand clearance nor later river capacity; inspect
-the legal played positions as well. Screenshots are opt-in. Compile the other
-affected loaders without duplicating shared images.
 
 The Fabric automatic-table MCR client fixture below verifies native case admission,
 flower/item identities, appearance matching and the supplied-stock session boundary.
@@ -231,10 +198,6 @@ recipient-only restriction projection. Run with `:engine:test --tests "*Convenie
 The MCR automatic-table and Sichuan client smokes enable hints through the shared
 room control, select a discard and focus the native hint widget. Opt-in captures
 are `mcr-auto-hints.png` and `sichuan-hints.png` in their respective evidence directories.
-Both smokes also check scored display fixtures at 320 × 240 seated and on the
-fixed immersive canvas; optional captures are `mcr-scored-hints-seated.png`,
-`mcr-scored-hints-immersive.png`, `sichuan-scored-hints-seated.png` and
-`sichuan-scored-hints-immersive.png`.
 `ServerIntegrationTest.actualMinecraftCodecsRoundTripOnlyDeclaredPayloads` also
 checks Sichuan proposals and settings at both field bounds and rejects malformed
 numeric proposals through the native codec.
@@ -242,9 +205,8 @@ numeric proposals through the native codec.
 `SichuanPresentationTest` owns both 108-slot physical layouts, recipient-safe scene
 projection, multi-win aliases and faithful result-ledger formatting. Run
 `gradlew.bat :fabric:test --tests "*SichuanPresentationTest" --warning-mode fail --console=plain`.
-The focused real-client Sichuan smoke checks three-way lobby selection at
-320 × 240, the shared settings/clock return chain and synchronized World scope
-for each variant, server-confirmed rule drafts and preset restoration, old-snapshot rejection,
+The focused real-client Sichuan smoke checks variant selection, server-confirmed
+rule drafts and preset restoration, old-snapshot rejection,
 non-host/stale/incarnation payload rejection, the
 108-tile subset, private suit/first-discard declarations, NBT restoration, seated and immersive
 physical-tile selection and discard, exit
@@ -278,12 +240,10 @@ unchanged passed-win state, simultaneous replies, private/restored preferences a
 legal physical draw discards under void-suit priority and SBR first-discard binding.
 `RiichiAutoPlayTest` and `ReactionRulesTest` retain shared win/pass/discard priority,
 private/restored preferences and Riichi-only sort/north behavior.
-The MCR and Sichuan client profiles also run `MatchAutomationControlsSmoke` for
-native pointer/keyboard packets, acknowledgement focus, 320 x 240 seated controls
-and the fixed immersive canvas, including clock/control separation and opening
-and returning from the replay browser by pointer in both views. Opt-in captures are `mcr-automation-seated.png`,
-`mcr-automation-immersive.png`, `sichuan-automation-seated.png` and
-`sichuan-automation-immersive.png`.
+The MCR client profile owns shared non-Riichi automation UI checks through
+`MatchAutomationControlsSmoke`: native pointer/keyboard packets, acknowledgement
+focus, the minimum seated viewport, immersive controls and replay-browser return.
+Opt-in captures are `mcr-automation-seated.png` and `mcr-automation-immersive.png`.
 `McrBotTest` owns shared one-human/three-Bot preparation, world policy, recipient-only
 decisions, minimum-fan wins, discard availability, public opponent danger and
 qualification discounts, flower-only payment increments, conservative calls, delayed
@@ -336,10 +296,11 @@ They check placement/headroom, occupancy-cell removal, explosions, private/publi
 save separation and recoverable sanma stock. Do not introduce null-world behavior
 into production to support these checks.
 
-Full client runs also exercise ordinary-table physical handling, live rule and
+The default client run owns ordinary-table physical handling, live rule and
 control packets, replay archival, command fetch, chunk transfer, timeline seeking
-and the Tenhou export button. Rare multi-winner and animation screenshots use
-display-only fixtures and are not independent scoring proofs. Smoke-only mouse
+and the Tenhou export button. Settlement and seating profiles own their rendering
+fixtures; the default run does not repeat them. Taiwan owns cross-variant lobby
+routing, and MCR owns shared non-Riichi automation controls. Smoke-only mouse
 hooks keep the desktop cursor free and verify its native mode.
 
 ## Scope and screenshots

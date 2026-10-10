@@ -508,7 +508,7 @@ unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
 `ClientMcrNetworking`, `ClientSichuanNetworking` and `ClientTaiwanNetworking` decode and apply their respective views.
-`RoomLobby` owns the shared variant rail, roster, settings and stage footer.
+`RoomLobby` owns the shared horizontal variant tabs, roster, settings and stage footer.
 `RiichiTableScreen`, `McrLobbyScreen`, `SichuanLobbyScreen` and `TaiwanLobbyScreen` adapt their confirmed
 rule state to that component. `TableToolbar`, `TableOptionsScreen`,
 `TableParticipantsScreen` and `TableInviteScreen` share navigation across variants;
@@ -682,8 +682,11 @@ for chapter, entry and page text. The handbook reads client resources and has no
 gameplay authority. The presence-guarded server adapter gives each player a starter
 book once, recording recipient UUIDs in overworld saved data.
 `RuleHelp` indexes the shared handbook JSON and translation keys during resource
-reload. Award anchors identify exact entry/page destinations and adjacent generated
-images; rule options map to the owning pages and reuse their existing descriptions.
+reload. Award anchors identify exact entry/page destinations and native tile diagrams;
+rule options map to stable translation keys and collect their paginated descriptions.
+`TileDiagram` shares atlas rendering between explanations and Patchouli's
+`HandbookExample` custom template component. The book uses facing pages with
+fixed margins and wraps long examples without shrinking below readable tile sizes.
 The basic `TableHelpScreen` has no optional API dependency. `ManualLinks` registers
 book navigation after presence detection. Its parent is retained in the shared
 screen chain so view packets update the owning table/results/editor without replacing
@@ -776,13 +779,13 @@ from the client update tag. A table is not a global singleton.
 
 The seated overlays project the actual 3D table, with `TableSettings` supplying
 the matching eye and FOV to world rendering and picking. `SeatedCameraState` owns
-seat-local distance, height, yaw/pitch, target translation and interpolated inspect
-progress. `SeatedCamera` bridges native free look and the loader tick lifecycle.
+seat-local distance, height, yaw/pitch and target translation.
+`SeatedCamera` bridges native free look and the loader tick lifecycle.
 `RiichiTableScreen`, `McrTableScreen` and `SichuanTableScreen` compose `TableViewController`, which owns
-view mode, inspect/reset, held arrows, right-drag look/pan and wheel distance/height.
+view mode, reset, right-drag look/pan and wheel distance/height.
 View switching is available to players and spectators throughout preparation
 and play. Each rule adapter retains its own issued actions and hand selection;
-`TableHud`, `TableActionLayout` and `TableResults` own common presentation. `TableKeys` supplies registered, rebindable actions;
+`TableHud`, `TableActionLayout` and `TableResults` own common presentation.
 `SeatedTableProjection` derives screen anchors and picking rays from the rendered
 camera. `TableCanvas` owns the fixed 1280 × 800 immersive transform and black bars,
 so rendering and pointer input use the same coordinates.
@@ -884,7 +887,7 @@ does not change their physical layers. This follows the deal in the
 
 `TableResults` is a separate, narrated single-screen receipt widget. It uses compact
 hands, yaku columns and point tables rather than a scroll viewport. Multiple ron
-winners have a mouse/keyboard selector. It displays server-authored deltas and final scores without recalculating settlement or
+winners have clickable tabs. It displays server-authored deltas and final scores without recalculating settlement or
 inventing a private tie-break order. Input stays in `RiichiTableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
