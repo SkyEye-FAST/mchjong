@@ -10,7 +10,15 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_payments.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_2.continued_1"
     },
     {
       "type": "patchouli:text",
@@ -18,11 +26,35 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_3.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_3.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_payments.page_4"
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_4.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_4.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_payments.page_5"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_5.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_payments.page_5.continued_2"
     }
   ]
 }

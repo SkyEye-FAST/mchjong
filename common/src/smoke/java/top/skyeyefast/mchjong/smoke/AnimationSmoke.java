@@ -57,7 +57,7 @@ final class AnimationSmoke {
             RiichiTableScreen screen = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
-            if (layoutsOnly) screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            if (layoutsOnly) InputSmoke.switchView(screen);
             table.acceptView(fixture);
             screen.receivedView();
             for (var information : TableSettings.Information.values())
@@ -75,7 +75,7 @@ final class AnimationSmoke {
             if (RiichiAnimation.of(table).dealing(Util.getMillis())) throw new IllegalStateException("Deal did not finish");
             capture(client, output, layoutsOnly ? "14-immersive-deal-complete.png" : "14-animated-deal-complete.png");
             if (layoutsOnly) {
-                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+                InputSmoke.switchView(client.screen);
                 hidden.forEach(TableSettings.get()::toggle);
                 hidden.clear();
                 TableSettings.get().animations = false;
@@ -178,7 +178,7 @@ final class AnimationSmoke {
             seats.set(leftSeat, new RiichiView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
                 Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            InputSmoke.switchView(client.screen);
             if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
             String label = net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString();
             AutomationControlsSmoke.click(client, label);
@@ -204,7 +204,7 @@ final class AnimationSmoke {
         }
         if (ticks == 328) {
             capture(client, output, "57-immersive-rivers-melds-640x400.png");
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            InputSmoke.switchView(client.screen);
         }
         if (layoutsOnly && ticks == 328) { ticks = 359; return false; }
         if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
@@ -222,7 +222,7 @@ final class AnimationSmoke {
             update(table, seats, fixture.wall());
             TableSettings.get().animations = true;
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            InputSmoke.switchView(client.screen);
         }
         if (ticks == 364 || ticks == 384 || ticks == 404) {
             int owner = ticks == 404 ? 1 : 0;
@@ -250,7 +250,7 @@ final class AnimationSmoke {
             seats.set(0, seat(hand, player.melds(), player.river(), player.riichi()));
             update(table, seats, fixture.wall());
         }
-        if (ticks == 420) client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+        if (ticks == 420) InputSmoke.switchView(client.screen);
         if (layoutsOnly && ticks >= 420) return true;
         if (ticks >= 422) return deposits.tick(client, table, output);
         return false;

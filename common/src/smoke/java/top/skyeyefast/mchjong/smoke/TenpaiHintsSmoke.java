@@ -142,7 +142,7 @@ final class TenpaiHintsSmoke {
             room.seating(), room.availableWinds(), room.seats(), room.actions(), room.exitVote(), room.leaveDecision(), true, true, room.automation(), List.of()));
         table.acceptView(fixture); client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         if (preview) {
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
+            InputSmoke.switchView(client.screen);
         }
         AutomationControlsSmoke.click(client, Component.translatable("ui.mchjong.automation_show").getString());
         client.screen.setFocused(null);

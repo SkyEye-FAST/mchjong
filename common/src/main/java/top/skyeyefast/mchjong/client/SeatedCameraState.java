@@ -7,9 +7,6 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 public final class SeatedCameraState {
     private double distance, height, targetX, targetZ;
     private float yaw, pitch;
-    private double inspect, previousInspect, renderedInspect;
-    private static final double INSPECT_TRAVEL = .45;
-    private static final double INSPECT_FOV = .90;
 
     public SeatedCameraState(double distance, double height) { reset(distance, height); }
 
@@ -19,7 +16,6 @@ public final class SeatedCameraState {
         yaw = 0;
         pitch = (float) Math.toDegrees(Math.atan2(height - TableGeometry.FELT_Y,
             distance - TableSettings.CAMERA_TARGET_Z));
-        inspect = previousInspect = renderedInspect = 0;
     }
 
     /** Changing the preferred eye position does not overwrite the current look direction. */
@@ -28,55 +24,30 @@ public final class SeatedCameraState {
         this.height = Math.clamp(height, TableSettings.MIN_CAMERA_HEIGHT, TableSettings.MAX_CAMERA_HEIGHT);
     }
 
-    public double sensitivity() { return 1 - .6 * inspect; }
     public void look(double horizontal, double vertical) {
-        yaw = (float) Math.IEEEremainder(yaw + horizontal * sensitivity(), 360);
-        pitch = (float) Math.clamp(pitch + vertical * sensitivity(), -25, 85);
+        yaw = (float) Math.IEEEremainder(yaw + horizontal, 360);
+        pitch = (float) Math.clamp(pitch + vertical, -25, 85);
     }
     public void pan(double x, double z) {
-        targetX = Math.clamp(targetX + x * sensitivity(), -.55, .55);
-        targetZ = Math.clamp(targetZ + z * sensitivity(), -.55, .55);
+        targetX = Math.clamp(targetX + x, -.55, .55);
+        targetZ = Math.clamp(targetZ + z, -.55, .55);
     }
     public void scroll(double steps) {
-        distance = Math.clamp(distance - steps * .12 * sensitivity(),
+        distance = Math.clamp(distance - steps * .12,
             TableSettings.MIN_CAMERA_DISTANCE, TableSettings.MAX_CAMERA_DISTANCE);
     }
     public void raise(double steps) {
-        height = Math.clamp(height + steps * .05 * sensitivity(),
+        height = Math.clamp(height + steps * .05,
             TableSettings.MIN_CAMERA_HEIGHT, TableSettings.MAX_CAMERA_HEIGHT);
-    }
-    public void tick(boolean inspecting) {
-        previousInspect = inspect;
-        inspect += ((inspecting ? 1 : 0) - inspect) * .35;
-        if (Math.abs(inspect - (inspecting ? 1 : 0)) < .001) inspect = inspecting ? 1 : 0;
-    }
-    public void sample(float partialTick) {
-        renderedInspect = progress(partialTick);
-    }
-    private double progress(float partialTick) {
-        return previousInspect + (inspect - previousInspect) * Math.clamp(partialTick, 0, 1);
     }
     public float yaw(int seat) { return TableGeometry.yaw(seat) + yaw; }
     public float pitch() { return pitch; }
     public double distance() { return distance; }
     public Vec3 localEye() {
-        return localEye(renderedInspect);
-    }
-    private Vec3 localEye(double progress) {
-        // Inspect moves toward the table, independently of the current free-look direction.
-        double travel = INSPECT_TRAVEL * progress;
-        return new Vec3(targetX, height - travel * .35, distance + targetZ - travel);
+        return new Vec3(targetX, height, distance + targetZ);
     }
     public Vec3 eye(int seat) {
         Vec3 eye = localEye();
         return TableGeometry.orient(eye.x, eye.y, eye.z, seat);
-    }
-    public Vec3 eye(int seat, float partialTick) {
-        Vec3 eye = localEye(progress(partialTick));
-        return TableGeometry.orient(eye.x, eye.y, eye.z, seat);
-    }
-    public double fov(double normal) {
-        return Math.toDegrees(2 * Math.atan(Math.tan(Math.toRadians(normal) / 2)
-            / (1 + INSPECT_FOV * renderedInspect)));
     }
 }

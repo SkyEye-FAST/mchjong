@@ -8,5 +8,6 @@
   "show_progress": false,
   "show_toasts": false,
   "i18n": true,
-  "use_resource_pack": true
+  "use_resource_pack": true,
+  "text_overflow_mode": "OVERFLOW"
 }

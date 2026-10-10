@@ -6,14 +6,13 @@ import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 
 /** Compact, paginated text help using ordinary focus and return navigation. */
 public class TableHelpScreen extends Screen implements TableChildScreen {
     private final Screen parent;
     private final Supplier<List<Component>> contents;
-    private final Identifier example;
+    private final TileDiagram example;
     private final Runnable manual;
     private List<Component> shown = List.of();
     private final List<FormattedCharSequence> lines = new ArrayList<>();
@@ -28,7 +27,7 @@ public class TableHelpScreen extends Screen implements TableChildScreen {
     public TableHelpScreen(Screen parent, Component title, Supplier<List<Component>> contents) {
         this(parent, title, contents, null, null);
     }
-    public TableHelpScreen(Screen parent, Component title, Supplier<List<Component>> contents, Identifier example, Runnable manual) {
+    public TableHelpScreen(Screen parent, Component title, Supplier<List<Component>> contents, TileDiagram example, Runnable manual) {
         super(title); this.parent = parent; this.contents = contents; this.example = example; this.manual = manual;
     }
     @Override public Screen parent() { return parent; }
@@ -48,7 +47,7 @@ public class TableHelpScreen extends Screen implements TableChildScreen {
                 paragraph = font.split(text, span - 48);
             lines.addAll(paragraph); lines.add(FormattedCharSequence.EMPTY);
         }
-        exampleHeight = example == null ? 0 : (Math.min(span - 24, 300) * 48 / 200 + 14);
+        exampleHeight = example == null ? 0 : 58;
         panelHeight = Math.min(panelHeight, Math.max(100, lines.size() * 12 + 64 + exampleHeight));
         top = (height - panelHeight) / 2;
         rows = Math.max(1, (panelHeight - 64 - exampleHeight) / 12);
@@ -75,12 +74,9 @@ public class TableHelpScreen extends Screen implements TableChildScreen {
         if (example != null) {
             int y = top + panelHeight - 32 - exampleHeight;
             MahjongUi.text(graphics, font, Component.translatable("rules.mchjong.example"), left + 12, y, span - 24, MahjongUi.MUTED, false);
-            graphics.pose().pushMatrix();
-            graphics.pose().translate(left + 12, y + 12);
-            float scale = Math.min(span - 24, 300) / 200f;
-            graphics.pose().scale(scale, scale);
-            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, example, 0, 0, 0, 0, 200, 48, 256, 256);
-            graphics.pose().popMatrix();
+            int tileWidth = Math.min(22, (span - 24 - example.parts().size()) / example.parts().size());
+            int drawnWidth = example.width(0, example.parts().size(), tileWidth);
+            example.render(graphics, left + (span - drawnWidth) / 2, y + 22, tileWidth, 0, example.parts().size());
         }
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }

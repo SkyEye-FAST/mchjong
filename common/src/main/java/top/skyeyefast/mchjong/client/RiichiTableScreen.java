@@ -49,7 +49,6 @@ public final class RiichiTableScreen extends Screen {
     private int selectedTile = Tile.ABSENT;
     private int hoveredTile = Tile.ABSENT;
     private long lastRevision = -1;
-    public boolean inspecting() { return presentation.inspecting(); }
     private float framePartial;
     private long lastClickAt;
     private int lastClickedTile = Tile.ABSENT;
@@ -277,7 +276,7 @@ public final class RiichiTableScreen extends Screen {
             for (var button : callouts) if ((button.isFocused() || highlights && button.isHovered()) && showsConsumed(button.action)
                 && button.action.tiles().contains(piece.tile())) return MahjongUi.POSITIVE;
         }
-        if ((highlights || getFocused() instanceof PhysicalHandle) && RiichiHandling.action(view) >= 0) {
+        if (highlights && RiichiHandling.action(view) >= 0) {
             // Keep the held outline attached to the displaced mesh throughout the gesture.
             if (handlingDrag != null)
                 return handlingOffset(table, piece).lengthSqr() > 0 ? MahjongUi.POSITIVE : 0;
@@ -375,8 +374,6 @@ public final class RiichiTableScreen extends Screen {
             immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         if (view.exitVote() != null) { buildExitVote(view); return; }
-        int physical = RiichiHandling.action(view);
-        if (physical >= 0 && !immersive()) addRenderableWidget(new PhysicalHandle(view, physical));
         List<Integer> choices = new ArrayList<>();
         for (int i = 0; i < view.actions().size(); i++) {
             RiichiAction action = view.actions().get(i);
@@ -570,7 +567,10 @@ public final class RiichiTableScreen extends Screen {
             String key = view.phase() == RiichiView.Phase.HAND_END ? "ui.mchjong.next_hand"
                 : standings ? "ui.mchjong.final_scores" : "ui.mchjong.lobby";
             int scale = immersive() ? 2 : 1;
-            int countdownWidth = uiWidth() - 20 * scale;
+            String viewKey = immersive() ? "ui.mchjong.view_seated" : "ui.mchjong.view_immersive";
+            int viewWidth = (font.width(Component.translatable(viewKey)) + 14) * scale;
+            boolean drawer = view.handling() != null && view.viewerSeat() >= 0;
+            int countdownWidth = uiWidth() - 24 * scale - viewWidth - (drawer ? 76 * scale : 0);
             var readout = RiichiAudio.result(view);
             boolean reading = !view.wins().isEmpty() && ticks - (standings ? RiichiGame.SETTLEMENT_TICKS : 0) > RiichiGame.SETTLEMENT_TICKS;
             Component caption = Component.translatable(key, seconds);
@@ -580,13 +580,28 @@ public final class RiichiTableScreen extends Screen {
                 readout != null && !readout.complete() ? "ui.mchjong.readout_active" : "ui.mchjong.readout_waiting"));
             var countdown = MahjongButton.create(caption, ignored -> send(view, skip))
                 .bounds(10 * scale, 8 * scale, countdownWidth, 20 * scale)
-                .tooltip(Tooltip.create(help)).build().textScale(scale).selected(true);
+                .tooltip(Tooltip.create(help)).build().textScale(scale).primary();
             countdown.active = skip >= 0 && !skipped;
             addRenderableWidget(countdown);
+            if (drawer) addRenderableWidget(drawerButton(view.viewerSeat(), 14 * scale + countdownWidth, scale));
+            addRenderableWidget(MahjongButton.create(Component.translatable(viewKey), ignored -> toggleView())
+                .bounds(uiWidth() - 10 * scale - viewWidth, 8 * scale, viewWidth, 20 * scale)
+                .tooltip(Tooltip.create(Component.translatable(viewKey))).build().textScale(scale));
             return;
         }
         TableToolbar.build(this, pos, room(), uiWidth(), immersive(), this::toggleView)
             .forEach(this::addRenderableWidget);
+        if (immersive() && view.handling() != null && view.viewerSeat() >= 0)
+            addRenderableWidget(drawerButton(view.viewerSeat(), 16, 2));
+    }
+
+    private MahjongButton drawerButton(int side, int x, int scale) {
+        return MahjongButton.create(Component.translatable("ui.mchjong.drawer"), ignored -> {
+            Vec3 location = TableGeometry.world(pos, TableGeometry.drawerBounds(side).getCenter());
+            var hit = new net.minecraft.world.phys.BlockHitResult(location, TableGeometry.SIDES[side], BlockPos.containing(location), false);
+            handlingDrag = null;
+            minecraft.gameMode.useItemOn(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+        }).bounds(x, 8 * scale, 72 * scale, 20 * scale).build().textScale(scale);
     }
 
     void configureVisibility(top.skyeyefast.mchjong.engine.PlayerHandVisibility visibility) {
@@ -782,24 +797,6 @@ public final class RiichiTableScreen extends Screen {
         return held ? handlingPointer.subtract(handlingStart).add(0, .05, 0) : Vec3.ZERO;
     }
 
-    private boolean openOwnDrawer() {
-        TableRoomView room = room();
-        RiichiView view = view();
-        int side;
-        if (room != null && room.lobby()) {
-            if (!room.manual() || room.viewerSeat() < 0 || room.exitVote() != null || minecraft.gameMode == null) return false;
-            side = room.viewerSeat();
-        } else {
-            if (view == null || view.handling() == null || view.viewerSeat() < 0 || view.exitVote() != null || minecraft.gameMode == null) return false;
-            side = view.viewerSeat();
-        }
-        Vec3 location = TableGeometry.world(pos, TableGeometry.drawerBounds(side).getCenter());
-        var hit = new net.minecraft.world.phys.BlockHitResult(location, TableGeometry.SIDES[side], BlockPos.containing(location), false);
-        handlingDrag = null;
-        minecraft.gameMode.useItemOn(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
-        return true;
-    }
-
     private boolean openDrawer(double mouseX, double mouseY) {
         RiichiView view = view();
         if (immersive() || view == null || view.handling() == null || view.viewerSeat() < 0 || view.exitVote() != null
@@ -822,7 +819,6 @@ public final class RiichiTableScreen extends Screen {
 
     private boolean overWidget(double x, double y) {
         return children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-            .filter(widget -> !(widget instanceof PhysicalHandle))
             .anyMatch(widget -> widget.visible && x >= widget.getX() && x < widget.getRight() && y >= widget.getY() && y < widget.getBottom());
     }
 
@@ -932,11 +928,7 @@ public final class RiichiTableScreen extends Screen {
         if (!turnClock.visible && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
                 : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help." + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
-            Component help = choosingRiichi || TableResults.available(view) || view.viewerSeat() < 0
-                ? Component.translatable(helpKey)
-                : Component.translatable(helpKey, TableKeys.RIICHI.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());
-            if (view.handling() != null && view.viewerSeat() >= 0)
-                help = Component.translatable("sticks.mchjong.access", TableKeys.DRAWER.getTranslatedKeyMessage()).append("  ").append(help);
+            Component help = Component.translatable(helpKey);
             renderFooter(graphics, help, 0xffe0deca);
         }
         if (informationTooltip != null && !overWidget(drawMouseX, drawMouseY)) {
@@ -1155,9 +1147,7 @@ public final class RiichiTableScreen extends Screen {
     }
 
     @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
-        double mouseX = event.x(), mouseY = event.y();
-        int button = event.button();
-        if (mappedClick(event)) return true;
+        double mouseX = event.x(), mouseY = event.y(); int button = event.button();
         if (immersive()) {
             if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
             mouseX = canvasX(mouseX);
@@ -1249,9 +1239,7 @@ public final class RiichiTableScreen extends Screen {
         return -1;
     }
     @Override public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent event) {
-        double mouseX = event.x(), mouseY = event.y();
-        int button = event.button();
-        if (presentation.releaseInspect(event)) return true;
+        double mouseX = event.x(), mouseY = event.y(); int button = event.button();
         if (immersive()) {
             if (!insideImmersiveCanvas(mouseX, mouseY) && handDrag == null) return false;
             mouseX = canvasX(mouseX);
@@ -1319,30 +1307,10 @@ public final class RiichiTableScreen extends Screen {
     }
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
         int key = event.key();
-        RiichiView view = view();
         if (key == GLFW.GLFW_KEY_ESCAPE && handlingDrag != null) { handlingDrag = null; handlingStart = null; return true; }
         if (key == GLFW.GLFW_KEY_ESCAPE && handDrag != null) { handDrag = null; return true; }
-        if (TableKeys.DRAWER.matches(event) && openOwnDrawer()) return true;
-        if (results != null && results.isFocused() && results.keyPressed(event)) return true;
         if (key == GLFW.GLFW_KEY_ESCAPE && (choosingRiichi || selectedTile >= 0)) { cancelSelection(); return true; }
-        if (presentation.keyPressed(event, this::toggleView, this::resetView)) return true;
-        if (TableKeys.RIICHI.matches(event) && view != null && view.actions().stream().anyMatch(action -> action.type() == RiichiAction.Type.RIICHI)) {
-            toggleRiichi(); return true;
-        }
-        if (TableKeys.PASS.matches(event) && view != null) {
-            for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == RiichiAction.Type.PASS) { send(view, i); return true; }
-        }
-        if (presentation.lookPressed(key)) return true;
-        if ((key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) && selectedTile >= 0 && view != null && getFocused() == null) {
-            int action = tileAction(view, selectedTile, choosingRiichi ? RiichiAction.Type.RIICHI : RiichiAction.Type.DISCARD);
-            if (action >= 0) send(view, action);
-            return true;
-        }
         return super.keyPressed(event);
-    }
-
-    @Override public boolean keyReleased(net.minecraft.client.input.KeyEvent event) {
-        return presentation.keyReleased(event) || super.keyReleased(event);
     }
 
     @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
@@ -1353,22 +1321,6 @@ public final class RiichiTableScreen extends Screen {
         }
         if (!overWidget(x, y) && presentation.scroll(vertical, MahjongUi.shiftDown())) return true;
         return super.mouseScrolled(x, y, horizontal, vertical);
-    }
-
-    private boolean mappedClick(net.minecraft.client.input.MouseButtonEvent event) {
-        if (presentation.mouseBinding(event, this::toggleView, this::resetView)) return true;
-        if (TableKeys.DRAWER.matchesMouse(event)) return openOwnDrawer();
-        var view = view();
-        if (view == null) return false;
-        if (TableKeys.RIICHI.matchesMouse(event) && view.actions().stream().anyMatch(action -> action.type() == RiichiAction.Type.RIICHI)) {
-            toggleRiichi(); return true;
-        }
-        if (TableKeys.PASS.matchesMouse(event)) {
-            for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == RiichiAction.Type.PASS) {
-                send(view, i); return true;
-            }
-        }
-        return false;
     }
 
     private void toggleRiichi() {
@@ -1395,27 +1347,6 @@ public final class RiichiTableScreen extends Screen {
         setFocused(null);
     }
 
-    /** Keyboard focus is attached to the physical source; pointer input uses the actual tile mesh. */
-    private final class PhysicalHandle extends MahjongButton {
-        private final RiichiView snapshot;
-        PhysicalHandle(RiichiView snapshot, int index) {
-            super(0, 0, 20, 20, Component.translatable(snapshot.actions().get(index).translationKey()), ignored -> send(snapshot, index));
-            this.snapshot = snapshot;
-            setTooltip(null);
-        }
-        @Override public boolean isMouseOver(double x, double y) { return false; }
-        @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-            RiichiTableScene.Piece source = RiichiHandling.source(snapshot, scene);
-            SeatedTableProjection.Point point = source == null ? null : project(grip(source));
-            active = point != null && !decision.pending() && !handlingMoving() && results == null;
-            if (point == null) return;
-            setX((int) point.x() - 10); setY((int) point.y() - 10);
-            if (active && isFocused()) {
-                graphics.centeredText(font, getMessage(), (int) point.x(), (int) point.y() - 22, MahjongUi.TEXT);
-            }
-        }
-    }
-
     private final class CalloutButton extends MahjongButton {
         final RiichiAction action;
         CalloutButton(int x, int y, int w, int h, Component label, RiichiAction action, Runnable click) {
@@ -1437,7 +1368,7 @@ public final class RiichiTableScreen extends Screen {
             int y = -lines.size() * font.lineHeight / 2;
             for (var line : lines) {
                 graphics.text(font, line, (captionWidth - font.width(line)) / 2,
-                    y, active ? MahjongUi.TEXT : MahjongUi.DISABLED, false);
+                    y, captionColor(), false);
                 y += font.lineHeight;
             }
             graphics.pose().popMatrix();

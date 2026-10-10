@@ -5,485 +5,485 @@
   "sortnum": 3,
   "pages": [
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_1",
-      "anchor": "heavenly_win"
+      "anchor": "heavenly_win",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/heavenly_win.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_1",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_2",
-      "anchor": "earthly_win"
+      "anchor": "earthly_win",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/earthly_win.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_2",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_3",
-      "anchor": "human_win"
+      "anchor": "human_win",
+      "tiles": "123m 456m 789p 23s 678s 55p + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/human_win.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_3",
+      "tiles": "123m 456m 789p 23s 678s 55p + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_4",
-      "anchor": "heavenly_ready"
+      "anchor": "heavenly_ready",
+      "tiles": "123m 456m 789p 23s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/heavenly_ready.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_4",
+      "tiles": "123m 456m 789p 23s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_5",
-      "anchor": "earthly_ready"
+      "anchor": "earthly_ready",
+      "tiles": "123m 456m 789p 23s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/earthly_ready.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_5",
+      "tiles": "123m 456m 789p 23s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_6",
-      "anchor": "eight_flowers"
+      "anchor": "eight_flowers",
+      "tiles": "1q 2q 3q 4q 5q 6q 7q 8q",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/eight_flowers.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_6",
+      "tiles": "1q 2q 3q 4q 5q 6q 7q 8q",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_7",
-      "anchor": "seven_robs_one"
+      "anchor": "seven_robs_one",
+      "tiles": "1q 2q 3q 4q 5q 6q 7q / 8q",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/seven_robs_one.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_7",
+      "tiles": "1q 2q 3q 4q 5q 6q 7q / 8q",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_8",
-      "anchor": "big_four_winds"
+      "anchor": "big_four_winds",
+      "tiles": "111z 222z 333z 444z 123m 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/big_four_winds.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_8",
+      "tiles": "111z 222z 333z 444z 123m 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_9",
-      "anchor": "all_honors"
+      "anchor": "all_honors",
+      "tiles": "111z 222z 333z 555z 666z 77z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/all_honors.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_9",
+      "tiles": "111z 222z 333z 555z 666z 77z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_10",
-      "anchor": "full_flush"
+      "anchor": "full_flush",
+      "tiles": "123m 234m 456m 567m 789m 55m",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/full_flush.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_10",
+      "tiles": "123m 234m 456m 567m 789m 55m",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_11",
-      "anchor": "small_four_winds"
+      "anchor": "small_four_winds",
+      "tiles": "111z 222z 333z 44z 123m 456p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/small_four_winds.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_11",
+      "tiles": "111z 222z 333z 44z 123m 456p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_12",
-      "anchor": "big_three_dragons"
+      "anchor": "big_three_dragons",
+      "tiles": "555z 666z 777z 123m 456p 22s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/big_three_dragons.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_12",
+      "tiles": "555z 666z 777z 123m 456p 22s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_13",
-      "anchor": "five_concealed_triplets"
+      "anchor": "five_concealed_triplets",
+      "tiles": "111m 333p 555s 777z 888m 22p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/five_concealed_triplets.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_13",
+      "tiles": "111m 333p 555s 777z 888m 22p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_14",
-      "anchor": "four_concealed_triplets"
+      "anchor": "four_concealed_triplets",
+      "tiles": "111m 333p 555s 777z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/four_concealed_triplets.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_14",
+      "tiles": "111m 333p 555s 777z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_15",
-      "anchor": "all_triplets"
+      "anchor": "all_triplets",
+      "tiles": "111m 333p 555s 777z 888m 22p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/all_triplets.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_15",
+      "tiles": "111m 333p 555s 777z 888m 22p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_16",
-      "anchor": "half_flush"
+      "anchor": "half_flush",
+      "tiles": "123m 456m 789m 111z 555z 22m",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/half_flush.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_16",
+      "tiles": "123m 456m 789m 111z 555z 22m",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_17",
-      "anchor": "small_three_dragons"
+      "anchor": "small_three_dragons",
+      "tiles": "555z 666z 77z 123m 456p 789s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/small_three_dragons.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_17",
+      "tiles": "555z 666z 77z 123m 456p 789s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_18",
-      "anchor": "pinfu"
+      "anchor": "pinfu",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/pinfu.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_18",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_19",
-      "anchor": "three_concealed_triplets"
+      "anchor": "three_concealed_triplets",
+      "tiles": "111m 333p 555s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/three_concealed_triplets.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_19",
+      "tiles": "111m 333p 555s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_20",
-      "anchor": "concealed"
+      "anchor": "concealed",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/concealed.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_20",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_21",
-      "anchor": "self_draw"
+      "anchor": "self_draw",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/self_draw.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_21",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_22",
-      "anchor": "concealed_self_draw"
+      "anchor": "concealed_self_draw",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/concealed_self_draw.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_22",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_23",
-      "anchor": "all_from_others"
+      "anchor": "all_from_others",
+      "tiles": "123m 456m 789p 234s 678s / 5p + 5p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/all_from_others.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_23",
+      "tiles": "123m 456m 789p 234s 678s / 5p + 5p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_24",
-      "anchor": "half_from_others"
+      "anchor": "half_from_others",
+      "tiles": "123m 456m 789p 234s 678s / 5p + 5p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/half_from_others.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_24",
+      "tiles": "123m 456m 789p 234s 678s / 5p + 5p",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_25",
-      "anchor": "replacement_win"
+      "anchor": "replacement_win",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/replacement_win.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_25",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_26",
-      "anchor": "last_draw"
+      "anchor": "last_draw",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/last_draw.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_26",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_27",
-      "anchor": "last_discard"
+      "anchor": "last_discard",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/last_discard.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_27",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_28",
-      "anchor": "robbing_kong"
+      "anchor": "robbing_kong",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/robbing_kong.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_28",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_29",
-      "anchor": "declared_ready"
+      "anchor": "declared_ready",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/declared_ready.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_29",
+      "tiles": "23s + 1s",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_30",
-      "anchor": "single_wait"
+      "anchor": "single_wait",
+      "tiles": "13m + 2m",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/single_wait.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_30",
+      "tiles": "13m + 2m",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_31",
-      "anchor": "red_dragon"
+      "anchor": "red_dragon",
+      "tiles": "777z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/red_dragon.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_31",
+      "tiles": "777z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_32",
-      "anchor": "green_dragon"
+      "anchor": "green_dragon",
+      "tiles": "666z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/green_dragon.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_32",
+      "tiles": "666z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_33",
-      "anchor": "white_dragon"
+      "anchor": "white_dragon",
+      "tiles": "555z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/white_dragon.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_33",
+      "tiles": "555z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_34",
-      "anchor": "flower_set"
+      "anchor": "flower_set",
+      "tiles": "1q 2q 3q 4q",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/flower_set.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_34",
+      "tiles": "1q 2q 3q 4q",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_35",
-      "anchor": "round_wind"
+      "anchor": "round_wind",
+      "tiles": "111z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/round_wind.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_35",
+      "tiles": "111z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_36",
-      "anchor": "seat_wind"
+      "anchor": "seat_wind",
+      "tiles": "222z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/seat_wind.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_36",
+      "tiles": "222z",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_tai.page_37",
-      "anchor": "seat_flower"
+      "anchor": "seat_flower",
+      "tiles": "1q 5q",
+      "face": "mchjong:taiwan"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/seat_flower.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tai.page_37",
+      "tiles": "1q 5q",
+      "face": "mchjong:taiwan"
     }
   ]
 }

@@ -10,7 +10,19 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flow.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_flow.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flow.page_2.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flow.page_2.continued_2"
     },
     {
       "type": "patchouli:text",
@@ -18,23 +30,47 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flow.page_3.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_flow.page_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flow.page_4.continued_1"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_flow.page_5"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/taiwan/concealed.png"
-      ],
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flow.page_5.continued_1"
+    },
+    {
+      "type": "patchouli:empty",
+      "draw_filler": false
+    },
+    {
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.taiwan_flow.taiwan",
-      "border": false
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
+    },
+    {
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_flow.taiwan",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_flow.notation"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flow.notation.continued_1"
     }
   ]
 }

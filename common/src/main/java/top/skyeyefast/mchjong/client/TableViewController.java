@@ -1,15 +1,12 @@
 package top.skyeyefast.mchjong.client;
 
-import java.util.Arrays;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** Composed by each rule screen; owns presentation mode and seated camera input only. */
 final class TableViewController {
-    private boolean immersive, inspecting, dragging;
+    private boolean immersive, dragging;
     private double dragDistance;
-    private final boolean[] lookKeys = new boolean[4];
 
     boolean immersive() { return immersive; }
     void immersive(boolean value) {
@@ -23,8 +20,7 @@ final class TableViewController {
         return !immersive && client.player != null && client.player.getVehicle() instanceof SeatEntity
             && client.options.getCameraType().isFirstPerson();
     }
-    boolean inspecting() { return inspecting && cameraEnabled(); }
-    void clearInput() { inspecting = dragging = false; Arrays.fill(lookKeys, false); }
+    void clearInput() { dragging = false; }
 
     private void syncCamera() {
         var client = Minecraft.getInstance();
@@ -43,47 +39,7 @@ final class TableViewController {
 
     void tick() {
         if (!Minecraft.getInstance().isWindowActive()) clearInput();
-        if (cameraEnabled()) {
-            TableSettings.get().camera().look((lookKeys[1] ? 1 : 0) - (lookKeys[0] ? 1 : 0),
-                (lookKeys[3] ? 1 : 0) - (lookKeys[2] ? 1 : 0));
-            syncCamera();
-        }
-    }
-
-    boolean keyPressed(net.minecraft.client.input.KeyEvent event, Runnable toggle, Runnable reset) {
-        if (TableKeys.RESET.matches(event)) { reset.run(); return true; }
-        if (TableKeys.VIEW.matches(event)) { toggle.run(); return true; }
-        if (TableKeys.INSPECT.matches(event) && cameraEnabled()) { inspecting = true; return true; }
-        return false;
-    }
-
-    boolean lookPressed(int key) {
-        int arrow = arrow(key);
-        if (arrow < 0 || !cameraEnabled()) return false;
-        lookKeys[arrow] = true;
-        return true;
-    }
-
-    boolean keyReleased(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key();
-        if (TableKeys.INSPECT.matches(event)) { inspecting = false; return true; }
-        int arrow = arrow(key);
-        if (arrow < 0) return false;
-        lookKeys[arrow] = false;
-        return true;
-    }
-
-    boolean mouseBinding(net.minecraft.client.input.MouseButtonEvent event, Runnable toggle, Runnable reset) {
-        if (TableKeys.INSPECT.matchesMouse(event) && cameraEnabled()) { inspecting = true; return true; }
-        if (TableKeys.RESET.matchesMouse(event)) { reset.run(); return true; }
-        if (TableKeys.VIEW.matchesMouse(event)) { toggle.run(); return true; }
-        return false;
-    }
-
-    boolean releaseInspect(net.minecraft.client.input.MouseButtonEvent event) {
-        if (!TableKeys.INSPECT.matchesMouse(event)) return false;
-        inspecting = false;
-        return true;
+        if (cameraEnabled()) syncCamera();
     }
 
     void startDrag() { dragging = true; dragDistance = 0; }
@@ -114,13 +70,4 @@ final class TableViewController {
         return true;
     }
 
-    private static int arrow(int key) {
-        return switch (key) {
-            case GLFW.GLFW_KEY_LEFT -> 0;
-            case GLFW.GLFW_KEY_RIGHT -> 1;
-            case GLFW.GLFW_KEY_UP -> 2;
-            case GLFW.GLFW_KEY_DOWN -> 3;
-            default -> -1;
-        };
-    }
 }

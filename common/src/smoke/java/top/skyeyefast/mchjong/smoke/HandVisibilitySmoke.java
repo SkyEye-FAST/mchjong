@@ -65,12 +65,12 @@ final class HandVisibilitySmoke {
             seat = view.viewerSeat();
             require(seat >= 0, "Missing seated snapshot");
             capture(client, output, "seated-" + visibility + ".png");
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            InputSmoke.switchView(client.screen);
             next(9);
         } else if (stage == 9 && ticks > 10) {
             require(client.screen instanceof RiichiTableScreen screen && screen.immersive(), "Missing immersive view");
             capture(client, output, "immersive-" + visibility + ".png");
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            InputSmoke.switchView(client.screen);
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             work = client.getSingleplayerServer().submit(() -> {

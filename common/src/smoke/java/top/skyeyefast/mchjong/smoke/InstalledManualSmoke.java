@@ -130,6 +130,19 @@ final class InstalledManualSmoke {
         var selected = entries.get(entry);
         for (int index = page; index < Math.min(page + 2, selected.getPages().size()); index++) {
             var current = selected.getPages().get(index);
+            if (current instanceof vazkii.patchouli.client.book.page.PageTemplate) {
+                try {
+                    var field = current.getClass().getDeclaredField("template"); field.setAccessible(true);
+                    var template = field.get(current);
+                    var components = template.getClass().getDeclaredField("components"); components.setAccessible(true);
+                    for (Object component : (List<?>) components.get(template)) {
+                        var callbacks = component.getClass().getDeclaredField("callbacks"); callbacks.setAccessible(true);
+                        var example = (top.skyeyefast.mchjong.compat.patchouli.HandbookExample) callbacks.get(component);
+                        if (example.textLines() > example.textCapacity()) layoutErrors.add(LANGUAGES.get(language) + ":" + selected.getId() + ":" + index + " example text needs " + example.textLines() + " lines");
+                    }
+                } catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
+                continue;
+            }
             if (!(current instanceof vazkii.patchouli.client.book.page.abstr.PageWithText)) continue;
             String location = LANGUAGES.get(language) + ":" + selected.getId() + ":" + index;
             try {

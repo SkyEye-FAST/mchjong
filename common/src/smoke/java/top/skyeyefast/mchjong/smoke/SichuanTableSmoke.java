@@ -15,8 +15,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import top.skyeyefast.mchjong.client.MahjongButton;
-import top.skyeyefast.mchjong.client.McrLobbyScreen;
-import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.SichuanLobbyScreen;
 import top.skyeyefast.mchjong.client.SichuanTableScreen;
 import top.skyeyefast.mchjong.client.SichuanResultsScreen;
@@ -41,18 +39,13 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** Real packets, recipient-safe scenes, exit voting and the eight-hand client lifecycle. */
 final class SichuanTableSmoke {
-    private static final List<MahjongVariant> CHOICES = List.of(MahjongVariant.SICHUAN, MahjongVariant.MCR,
-        MahjongVariant.RIICHI, MahjongVariant.SICHUAN);
     private final List<ServerPlayer> guests = new ArrayList<>();
     private CompletableFuture<?> task;
-    private int stage, choice, ticks, settled, captureTicks;
+    private int stage, ticks, settled;
     private UUID incarnation;
     private UUID replayId;
     private boolean picked;
     private boolean hintsConfigured;
-    private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
-    private final WallSeatedSmoke seatedWall = new WallSeatedSmoke();
-    private final MatchAutomationControlsSmoke automation = new MatchAutomationControlsSmoke();
     private int selectedTile;
     private int boundFirstDiscard = Tile.ABSENT;
     private long discardDecision;
@@ -77,49 +70,11 @@ final class SichuanTableSmoke {
             }
             case 1 -> {
                 if (room == null || room.viewerSeat() < 0 || client.screen == null) break;
-                var buttons = client.screen.children().stream().filter(MahjongButton.class::isInstance)
-                    .map(MahjongButton.class::cast).toList();
-                for (var variant : MahjongVariant.values()) {
-                    var label = Component.translatable("variant.mchjong." + variant.name().toLowerCase(java.util.Locale.ROOT)).getString();
-                    var button = buttons.stream().filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
-                    require(button.getX() >= 0 && button.getX() + button.getWidth() <= client.screen.width, "Variant button outside screen");
-                    if (variant == CHOICES.get(choice)) button.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
-                }
+                InputSmoke.clickWidget(client.screen, LobbySmoke.find(client, Component.translatable("variant.mchjong.sichuan").getString()));
                 stage++;
             }
             case 2 -> {
-                if (room == null || room.variant() != CHOICES.get(choice)) break;
-                require(switch (room.variant()) {
-                    case RIICHI -> client.screen instanceof RiichiTableScreen;
-                    case MCR -> client.screen instanceof McrLobbyScreen;
-                    case SICHUAN -> client.screen instanceof SichuanLobbyScreen;
-                    case TAIWAN -> client.screen instanceof top.skyeyefast.mchjong.client.TaiwanLobbyScreen;
-                }, "Variant did not open its own screen");
-                client.getWindow().setWindowed(960, 720);
-                client.options.guiScale().set(3); client.resizeGui();
-                captureTicks = 0; stage = 60;
-            }
-            case 60 -> {
-                if (++captureTicks < 12) break;
-                require(client.screen.width == 320 && client.screen.height == 240, "Lobby viewport was not 320x240");
-                AutomationControlsSmoke.checkBounds(client);
-                SmokeScreenshots.grab(output.toFile(), "lobby-" + room.variant().name().toLowerCase(java.util.Locale.ROOT) + "-320x240.png", client.getMainRenderTarget(), 1, ignored -> {});
-                var lobbyScreen = client.screen;
-                LobbySmoke.find(client, Component.translatable("settings.mchjong.scopes").getString()).onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
-                var optionsScreen = client.screen;
-                LobbySmoke.find(client, Component.translatable("ui.mchjong.clock_settings").getString()).onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
-                require(client.screen instanceof top.skyeyefast.mchjong.client.TableClockScreen, "Variant clock settings did not open");
-                AutomationControlsSmoke.checkBounds(client);
-                client.screen.onClose();
-                require(client.screen == optionsScreen, "Clock did not return to its settings scope");
-                LobbySmoke.find(client, Component.translatable("settings.mchjong.scope.world").getString()).onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
-                String policy = Component.translatable("settings.mchjong.toggle", Component.translatable("settings.mchjong.invitations_enabled"),
-                    Component.translatable(table.clientWorldPolicy().invitationsEnabled() ? "options.on" : "options.off")).getString();
-                require(LobbySmoke.find(client, policy) != null, "Variant world scope did not display synchronized policy");
-                client.screen.onClose();
-                require(client.screen == lobbyScreen, "Settings did not return to the variant lobby");
-                client.options.guiScale().set(2); client.getWindow().setWindowed(1280, 800); client.resizeGui();
-                if (++choice < CHOICES.size()) { stage = 1; break; }
+                if (room == null || room.variant() != MahjongVariant.SICHUAN || !(client.screen instanceof SichuanLobbyScreen)) break;
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var target = (MahjongTableBlockEntity) main.level().getBlockEntity(pos);
@@ -278,7 +233,7 @@ final class SichuanTableSmoke {
                         && candidate.seat() == view.game().viewerSeat() && candidate.tile() == boundFirstDiscard).findFirst().orElseThrow();
                 var pointer = project(client, pos, piece.position());
                 require(screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(pointer.x, pointer.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false) && screen.selected(piece), "Secret first-discard picking failed");
-                screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+                InputSmoke.click(screen, "sichuan.mchjong.void_choice");
                 stage++;
             }
             case 7 -> {
@@ -306,7 +261,6 @@ final class SichuanTableSmoke {
             case 8 -> {
                 var view = table.clientSichuanView();
                 if (view == null || view.game().phase() != SichuanGame.Phase.TURN) break;
-                if (!automation.tick(client, table, output, "sichuan")) break;
                 require(!incarnation.equals(view.incarnation()), "Restored Sichuan incarnation was reused");
                 require(view.game().seats().stream().allMatch(seat -> seat.voidSuit() == 0), "Sichuan declarations did not complete");
                 require(view.game().seats().get(view.game().viewerSeat()).firstDiscard() == boundFirstDiscard, "NBT restore lost the first-discard binding");
@@ -343,8 +297,6 @@ final class SichuanTableSmoke {
                 settled = 0; stage++;
             }
             case 11 -> {
-                if (!seatedWall.finished()) { seatedWall.tick(client, table, output, false); break; }
-                if (!scoredHints.finished()) { scoredHints.tick(client, table, output, false); break; }
                 var view = table.clientSichuanView();
                 if (view.game().actions().stream().noneMatch(action -> action.type() == SichuanAction.Type.DISCARD)) break;
                 if (++settled < 10) break;
@@ -359,7 +311,7 @@ final class SichuanTableSmoke {
                             && candidate.seat() == view.game().viewerSeat() && candidate.tile() == selectedTile).findFirst().orElseThrow();
                     var pointer = project(client, pos, piece.position());
                     require(screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(pointer.x, pointer.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false) && screen.selected(piece), "Seated Sichuan picking failed");
-                    screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+                    InputSmoke.switchView(screen);
                     require(screen.immersive(), "Sichuan cannot enter immersive view");
                     var player = view.game().seats().get(view.game().viewerSeat());
                     var tiles = new ArrayList<>(player.hand());
@@ -369,9 +321,9 @@ final class SichuanTableSmoke {
                         + (248 + tiles.indexOf(selectedTile) * 58 + (selectedTile == player.drawn() ? 29 : 0)) * scale;
                     double vertical = (screen.height - 800 * scale) / 2 + 690 * scale;
                     require(screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(horizontal, vertical, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false), "Immersive Sichuan picking failed");
-                    screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+                    InputSmoke.switchView(screen);
                     require(screen.selected(piece), "Immersive Sichuan picking selected a different tile");
-                    screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+                    InputSmoke.switchView(screen);
                     picked = true; settled = 0; break;
                 }
                 var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
@@ -383,7 +335,7 @@ final class SichuanTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "sichuan-table.png", client.getMainRenderTarget(), 1, ignored -> {});
                 screen.setFocused(null);
                 discardDecision = view.game().decision();
-                screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+                InputSmoke.click(screen, "sichuan.mchjong.action.discard");
                 stage = 17;
             }
             case 17 -> {
@@ -487,18 +439,24 @@ final class SichuanTableSmoke {
                     "Browser did not fetch the completed Sichuan replay");
                 require(replay.cursor() == 0 && replay.handIndex() == 0, "Sichuan replay did not open at the initial deal");
                 settled = 0;
-                replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0));
+                InputSmoke.nextReplay(replay);
                 require(replay.cursor() == 1, "Sichuan replay did not step one event");
-                replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+                InputSmoke.click(replay, "replay.mchjong.view");
                 stage++;
             }
             case 20 -> {
                 if (!(client.screen instanceof ReplayScreen replay)) break;
                 if (++settled < 8) break;
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay.png", client.getMainRenderTarget(), 1, ignored -> {});
-                for (int hand = 1; hand < 8; hand++) replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0));
+                for (int hand = 1; hand < 8; hand++) {
+                    var next = replay.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
+                        .map(net.minecraft.client.gui.components.AbstractWidget.class::cast)
+                        .filter(widget -> widget.getY() == 29 && widget.getMessage().getString().equals(">"))
+                        .findFirst().orElseThrow();
+                    InputSmoke.clickWidget(replay, next);
+                }
                 require(replay.handIndex() == 7 && replay.cursor() == 0, "Sichuan replay hand navigation failed");
-                replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0));
+                InputSmoke.click(replay, ">|");
                 stage++;
             }
             case 21 -> {

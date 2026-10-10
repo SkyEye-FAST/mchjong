@@ -33,7 +33,6 @@ abstract class TableResultsScreen extends Screen {
     }
     public BlockPos tablePos() { return pos; }
     public boolean immersive() { return camera.immersive(); }
-    public boolean inspecting() { return camera.inspecting(); }
     public void resetView() { camera.reset(); }
     protected MahjongTableBlockEntity table() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity t ? t : null;
@@ -112,7 +111,6 @@ abstract class TableResultsScreen extends Screen {
     }
     @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
         double x = event.x(), y = event.y(); int button = event.button();
-        if (camera.mouseBinding(event, this::toggleView, this::resetView)) return true;
         if (!canvas().contains(x, y)) return false;
         if (super.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(canvas().localX(x), canvas().localY(y), event.buttonInfo()), doubleClick)) return true;
         if (button == 1 && camera.cameraEnabled()) { camera.startDrag(); return true; }
@@ -120,7 +118,7 @@ abstract class TableResultsScreen extends Screen {
     }
     @Override public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent event) {
         double x = event.x(), y = event.y(); int button = event.button();
-        if (camera.releaseInspect(event) || camera.releaseDrag(button, () -> {})) return true;
+        if (camera.releaseDrag(button, () -> {})) return true;
         return super.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(canvas().localX(x), canvas().localY(y), event.buttonInfo()));
     }
     @Override public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent event, double dx, double dy) {
@@ -131,12 +129,5 @@ abstract class TableResultsScreen extends Screen {
         if (!canvas().contains(x, y)) return false;
         if (super.mouseScrolled(canvas().localX(x), canvas().localY(y), horizontal, vertical)) return true;
         return camera.scroll(vertical, MahjongUi.shiftDown());
-    }
-    @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        int key = event.key();
-        return camera.keyPressed(event, this::toggleView, this::resetView) || getFocused() == null && camera.lookPressed(key) || super.keyPressed(event);
-    }
-    @Override public boolean keyReleased(net.minecraft.client.input.KeyEvent event) {
-        return camera.keyReleased(event) || super.keyReleased(event);
     }
 }

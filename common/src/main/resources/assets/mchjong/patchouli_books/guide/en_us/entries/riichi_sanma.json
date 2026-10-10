@@ -10,7 +10,19 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_sanma.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.page_2.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.page_2.continued_2"
     }
   ]
 }

@@ -6,7 +6,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
-import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.client.ReplayBrowserScreen;
 import top.skyeyefast.mchjong.client.ReplayScreen;
@@ -61,12 +60,12 @@ final class ReplaySmoke {
             require(!match.riichi().hands().getFirst().decisions().isEmpty(), "Replay transfer lost decision points");
             checkBounds(client);
             capture(client,output,"20-replay-initial.png");
-            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT_BRACKET, 0, 0));
+            InputSmoke.click(replay, "replay.mchjong.next_decision");
             require(replay.cursor() > 0, "Decision navigation failed");
-            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_W, 0, 0));
-            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_W, 0, 0));
-            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0));
-            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_END, 0, 0));
+            InputSmoke.click(replay, "replay.mchjong.wall");
+            InputSmoke.click(replay, "replay.mchjong.wall");
+            InputSmoke.nextReplay(replay);
+            InputSmoke.click(replay, ">|");
             stage = 3; ticks = 0;
         } else if (stage == 3 && ticks > 15 && client.screen instanceof ReplayScreen replay) {
             require(replay.cursor() == ReplayPlayback.timeline(match, 0).frames().size() - 1, "Cannot seek to settlement");

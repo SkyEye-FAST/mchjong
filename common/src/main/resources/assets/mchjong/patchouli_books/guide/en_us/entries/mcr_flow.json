@@ -10,7 +10,19 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_flow.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_flow.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_flow.page_2.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_flow.page_2.continued_2"
     },
     {
       "type": "patchouli:text",
@@ -18,7 +30,15 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_flow.page_3.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_flow.page_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_flow.page_4.continued_1"
     },
     {
       "type": "patchouli:text",
@@ -26,7 +46,15 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_flow.page_5.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_flow.page_6"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_flow.page_6.continued_1"
     }
   ]
 }

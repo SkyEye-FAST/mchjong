@@ -26,10 +26,6 @@ public final class MchjongNeoForgeClient {
         event.addListener(MahjongContent.id("rule_help"), (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
             top.skyeyefast.mchjong.client.RuleHelp::reload);
     }
-    @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
-        event.registerCategory(top.skyeyefast.mchjong.client.TableKeys.CATEGORY);
-        top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(event::register);
-    }
     @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
         if (net.neoforged.fml.ModList.get().isLoaded("touhou_little_maid"))
             event.enqueueWork(top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts::register);

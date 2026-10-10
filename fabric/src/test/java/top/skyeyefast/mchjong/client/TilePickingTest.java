@@ -56,13 +56,10 @@ class TilePickingTest {
         assertNull(projection.project(origin.subtract(forward), .05));
     }
 
-    @Test void pannedAndInspectingCamerasPickFarPublicFacesFromEverySeat() {
+    @Test void pannedCamerasPickFarPublicFacesFromEverySeat() {
         var camera = new SeatedCameraState(2, 2.2);
         camera.pan(.2, -.15);
         camera.scroll(1);
-        for (boolean inspect : new boolean[]{false, true}) {
-            for (int tick = 0; tick < 30; tick++) camera.tick(inspect);
-            camera.sample(1);
             for (int seat = 0; seat < 4; seat++) for (RiichiTableScene.Area area :
                 new RiichiTableScene.Area[]{RiichiTableScene.Area.RIVER, RiichiTableScene.Area.MELD}) {
                 int opposite = (seat + 2) % 4;
@@ -72,9 +69,8 @@ class TilePickingTest {
                 var piece = new RiichiTableScene.Piece(0, opposite, area, 0, position, opposite * 90, true, false);
                 var origin = camera.eye(seat);
                 assertTrue(Double.isFinite(TilePicking.distanceSquared(new RiichiAnimation.Frame(piece, -90),
-                    origin, position.subtract(origin), false)), seat + " " + area + " inspect=" + inspect);
+                    origin, position.subtract(origin), false)), seat + " " + area);
             }
-        }
     }
 
     @Test void tracksRaisedSelectionAndReturnsNearestHitDistance() {

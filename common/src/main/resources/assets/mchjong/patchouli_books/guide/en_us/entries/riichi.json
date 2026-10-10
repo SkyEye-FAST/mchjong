@@ -10,6 +10,10 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi.page_1_continued"
     },
     {
@@ -18,7 +22,15 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi.page_2.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi.declaration"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi.declaration.continued_1"
     }
   ]
 }

@@ -268,7 +268,7 @@ final class ResourcePackSmoke {
             require(VoicePresets.forPlayer(client.player.getGameProfile().name()).equals(VoicePresets.DEFAULT),
                 "Client-only voice selection was shared with the server");
             var screen = (top.skyeyefast.mchjong.client.RiichiTableScreen) client.screen;
-            screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            InputSmoke.switchView(screen);
             stage = 6; ticks = 0;
         } else if (stage == 6 && ticks > 20) {
             require(client.screen instanceof top.skyeyefast.mchjong.client.RiichiTableScreen screen && screen.immersive(), "Resource fixture did not enter immersive view");

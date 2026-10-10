@@ -28,7 +28,7 @@ public abstract class SeatedEyePositionMixin {
         if ((Object) this != client.player || !client.options.getCameraType().isFirstPerson()) return;
         if (client.player.getVehicle() instanceof SeatEntity seat) {
             var pose = top.skyeyefast.mchjong.client.SeatedCamera.state(seat);
-            callback.setReturnValue(top.skyeyefast.mchjong.world.TableGeometry.world(seat.tablePos(), pose.eye(seat.seat(), partialTick)));
+            callback.setReturnValue(top.skyeyefast.mchjong.world.TableGeometry.world(seat.tablePos(), pose.eye(seat.seat())));
         }
     }
 }

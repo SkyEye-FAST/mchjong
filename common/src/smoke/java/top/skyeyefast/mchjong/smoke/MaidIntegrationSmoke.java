@@ -30,8 +30,6 @@ final class MaidIntegrationSmoke {
     private CompoundTag saved;
     private int maidSeat;
     private boolean capturedLobby;
-    private int headCapture;
-    private net.minecraft.client.gui.screens.Screen previousScreen;
     private CompletableFuture<Boolean> work;
 
     boolean tick(Minecraft client, BlockPos center, Path output) {
@@ -55,24 +53,8 @@ final class MaidIntegrationSmoke {
             }
             require(seated != null && seated.getVehicle() instanceof SeatEntity,
                 "Client maid lost its synchronized seat at step " + step);
-            if (step == 2 && headCapture < 4) {
-                require(seated.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(
-                    top.skyeyefast.mchjong.world.MahjongContent.TABLE_ITEM), "Maid HEAD equipment did not synchronize");
-                if (headCapture == 0) {
-                    seated.getConfigManager().setChatBubbleShow(false);
-                    previousScreen = client.screen;
-                    client.setScreen(new MaidFurnitureSmokeScreen(seated));
-                } else if (headCapture == 1) {
-                    SmokeScreenshots.grab(output.toFile(), "maid-furniture-head.png", client.getMainRenderTarget(), 1, ignored -> {});
-                    seated.setModelId("geckolib:winefox");
-                } else if (headCapture == 2) {
-                    SmokeScreenshots.grab(output.toFile(), "maid-gecko-furniture-head.png", client.getMainRenderTarget(), 1, ignored -> {});
-                    seated.setModelId("touhou_little_maid:hakurei_reimu");
-                } else client.setScreen(previousScreen);
-                headCapture++;
-                stageTicks = 0;
-                return false;
-            }
+            if (step == 2) require(seated.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(
+                top.skyeyefast.mchjong.world.MahjongContent.TABLE_ITEM), "Maid HEAD equipment did not synchronize");
             if (step == 2) require(!Component.translatable("model.touhou_little_maid.hakurei_reimu.name").getString().startsWith("model."),
                 "Default maid model name is not localized");
             if (step == 2) {

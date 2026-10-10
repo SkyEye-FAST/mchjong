@@ -10,7 +10,15 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.results.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.results.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.results.page_2.continued_1"
     }
   ]
 }

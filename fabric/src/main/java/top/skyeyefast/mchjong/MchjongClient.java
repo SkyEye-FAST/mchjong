@@ -25,8 +25,6 @@ public final class MchjongClient implements ClientModInitializer {
                         top.skyeyefast.mchjong.client.TileFacePresets.reload(resources);
                         top.skyeyefast.mchjong.client.RuleHelp.reload(resources);
                     });
-        net.minecraft.client.KeyMapping.Category.register(top.skyeyefast.mchjong.client.TableKeys.CATEGORY.id());
-        top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper::registerKeyMapping);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
