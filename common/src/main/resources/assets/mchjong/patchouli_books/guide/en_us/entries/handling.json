@@ -10,11 +10,19 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.page_1.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.handling.page_1_continued"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.handling.page_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.page_2.continued_1"
     }
   ]
 }

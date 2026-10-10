@@ -5,199 +5,199 @@
   "sortnum": 4,
   "pages": [
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_1",
-      "anchor": "kokushi_musou"
+      "anchor": "kokushi_musou",
+      "tiles": "19m 19p 19s 1234567z + 1m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/kokushi_musou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_1",
+      "tiles": "19m 19p 19s 1234567z + 1m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_2",
-      "anchor": "kokushi_thirteen_waiting"
+      "anchor": "kokushi_thirteen_waiting",
+      "tiles": "19m 19p 19s 1234567z + 7z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/kokushi_thirteen_waiting.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_2",
+      "tiles": "19m 19p 19s 1234567z + 7z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_3",
-      "anchor": "suuankou"
+      "anchor": "suuankou",
+      "tiles": "111m 333p 555s 77z 22m + 7z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/suuankou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_3",
+      "tiles": "111m 333p 555s 77z 22m + 7z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_4",
-      "anchor": "suuankou_tanki"
+      "anchor": "suuankou_tanki",
+      "tiles": "111m 333p 555s 777z 2m + 2m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/suuankou_tanki.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_4",
+      "tiles": "111m 333p 555s 777z 2m + 2m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_5",
-      "anchor": "daisangen"
+      "anchor": "daisangen",
+      "tiles": "555z 666z 777z 123m 22p",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/daisangen.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_5",
+      "tiles": "555z 666z 777z 123m 22p",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_6",
-      "anchor": "shousuushii"
+      "anchor": "shousuushii",
+      "tiles": "111z 222z 333z 44z 123m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/shousuushii.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_6",
+      "tiles": "111z 222z 333z 44z 123m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_7",
-      "anchor": "daisuushii"
+      "anchor": "daisuushii",
+      "tiles": "111z 222z 333z 444z 55m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/daisuushii.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_7",
+      "tiles": "111z 222z 333z 444z 55m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_8",
-      "anchor": "tsuuiisou"
+      "anchor": "tsuuiisou",
+      "tiles": "11z 22z 33z 44z 55z 66z 77z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/tsuuiisou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_8",
+      "tiles": "11z 22z 33z 44z 55z 66z 77z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_9",
-      "anchor": "chinroutou"
+      "anchor": "chinroutou",
+      "tiles": "111m 999m 111p 999s 99p",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/chinroutou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_9",
+      "tiles": "111m 999m 111p 999s 99p",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_10",
-      "anchor": "ryuuiisou"
+      "anchor": "ryuuiisou",
+      "tiles": "234s 234s 666s 888s 66z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/ryuuiisou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_10",
+      "tiles": "234s 234s 666s 888s 66z",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_11",
-      "anchor": "chuuren_poutou"
+      "anchor": "chuuren_poutou",
+      "tiles": "11123456789995m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/chuuren_poutou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_11",
+      "tiles": "11123456789995m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_12",
-      "anchor": "chuuren_nine_waiting"
+      "anchor": "chuuren_nine_waiting",
+      "tiles": "1112345678999m + 5m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/chuuren_nine_waiting.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_12",
+      "tiles": "1112345678999m + 5m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_13",
-      "anchor": "suukantsu"
+      "anchor": "suukantsu",
+      "tiles": "1111m 3333p 5555s 7777z 22m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/suukantsu.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_13",
+      "tiles": "1111m 3333p 5555s 7777z 22m",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_14",
-      "anchor": "tenhou"
+      "anchor": "tenhou",
+      "tiles": "123m 456m 789p 234s 55p",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/tenhou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_14",
+      "tiles": "123m 456m 789p 234s 55p",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_yakuman.page_15",
-      "anchor": "chihou"
+      "anchor": "chihou",
+      "tiles": "123m 456m 789p 234s 55p",
+      "face": "mchjong:kansai"
     },
     {
-      "type": "patchouli:image",
-      "images": [
-        "mchjong:textures/manual/riichi/chihou.png"
-      ],
-      "text": "manual.mchjong.example.description",
-      "border": false
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_yakuman.page_15",
+      "tiles": "123m 456m 789p 234s 55p",
+      "face": "mchjong:kansai"
     }
   ]
 }

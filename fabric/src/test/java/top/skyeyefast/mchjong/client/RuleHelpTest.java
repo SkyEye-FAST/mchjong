@@ -18,9 +18,21 @@ class RuleHelpTest {
                 RuleHelp.addEntry(entry, data, pages, awards);
                 var definitions = data.getAsJsonArray("pages");
                 for (int i = 0; i < definitions.size(); i += 2) {
-                    var topic = pages.get(entry + ":" + i);
+                    var topic = pages.get(definitions.get(i).getAsJsonObject().get("text").getAsString());
                     assertEquals(i, topic.page()); assertEquals(entry, topic.entry());
-                    assertEquals(definitions.get(i + 1).getAsJsonObject().getAsJsonArray("images").get(0).getAsString(), topic.image().toString());
+                    var spread = topic.diagram().spread(100);
+                    assertTrue(spread.tileWidth() >= 12, entry + ":" + i);
+                    int split = spread.across() ? spread.split() : 0;
+                    int[] bounds = {0, split, topic.diagram().parts().size()};
+                    for (int side = 0; side < 2; side++) {
+                        int rows = 0;
+                        for (int start = bounds[side]; start < bounds[side + 1]; rows++) {
+                            int end = topic.diagram().rowEnd(start, bounds[side + 1], spread.tileWidth(), 100);
+                            assertTrue(topic.diagram().width(start, end, spread.tileWidth()) <= 100);
+                            start = end;
+                        }
+                        assertTrue(rows <= 2, entry + ":" + i);
+                    }
                 }
             }
         }
