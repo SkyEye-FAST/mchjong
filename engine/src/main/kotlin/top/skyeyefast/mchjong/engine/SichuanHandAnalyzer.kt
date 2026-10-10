@@ -4,11 +4,17 @@ import mahjongutils.models.Tile as LibraryTile
 import mahjongutils.shanten.CommonShantenArgs
 import mahjongutils.shanten.ShantenWithoutGot
 
+/** Sichuan shape and fan analysis; input collections are not modified. */
 object SichuanHandAnalyzer {
     @JvmRecord
     data class Progress(val shanten: Int, val effectiveKinds: Set<Int>, val remainingCount: Int)
 
-    /** Post-discard shape. Regular shapes use mahjong-utils; Sichuan counts a four as two pairs. */
+    /**
+     * Post-discard progress for [voidSuit] 0..2 (characters, circles, bamboo).
+     * Requires 13 concealed-equivalent tiles, unique Sichuan physical IDs and no sequence melds.
+     * Regular shapes use mahjong-utils; Sichuan counts a four as two pairs.
+     * [visible] is deduplicated with owned tiles; invalid visible IDs are ignored and exhausted kinds excluded.
+     */
     @JvmStatic
     fun analyze(hand: List<Int>, melds: List<Meld>, voidSuit: Int, visible: List<Int>): Progress {
         val owned = hand + melds.flatMap { it.tiles() }
@@ -31,6 +37,7 @@ object SichuanHandAnalyzer {
         return Progress(shanten, java.util.Collections.unmodifiableSet(effective), effective.sumOf { 4 - (known[it] ?: 0) })
     }
 
+    /** Scores a complete [hand]; invalid size, physical IDs, duplicates, sequences or non-winning shapes return null. */
     @JvmStatic
     fun score(hand: List<Int>, melds: List<Meld>, rules: SichuanRules,
               afterKong: Boolean, shootAfterKong: Boolean, robbing: Boolean, lastTile: Boolean): SichuanSettlement.Score? {
@@ -64,6 +71,10 @@ object SichuanHandAnalyzer {
         return SichuanSettlement.Score(fan, rules.value(fan), patterns)
     }
 
+    /**
+     * Maximum structural base value over non-void completions, without situational fan or public-copy availability.
+     * Returns zero when the void suit is unset or still held, the hand size is wrong, or no completion scores.
+     */
     @JvmStatic
     fun readyValue(hand: List<Int>, melds: List<Meld>, voidSuit: Int, rules: SichuanRules): Int {
         val owned = hand + melds.flatMap { it.tiles() }

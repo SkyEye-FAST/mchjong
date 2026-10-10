@@ -17,7 +17,7 @@ import mahjongutils.shanten.CommonShantenArgs
 import mahjongutils.shanten.UnionShantenResult
 import mahjongutils.yaku.Yakus
 
-/** Riichi-only mahjong-utils boundary. No Minecraft or network types are accepted here. */
+/** Riichi analysis and scoring over engine tile IDs; input collections are not modified. */
 object RiichiHandAnalyzer {
     private fun options(rules: RiichiRules) = HoraOptions(aotenjou = false, allowKuitan = rules.kuitan(),
         hasRenpuuJyantouHu = rules.doubleWindPairFu(), hasKiriageMangan = rules.kiriageMangan(),
@@ -39,8 +39,9 @@ object RiichiHandAnalyzer {
     private fun kind(tile: LibraryTile) = Tile.parseKind(tile.toString())
 
     // Shanten concerns only the concealed remainder. Passing declared quads to
-    // upstream's move-suggestion API incorrectly suggests declaring those quads
-    // again. Attach fixed melds to scoring patterns, not to the move search.
+    // mahjong-utils 0.7.7's move-suggestion API incorrectly suggests declaring those
+    // quads again. Keep fixed melds out of the move search until upstream excludes
+    // already-declared quads, and attach them to scoring patterns instead.
     private fun analyze(hand: List<Int>, melds: List<Meld>, best: Boolean, goodShape: Boolean = false): UnionShantenResult {
         val result = MahjongUtilsInterop.analyze(CommonShantenArgs(tiles(hand), bestShantenOnly = best), goodShape)
         if (melds.isEmpty()) return result
@@ -53,6 +54,7 @@ object RiichiHandAnalyzer {
     fun shantenNumber(hand: List<Int>, melds: List<Meld>): Int =
         analyze(hand, melds, true).shantenInfo.shantenNum
 
+    /** Structural winning kinds for the pre-draw [hand], excluding fifth copies owned in [hand] or [melds]; no yaku check. */
     @JvmStatic
     fun waits(hand: List<Int>, melds: List<Meld>): Set<Int> {
         if (hand.size % 3 != 1) return emptySet()
@@ -88,11 +90,11 @@ object RiichiHandAnalyzer {
         return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
     }
 
-    /** All minimum-shanten discards, including ties across regular/special hands.
-     * An effective draw from one-shanten has minimum zero, so this includes
-     * every tenpai discard without analyzing the discarded retreat branches. */
+    /** All minimum-shanten discards, including ties across regular and special hands, keyed by tile kind. */
     @JvmStatic
     fun bestDiscardEfficiency(hand: List<Int>, melds: List<Meld>): Map<Int, TileEfficiency> {
+        // An effective draw from one shanten has minimum zero, so all tenpai
+        // discards survive this search without analyzing retreat branches.
         val result = analyze(hand, melds, true).shantenInfo as? ShantenWithGot ?: return emptyMap()
         return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
     }
@@ -148,6 +150,13 @@ object RiichiHandAnalyzer {
         }
     }
 
+    /**
+     * Chooses the qualifying interpretation with the largest total payment under [rules].
+     * [hand] contains the concealed remainder: append [winningTile] when its size plus three per meld is 13,
+     * otherwise analyze it as complete. [selfWind] and [roundWind] are wind indices 0..3 (East through North).
+     * Returns null for a non-winning shape or no qualifying yaku, except the configured Renhou alternative.
+     * Tile, wind and yaku-name conversion failures propagate to the caller.
+     */
     @JvmStatic
     fun score(hand: List<Int>, melds: List<Meld>, winningTile: Int, tsumo: Boolean,
               selfWind: Int, roundWind: Int, dora: Int, extra: List<String>, rules: RiichiRules): HandScore? {
@@ -170,8 +179,9 @@ object RiichiHandAnalyzer {
             val excludedIppatsu = if (!rules.ippatsuCountsTowardMinimum() && it.yaku.any { yaku -> yaku.name == "Ippatsu" }) 1 else 0
             it.yaku.isNotEmpty() && (it.hasYakuman || it.han - dora - excludedIppatsu >= rules.minHan())
         }.map { result ->
-            // 0.7.7 omits 3-han 60-fu kiriage and applies the kazoe switch to natural
-            // yakuman payments. Keep its yaku/fu analysis and correct the point-table inputs.
+            // mahjong-utils 0.7.7 omits 3-han 60-fu kiriage and applies the kazoe switch to natural
+            // yakuman payments. Correct the point-table inputs until upstream handles both cases;
+            // ScoringBridgeTest covers these corrections.
             val yakuman = if (result.hasYakuman) result.han / 13 else 0
             val pointHan = if (yakuman > 0) 13 else if (rules.kiriageMangan() && result.han == 3 && result.hu == 60) 5 else result.han
             val pointOptions = HanHuOptions(hasKiriageMangan = rules.kiriageMangan(),

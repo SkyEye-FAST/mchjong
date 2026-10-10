@@ -39,7 +39,7 @@ public final class McrGame {
         this(seed, new McrWall(physicalWall, opening));
     }
 
-    /** Room equipment supplies an unordered, complete stock; the engine owns the shuffle. */
+    /** Shuffles a copy of the complete 144-tile stock; invalid stock throws IllegalArgumentException. */
     public static McrGame fromStock(long seed, List<Integer> stock) { return new McrGame(seed, new McrWall(seed, 0, stock)); }
 
     private McrGame(long seed, McrWall wall) {
@@ -155,7 +155,11 @@ public final class McrGame {
         return replies[seat] == null ? choices.get(seat) : List.of();
     }
 
-    /** Accept only a current engine-issued action, once per seat in a response window. */
+    /**
+     * Applies a current issued action for seat 0..3; invalid seats, tokens or indices return false unchanged.
+     * A reaction records one response per seat and may return true before arbitration finishes.
+     * The caller authorizes the seat; this method has no player identity or mount information.
+     */
     public boolean act(int seat, long expectedDecision, int actionIndex) {
         if (seat < 0 || seat >= 4 || expectedDecision != decision || replies[seat] != null
             || actionIndex < 0 || actionIndex >= choices.get(seat).size()) return false;
@@ -183,7 +187,7 @@ public final class McrGame {
         return true;
     }
 
-    /** Hand advancement is an engine host operation, separate from player tile actions. */
+    /** Starts the next hand only at HAND_END; otherwise returns false unchanged, including at MATCH_END. */
     public boolean nextHand() {
         if (phase != Phase.HAND_END) return false;
         handIndex++;

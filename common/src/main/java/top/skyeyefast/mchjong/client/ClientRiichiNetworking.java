@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.network.RiichiViewPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
+/** Applies recipient snapshots and routes screen updates on the logical client's game thread. */
 public final class ClientRiichiNetworking {
     private ClientRiichiNetworking() {}
 

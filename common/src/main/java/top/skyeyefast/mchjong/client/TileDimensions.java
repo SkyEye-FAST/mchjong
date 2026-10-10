@@ -17,11 +17,12 @@ public record TileDimensions(float width, float height, float depth) {
     }
 
     public float ratio() { return height / width; }
+    /** Unrotated tile-local box centered on the mesh origin: width along x, height along y, depth along z. */
     public AABB bounds() {
         return new AABB(-width / 2.0, -height / 2.0, -depth / 2.0, width / 2.0, height / 2.0, depth / 2.0);
     }
 
-    /** Map the shared canonical mesh to this envelope once, after its pose rotations. */
+    /** Scales the current pose from the canonical LARGE mesh to this envelope; apply once after its rotations. */
     public void apply(PoseStack pose) {
         pose.scale(width / LARGE.width, height / LARGE.height, depth / LARGE.depth);
     }
