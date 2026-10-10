@@ -5,11 +5,14 @@ import com.google.gson.GsonBuilder;
 import net.minecraft.server.level.ServerPlayer;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
+/**
+ * Serverbound table requests shared by all loaders. Receivers must run on the logical server's game thread.
+ * Reach checks inspect only loaded chunks; the table then validates request identity and player authority.
+ */
 public final class TableNetworking {
     public static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
     private TableNetworking() {}
 
-    /** Both loader handlers enqueue this on the server thread. Do not force-load chunks. */
     public static void receive(ServerPlayer player, RiichiActionPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)

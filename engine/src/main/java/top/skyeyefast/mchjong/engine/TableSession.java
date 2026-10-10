@@ -9,7 +9,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-/** The closed, server-owned room boundary shared by the built-in rule runtimes. */
+/**
+ * Mutable room lifecycle shared by the built-in rule runtimes; server adapters serialize access.
+ * Seats are zero-based room positions, reassigned by the wind lottery before play.
+ */
 public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession, TaiwanSession {
     public enum Lifecycle { LOBBY, PLAYING, FINISHED }
     public static final int AWAY_GRACE_TICKS = 5 * 20;
@@ -125,7 +128,11 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         return true;
     }
 
-    /** A successful mount is observed by the world adapter, not asserted by a network request. */
+    /**
+     * Updates presence from world-observed mounts and connections without modifying either input.
+     * Only a unique mount at the assigned seat grants seated presence; client requests cannot assert it.
+     * Returns whether presence changed. Lobby presence changes clear the affected participants' readiness.
+     */
     public boolean synchronizeSeats(Map<UUID, Integer> mounted, Set<UUID> connected) {
         var observed = Map.copyOf(mounted);
         boolean changed = false;
@@ -188,7 +195,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         return seat >= 0 && participants[seat].presence == PlayerPresence.SEATED ? seat : -1;
     }
 
-    /** A decision is meaningful only inside this table's current live incarnation. */
+    /** Returns the actor's seated position, or -1 for mismatched request authority or an unseated actor. */
     public int authorize(UUID actor, UUID expectedTable, UUID expectedIncarnation, long expectedDecision,
                          long currentDecision) {
         if (!tableId.equals(expectedTable) || !incarnation.equals(expectedIncarnation)
@@ -222,7 +229,13 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         }
     }
 
-    /** Change the built-in ruleset while retaining only the prepared human roster. */
+    /**
+     * Creates a lobby session for another variant without changing this session; the caller installs it.
+     * Retains human identities at seats within the new capacity, the host, seed, world policy and hint setting.
+     * Presence is not copied; rules, equipment and seating preparation start fresh with a new incarnation.
+     * Returns null for an unchanged variant or a rejected request. Only the current host may switch an
+     * automatic, bot-free lobby in the gathering stage, using its current incarnation and room decision.
+     */
     public TableSession selectVariant(UUID actor, UUID incarnation, long expectedDecision, MahjongVariant selected) {
         if (!this.incarnation.equals(incarnation) || selected == null || selected == variant || !lobby() || !isHost(actor)
             || expectedDecision != decision || exitVote != null || manual
@@ -448,7 +461,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         renewIncarnation();
     }
 
-    /** Room clocks and votes run before the rule runtime advances a tick. */
+    /** Advances presence and exit timers; returns false when absence or an exit vote blocks the rule tick. */
     protected final boolean tickRoom() {
         for (int seat = 0; seat < capacity; seat++) {
             var participant = participants[seat];

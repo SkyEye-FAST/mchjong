@@ -5,7 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
-/** Projection and picking rays from the same rendered world camera and FOV. */
+/** Projects table-relative block coordinates to GUI pixels using the rendered world camera and FOV. */
 record SeatedTableProjection(Vec3 origin, Vec3 forward, Vec3 right, double focal, int width, int height) {
     record Point(double x, double y, double scale) {}
     record Pointer(Vec3 origin, Vec3 ray) {}
@@ -21,6 +21,7 @@ record SeatedTableProjection(Vec3 origin, Vec3 forward, Vec3 right, double focal
             forward, right, height / (2 * Math.tan(Math.toRadians(fov) / 2)), width, height);
     }
 
+    /** Returns null at or behind the near depth, measured in blocks along the camera's forward axis. */
     Point project(Vec3 relative, double near) {
         var delta = relative.subtract(origin);
         double depth = delta.dot(forward);
@@ -30,6 +31,7 @@ record SeatedTableProjection(Vec3 origin, Vec3 forward, Vec3 right, double focal
             height / 2.0 - delta.dot(right.cross(forward)) * scale, scale);
     }
 
+    /** Builds a table-relative ray from GUI pixels measured from the top-left; the ray is not normalized. */
     Pointer pointer(double x, double y) {
         return new Pointer(origin, forward.add(right.scale((x - width / 2.0) / focal))
             .add(right.cross(forward).scale((height / 2.0 - y) / focal)));

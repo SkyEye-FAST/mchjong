@@ -80,6 +80,27 @@ Guides describe current capabilities, permissions and privacy, not retired featu
 speculative roadmaps or unrelated comparisons. Keep third-party attribution in
 `NOTICE.md`/license notices and version support in Compatibility sections.
 
+## Code comments
+
+- Keep English comments concise and natural. Javadoc/KDoc describe responsibility
+  and caller contracts; ordinary comments explain reasons, constraints and surprising behavior.
+- Check implementation and callers before documenting input mutation, failure/null
+  semantics, state changes, thread/logical side, coordinate origins, units or seat numbering.
+  Do not promise guarantees the implementation does not provide.
+- Explain only algorithm ideas and invariants needed to read the code. Preserve useful
+  reasons; remove code narration, duplicate prose, empty templates and development diaries.
+  Put longer design context in the owning guide under `docs/`.
+- Identify the applicable ruleset or clause for special rules. For compatibility
+  workarounds, state the cause, affected version and removal condition; cite real
+  issues or regression tests when available.
+- In KDoc, prefer parameter links in prose. Add tags when useful, without requiring
+  documentation for every method or a comment coverage target.
+
+Style references: [Guava contracts](https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/base/Preconditions.html),
+[OpenJDK implementation notes](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/List.java),
+[Fabric platform boundaries](https://docs.fabricmc.net/develop/networking) and
+[KDoc](https://kotlinlang.org/docs/kotlin-doc.html).
+
 ## Validation
 
 Use JDK 21 and the checked-in Gradle wrapper (`--warning-mode fail`). Test ownership
