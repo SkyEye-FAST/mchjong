@@ -199,6 +199,9 @@ final class AutomationControlsSmoke {
                 && (a.getY() + a.getHeight()) <= boundHeight, "Automatic control exceeds its layout canvas");
             for (int j = i + 1; j < widgets.size(); j++) {
                 var b = widgets.get(j);
+                // The rule viewport intentionally contains its independently registered native buttons.
+                if (a instanceof top.skyeyefast.mchjong.client.RoomVariantList list && list.children().contains(b)
+                    || b instanceof top.skyeyefast.mchjong.client.RoomVariantList other && other.children().contains(a)) continue;
                 require((a.getX() + a.getWidth()) <= b.getX() || (b.getX() + b.getWidth()) <= a.getX()
                     || (a.getY() + a.getHeight()) <= b.getY() || (b.getY() + b.getHeight()) <= a.getY(), "Automatic controls overlap");
             }

@@ -3,9 +3,9 @@
 This is the shared visual contract for all project-owned screens, HUD cards,
 inventory panels and controls. Read it before adding or changing client UI.
 
-## Colors and surfaces
+## Felt and brass
 
-Use a restrained dark-teal surface, warm-white type and pale-green accents.
+Use a restrained dark-teal surface, warm-white type and sparse brass accents.
 The table and the tile faces remain the visual focus. Interface panels should
 look like one family, not a collection of stock menus with different tints.
 Use square, pixel-aligned edges, one-pixel borders and flat fills. Do not add
@@ -17,16 +17,16 @@ large rounded cards or textures copied from unrelated Minecraft menus.
 | Token | ARGB | Purpose |
 | --- | --- | --- |
 | `BACKDROP` | `D90B1418` | Dim the world behind a modal panel |
-| `PANEL` | `F2142B2A` | Main panel surface |
-| `SURFACE` | `FF203C38` | Resting controls and cards |
-| `HOVER` | `FF2D4E47` | Pointer hover |
-| `INPUT` | `FF0E211F` | Recessed fields and inventory wells |
-| `EDGE` | `FF49635A` | Quiet one-pixel separators |
-| `TEXT` | `FFF4EBDD` | Main text |
-| `MUTED` | `FFB5C9BE` | Supporting text |
+| `PANEL` | `F018292E` | Main panel surface |
+| `SURFACE` | `FF22383D` | Resting controls and cards |
+| `HOVER` | `FF304B50` | Pointer hover |
+| `INPUT` | `FF101E23` | Recessed fields and inventory wells |
+| `EDGE` | `FF4C686B` | Quiet one-pixel separators |
+| `TEXT` | `FFF1EEE3` | Main text |
+| `MUTED` | `FFBDCFCA` | Supporting text |
 | `DISABLED` | `FF81938F` | Unavailable controls |
-| `ACCENT` | `FFB8D9CC` | Pale green emphasis and primary outlines |
-| `SELECTED` | `FF294B42` | Selected fill |
+| `ACCENT` | `FFE3C082` | Brass; selected state and primary action |
+| `SELECTED` | `FF365851` | Selected fill |
 | `POSITIVE` | `FFA9D8B8` | Positive state, paired with a label |
 | `NEGATIVE` | `FFF0AAA4` | Errors/losses, paired with a label or sign |
 | `DANGER` | `FFA33232` | Persistent local furiten badge |
@@ -34,8 +34,10 @@ large rounded cards or textures copied from unrelated Minecraft menus.
 
 Use these tokens rather than introducing almost-identical local colors. Tile
 artwork, felt dyes, suit colors and world materials are not interface tokens.
-Primary buttons use dark teal with light text and an accent outline; do not fill
-an entire button yellow. Yellow may remain in small indicators and text.
+Primary buttons use dark teal with light text, a brass outline and a bottom
+accent strip. Brass also marks selected navigation, focus, locked slots and the
+shared backdrop's top rule. Keep ordinary borders quiet; do not fill an entire
+button yellow.
 Always display the full Immersive View label, including in
 compact toolbars. Reserve emphasis for the current selection,
 keyboard focus or an important decision. Do not decorate controls or titles with
@@ -148,7 +150,7 @@ uses a drop shadow for contrast.
 ## Layout and information hierarchy
 
 Lobby and settings controls share straight row baselines and four-pixel gutters.
-Primary actions use dark teal and a pale-green outline on the same
+Primary actions use dark teal with a brass outline and bottom accent on the same
 footer baseline as their secondary actions. Match HUD cards and action rows share
 aligned edges and baselines; do not add decorative staggering or overhangs.
 On the immersive canvas, spacing follows the content scale. Keep native rectangular
@@ -207,15 +209,20 @@ Taiwan uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
 are shared. Its lobby exposes human and built-in Bot seats, presets,
 payment/reserve rules, clocks, shared Replay navigation and convenience hints.
-All four variants share one lobby layout. Horizontal tabs select Riichi, MCR,
-Sichuan or Taiwan; variant selection never appears among that variant's settings. The body
-has Players and bots and Match settings tabs. Keep the roster visible on arrival,
-with per-seat Bot and ownership controls. Match settings paginate player count,
-presets, detailed rules, visibility, timing and convenience hints. Invitation and
-replay navigation sit beside the body tabs. The header names the current preparation
-stage and the footer supplies one brief next-step instruction. Leave and host dissolution stay
-distinct in the toolbar. Fill empty seats is a separate secondary action beside
-the prominent seat-preparation action; drawing winds and readiness reuse its footer.
+All variants share one lobby layout. A left sidebar selects the rule variant;
+its width and row height are independent of the number of variants. Overflow
+scrolls by whole rows using the wheel or a visible, draggable scrollbar. Hidden
+rows cannot receive pointer input, and a newly selected variant is brought into
+view. Variant selection never appears among that variant's settings. The right
+body has Players and bots and Match settings tabs, with invitation and replay
+navigation on a separate row below. Keep the roster visible on arrival, with
+per-seat Bot and ownership controls. Match settings paginate player count,
+presets, detailed rules, visibility, timing and convenience hints. The footer
+spans the full panel so primary actions retain their space at small sizes.
+The header names the current preparation stage and the footer supplies one brief
+next-step instruction. Leave and host dissolution stay distinct in the toolbar.
+Emphasize Fill empty seats while players are missing, then seat preparation when
+available; drawing winds and readiness reuse the same footer.
 Settlement uses a top action with the server's countdown in parentheses beside
 the view selector (and the ordinary table's point-stick drawer), and
 automatically opens final standings at the match's second stage. The roster

@@ -7,16 +7,16 @@ import net.minecraft.network.chat.Component;
 /** Shared visual vocabulary. Interaction remains in Minecraft's native widget/menu classes. */
 public final class MahjongUi {
     public static final int BACKDROP = 0xd90b1418;
-    public static final int PANEL = 0xf2142b2a;
-    public static final int SURFACE = 0xff203c38;
-    public static final int HOVER = 0xff2d4e47;
-    public static final int INPUT = 0xff0e211f;
-    public static final int EDGE = 0xff49635a;
-    public static final int TEXT = 0xfff4ebdd;
-    public static final int MUTED = 0xffb5c9be;
+    public static final int PANEL = 0xf018292e;
+    public static final int SURFACE = 0xff22383d;
+    public static final int HOVER = 0xff304b50;
+    public static final int INPUT = 0xff101e23;
+    public static final int EDGE = 0xff4c686b;
+    public static final int TEXT = 0xfff1eee3;
+    public static final int MUTED = 0xffbdcfca;
     public static final int DISABLED = 0xff81938f;
-    public static final int ACCENT = 0xffb8d9cc;
-    public static final int SELECTED = 0xff294b42;
+    public static final int ACCENT = 0xffe3c082;
+    public static final int SELECTED = 0xff365851;
     public static final int POSITIVE = 0xffa9d8b8;
     public static final int NEGATIVE = 0xfff0aaa4;
     public static final int DANGER = 0xffa33232;
@@ -38,14 +38,15 @@ public final class MahjongUi {
     public static void backdrop(GuiGraphics g, int width, int height, int contentWidth) {
         int span = Math.min(contentWidth, width - 24);
         panel(g, (width - span) / 2 - 8, 6, span + 16, height - 12);
+        g.fill((width - span) / 2, 7, (width + span) / 2, 8, ACCENT);
     }
 
     public static void control(GuiGraphics g, int x, int y, int width, int height,
                                boolean active, boolean hover, boolean focused, boolean selected, boolean primary) {
-        int fill = !active ? INPUT : hover ? HOVER : primary || selected ? SELECTED : SURFACE;
+        int fill = selected ? SELECTED : !active ? INPUT : hover ? HOVER : SURFACE;
         g.fill(x, y, x + width, y + height, fill);
-        if (primary || selected || hover || focused) g.renderOutline(x, y, width, height, focused ? TEXT : active && (primary || selected) ? ACCENT : EDGE);
-        if (selected && !primary) g.fill(x + 4, y + height - 2, x + width - 4, y + height - 1, ACCENT);
+        g.renderOutline(x, y, width, height, active && focused ? TEXT : selected || primary ? ACCENT : EDGE);
+        if (selected || primary && active) g.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, ACCENT);
         if (active && focused) g.renderOutline(x + 2, y + 2, width - 4, height - 4, ACCENT);
     }
 
