@@ -84,12 +84,8 @@ final class SettlementSmoke {
                     throw new IllegalStateException("Settlement locale viewport was not 320x240");
                 checkBounds(client);
                 capture(client, output, "18-settlement-" + LANGUAGES[locale] + ".png");
-                var parent = client.screen;
-                var panel = panel(client);
-                parent.setFocused(panel); panel.setFocused(true);
-                parent.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0);
-                parent.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
-                if (!(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen)) throw new IllegalStateException("Keyboard result explanation did not open");
+                clickAward(client);
+                if (!(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen)) throw new IllegalStateException("Mouse result explanation did not open");
                 checkBounds(client);
                 return false;
             }
@@ -101,9 +97,6 @@ final class SettlementSmoke {
                 return false;
             }
             if (localeTicks == 13) {
-                clickAward(client);
-                if (!(client.screen instanceof top.skyeyefast.mchjong.client.TableHelpScreen)) throw new IllegalStateException("Mouse result explanation did not open");
-                client.screen.onClose();
                 click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.2").getString());
                 return false;
             }
@@ -150,10 +143,10 @@ final class SettlementSmoke {
         }
         ticks++;
         if (ticks == 2) {
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            InputSmoke.switchView(client.screen);
         } else if (ticks == 6) {
             capture(client, output, "07-readout-complete-immersive.png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            InputSmoke.switchView(client.screen);
         } else if (ticks == 10) {
             checkBounds(client);
             capture(client, output, "08-settlement.png");
@@ -175,11 +168,10 @@ final class SettlementSmoke {
             click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.view_results").getString());
         } else if (ticks == 40) {
             TableResults panel = panel(client);
-            client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+            int span = panel.getWidth() - 20 - (panel.getWidth() >= 500 ? 156 : 0);
+            client.screen.mouseClicked(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, 0);
         } else if (ticks == 45) {
-            if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Keyboard winner selection failed");
-            capture(client, output, "11-settlement-keyboard.png");
+            if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Winner selection failed");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
@@ -249,11 +241,11 @@ final class SettlementSmoke {
             acceptFixture(table, fixture);
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         } else if (ticks == 100) {
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            InputSmoke.switchView(client.screen);
             if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
         } else if (ticks == 105) {
             capture(client, output, "14-settlement-draw-immersive.png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            InputSmoke.switchView(client.screen);
         } else if (ticks == 110) {
             checkBounds(client);
             capture(client, output, "14-settlement-draw.png");

@@ -17,8 +17,7 @@ Sichuan and Taiwan chapters explain play from dealing to match end, with complet
 award indexes, illustrated hands, payment examples and preset differences. The
 [Rules guide](RULES.md) also collects these player rules.
 Click an award in a settlement to read its explanation and illustrated example.
-With the receipt focused, Up/Down selects an explanation and Enter opens it;
-Left/Right still selects the winner. Rule settings offer a `?` beside each option.
+Click the winner tabs to switch hands. Rule settings offer a `?` beside each option.
 These explanations work without Patchouli. When installed, the Handbook button
 opens the corresponding entry and page; closing the book returns to the explanation,
 and Back or Escape returns to the original screen.
@@ -42,8 +41,7 @@ lay a cloth on its surface. A complete set and a cloth are required to play.
 On ordinary tables, sweep the face-down tiles across the felt to shuffle, drag
 your highlighted loose tiles toward your wall, and pull starting packets and
 draws from the highlighted wall stack toward your hand. Automatic tables handle
-these steps for you. Tab focuses the physical source; Enter or Space performs
-its available action with keyboard and narration support.
+these steps for you.
 See [Survival equipment and recipes](SURVIVAL.md) for the complete recipes,
 component schema, dyes, glass tiles, point sticks and removal controls.
 
@@ -58,7 +56,7 @@ dismount with Minecraft's sneak control after closing it.
 
 ### Automatic-table MCR
 
-In the automatic-table lobby, the host selects MCR from the variant sidebar. Fill
+In the automatic-table lobby, the host selects MCR from the top rule tabs. Fill
 all four seats with humans and built-in Bots, and store a complete standard
 144-tile box with eight flowers and a cloth. Assign seats; each human takes their
 assigned stool and presses Ready. Bots are ready automatically. For one human
@@ -66,11 +64,11 @@ and three Bots, follow [Rooms and permissions](ROOMS.md#computer-players). The h
 play. The table runs a fixed sixteen-hand match.
 
 The seated view shows physical walls, six-column rivers, left-corner melds,
-flowers, winds, scores and remaining tiles. Press V or the view button to switch
+flowers, winds, scores and remaining tiles. Click the view button to switch
 to the immersive table. Select and discard hand tiles with your personal
-single-click, double-click or confirmation preference; Enter confirms selection.
-Tab focuses tiles and actions, P passes, and the seated camera supports inspect,
-right-drag, zoom and Home reset through the shared bindings.
+single-click, double-click or confirmation preference. Click Discard to confirm
+selection. Right-drag adjusts the seated view, the wheel changes distance, and
+Personal Settings offers a view reset.
 
 Use the Chow, Pung, Melded Kong, Added Kong, Concealed Kong, Win and Pass buttons
 when offered. The table automatically draws and replaces flowers. Initial flower
@@ -116,8 +114,8 @@ assign seats and have each player sit at their assigned stool and press Ready.
 
 The dealer starts with seventeen tiles and the others with sixteen. Draws and
 flower replacements are automatic. Select a physical tile to discard; Chow,
-Pong, Kong, Ready, Win and Pass buttons appear when legal. The same hand selection,
-Enter confirmation, P response and V seated/immersive controls apply. Ready
+Pong, Kong, Ready, Win and Pass buttons appear when legal. The same mouse selection,
+confirmation and view buttons apply. Ready
 includes the declared discard and locks subsequent discards to the drawn tile.
 Flowers, rivers and exposed melds remain public. Opponent concealed hands and
 covered kongs remain hidden, including after settlement.
@@ -179,16 +177,14 @@ tile order. Drag a tile onto another tile to move it within your hand; drag it
 up by at least 48 GUI pixels to discard it. In immersive view, the threshold
 is 96 pixels on the fixed virtual canvas. A shorter drag keeps the tile in
 your hand. Single-click and double-click remain discard choices.
-Enter confirms the selected tile; R opens riichi selection
-and P passes a response. Riichi highlights only legal discard candidates and
+Click Discard to confirm the selected tile, Riichi to choose a riichi discard,
+or Pass to skip a response. Riichi highlights only legal discard candidates and
 requires confirmation. Right-click or Esc cancels a selection before closing the
 overlay. Right-drag looks freely around the seated table; the wheel moves closer
-or farther away. Shift-right-drag pans across the table, and holding an arrow key
-finely adjusts yaw or pitch. Hold C to inspect with a smooth move toward the table,
-a narrower field of view and gentler controls. Home restores the complete seated
-view. Distance and height sliders preserve the current look direction.
-Rebind C, V, Home, R, P and E in Minecraft's Controls → Key Binds → Mahjong table.
-Use the top-bar view button or V to switch between the seated and immersive
+or farther away. Shift-right-drag pans across the table; Shift-wheel adjusts height.
+Reset the seated view in Personal Settings. Distance and height sliders preserve
+the current look direction.
+Use the top-bar view button to switch between the seated and immersive
 views. Immersive play uses one fixed 1280 × 800 virtual mahjong layout: your large
 clickable hand and raised rack form the foreground. Riichi melds lie flat at each
 owner's right-hand table corner; MCR, Sichuan and Taiwan melds begin on the owner's left
@@ -204,9 +200,9 @@ Minecraft GUI scale and window dimensions do not reflow this layout. The complet
 solid black letterbox or pillarbox bars around the unused area. Small windows keep the
 same proportions and rendering instead of switching to another layout.
 It remains usable under ceilings and other world obstructions, with the same
-discard modes and keyboard controls. Closing the overlay reveals the world again.
-Ordinary-table handling actions are available as buttons in immersive view;
-E opens your point-stick drawer.
+discard modes and mouse controls. Closing the overlay reveals the world again.
+Ordinary-table handling actions are available as buttons in immersive view.
+Click the side drawer to manage point sticks, or use Point Sticks in immersive view.
 
 The compact top bar shows points and essential table information; hover over a
 player card for detailed status. Player names have skin portraits; practice bots
@@ -245,7 +241,7 @@ privacy are described in its table section above.
 Results reveal yaku one at a time with the selected voice preset, followed by
 points and the hand grade. They also show winning hands and melds, and revealed
 dora/ura indicators without a scroll viewport. Select a winner's tab
-when several players ron, or focus the result panel and use Left/Right.
+when several players ron.
 Separate tabs show hand details, animated point changes and server-authoritative
 final standings. Large windows show point summaries alongside the hand;
 shorter windows keep the dedicated point-change tab available. **View table** hides the receipt without
@@ -285,8 +281,8 @@ Use **Replays** in the table overlay or `/mchjong replays [page]` anywhere on th
 server. Select a match to view completed hands; `/mchjong replay <match UUID>`
 opens a specific match. Only that match's human participants can retrieve it.
 Use the timeline, step controls and Play/Pause to inspect draws, discards, calls,
-riichi, indicators and settlements. Arrow keys step, Home/End seek, and Space
-toggles playback. Scroll the board to inspect every seat.
+riichi, indicators and settlements. Use the viewpoint button or scroll the board
+to inspect every seat.
 
 **Export Tenhou JSON** writes `<game directory>/replays/mchjong/<match UUID>.json`.
 The export uses Tenhou's `/6` JSON interchange format and is saved locally.

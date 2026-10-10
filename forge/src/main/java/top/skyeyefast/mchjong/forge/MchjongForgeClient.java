@@ -9,7 +9,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.event.GameShuttingDownEvent;
 import net.minecraftforge.event.TickEvent;
@@ -39,9 +38,6 @@ public final class MchjongForgeClient {
         event.registerReloadListener((ResourceManagerReloadListener) RuleHelp::reload);
     }
 
-    @SubscribeEvent public static void keys(RegisterKeyMappingsEvent event) {
-        TableKeys.ALL.forEach(event::register);
-    }
 
     @SubscribeEvent public static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {

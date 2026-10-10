@@ -259,7 +259,7 @@ final class McrAutoTableSmoke {
                         .findFirst().orElseThrow();
                     var pointer = project(client, pos, piece.position());
                     check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Seated MCR hand picking failed");
-                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                    InputSmoke.switchView(screen);
                     check(screen.immersive(), "MCR view binding did not open the immersive canvas");
                     presentationStep++;
                     break;
@@ -275,15 +275,8 @@ final class McrAutoTableSmoke {
                     "hints.mchjong.after_discard", "").getString()), "MCR native hint focus or narration lost the discard preview");
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), message -> {});
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
-                double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
-                var tileTarget = screen.children().stream().filter(child -> child instanceof MahjongButton
-                    && child.getClass().getSimpleName().equals("HandTarget")).map(child -> (MahjongButton) child)
-                    .filter(target -> target.active && target.getX() > 0).findFirst().orElseThrow();
-                double x = (screen.width - 1280 * scale) / 2 + (tileTarget.getX() + tileTarget.getWidth() / 2.0) * scale;
-                double y = (screen.height - 800 * scale) / 2 + (tileTarget.getY() + tileTarget.getHeight() / 2.0) * scale;
                 firstDecision = view.game().decision();
-                check(screen.mouseClicked(x, y, 0), "Immersive hand did not accept canvas coordinates");
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
+                InputSmoke.click(screen, "mcr.mchjong.action.discard");
                 stage++;
             }
             case 8 -> {
@@ -399,15 +392,15 @@ final class McrAutoTableSmoke {
                 if (!(client.screen instanceof ReplayScreen replay)) break;
                 check(replay.match().variant() == MahjongVariant.MCR && replay.cursor() == 0,
                     "MCR replay did not open at the initial deal");
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+                InputSmoke.nextReplay(replay);
                 check(replay.cursor() == 1, "MCR replay did not advance one event");
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.click(replay, "replay.mchjong.view");
                 stage++;
             }
             case 17 -> {
                 if (!(client.screen instanceof ReplayScreen replay)) break;
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay.png", client.getMainRenderTarget(), message -> {});
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0);
+                InputSmoke.click(replay, ">|");
                 stage++;
             }
             case 18 -> {
@@ -450,7 +443,7 @@ final class McrAutoTableSmoke {
         return -1;
     }
 
-    private static net.minecraft.world.phys.Vec3 project(Minecraft client, BlockPos pos, net.minecraft.world.phys.Vec3 point) {
+    static net.minecraft.world.phys.Vec3 project(Minecraft client, BlockPos pos, net.minecraft.world.phys.Vec3 point) {
         var camera = client.gameRenderer.getMainCamera();
         double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
         var forward = new net.minecraft.world.phys.Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));

@@ -15,7 +15,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -434,29 +433,6 @@ public final class TableResults extends AbstractWidget {
         if (page != Page.PAYMENTS) return false;
         paymentPage = Math.max(0, paymentPage + (vertical < 0 ? 1 : -1));
         return true;
-    }
-    @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (page == Page.HAND && !awardHits.isEmpty()) {
-            helpRow = Math.clamp(helpRow, 0, awardHits.size() - 1);
-            if (key == GLFW.GLFW_KEY_UP || key == GLFW.GLFW_KEY_DOWN) {
-                helpRow = Math.floorMod(helpRow + (key == GLFW.GLFW_KEY_UP ? -1 : 1), awardHits.size()); return true;
-            }
-            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE) {
-                RuleHelp.openAward(Minecraft.getInstance().screen, awardHits.get(helpRow).text()); return true;
-            }
-        }
-        if (page == Page.PAYMENTS && (key == GLFW.GLFW_KEY_PAGE_UP || key == GLFW.GLFW_KEY_PAGE_DOWN)) {
-            paymentPage = Math.max(0, paymentPage + (key == GLFW.GLFW_KEY_PAGE_DOWN ? 1 : -1)); return true;
-        }
-        if (page == Page.HAND && view.wins().size() > 1 && (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT)) {
-            winner = selectedWinner();
-            if (readout != null) readout.finish(Util.getMillis());
-            RiichiAudio.finishResult();
-            winner = Math.floorMod(winner + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1), view.wins().size());
-            helpRow = 0;
-            return true;
-        }
-        return super.keyPressed(key, scanCode, modifiers);
     }
     @Override protected void updateWidgetNarration(NarrationElementOutput output) {
         var summary = getMessage().copy();

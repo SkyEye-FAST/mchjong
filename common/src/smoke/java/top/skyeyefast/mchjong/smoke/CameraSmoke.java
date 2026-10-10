@@ -31,22 +31,20 @@ final class CameraSmoke {
         }
         if (++ticks < 24) return false;
         var camera = client.gameRenderer.getMainCamera();
-        if (sample < 6) {
+        if (sample < 3) {
             var seat = (SeatEntity) client.player.getVehicle();
             var pose = TableSettings.get().camera();
             double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
             double normal = TableSettings.get().cameraFov(client.options.fov().get(),
                 (double) client.getWindow().getWidth() / client.getWindow().getHeight());
-            require(Math.abs(fov - pose.fov(normal)) < 1e-5, "Rendered inspect FOV differs from picking FOV");
+            require(Math.abs(fov - normal) < 1e-5, "Rendered seated FOV differs from picking FOV");
             require(camera.getPosition().distanceTo(client.player.getEyePosition()) < 1e-6,
-                "Native picking does not share the rendered inspect eye");
+                "Native picking does not share the rendered seated eye");
             require(camera.getPosition().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
-                "Overlay picking does not share the inspect eye");
-            require(sample % 2 == 0 ? Math.abs(fov - normal) < 1e-5 : fov < normal - 10,
-                "Inspect transition did not reach its expected FOV");
+                "Overlay picking does not share the seated eye");
             SmokeScreenshots.grab(output.toFile(), "59-camera-fov-" + client.options.fov().get()
-                + (sample % 2 == 0 ? "-normal.png" : "-inspect.png"), client.getMainRenderTarget(), ignored -> {});
-        } else if (sample == 6) {
+                + "-normal.png", client.getMainRenderTarget(), ignored -> {});
+        } else if (sample == 3) {
             require(camera.isDetached(), "Third-person camera was captured by seated controls");
             var pose = TableSettings.get().camera();
             double distance = pose.distance();
@@ -63,7 +61,7 @@ final class CameraSmoke {
             SmokeScreenshots.grab(output.toFile(), "59-readable-dense-" + client.screen.width + "x" + client.screen.height + ".png",
                 client.getMainRenderTarget(), ignored -> {});
         }
-        if (++sample == 9) {
+        if (++sample == 6) {
             client.options.fov().set(originalFov);
             client.options.setCameraType(originalType);
             client.setWindowActive(originalActive);
@@ -78,18 +76,17 @@ final class CameraSmoke {
     }
 
     private void show(Minecraft client, MahjongTableBlockEntity table) {
-        client.options.setCameraType(sample == 6 ? net.minecraft.client.CameraType.THIRD_PERSON_BACK : net.minecraft.client.CameraType.FIRST_PERSON);
-        client.options.fov().set(new int[]{50, 70, 110}[Math.min(2, sample / 2)]);
-        if (sample >= 7) {
-            client.getWindow().setWindowed(sample == 7 ? 960 : 1280, sample == 7 ? 600 : 800);
+        client.options.setCameraType(sample == 3 ? net.minecraft.client.CameraType.THIRD_PERSON_BACK : net.minecraft.client.CameraType.FIRST_PERSON);
+        client.options.fov().set(new int[]{50, 70, 110}[Math.min(2, sample)]);
+        if (sample >= 4) {
+            client.getWindow().setWindowed(sample == 4 ? 960 : 1280, sample == 4 ? 600 : 800);
             client.options.guiScale().set(2);
             client.resizeDisplay();
         }
         var screen = new RiichiTableScreen(table.getBlockPos());
         client.setScreen(screen);
         screen.resetView();
-        if (sample >= 7) screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        else if (sample % 2 == 1) screen.keyPressed(GLFW.GLFW_KEY_C, 0, 0);
+        if (sample >= 4) InputSmoke.switchView(screen);
         long window = client.getWindow().getWindow();
         var cursor = GLFW.glfwSetCursorPosCallback(window, null);
         if (cursor == null) throw new IllegalStateException("Missing native cursor callback");

@@ -41,48 +41,13 @@ class SeatedCameraStateTest {
         camera.raise(100);
         assertEquals(TableSettings.MAX_CAMERA_HEIGHT, camera.localEye().y);
         camera.reset(2, 2.1);
-        for (int i = 0; i < 30; i++) camera.tick(true);
         camera.raise(1);
-        assertEquals(2.12, camera.localEye().y, 1e-6);
+        assertEquals(2.15, camera.localEye().y, 1e-6);
         camera.reset(2, 2.1);
         assertEquals(new Vec3(0, 2.1, 2), camera.localEye());
     }
 
-    @Test void inspectSmoothlyCombinesDollyAndFovAndReducesBothLookAxes() {
-        var camera = new SeatedCameraState(2, 2.2);
-        for (double fov : new double[]{30, 70, 110}) {
-            camera.reset(2, 2.2);
-            assertEquals(fov, camera.fov(fov), 1e-6);
-            camera.tick(true);
-            camera.sample(0);
-            assertEquals(2, camera.localEye().z);
-            camera.sample(.5f);
-            double halfway = camera.localEye().z;
-            assertTrue(halfway < 2 && halfway > 1.55);
-            for (int seat = 0; seat < 4; seat++) {
-                assertEquals(camera.eye(seat), camera.eye(seat, .5f));
-                camera.eye(seat, 1);
-                assertEquals(halfway, camera.localEye().z, "Native eye queries must not change the rendered pose");
-            }
-            camera.sample(1);
-            assertTrue(camera.localEye().z < halfway);
-            double intermediateFov = camera.fov(fov);
-            for (int i = 0; i < 30; i++) camera.tick(true);
-            camera.sample(1);
-            assertEquals(1.55, camera.localEye().z, 1e-6);
-            assertTrue(camera.fov(fov) < intermediateFov && intermediateFov < fov);
-            float pitch = camera.pitch();
-            camera.look(10, 10);
-            assertEquals(4, camera.yaw(0) - TableGeometry.yaw(0), 1e-6);
-            assertEquals(4, camera.pitch() - pitch, 1e-5);
-            for (int i = 0; i < 30; i++) camera.tick(false);
-            camera.sample(1);
-            assertEquals(2, camera.localEye().z, 1e-6);
-            assertEquals(fov, camera.fov(fov), 1e-6);
-        }
-    }
-
-    @Test void settingsPreserveLookWhileHomeRestoresTheWholePose() {
+    @Test void settingsPreserveLookWhileResetRestoresTheWholePose() {
         var camera = new SeatedCameraState(2, 2.2);
         float defaultPitch = camera.pitch();
         camera.look(20, 10);
@@ -90,13 +55,10 @@ class SeatedCameraStateTest {
         camera.configure(2.4, 2.3);
         assertEquals(defaultPitch + 10, camera.pitch());
         assertEquals(TableGeometry.yaw(0) + 20, camera.yaw(0));
-        camera.tick(true);
-        camera.sample(1);
         camera.reset(2, 2.2);
         assertEquals(new Vec3(0, 2.2, 2), camera.localEye());
         assertEquals(defaultPitch, camera.pitch());
         assertEquals(TableGeometry.yaw(0), camera.yaw(0));
-        assertEquals(70, camera.fov(70), 1e-6);
     }
 
     @Test void worldMipsKeepTheWhiteSwatchAndAntialiasedInkOpaque() {

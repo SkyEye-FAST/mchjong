@@ -23,7 +23,6 @@ public abstract class TableCameraMixin {
             float partialTick, CallbackInfo callback) {
         if (detached || entity != Minecraft.getInstance().player || !(entity.getVehicle() instanceof SeatEntity seat)) return;
         var pose = top.skyeyefast.mchjong.client.SeatedCamera.state(seat);
-        pose.sample(partialTick);
         Vec3 position = TableSettings.get().cameraPosition(seat);
         setPosition(position.x, position.y, position.z);
         setRotation(pose.yaw(seat.seat()), pose.pitch());

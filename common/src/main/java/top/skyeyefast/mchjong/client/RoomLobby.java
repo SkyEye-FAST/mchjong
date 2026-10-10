@@ -16,7 +16,7 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
-/** One preparation layout for every rule: variant rail, roster, settings and stage action. */
+/** One preparation flow for every rule, with a horizontal variant row and a single next step. */
 final class RoomLobby {
     private final Screen parent;
     private final BlockPos pos;
@@ -40,20 +40,19 @@ final class RoomLobby {
         }
     }
 
-    private record Layout(int left, int top, int span, int height, int rail) {
+    private record Layout(int left, int top, int span, int height) {
         static Layout of(int width, int height, int entries, boolean roster) {
-            int span = Math.min(440, width - 32);
-            int wanted = 58 + entries * (roster ? 32 : 22) + (roster ? 40 : 64);
-            int panelHeight = Math.min(Math.min(300, height - 24), Math.max(180, wanted));
-            return new Layout((width - span) / 2, (height - panelHeight) / 2, span, panelHeight,
-                Math.min(88, Math.max(64, span / 5)));
+            int span = Math.min(464, width - 32);
+            int wanted = 78 + entries * (roster ? 34 : 24) + (roster ? 48 : 72);
+            int panelHeight = Math.min(Math.min(304, height - 24), Math.max(216, wanted));
+            return new Layout((width - span) / 2, (height - panelHeight) / 2, span, panelHeight);
         }
-        int bodyLeft() { return left + rail + 12; }
-        int bodyWidth() { return span - rail - 12; }
-        int contentTop() { return top + 58; }
+        int bodyLeft() { return left; }
+        int bodyWidth() { return span; }
+        int contentTop() { return top + 80; }
         int footer() { return top + height - 26; }
         int status() { return footer() - 14; }
-        int rosterPitch(int seats) { return Math.min(32, (status() - contentTop() - 4) / seats); }
+        int rosterPitch(int seats) { return Math.min(34, (status() - contentTop() - 4) / seats); }
     }
 
     RoomLobby(Screen parent, BlockPos pos, Runnable rebuild) {
@@ -76,39 +75,42 @@ final class RoomLobby {
         var client = Minecraft.getInstance();
         if (room.exitVote() != null) return TableExitControls.voteButtons(pos, room, width, height);
         int body = layout.bodyLeft(), span = layout.bodyWidth(), top = layout.top();
-        int toolbarWidth = (span - 8) / 3;
-        buttons.add(RoomLobbyControls.button(Component.translatable("settings.mchjong.scopes"), body, top + 6, toolbarWidth,
+        int toolbarWidth = 48, toolbarLeft = body + span - 3 * toolbarWidth - 8;
+        buttons.add(RoomLobbyControls.button(Component.translatable("settings.mchjong.scopes"), toolbarLeft, top + 6, toolbarWidth,
             () -> client.setScreen(new TableOptionsScreen(parent, pos))).shortCaption(Component.translatable("settings.mchjong.scopes.short")));
         int leave = RoomLobbyControls.find(room, RoomAction.Type.LEAVE_ROOM, List.of());
-        var leaveButton = RoomLobbyControls.button(Component.translatable("action.mchjong.leave_room"), body + toolbarWidth + 4,
+        var leaveButton = RoomLobbyControls.button(Component.translatable("action.mchjong.leave_room"), toolbarLeft + toolbarWidth + 4,
             top + 6, toolbarWidth, () -> send(room, leave)).shortCaption(Component.translatable("action.mchjong.leave_room.short"));
         leaveButton.active = leave >= 0 && !pending;
         buttons.add(leaveButton);
-        var close = RoomLobbyControls.button(Component.translatable("room.mchjong.dissolve"), body + 2 * (toolbarWidth + 4), top + 6,
-            span - 2 * (toolbarWidth + 4), () -> TableExitControls.send(pos, room,
+        var close = RoomLobbyControls.button(Component.translatable("room.mchjong.dissolve"), toolbarLeft + 2 * (toolbarWidth + 4), top + 6,
+            toolbarWidth, () -> TableExitControls.send(pos, room,
                 TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)).shortCaption(Component.translatable("room.mchjong.dissolve.short"));
         close.active = host(room) && !pending;
         buttons.add(close);
         int variantRow = 0;
         for (var variant : MahjongVariant.values()) {
-            var button = RoomLobbyControls.variantButton(pos, room, variant, layout.left(), top + 6 + variantRow++ * 24,
-                layout.rail(), !room.manual(), () -> { pending = true; rebuild.run(); }).navigation();
+            int cell = (span + 4) / MahjongVariant.values().length;
+            var button = RoomLobbyControls.variantButton(pos, room, variant, layout.left() + variantRow++ * cell, top + 32,
+                cell - 4, !room.manual(), () -> { pending = true; rebuild.run(); }).navigation();
             button.active &= !pending;
             buttons.add(button);
         }
-        var replays = RoomLobbyControls.button(Component.translatable("replay.mchjong.title"), layout.left(), layout.footer(), layout.rail(),
-            () -> ClientReplays.list(0, "", false)).navigation();
+        int linkWidth = width < 480 ? 52 : 62;
+        var replays = RoomLobbyControls.button(Component.translatable("replay.mchjong.title"), body + span - linkWidth, top + 56, linkWidth,
+            () -> ClientReplays.list(0, "", false)).navigation().shortCaption(Component.translatable("replay.mchjong.title.short"));
         replays.active = table() != null && table().clientWorldPolicy().replaysEnabled();
         buttons.add(replays);
-        var invite = RoomLobbyControls.button(Component.translatable("ui.mchjong.invite"), layout.left(), layout.footer() - 24, layout.rail(),
+        var invite = RoomLobbyControls.button(Component.translatable("ui.mchjong.invite"), body + span - 2 * linkWidth - 4, top + 56, linkWidth,
             () -> client.setScreen(new TableInviteScreen(parent, pos))).navigation().shortCaption(Component.translatable("ui.mchjong.invite.short"));
         invite.active = room.viewerSeat() >= 0 && room.lobby() && table().clientWorldPolicy().invitationsEnabled();
         buttons.add(invite);
         String[] tabs = {"room.mchjong.participants", "lobby.mchjong.match_settings"};
+        int tabWidth = (span - 2 * linkWidth - 16) / 2;
         for (int index = 0; index < tabs.length; index++) {
             int selected = index;
-            buttons.add(RoomLobbyControls.button(Component.translatable(tabs[index]), body + index * (span + 4) / 2, top + 34,
-                (span - 4) / 2, () -> { tab = selected; page = 0; rebuild.run(); }).navigation().selected(tab == index).shortCaption(Component.translatable(tabs[index] + ".short")));
+            buttons.add(RoomLobbyControls.button(Component.translatable(tabs[index]), body + index * (tabWidth + 4), top + 56,
+                tabWidth, () -> { tab = selected; page = 0; rebuild.run(); }).navigation().selected(tab == index).shortCaption(Component.translatable(tabs[index] + ".short")));
         }
         if (tab == 0) buildRoster(buttons, room);
         else {
@@ -137,16 +139,16 @@ final class RoomLobby {
     private void buildRoster(List<MahjongButton> buttons, TableRoomView room) {
         int pitch = layout.rosterPitch(room.seats().size());
         for (int seat = 0; seat < room.seats().size(); seat++) {
-            int y = layout.contentTop() + seat * pitch;
+            int y = layout.contentTop() + seat * pitch + (pitch - 20) / 2;
             var participant = room.seats().get(seat).participant();
             int action = nextBot(room, seat);
-            if (participant.id() == null || participant.bot() || room.seats().get(seat).presence() == PlayerPresence.DISCONNECTED) {
+            if (action >= 0 && (participant.id() == null || participant.bot() || room.seats().get(seat).presence() == PlayerPresence.DISCONNECTED)) {
                 int target = action;
                 var label = participant.bot() ? botName(room, seat).copy().append(" ›") : Component.translatable("room.mchjong.add_bot");
                 var button = RoomLobbyControls.button(label, layout.bodyLeft() + layout.bodyWidth() - 78, y, 78, () -> send(room, target));
                 button.active = action >= 0 && !pending;
                 buttons.add(button);
-            } else if (seat != room.host()) {
+            } else if (seat != room.host() && host(room) && participant.id() != null && !participant.bot()) {
                 int transfer = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
                 var button = RoomLobbyControls.button(Component.translatable("room.mchjong.transfer"), layout.bodyLeft() + layout.bodyWidth() - 78,
                     y, 78, () -> send(room, transfer));
@@ -175,6 +177,7 @@ final class RoomLobby {
             int fill = RoomLobbyControls.find(room, RoomAction.Type.FILL_BOTS, List.of());
             if (fill >= 0) {
                 var button = RoomLobbyControls.button(Component.translatable("action.mchjong.fill_bots"), x, y, (span - 4) / 2, () -> send(room, fill));
+                if (action < 0) button.primary();
                 button.active = !pending; buttons.add(button);
                 x += (span + 4) / 2; span = (span - 4) / 2;
             }
@@ -288,15 +291,19 @@ final class RoomLobby {
         var font = Minecraft.getInstance().font;
         var l = layout;
         MahjongUi.panel(graphics, l.left() - 6, l.top(), l.span() + 12, l.height());
+        graphics.fill(l.left() - 5, l.top() + 1, l.left() + l.span() + 5, l.top() + 28, MahjongUi.INPUT);
+        MahjongUi.text(graphics, font, Component.translatable("lobby.mchjong.stage." + room.seating().name().toLowerCase(java.util.Locale.ROOT)),
+            l.left() + 4, l.top() + 11, l.span() - 164, MahjongUi.TEXT, false);
+        graphics.fill(l.left(), l.footer() - 18, l.left() + l.span(), l.footer() - 17, MahjongUi.EDGE);
         if (tab == 0) {
             int pitch = l.rosterPitch(room.seats().size());
             for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat); var player = state.participant();
                 int y = l.contentTop() + seat * pitch;
-                boolean control = player.id() == null || player.bot() || state.presence() == PlayerPresence.DISCONNECTED || seat != room.host();
+                boolean control = nextBot(room, seat) >= 0 || host(room) && player.id() != null && seat != room.host() && !player.bot();
                 int textWidth = l.bodyWidth() - (control ? 88 : 8);
-                graphics.fill(l.bodyLeft(), y, l.bodyLeft() + l.bodyWidth(), y + pitch - 2, MahjongUi.INPUT);
-                int portrait = PlayerPortrait.draw(graphics, player, l.bodyLeft() + 4, y + 2, 10);
+                graphics.fill(l.bodyLeft(), y, l.bodyLeft() + l.bodyWidth(), y + pitch - 2, seat == room.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.INPUT);
+                int portrait = PlayerPortrait.draw(graphics, player, l.bodyLeft() + 5, y + 3, 10);
                 var name = player.id() == null ? Component.translatable("room.mchjong.empty") : Component.literal(player.name());
                 int color = seat == room.viewerSeat() ? MahjongUi.ACCENT : state.presence() == PlayerPresence.DISCONNECTED ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
                 MahjongUi.text(graphics, font, name, l.bodyLeft() + 4 + portrait, y + 2, textWidth - portrait, color, false);
@@ -304,7 +311,7 @@ final class RoomLobby {
                     : player.bot() ? botName(room, seat) : TableParticipantsScreen.presence(state.presence())).copy();
                 if (state.wind() >= 0) status = Component.translatable("room.mchjong.member", TableParticipantsScreen.wind(state.wind()), status);
                 if (seat == room.host()) status = Component.translatable("ui.mchjong.annotation", status, Component.translatable("room.mchjong.host.short"));
-                MahjongUi.text(graphics, font, status, l.bodyLeft() + 4, y + 15, textWidth, MahjongUi.MUTED, false);
+                MahjongUi.text(graphics, font, status, l.bodyLeft() + 5, y + Math.min(17, pitch - 11), textWidth, player.ready() ? MahjongUi.POSITIVE : MahjongUi.MUTED, false);
                 var hover = name.copy().append("\n").append(status);
                 if (state.wind() >= 0) {
                     var position = top.skyeyefast.mchjong.world.TableGeometry.stool(pos, state.wind());
@@ -316,7 +323,8 @@ final class RoomLobby {
                     MahjongUi.text(graphics, font, Component.literal("!"), l.bodyLeft() + l.bodyWidth() - 88, y + 3, 8, MahjongUi.NEGATIVE, false);
                     hover.append("\n").append(Component.translatable("bot.mchjong.service." + error));
                 }
-                if (mouseX >= l.bodyLeft() && mouseX < l.bodyLeft() + l.bodyWidth() - 82 && mouseY >= y && mouseY < y + pitch - 2)
+                boolean details = state.wind() >= 0 || error != null || font.width(name) > textWidth - portrait || font.width(status) > textWidth;
+                if (details && mouseX >= l.bodyLeft() && mouseX < l.bodyLeft() + l.bodyWidth() - 82 && mouseY >= y && mouseY < y + pitch - 2)
                     parent.setTooltipForNextRenderPass(hover);
             }
         } else {
@@ -326,6 +334,8 @@ final class RoomLobby {
         }
         if (pending) MahjongUi.text(graphics, font, Component.translatable("rules.mchjong.pending"),
             l.bodyLeft(), l.status(), l.bodyWidth(), MahjongUi.ACCENT, false);
+        else MahjongUi.text(graphics, font, Component.translatable("lobby.mchjong.guide." + room.seating().name().toLowerCase(java.util.Locale.ROOT)),
+            l.bodyLeft(), l.status(), l.bodyWidth(), MahjongUi.MUTED, false);
         TableExitControls.renderVote(graphics, font, room, width, height);
     }
 }

@@ -29,9 +29,8 @@ The upper hand selector opens a scrollable list for direct hand selection; the
 viewpoint control rotates any participant to the bottom seat. Playback supports
 0.5x, 1x, 2x and 4x speed. Lower controls seek to the initial deal, step backward,
 play/pause, step forward, or seek to settlement, and the timeline allows direct
-seeking. Left/Right step, Up/Down change hands, Home/End seek, Space toggles
-playback, V rotates the viewpoint, W opens the initial physical wall, and [ / ]
-jump between reviewable decisions for the current viewpoint.
+seeking. The Wall button opens the initial physical wall. Previous/Next Decision
+buttons jump between reviewable decisions for the current viewpoint.
 
 Playback steps are semantic table actions rather than raw recorder events. Riichi
 deposit acceptance and dora reveals are folded into the declaration, discard or

@@ -153,13 +153,13 @@ final class RoomFlowSmoke {
             if (!capturedHand && remaining > RiichiGame.SETTLEMENT_TICKS && ticks > 10) {
                 check(client);
                 capture(client, output, "match-hand-countdown.png");
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.switchView(client.screen);
                 capturedHand = true;
             } else if (capturedHand && !capturedImmersive && remaining > RiichiGame.SETTLEMENT_TICKS && ticks > 25) {
                 require(((RiichiTableScreen) client.screen).immersive(), "Settlement cannot enter immersive view");
                 check(client);
                 capture(client, output, "match-hand-immersive.png");
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.switchView(client.screen);
                 resize(client, true);
                 capturedImmersive = true;
             } else if (capturedImmersive && !capturedFinal && remaining <= RiichiGame.SETTLEMENT_TICKS && remaining > 20) {

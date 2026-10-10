@@ -44,7 +44,10 @@ final class ConvenienceHintsSmoke {
         }
         if (++ticks == 3) {
             var hint = hint(client);
-            if (!hint.visible || !hint.active) throw new IllegalStateException("Scored hint fixture is unavailable: " + mcrRule + "/" + sample);
+            if (!hint.visible || !hint.active) {
+                SmokeScreenshots.grab(output.toFile(), "scored-hints-failure.png", client.getMainRenderTarget(), ignored -> {});
+                throw new IllegalStateException("Scored hint fixture is unavailable: " + mcrRule + "/" + sample);
+            }
             client.screen.setFocused(hint);
         }
         if (ticks < 6) return;
@@ -90,11 +93,14 @@ final class ConvenienceHintsSmoke {
             var view = new McrSession.View(mcr.tableId(), mcr.incarnation(), fixtureRoom.revision(), mcr.participants(), 15, 0, false,
                 Collections.nCopies(4, new TimeControl.Clock(0, 0, false)), 0, game);
             table.acceptMcrView(view, fixtureRoom, table.clientMcrDeck(), table.clientMcrCloth(), table.clientMcrTimeControl());
-            client.setScreen(new McrTableScreen(table.getBlockPos(), sample == 1));
-            var tileLabel = table.clientMcrDeck().tile(36).label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ, table.clientMcrDeck().preset());
-            client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
-                .filter(button -> button.getClass().getSimpleName().equals("HandTarget") && button.getMessage().equals(tileLabel))
-                .findFirst().orElseThrow().onPress();
+            var screen = new McrTableScreen(table.getBlockPos());
+            client.setScreen(screen);
+            var piece = top.skyeyefast.mchjong.client.McrTableScene.build(game).stream()
+                .filter(tile -> tile.area() == top.skyeyefast.mchjong.client.McrTableScene.Area.HAND && tile.seat() == viewer && tile.tile() == 36)
+                .findFirst().orElseThrow();
+            var pointer = McrAutoTableSmoke.project(client, table.getBlockPos(), piece.position());
+            screen.mouseClicked(pointer.x, pointer.y, 0);
+            if (sample == 1) InputSmoke.switchView(screen);
         } else {
             var base = sichuan.game(); var seats = new ArrayList<SichuanView.Seat>();
             for (int seat = 0; seat < 4; seat++) seats.add(new SichuanView.Seat(seat == viewer ? tiles("1111222233334m")
@@ -121,7 +127,7 @@ final class ConvenienceHintsSmoke {
         if (hint.getX() < 0 || hint.getY() < 0 || hint.getRight() > width || hint.getBottom() > height)
             throw new IllegalStateException("Hint icon exceeds its layout canvas");
         for (var child : client.screen.children()) if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget
-            && widget != hint && widget.visible && !widget.getClass().getSimpleName().equals("HandTarget")
+            && widget != hint && widget.visible
             && hint.getRight() > widget.getX() && widget.getRight() > hint.getX()
             && hint.getBottom() > widget.getY() && widget.getBottom() > hint.getY())
             throw new IllegalStateException("Hint icon overlaps " + widget.getMessage().getString());

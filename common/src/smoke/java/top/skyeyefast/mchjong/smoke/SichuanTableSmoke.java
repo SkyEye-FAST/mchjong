@@ -276,7 +276,7 @@ final class SichuanTableSmoke {
                         && candidate.seat() == view.game().viewerSeat() && candidate.tile() == boundFirstDiscard).findFirst().orElseThrow();
                 var pointer = project(client, pos, piece.position());
                 require(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Secret first-discard picking failed");
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
+                InputSmoke.click(screen, "sichuan.mchjong.void_choice");
                 stage++;
             }
             case 7 -> {
@@ -357,7 +357,7 @@ final class SichuanTableSmoke {
                             && candidate.seat() == view.game().viewerSeat() && candidate.tile() == selectedTile).findFirst().orElseThrow();
                     var pointer = project(client, pos, piece.position());
                     require(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Seated Sichuan picking failed");
-                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                    InputSmoke.switchView(screen);
                     require(screen.immersive(), "Sichuan cannot enter immersive view");
                     var player = view.game().seats().get(view.game().viewerSeat());
                     var tiles = new ArrayList<>(player.hand());
@@ -367,9 +367,9 @@ final class SichuanTableSmoke {
                         + (248 + tiles.indexOf(selectedTile) * 58 + (selectedTile == player.drawn() ? 29 : 0)) * scale;
                     double vertical = (screen.height - 800 * scale) / 2 + 690 * scale;
                     require(screen.mouseClicked(horizontal, vertical, 0), "Immersive Sichuan picking failed");
-                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                    InputSmoke.switchView(screen);
                     require(screen.selected(piece), "Immersive Sichuan picking selected a different tile");
-                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                    InputSmoke.switchView(screen);
                     picked = true; settled = 0; break;
                 }
                 var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
@@ -381,7 +381,7 @@ final class SichuanTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "sichuan-table.png", client.getMainRenderTarget(), ignored -> {});
                 screen.setFocused(null);
                 discardDecision = view.game().decision();
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
+                InputSmoke.click(screen, "sichuan.mchjong.action.discard");
                 stage = 17;
             }
             case 17 -> {
@@ -485,18 +485,24 @@ final class SichuanTableSmoke {
                     "Browser did not fetch the completed Sichuan replay");
                 require(replay.cursor() == 0 && replay.handIndex() == 0, "Sichuan replay did not open at the initial deal");
                 settled = 0;
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+                InputSmoke.nextReplay(replay);
                 require(replay.cursor() == 1, "Sichuan replay did not step one event");
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                InputSmoke.click(replay, "replay.mchjong.view");
                 stage++;
             }
             case 20 -> {
                 if (!(client.screen instanceof ReplayScreen replay)) break;
                 if (++settled < 8) break;
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay.png", client.getMainRenderTarget(), ignored -> {});
-                for (int hand = 1; hand < 8; hand++) replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0);
+                for (int hand = 1; hand < 8; hand++) {
+                    var next = replay.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
+                        .map(net.minecraft.client.gui.components.AbstractWidget.class::cast)
+                        .filter(widget -> widget.getY() == 29 && widget.getMessage().getString().equals(">"))
+                        .findFirst().orElseThrow();
+                    InputSmoke.clickWidget(replay, next);
+                }
                 require(replay.handIndex() == 7 && replay.cursor() == 0, "Sichuan replay hand navigation failed");
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0);
+                InputSmoke.click(replay, ">|");
                 stage++;
             }
             case 21 -> {

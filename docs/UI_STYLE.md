@@ -3,9 +3,9 @@
 This is the shared visual contract for all project-owned screens, HUD cards,
 inventory panels and controls. Read it before adding or changing client UI.
 
-## Felt and brass
+## Colors and surfaces
 
-Use a restrained dark-teal surface, warm-white type and sparse brass accents.
+Use a restrained dark-teal surface, warm-white type and pale-green accents.
 The table and the tile faces remain the visual focus. Interface panels should
 look like one family, not a collection of stock menus with different tints.
 Use square, pixel-aligned edges, one-pixel borders and flat fills. Do not add
@@ -17,16 +17,16 @@ large rounded cards or textures copied from unrelated Minecraft menus.
 | Token | ARGB | Purpose |
 | --- | --- | --- |
 | `BACKDROP` | `D90B1418` | Dim the world behind a modal panel |
-| `PANEL` | `F018292E` | Main panel surface |
-| `SURFACE` | `FF22383D` | Resting controls and cards |
-| `HOVER` | `FF304B50` | Pointer hover |
-| `INPUT` | `FF101E23` | Recessed fields and inventory wells |
-| `EDGE` | `FF4C686B` | Quiet one-pixel separators |
-| `TEXT` | `FFF1EEE3` | Main text |
-| `MUTED` | `FFBDCFCA` | Supporting text |
+| `PANEL` | `F2142B2A` | Main panel surface |
+| `SURFACE` | `FF203C38` | Resting controls and cards |
+| `HOVER` | `FF2D4E47` | Pointer hover |
+| `INPUT` | `FF0E211F` | Recessed fields and inventory wells |
+| `EDGE` | `FF49635A` | Quiet one-pixel separators |
+| `TEXT` | `FFF4EBDD` | Main text |
+| `MUTED` | `FFB5C9BE` | Supporting text |
 | `DISABLED` | `FF81938F` | Unavailable controls |
-| `ACCENT` | `FFE3C082` | Brass; selected state and primary action |
-| `SELECTED` | `FF365851` | Selected fill |
+| `ACCENT` | `FFB8D9CC` | Pale green emphasis and primary outlines |
+| `SELECTED` | `FF294B42` | Selected fill |
 | `POSITIVE` | `FFA9D8B8` | Positive state, paired with a label |
 | `NEGATIVE` | `FFF0AAA4` | Errors/losses, paired with a label or sign |
 | `DANGER` | `FFA33232` | Persistent local furiten badge |
@@ -34,7 +34,10 @@ large rounded cards or textures copied from unrelated Minecraft menus.
 
 Use these tokens rather than introducing almost-identical local colors. Tile
 artwork, felt dyes, suit colors and world materials are not interface tokens.
-Avoid turning every edge gold: reserve emphasis for the current selection,
+Primary buttons use dark teal with light text and an accent outline; do not fill
+an entire button yellow. Yellow may remain in small indicators and text.
+Always display the full Immersive View label, including in
+compact toolbars. Reserve emphasis for the current selection,
 keyboard focus or an important decision. Do not decorate controls or titles with
 left-edge vertical accent strips; selected navigation uses a short bottom rule.
 
@@ -112,7 +115,7 @@ Its immersive view uses the same fixed 1280 × 800 canvas, perspective solids an
 foreground hand, player plaques, center display and motion as Riichi and Sichuan.
 MCR retains its native flat-kong display in the shared left public area.
 Compact edge cards show player names, winds and scores; the current turn is marked
-with brass. Automatic flower replacement names the player currently replacing.
+with the shared accent. Automatic flower replacement names the player currently replacing.
 Discards come from hand selection, while claims, kongs, wins and pass use localized
 native buttons with tile previews. MCR uses the shared room time editor and turn
 clock, reserving a clock lane below the actions and above the private hand.
@@ -144,8 +147,8 @@ uses a drop shadow for contrast.
 
 ## Layout and information hierarchy
 
-Lobby and settings controls share straight row baselines, four-pixel gutters,
-and a persistent category rail. Primary actions use brass emphasis on the same
+Lobby and settings controls share straight row baselines and four-pixel gutters.
+Primary actions use dark teal and a pale-green outline on the same
 footer baseline as their secondary actions. Match HUD cards and action rows share
 aligned edges and baselines; do not add decorative staggering or overhangs.
 On the immersive canvas, spacing follows the content scale. Keep native rectangular
@@ -176,21 +179,20 @@ than moving controls outside the screen. Actual pixel resolution depends on GUI
 scale. Support English, Japanese, Simplified Chinese and Traditional Chinese.
 Select visual checks according to the changed layout or translation; the full
 locale/viewport matrix is not a per-edit requirement.
-Retain existing no-scroll settlement navigation and replay keyboard controls.
+Keep settlement tabs and replay controls visible and directly clickable.
 Settlement reserves the complete receipt layout before revealing individual yaku
 rows. Highlight the current row with the shared accent; points precede the hand
 grade. Put each ordinary yaku's han in a solid square-cornered badge directly
 after the yaku name's last line; natural yakuman have no han badge. Enlarge
 points and hand grades together. Leave eight logical pixels after the fan/yaku
 list before the enlarged score, and draw the score without a background box. Show the hand grade in
-a brass-filled badge beneath the points, or beside them in compact receipts.
+an accent badge beneath the points, or beside them in compact receipts.
 Small receipts reserve their body for the hand and yaku; the Point changes page
 provides the complete score table. Reserve both badge and text
 space before the readout begins. Do not reflow the hand or restart the readout
 on a resize or snapshot refresh.
 Award rows provide short hover text, a quiet `?` cue and a clickable explanation.
-The focused receipt uses Up/Down and Enter for explanations; winner selection
-retains Left/Right. Rule editors keep their draft while a separate `?` opens help.
+Winner tabs switch hands by mouse. Rule editors keep their draft while a separate `?` opens help.
 The shared compact help panel paginates text, reuses handbook diagrams and offers
 Back plus an optional Handbook button. Closing the book returns through the same
 parent chain, including when synchronized table state changes.
@@ -198,22 +200,24 @@ All four variants share the table, player-card, action-grid, camera, settings
 and settlement design. All four share replay presentation. Rule adapters supply native winds,
 flowers, void suits, yaku/fan and payment data. Receipts retain native win methods;
 MCR, Sichuan and Taiwan standings show cumulative points, without Riichi uma fields.
-Dense payment ledgers paginate with the wheel or Page Up/Down; their original
+Dense payment ledgers paginate with the wheel; their original
 entry order and related-entry links remain visible. Taiwan receipts show public
 tai awards and transfers while keeping opponent hands and covered kongs hidden.
 Taiwan uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
 are shared. Its lobby exposes human and built-in Bot seats, presets,
 payment/reserve rules, clocks, shared Replay navigation and convenience hints.
-All four variants share one lobby layout. The left rail selects Riichi, MCR,
+All four variants share one lobby layout. Horizontal tabs select Riichi, MCR,
 Sichuan or Taiwan; variant selection never appears among that variant's settings. The body
 has Players and bots and Match settings tabs. Keep the roster visible on arrival,
 with per-seat Bot and ownership controls. Match settings paginate player count,
 presets, detailed rules, visibility, timing and convenience hints. Invitation and
-replay navigation sit at the bottom of the rail. Leave and host dissolution stay
+replay navigation sit beside the body tabs. The header names the current preparation
+stage and the footer supplies one brief next-step instruction. Leave and host dissolution stay
 distinct in the toolbar. Fill empty seats is a separate secondary action beside
 the prominent seat-preparation action; drawing winds and readiness reuse its footer.
-Settlement uses one top action with the server's countdown in parentheses and
+Settlement uses a top action with the server's countdown in parentheses beside
+the view selector (and the ordinary table's point-stick drawer), and
 automatically opens final standings at the match's second stage. The roster
 returns to the lobby after that stage, with leave and dissolution available there.
 This responsive rule applies to ordinary screens and the seated overlay, not the
@@ -326,7 +330,7 @@ Names, winds and points keep their own rows in 24-pixel cards. With MELDS enable
 grow to 40 pixels for actual resource-pack faces at 5–7 pixels, or 36 pixels for
 a localized group count when all melds cannot fit. Immersive cards retain their
 board positions and the board owns the full meld display. In both views, STATUS
-shows riichi using the fixed HUD icon (blue with a white dot) and a persistent brass
+shows riichi using the fixed HUD icon (blue with a white dot) and a persistent accent
 bottom rule, with the full status in hover details. The sideways river tile
 continues to identify the declaration discard.
 
@@ -377,8 +381,8 @@ anchors use the same projected centers as the tile faces. Player labels are comp
 translucent plaques in open table margins. Use larger portrait and score type on the
 virtual canvas; toolbar, automation, score and status captions use twice the native
 font size.
-The bottom-left keyboard help uses that same enlarged size. In both views, show
-the move allowance as large warm-white digits with a smaller brass `+reserve`,
+The bottom-left control hint uses that same enlarged size. In both views, show
+the move allowance as large warm-white digits with a smaller `+reserve` in the accent color,
 right-aligned above the private hand. Reserve a separate clock lane below the
 action buttons; riichi prompts and animation cues grow upward above the buttons.
 Seated placement follows the animated tile-box projection, including melds and
@@ -518,21 +522,17 @@ Native first-person picking uses that same eye position.
 The seated world FOV expands as needed for the near playing-surface corners and
 window aspect ratio, while preserving wider player FOV settings. It stays stable
 while freely looking around; table projection and picking use the rendered FOV.
-Holding the Inspect binding (C by default) smoothly moves the eye 0.28 blocks toward
-the table and narrows the FOV by a 1.45 tangent ratio. Rendering and picking share
-the sampled pose. Inspect reduces mouse and arrow sensitivity to 40% at full progress.
 Right-drag adjusts yaw and pitch after a four-logical-pixel deadzone; the wheel changes
 distance in 0.12-block steps. Shift-wheel raises or lowers the eye in 0.05-block
 steps, preserving the look direction and bounded by the personal height slider's
 1.35–2.50-block range. Shift-right-drag pans the target along the seat-local
-table axes, bounded to 0.55 blocks on each axis. Holding arrows adjusts yaw/pitch
-at 20 degrees per second. Home restores distance, height, direction, target and
-inspect progress. Minecraft controls third-person views. Camera sliders preserve
+table axes, bounded to 0.55 blocks on each axis. Personal Settings provides a reset
+for distance, height, direction and target. Minecraft controls third-person views. Camera sliders preserve
 the current look direction; saved personal adjustments remain adjustable, and Restore defaults applies
 the current elevated seating view. All four variants use the same top-right toolbar order: Replays, view, Settings,
 and Exit. Narrow seated overlays use short captions with the full names on hover;
 normal and immersive toolbars size buttons from their translated captions.
-The top-bar view button or V switches to the
+The top-bar view button switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
 retaining the drawn-tile gap and normal selection, discard and riichi controls.
 Tile width uses a stable fourteen-tile capacity (seventeen for Taiwan). Short Riichi
@@ -543,9 +543,8 @@ changes in available controls never move the hand vertically.
 Action buttons stay above it. Switching views preserves world camera orientation;
 closing the overlay reveals the seated world. Third-person remains under Minecraft's
 control. Seat cards retain names, wind and scores in both presentations.
-Inspect, view, reset, riichi, pass and drawer controls are registered Minecraft
-key mappings on both loaders. Help text displays the current bindings. Selection
-uses pointer clicks and the existing confirmation controls.
+Selection and game actions use pointer clicks and visible confirmation controls.
+Native text editing, widget focus and Escape retain Minecraft's behavior.
 An active turn clock suppresses the footer help line, keeping attention on the
 decision controls and the separate clock lane above the hand.
 Tile highlights follow the beveled

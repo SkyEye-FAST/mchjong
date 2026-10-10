@@ -1,15 +1,12 @@
 package top.skyeyefast.mchjong.client;
 
-import java.util.Arrays;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** Composed by each rule screen; owns presentation mode and seated camera input only. */
 final class TableViewController {
-    private boolean immersive, inspecting, dragging;
+    private boolean immersive, dragging;
     private double dragDistance;
-    private final boolean[] lookKeys = new boolean[4];
 
     boolean immersive() { return immersive; }
     void immersive(boolean value) {
@@ -23,8 +20,7 @@ final class TableViewController {
         return !immersive && client.player != null && client.player.getVehicle() instanceof SeatEntity
             && client.options.getCameraType().isFirstPerson();
     }
-    boolean inspecting() { return inspecting && cameraEnabled(); }
-    void clearInput() { inspecting = dragging = false; Arrays.fill(lookKeys, false); }
+    void clearInput() { dragging = false; }
 
     private void syncCamera() {
         var client = Minecraft.getInstance();
@@ -43,46 +39,7 @@ final class TableViewController {
 
     void tick() {
         if (!Minecraft.getInstance().isWindowActive()) clearInput();
-        if (cameraEnabled()) {
-            TableSettings.get().camera().look((lookKeys[1] ? 1 : 0) - (lookKeys[0] ? 1 : 0),
-                (lookKeys[3] ? 1 : 0) - (lookKeys[2] ? 1 : 0));
-            syncCamera();
-        }
-    }
-
-    boolean keyPressed(int key, int scanCode, Runnable toggle, Runnable reset) {
-        if (TableKeys.RESET.matches(key, scanCode)) { reset.run(); return true; }
-        if (TableKeys.VIEW.matches(key, scanCode)) { toggle.run(); return true; }
-        if (TableKeys.INSPECT.matches(key, scanCode) && cameraEnabled()) { inspecting = true; return true; }
-        return false;
-    }
-
-    boolean lookPressed(int key) {
-        int arrow = arrow(key);
-        if (arrow < 0 || !cameraEnabled()) return false;
-        lookKeys[arrow] = true;
-        return true;
-    }
-
-    boolean keyReleased(int key, int scanCode) {
-        if (TableKeys.INSPECT.matches(key, scanCode)) { inspecting = false; return true; }
-        int arrow = arrow(key);
-        if (arrow < 0) return false;
-        lookKeys[arrow] = false;
-        return true;
-    }
-
-    boolean mouseBinding(int button, Runnable toggle, Runnable reset) {
-        if (TableKeys.INSPECT.matchesMouse(button) && cameraEnabled()) { inspecting = true; return true; }
-        if (TableKeys.RESET.matchesMouse(button)) { reset.run(); return true; }
-        if (TableKeys.VIEW.matchesMouse(button)) { toggle.run(); return true; }
-        return false;
-    }
-
-    boolean releaseInspect(int button) {
-        if (!TableKeys.INSPECT.matchesMouse(button)) return false;
-        inspecting = false;
-        return true;
+        if (cameraEnabled()) syncCamera();
     }
 
     void startDrag() { dragging = true; dragDistance = 0; }
@@ -113,13 +70,4 @@ final class TableViewController {
         return true;
     }
 
-    private static int arrow(int key) {
-        return switch (key) {
-            case GLFW.GLFW_KEY_LEFT -> 0;
-            case GLFW.GLFW_KEY_RIGHT -> 1;
-            case GLFW.GLFW_KEY_UP -> 2;
-            case GLFW.GLFW_KEY_DOWN -> 3;
-            default -> -1;
-        };
-    }
 }

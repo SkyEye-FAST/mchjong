@@ -35,24 +35,9 @@ public final class SeatedCamera {
             currentSeat = null;
             return;
         }
-        var pose = state(seat);
+        state(seat);
         boolean firstPerson = client.options.getCameraType().isFirstPerson() && client.isWindowActive();
         if (firstPerson) sync(seat);
-        var screen = TableChildScreen.root(client.screen);
-        boolean inspect = firstPerson && (screen instanceof RiichiTableScreen table
-            ? table.inspecting() : screen instanceof McrTableScreen mcr ? mcr.inspecting()
-            : screen instanceof SichuanTableScreen sichuan ? sichuan.inspecting()
-            : screen instanceof TaiwanTableScreen taiwan ? taiwan.inspecting()
-            : screen instanceof TableResultsScreen results ? results.inspecting()
-            : client.screen == null && TableKeys.INSPECT.isDown());
-        pose.tick(inspect);
-        if (client.screen == null && firstPerson) {
-            while (TableKeys.RESET.consumeClick()) {
-                var settings = TableSettings.get();
-                pose.reset(settings.cameraDistance, settings.cameraHeight);
-                sync(seat);
-            }
-        }
     }
 
     public static boolean turn(double dx, double dy) {
