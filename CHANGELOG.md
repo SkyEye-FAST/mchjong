@@ -9,7 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Redesign lobby and settings hierarchy with horizontal rule tabs, clearer primary actions and mouse-first controls; remove table and replay shortcuts and redundant checks, retain immersive table geometry and custom cloth, and render handbook examples directly from tile atlases with readable facing pages and inset margins.
+- Redesign lobby and settings hierarchy with a scrollable rule sidebar that accommodates additional variants, clearer primary actions and mouse-first controls; preserve the original felt-and-brass palette and accent scope, remove table and replay shortcuts and redundant checks, retain immersive table geometry and custom cloth, and render handbook examples directly from tile atlases with readable facing pages and inset margins.
 
 - Update the embedded mcr-mahjong library to 0.1.1 across all three Minecraft profiles.
 
