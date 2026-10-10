@@ -5,7 +5,11 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-/** Pick the rendered oriented tile box, including its animated pitch and selection lift. */
+/**
+ * Intersects rendered tile boxes, including animated pitch and selection lift.
+ * Poses and ray origins use table-relative block coordinates; directions need not be normalized.
+ * Distances are squared blocks, zero inside the box and positive infinity for no hit within 32 blocks.
+ */
 public final class TilePicking {
     private TilePicking() {}
 

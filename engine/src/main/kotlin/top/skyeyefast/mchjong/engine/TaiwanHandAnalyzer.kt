@@ -6,7 +6,7 @@ import top.skyeyefast.taiwan.TaiwanProfiles
 import top.skyeyefast.taiwan.TaiwanScoring
 import top.skyeyefast.taiwan.TaiwanScoringProfile
 
-/** Sole production taiwan-mahjong boundary. Public contracts use engine/JDK types only. */
+/** Sole production taiwan-mahjong boundary; engine/JDK inputs are read without modifying their collections. */
 object TaiwanHandAnalyzer {
     enum class GroupType { SEQUENCE, TRIPLET }
 
@@ -88,7 +88,11 @@ object TaiwanHandAnalyzer {
     }
     class FlowerScore(val award: Award, val handScore: Score?, val rawTai: Int, val tai: Int)
 
-    /** The game certifies event provenance, initial replacement completion and the other flower owner. */
+    /**
+     * Scores a flower event whose provenance, initial replacement completion and other flower owner are certified by the game.
+     * [replacementTile] is a new physical tile for the two after-replacement events, and [Tile.ABSENT] otherwise.
+     * Invalid hand or replacement inputs throw; a non-qualifying event returns null.
+     */
     @JvmStatic
     fun flowerWin(concealed: List<Int>, melds: List<Meld>, owner: Int, replacementTile: Int,
                   context: TaiwanWinContext, event: FlowerEvent, rules: TaiwanRules): FlowerScore? {
@@ -127,6 +131,11 @@ object TaiwanHandAnalyzer {
             .map { Discard(it.kind, analysis(it.analysis)) })
     }
 
+    /**
+     * Scores [concealed] before winning (16 tiles minus three per fixed meld) with a separately supplied [winningTile].
+     * [owner] is a seat in 0..3; invalid identities, duplicate ownership and meld provenance throw.
+     * Returns null when the validated hand does not qualify under [rules].
+     */
     @JvmStatic
     fun score(concealed: List<Int>, melds: List<Meld>, owner: Int, winningTile: Int, context: TaiwanWinContext, rules: TaiwanRules): Score? {
         validateWinningTile(concealed, melds, owner, winningTile)

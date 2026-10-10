@@ -287,7 +287,11 @@ public final class RiichiGame {
         return options.get(seat);
     }
 
-    /** Reject stale, replayed, out-of-range, and out-of-turn requests without mutating state. */
+    /**
+     * Applies an issued action for a room member and returns whether it was accepted.
+     * Stale tokens and unavailable indices return false without changing state; repeated settlement
+     * acknowledgements may return true without a change. The caller checks mount and request authority.
+     */
     public boolean act(UUID actor, long expectedDecision, int actionIndex) {
         int seat = session.seatOf(actor);
         if (seat < 0 || expectedDecision != session.decision) return false;
@@ -327,7 +331,7 @@ public final class RiichiGame {
         }
         if (recorder != null) recorder.decision(seat, legal, actionIndex);
         if (phase == Phase.REACTION) {
-            // Revision changes are cosmetic here. Every responder keeps the SAME decision token.
+            // Publish each response without invalidating the other seats' outstanding choices.
             replies[seat] = actionIndex;
             if (action.type() != RON && legal.stream().anyMatch(a -> a.type() == RON)) {
                 players[seat].temporaryFuriten = true;
@@ -761,6 +765,7 @@ public final class RiichiGame {
         return -1;
     }
 
+    /** Projects the member's private view, or a hidden-hand spectator view for an unknown UUID; the caller authorizes access. */
     public RiichiView view(UUID authorizedViewer) {
         return view(session.seatOf(authorizedViewer), SpectatorHandVisibility.HIDDEN);
     }
