@@ -110,3 +110,60 @@ dependency on both platforms.
 Use [Verification](VERIFICATION.md) for checks and record their exact scope before
 advancing a release pin. The [compatibility tables](../README.md#compatibility)
 describe supported adapters, not a substitute for runtime acceptance.
+
+### Synchronizing a batch with Git
+
+Keep one worktree per branch and finish the main batch before starting a port.
+Use the same committed main SHA for both ports; do not advance main until both
+have been reviewed and tested. No synchronization script or additional state file
+is needed: each port's latest synchronization merge records its previous main
+source as the second parent.
+
+Apply the difference between successive **main sources**, rather than an ordinary
+merge of the complete main tree. The return merges deliberately preserve main's
+profile, so the ordinary merge base can be a port commit; using that tree as the
+patch base would reintroduce unrelated Minecraft and loader differences.
+
+In each clean port worktree, inspect the previous merge and prepare the update
+with Git Bash (or another Bash shell):
+
+```bash
+git log --first-parent --merges -1 --format='%H %P'
+source=$(git rev-parse main)
+previous=$(git log --first-parent --merges -1 --format='%P' | cut -d' ' -f2)
+mkdir -p build
+git diff --binary --full-index "$previous" "$source" -- . ':(exclude).github/compat-*-ref' > build/compat.patch
+git merge --no-ff --no-commit -s ours "$source"
+git apply --3way --index build/compat.patch
+```
+
+The `ours` merge records the parent relationship; the patch supplies the actual
+shared changes. Resolve patch conflicts for that port's APIs, review the staged
+diff, and retain its Java target, loaders and dependencies. If the patch is empty,
+there is no code to apply. To abandon preparation, use `git merge --abort`.
+Run the focused runtime checks and `buildAll --warning-mode fail` with the port's
+JDK before creating its signed merge commit:
+
+```bash
+git add <resolved-files>
+git commit -S -m "chore(compat): synchronize port with main"
+git verify-commit HEAD
+```
+
+After both ports pass, return to the clean main worktree. Record both verified
+tips in one merge, preserving main's file tree and updating the two release pins
+in that same commit:
+
+```bash
+git merge --no-ff --no-commit -s ours compat/1.20.1 compat/26.1.2
+git rev-parse compat/1.20.1 > .github/compat-1.20.1-ref
+git rev-parse compat/26.1.2 > .github/compat-26.1.2-ref
+git add .github/compat-1.20.1-ref .github/compat-26.1.2-ref
+git commit -S -m "chore(compat): record verified port synchronization"
+git verify-commit HEAD
+git push origin main compat/1.20.1 compat/26.1.2
+```
+
+The return commit changes only the pins; its parents make main descend from both
+verified port tips. For the next batch, use the ports' second parents again,
+excluding the release-pin files from the patch as above.
