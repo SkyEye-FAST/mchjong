@@ -26,7 +26,7 @@ Branch synchronization and release artifact selection are documented in
 
 ## Embedded engine dependencies
 
-The engine declares Maven Central releases `top.skyeyefast:mcr-mahjong:0.1.0`,
+The engine declares Maven Central releases `top.skyeyefast:mcr-mahjong:0.1.1`,
 `top.skyeyefast:taiwan-mahjong:0.1.0` and
 `io.github.ssttkkl:mahjong-utils-jvm:0.7.7`. The exact pins live in
 `gradle.properties`. The engine Shadow JAR relocates the Taiwan and MCR libraries
