@@ -195,11 +195,11 @@ final class TaiwanTableSmoke {
                 if (++captures < 24) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-table.png", client.getMainRenderTarget(), ignored -> {});
                 client.getWindow().setWindowed(1280, 800); client.options.guiScale().set(2); client.resizeDisplay();
-                TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
+                TableSettings.get().discardMode = TableSettings.DiscardMode.SINGLE_CLICK;
                 selectedTile = view.game().actions().stream().filter(a -> a.type() == TaiwanAction.Type.DISCARD).findFirst().orElseThrow().tiles().getFirst();
                 var piece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
                 var pointer = project(client, pos, piece.position());
-                check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Taiwan seated picking failed");
+                InputSmoke.pointer(client, pointer.x, pointer.y);
                 captures = 0; stage = 51;
             }
             case 51 -> {
@@ -227,12 +227,8 @@ final class TaiwanTableSmoke {
                 check(hint.isFocused(), "Taiwan immersive hints lost focus");
                 SmokeScreenshots.grab(output.toFile(), "taiwan-hints-immersive.png", client.getMainRenderTarget(), ignored -> {});
                 screen.setFocused(null);
-                var pointer = TaiwanHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
-                check(screen.mouseClicked(pointer.x, pointer.y, 0), "Taiwan immersive picking failed");
-                InputSmoke.switchView(screen);
-                var selectedPiece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
-                check(screen.selected(selectedPiece), "Taiwan immersive selected wrong tile");
-                InputSmoke.switchView(screen);
+                var pointer = TableHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
+                InputSmoke.pointer(client, pointer.x, pointer.y);
                 task = server.submit(() -> setHintsPolicy(server, false)); stage = 53;
             }
             case 53 -> {
@@ -246,10 +242,14 @@ final class TaiwanTableSmoke {
                 var screen = (TaiwanTableScreen) client.screen;
                 check(!room.convenienceHints() && !hint(screen).visible, "Disabled room hints reappeared after world policy restored");
                 screen.setFocused(null);
-                InputSmoke.click(screen, "taiwan.mchjong.action.discard"); sentDecision = view.game().decision(); stage = 14;
+                var pointer = top.skyeyefast.mchjong.client.TableHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
+                sentDecision = view.game().decision();
+                check(screen.mouseClicked(pointer.x, pointer.y, 0), "Taiwan immersive direct discard failed"); stage = 14;
             }
             case 14 -> {
                 if (view.game().decision() == sentDecision) break;
+                check(view.game().seats().get(view.game().recipient()).river().contains(selectedTile),
+                    "Taiwan direct click discarded the wrong physical tile");
                 task = server.submit(() -> {
                     var t = target(client, pos); var player = main(client); var before = t.taiwanView(player);
                     var saved = t.saveWithoutMetadata(player.registryAccess()); t.loadWithComponents(saved, player.registryAccess());

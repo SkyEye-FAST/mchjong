@@ -610,9 +610,9 @@ canvas, letterboxing and pointer conversion. The world renderer consumes
 rails, rivers, perspective solids and player plaques used by Riichi and Sichuan mahjong,
 with a private `TableHand` in the foreground. `TilePicking` intersects the MCR piece's
 actual `TileDimensions` envelope and orientation.
-Hand selection resolves only issued discard indices. Other declarations use
-native action buttons with localized names and tile previews. View changes retain
-selection and leave the world camera pose intact. Settlement carries the selected
+Hand clicks resolve only issued discard indices. Other declarations use
+native action buttons with localized names and tile previews. View changes leave
+the world camera pose intact. Settlement carries the selected
 view into the next hand.
 
 ## Networking and authority

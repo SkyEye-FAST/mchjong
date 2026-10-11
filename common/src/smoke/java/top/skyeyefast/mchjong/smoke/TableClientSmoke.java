@@ -350,14 +350,13 @@ public final class TableClientSmoke {
                     prepareDisplaySeat(client);
                     return;
                 }
-                TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
+                TableSettings.get().discardMode = TableSettings.DiscardMode.SINGLE_CLICK;
                 InputSmoke.switchView(client.screen);
                 client.getSingleplayerServer().execute(() -> {
                     var level = client.getSingleplayerServer().overworld();
                     for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++)
                         level.setBlockAndUpdate(CENTER.offset(x, 3, z), Blocks.STONE.defaultBlockState());
                 });
-                client.screen.mouseClicked(client.screen.width / 2.0, client.screen.height - 52, 0);
                 step = 5; entered = ticks;
             } else if (step == 5 && ticks - entered > 15) {
                 require(((RiichiTableScreen) client.screen).immersive(), "Immersive hand selection was not enabled");
@@ -366,16 +365,14 @@ public final class TableClientSmoke {
                 require(client.gameRenderer.getMainCamera().getPosition().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
                     "Immersive view moved the world camera");
                 capture(client, "03-immersive-discard-under-roof.png");
-                for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
-                    && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.discard").getString())) {
-                    InputSmoke.clickWidget(client.screen, widget);
-                    step = 6; entered = ticks;
-                    return;
-                }
-                throw new IllegalStateException("Confirm discard mode did not expose its standalone discard button");
+                var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).clientView();
+                int tile = view.actions().stream().filter(action -> action.type() == top.skyeyefast.mchjong.engine.RiichiAction.Type.DISCARD)
+                    .findFirst().orElseThrow().tiles().getFirst();
+                InputSmoke.clickHand((RiichiTableScreen) client.screen, view, tile);
+                step = 6; entered = ticks;
             } else if (step == 6 && ticks - entered > 20) {
                 var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).clientView();
-                require(view.seats().get(view.viewerSeat()).river().size() == 1, "Discard confirmation did not reach the server");
+                require(view.seats().get(view.viewerSeat()).river().size() == 1, "Direct hand click did not reach the server");
                 capture(client, "04-immersive-river-under-roof.png");
                 InputSmoke.switchView(client.screen);
                 require(!((RiichiTableScreen) client.screen).immersive(), "Cannot return to the seated view");
@@ -440,7 +437,7 @@ public final class TableClientSmoke {
                 if (!Boolean.getBoolean("mchjong.smoke.ponder"))
                     Files.writeString(output.resolve("ponder-optional.txt"), "Base client gameplay passed with Ponder absent.\n");
                 Files.writeString(output.resolve("survival-checks.txt"), "Real server menus: carrier lock, clicks, shift transfers, hotbar/offhand swaps, dragging, collection, invalidation and conservation. Native stonecutter: component cache invalidation, no re-engraving, preserved material/color and shift result conservation. Equipment: native placement, replacement, public/private updates, save/load, active locks, sanma full-set recovery, point-stick independence, root/placeholder destruction and explosions. Real ordinary-table client: shuffle, own wall, 4/4/4/1 packets, dealer and normal draws, discard, private hands, waiting without auto-handling, manual save/load and exit with exact box recovery.\n");
-                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, immersive discard confirmation, river synchronization, texture filtering and resource reload passed. Live controls checked exit/rejoin, physical red stock, custom rule acknowledgement and world permissions. Ordinary-table handling, replay archival, authorized fetch, chunk reassembly, timeline seeking and Tenhou export passed.\n");
+                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, immersive direct hand-click discard, river synchronization, texture filtering and resource reload passed. Live controls checked exit/rejoin, physical red stock, custom rule acknowledgement and world permissions. Ordinary-table handling, replay archival, authorized fetch, chunk reassembly, timeline seeking and Tenhou export passed.\n");
                 LOG.info("MCHJONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
                 step = 13;

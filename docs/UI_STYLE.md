@@ -115,7 +115,7 @@ foreground hand, player plaques, center display and motion as Riichi and Sichuan
 MCR retains its native flat-kong display in the shared left public area.
 Compact edge cards show player names, winds and scores. The current turn is marked
 with the shared accent. Automatic flower replacement names the player currently replacing.
-Discards come from hand selection, while claims, kongs, wins and pass use localized
+Clicking a legal hand tile discards it, while claims, kongs, wins and pass use localized
 native buttons with tile previews. MCR uses the shared room time editor and turn
 clock, reserving a clock lane below the actions and above the private hand.
 
@@ -567,7 +567,7 @@ and Exit. Narrow seated overlays use short captions with the full names on hover
 normal and immersive toolbars size buttons from their translated captions.
 The top-bar view button switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
-retaining the drawn-tile gap and normal selection, discard and riichi controls.
+retaining the drawn-tile gap and direct discard and riichi controls.
 Tile width uses a stable fourteen-tile capacity (seventeen for Taiwanese mahjong). Short Riichi
 hands keep their left anchor; Chinese foreground hands stay centered and move
 right only when actual projected public tiles overlap their screen band.
@@ -576,7 +576,8 @@ changes in available controls never move the hand vertically.
 Action buttons stay above it. Switching views preserves world camera orientation;
 closing the overlay reveals the seated world. Third-person remains under Minecraft's
 control. Seat cards retain names, wind and scores in both presentations.
-Selection and game actions use pointer clicks and visible confirmation controls.
+Use the selected single-click or double-click mode to discard a legal hand tile.
+Other declarations use their native action controls.
 Native text editing, widget focus and Escape retain Minecraft's behavior.
 An active turn clock suppresses the footer help line, keeping attention on the
 decision controls and the separate clock lane above the hand.
@@ -610,8 +611,8 @@ preference, and retains the normal robbery and replacement-draw flow.
 Turning sorting off keeps the hand's current order. Dragging a tile onto another
 tile changes its position. Dragging it upward at least 48 logical pixels in seated
 view or 96 pixels on the immersive canvas discards only when a discard is legal.
-Shorter drags retain the tile. The personal single-click, double-click and
-confirmation settings continue to govern click discards.
+Shorter drags retain the tile. Clicking without dragging uses the personal
+single-click or double-click discard setting.
 Riichi draws and ordinary discards advance after
 12 server ticks on both tables, retaining legal concealed-kan and north-extraction
 choices. Ordinary tables start with a 30-second move allowance and 120-second

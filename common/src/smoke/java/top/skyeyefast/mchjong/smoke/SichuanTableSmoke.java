@@ -301,7 +301,7 @@ final class SichuanTableSmoke {
                 if (++settled < 10) break;
                 var screen = (SichuanTableScreen) client.screen;
                 if (!picked) {
-                    top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.CONFIRM;
+                    top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.SINGLE_CLICK;
                     selectedTile = view.game().actions().stream().filter(action -> action.type() == SichuanAction.Type.DISCARD)
                         .findFirst().orElseThrow().tiles().getFirst();
                     require(selectedTile == boundFirstDiscard, "First discard did not use the secret selection");
@@ -309,32 +309,24 @@ final class SichuanTableSmoke {
                         .filter(candidate -> candidate.area() == top.skyeyefast.mchjong.client.SichuanTableScene.Area.HAND
                             && candidate.seat() == view.game().viewerSeat() && candidate.tile() == selectedTile).findFirst().orElseThrow();
                     var pointer = project(client, pos, piece.position());
-                    require(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Seated Sichuan picking failed");
+                    InputSmoke.pointer(client, pointer.x, pointer.y);
                     InputSmoke.switchView(screen);
                     require(screen.immersive(), "Sichuan cannot enter immersive view");
-                    var player = view.game().seats().get(view.game().viewerSeat());
-                    var tiles = new ArrayList<>(player.hand());
-                    if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
-                    double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
-                    double horizontal = (screen.width - 1280 * scale) / 2
-                        + (248 + tiles.indexOf(selectedTile) * 58 + (selectedTile == player.drawn() ? 29 : 0)) * scale;
-                    double vertical = (screen.height - 800 * scale) / 2 + 690 * scale;
-                    require(screen.mouseClicked(horizontal, vertical, 0), "Immersive Sichuan picking failed");
-                    InputSmoke.switchView(screen);
-                    require(screen.selected(piece), "Immersive Sichuan picking selected a different tile");
-                    InputSmoke.switchView(screen);
+                    var handPoint = top.skyeyefast.mchjong.client.TableHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
+                    InputSmoke.pointer(client, handPoint.x, handPoint.y);
                     picked = true; settled = 0; break;
                 }
                 var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
                     && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
-                require(hint.visible && hint.active, "Sichuan convenience preview missing after restored room and discard selection");
+                require(hint.visible && hint.active, "Sichuan convenience preview missing after restored room and discard hover");
                 if (settled == 10) { screen.setFocused(hint); break; }
                 require(hint.isFocused(), "Sichuan hint cannot retain native keyboard focus");
                 SmokeScreenshots.grab(output.toFile(), "sichuan-hints.png", client.getMainRenderTarget(), ignored -> {});
                 SmokeScreenshots.grab(output.toFile(), "sichuan-table.png", client.getMainRenderTarget(), ignored -> {});
                 screen.setFocused(null);
                 discardDecision = view.game().decision();
-                InputSmoke.click(screen, "sichuan.mchjong.action.discard");
+                var pointer = top.skyeyefast.mchjong.client.TableHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
+                require(screen.mouseClicked(pointer.x, pointer.y, 0), "Immersive Sichuan direct discard failed");
                 stage = 17;
             }
             case 17 -> {

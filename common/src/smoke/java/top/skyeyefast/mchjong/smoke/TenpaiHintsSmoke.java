@@ -19,14 +19,13 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Dense HUDs and thirteen waits through pointer hover and native keyboard focus. */
 final class TenpaiHintsSmoke {
-    private record Sample(String language, int mode, boolean priorSelection) {}
+    private record Sample(String language, int mode, boolean priorHover) {}
     private static final Sample[] SAMPLES = {
         new Sample("en_us", 0, false), new Sample("zh_cn", 1, false),
         new Sample("en_us", 2, false), new Sample("zh_cn", 2, true)
     };
     private int sample = -1, ticks, width, height, scale;
     private boolean animations;
-    private TableSettings.DiscardMode discardMode;
     private String language;
     private CompletableFuture<Void> reload;
     private RiichiView original, fixture;
@@ -37,8 +36,8 @@ final class TenpaiHintsSmoke {
         if (sample < 0) {
             width = client.getWindow().getScreenWidth(); height = client.getWindow().getScreenHeight();
             scale = client.options.guiScale().get(); language = client.getLanguageManager().getSelected();
-            animations = settings.animations; discardMode = settings.discardMode;
-            settings.animations = false; settings.discardMode = TableSettings.DiscardMode.CONFIRM;
+            animations = settings.animations;
+            settings.animations = false;
             original = table.clientView();
             originalRoom = table.clientRoom();
             sample = 0;
@@ -92,7 +91,7 @@ final class TenpaiHintsSmoke {
         if (++ticks <= 20) return false;
         if (++sample < SAMPLES.length) show(client, table);
         else {
-            settings.animations = animations; settings.discardMode = discardMode;
+            settings.animations = animations;
             client.getWindow().setWindowed(width, height); client.options.guiScale().set(scale); client.resizeDisplay();
             client.getLanguageManager().setSelected(language); reload = client.reloadResourcePacks(); ticks = 0;
             table.acceptView(new RiichiView(original.tableId(), original.revision() + 13, original.decision(),
@@ -146,8 +145,8 @@ final class TenpaiHintsSmoke {
         }
         AutomationControlsSmoke.click(client, Component.translatable("ui.mchjong.automation_show").getString());
         client.screen.setFocused(null);
-        // Also cover a prior selection: the last hovered discard must win when entering the diamond.
-        if (SAMPLES[sample].priorSelection()) InputSmoke.clickHand((RiichiTableScreen) client.screen, fixture, 0);
+        // The latest hovered discard must replace the previous preview when entering the diamond.
+        if (SAMPLES[sample].priorHover()) InputSmoke.pointerHand(client, (RiichiTableScreen) client.screen, fixture, 0);
         client.getLanguageManager().setSelected(SAMPLES[sample].language()); reload = client.reloadResourcePacks(); ticks = 0;
     }
 

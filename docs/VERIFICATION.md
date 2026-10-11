@@ -173,7 +173,7 @@ The focused automatic-table MCR smoke uses one real client and three server-side
 human participants. It selects MCR through the registered payload, configures the
 shared clock editor, seats four players, checks the standard 144-tile stock,
 synchronized action clock and shared exit vote, then drives a
-physical hand selection, view switching, immersive click/confirmation, flower
+physical hand hover, view switching, immersive direct-click discards, flower
 replacement and responses through the independent MCR view and action path, opens
 settlement and confirms the next hand. It also keeps a match paused after the
 last dismount and resumes it when everyone returns. It then fetches the sealed
@@ -224,7 +224,7 @@ change private hands and wall identities without changing hint results.
 recipient-only restriction projection. Run with `:engine:test --tests "*ConvenienceHintsTest"
 --tests "*SichuanGameTest" --tests "*TenpaiHintsTest" --warning-mode fail --console=plain`.
 The MCR automatic-table and Sichuan mahjong client smokes enable hints through the shared
-room control, select a discard and focus the native hint widget. Opt-in captures
+room control, hover over a discard and focus the native hint widget. Opt-in captures
 are `mcr-auto-hints.png` and `sichuan-hints.png` in their respective evidence directories.
 `ServerIntegrationTest.actualMinecraftCodecsRoundTripOnlyDeclaredPayloads` also
 checks Sichuan mahjong proposals and settings at both field bounds and rejects malformed
@@ -460,7 +460,7 @@ lobby action or authenticated server command. The active check also verifies tha
 transfer action. The rule checks preserve unfinished payment input across help
 navigation and retain rejected yaku drafts until an explicit reload or correction.
 It exercises initial flower replacement, native calls, recipient/spectator privacy,
-seated and immersive discard selection, focused convenience-hint previews and
+seated and immersive discard previews, direct hand-click discards, focused convenience hints and
 world-policy disabling, exit-vote pause, result/next-hand packets,
 NBT restore and a complete East/South/West/North match. It then adds,
 removes and fills Bot seats through native room handlers, restores their NBT
@@ -542,8 +542,8 @@ The shared presentation is checked on all three Minecraft profiles with
 `smokeSettlement`, `smokeManual` and `smokeVisibility` client profiles. MCR and
 Sichuan mahjong checks exercise the shared immersive canvas, physical hand picking,
 settlements and replays while retaining their own rules and hidden information.
-The Sichuan mahjong picking check switches back to the physical table and verifies the
-same tile remains selected.
+The Sichuan mahjong picking check verifies that a direct hand click discards the
+secretly bound physical first-discard tile.
 
 The adjacent bot-advisor project owns decision and overlay-placement tests.
 Its development smoke installer can add the matching loader JAR to a focused

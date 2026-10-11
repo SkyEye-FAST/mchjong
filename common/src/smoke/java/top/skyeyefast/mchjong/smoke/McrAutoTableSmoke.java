@@ -248,21 +248,22 @@ final class McrAutoTableSmoke {
                 if (presentationStep == 0) {
                     check(!screen.immersive(), "MCR play must open in the seated world view");
                     SmokeScreenshots.grab(output.toFile(), "mcr-auto-play.png", client.getMainRenderTarget(), message -> {});
-                    top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.CONFIRM;
                     var piece = top.skyeyefast.mchjong.client.McrTableScene.build(view.game()).stream()
                         .filter(p -> p.area() == top.skyeyefast.mchjong.client.McrTableScene.Area.HAND
                             && p.seat() == view.game().viewerSeat() && p.tile() == view.game().actions().get(index).tiles().getFirst())
                         .findFirst().orElseThrow();
                     var pointer = project(client, pos, piece.position());
-                    check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Seated MCR hand picking failed");
+                    InputSmoke.pointer(client, pointer.x, pointer.y);
                     InputSmoke.switchView(screen);
                     check(screen.immersive(), "MCR view binding did not open the immersive canvas");
+                    var handPoint = top.skyeyefast.mchjong.client.TableHandSmoke.point(view.game(), piece.tile(), screen.width, screen.height);
+                    InputSmoke.pointer(client, handPoint.x, handPoint.y);
                     presentationStep++;
                     break;
                 }
                 var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
                     && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
-                check(hint.visible && hint.active, "MCR selected discard has no convenience preview");
+                check(hint.visible && hint.active, "MCR hovered discard has no convenience preview");
                 if (presentationStep == 1) {
                     screen.setFocused(hint); presentationStep++;
                     break;
@@ -272,8 +273,23 @@ final class McrAutoTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), message -> {});
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
                 firstDecision = view.game().decision();
-                InputSmoke.click(screen, "mcr.mchjong.action.discard");
-                stage++;
+                top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.DOUBLE_CLICK;
+                var pointer = top.skyeyefast.mchjong.client.TableHandSmoke.point(view.game(),
+                    view.game().actions().get(index).tiles().getFirst(), screen.width, screen.height);
+                check(screen.mouseClicked(pointer.x, pointer.y, 0), "Immersive MCR first click failed");
+                check(screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
+                    .noneMatch(button -> button.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("mcr.mchjong.action.discard").getString())),
+                    "Double-click mode exposed a discard confirmation button");
+                stage = 70;
+            }
+            case 70 -> {
+                var view = clientTable.clientMcrView();
+                check(view.game().decision() == firstDecision, "First click in double-click mode submitted a discard");
+                var screen = (McrTableScreen) client.screen;
+                var pointer = top.skyeyefast.mchjong.client.TableHandSmoke.point(view.game(),
+                    view.game().actions().get(first(view, McrAction.Type.DISCARD)).tiles().getFirst(), screen.width, screen.height);
+                check(screen.mouseClicked(pointer.x, pointer.y, 0), "Immersive MCR double-click discard failed");
+                stage = 8;
             }
             case 8 -> {
                 var view = clientTable.clientMcrView();

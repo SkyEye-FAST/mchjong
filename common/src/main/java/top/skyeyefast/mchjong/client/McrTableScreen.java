@@ -106,7 +106,6 @@ public final class McrTableScreen extends Screen {
         automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         var choices = new ArrayList<Integer>();
-        if (discardAction(selected) >= 0) choices.add(discardAction(selected));
         for (int i = 0; i < game.actions().size(); i++)
             if (game.actions().get(i).type() != McrAction.Type.DISCARD
                 && game.actions().get(i).type() != McrAction.Type.DRAW
@@ -146,13 +145,15 @@ public final class McrTableScreen extends Screen {
     }
     private void choose(int tile) {
         if (pending) return;
-        selected = tile; long now = Util.getMillis(); var mode = TableSettings.get().discardMode;
-        if (!hasShiftDown() && (mode == TableSettings.DiscardMode.SINGLE_CLICK
-            || mode == TableSettings.DiscardMode.DOUBLE_CLICK && lastClicked == tile && now - lastClickAt <= 450)) {
-            int index = discardAction(tile);
-            if (index >= 0) { send(view(), index); return; }
+        int index = discardAction(tile);
+        if (index < 0) return;
+        long now = Util.getMillis();
+        if (TableSettings.get().discardMode == TableSettings.DiscardMode.SINGLE_CLICK
+            || lastClicked == tile && now - lastClickAt <= 450) send(view(), index);
+        else {
+            selected = lastClicked = tile; lastClickAt = now;
+            rebuild(); setFocused(null);
         }
-        lastClicked = tile; lastClickAt = now; rebuild(); setFocused(null);
     }
     private Component tileLabel(int tile) {
         return table().clientMcrDeck().tile(tile).label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ,
