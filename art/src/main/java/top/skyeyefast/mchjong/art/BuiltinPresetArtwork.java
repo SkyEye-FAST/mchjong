@@ -7,6 +7,11 @@ import java.awt.image.BufferedImage;
 
 /** Deterministic artwork for the bundled cosmetic presets. */
 final class BuiltinPresetArtwork {
+    // Minecraft 1.21.1 Creeper head front: eyes and mouth on the same 8x8 pixel grid.
+    private static final String[] CREEPER_FACE = {
+        "........", "........", ".##..##.", ".##..##.",
+        "...##...", "..####..", "..####..", "..#..#.."
+    };
     private static final String[] MOJANG_BANNER_MARK = {
         "............#.....",
         "............##....",
@@ -33,13 +38,10 @@ final class BuiltinPresetArtwork {
         var g = graphics(image);
         try {
             if (name.equals("creeper")) {
-                int ink = 0xffeee5d3;
-                fill(g, 66, 127, 46, 44, ink);
-                fill(g, 144, 127, 46, 44, ink);
-                fill(g, 106, 174, 44, 32, ink);
-                fill(g, 82, 202, 92, 46, ink);
-                fill(g, 82, 238, 24, 24, ink);
-                fill(g, 150, 238, 24, 24, ink);
+                for (int row = 0; row < CREEPER_FACE.length; row++)
+                    for (int col = 0; col < CREEPER_FACE[row].length(); col++)
+                        if (CREEPER_FACE[row].charAt(col) == '#')
+                            fill(g, 64 + col * 16, 112 + row * 16, 16, 16, 0xffeee5d3);
             } else if (name.equals("mojang")) {
                 // The banner texture stores the front and mirrored back side by side; draw one mark.
                 for (int row = 0; row < MOJANG_BANNER_MARK.length; row++) {

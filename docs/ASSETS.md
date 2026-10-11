@@ -180,7 +180,8 @@ the chosen preset to its stored tiles independently of dye. Server presets are
 sent to joining players and refreshed for online players; an unavailable ID uses the transparent default pattern.
 The built-in back choices are Creeper and Mojang banner marks in a single ink
 color. Their artwork is generated with the mod and is available to every player
-without a preset ZIP.
+without a preset ZIP. The Creeper mark follows the vanilla face's 8 by 8 pixel
+grid, with uniformly scaled square pixels.
 On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material texture>.png`.

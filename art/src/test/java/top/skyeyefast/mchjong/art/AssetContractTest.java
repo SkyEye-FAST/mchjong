@@ -226,6 +226,18 @@ class AssetContractTest {
     }
 
     @Test
+    void creeperBackUsesTheVanillaPixelGrid() throws Exception {
+        var image = ImageIO.read(resources.resolve("assets/mchjong/textures/preset/back/creeper.png").toFile());
+        String[] mask = {"........", "........", ".##..##.", ".##..##.",
+            "...##...", "..####..", "..####..", "..#..#.."};
+        for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+            int col = (x - 64) / 16, row = (y - 112) / 16;
+            boolean ink = x >= 64 && x < 192 && y >= 112 && y < 240 && mask[row].charAt(col) == '#';
+            assertEquals(ink ? 0xffeee5d3 : 0, image.getRGB(x, y), x + "," + y);
+        }
+    }
+
+    @Test
     void modelsUseFewCuboidsAndOnlyAvailableTextures() throws Exception {
         for (String name : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool",
                 "mahjong_tile", "mahjong_box", "table_cloth", "point_stick")) {
