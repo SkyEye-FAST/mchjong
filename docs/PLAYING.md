@@ -181,6 +181,8 @@ Click Riichi, then click a highlighted legal tile to declare riichi.
 Click Pass to skip a response. Right-click or Esc cancels a declaration before closing the
 overlay. Right-drag looks freely around the seated table. The wheel moves closer
 or farther away. Shift-right-drag pans across the table; Shift-wheel adjusts height.
+Action announcements use muted text centered horizontally above the table and avoid
+the HUD, controls and hand. The current-discard card stays on the right.
 Reset the seated view in Personal Settings. Distance and height sliders preserve
 the current look direction.
 Use the top-bar view button to switch between the seated and immersive

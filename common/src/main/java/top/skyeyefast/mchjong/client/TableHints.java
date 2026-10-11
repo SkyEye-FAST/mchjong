@@ -39,6 +39,11 @@ final class TableHints extends TableHintsButton {
 
     @Override public void onPress() { page = (page + 1) % pages; }
 
+    net.minecraft.client.gui.navigation.ScreenRectangle popupBounds() {
+        return visible && isHoveredOrFocused()
+            ? new net.minecraft.client.gui.navigation.ScreenRectangle(left, top, span * scale, popupHeight * scale) : null;
+    }
+
     private int discard(int hovered, int selected) {
         if (hovered >= 0) previewDiscard = hovered;
         else if (selected != lastSelected) previewDiscard = selected;

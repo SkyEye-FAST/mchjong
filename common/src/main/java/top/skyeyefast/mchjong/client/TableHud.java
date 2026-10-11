@@ -3,6 +3,10 @@ package top.skyeyefast.mchjong.client;
 import top.skyeyefast.mchjong.text.CountedText;
 
 import java.util.List;
+import java.util.ArrayList;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -23,14 +27,26 @@ final class TableHud {
         MahjongUi.text(g, font, text, 0, 0, (int) (width / scale), color, false);
         g.pose().popPose();
     }
+
+    static List<ScreenRectangle> exclusions(Screen screen, ScreenRectangle hand, ScreenRectangle popup, TableBoard board) {
+        var occupied = new ArrayList<ScreenRectangle>();
+        for (var child : screen.children()) if (child instanceof AbstractWidget widget && widget.visible)
+            occupied.add(widget.getRectangle());
+        if (hand != null) occupied.add(hand);
+        if (popup != null) occupied.add(popup);
+        if (board != null) occupied.add(board.centerBounds());
+        return occupied;
+    }
+
     static void render(Font font, GuiGraphics g, TableBoardState state, TableRoomView room, List<Component> statuses,
-                       int width, boolean immersive, TileFacePreset preset, TileMaterial material,
+                       int width, int height, boolean immersive, List<ScreenRectangle> occupied, TileFacePreset preset, TileMaterial material,
                        net.minecraft.world.item.DyeColor back, net.minecraft.resources.ResourceLocation backPreset,
                        int mouseX, int mouseY, java.util.function.IntUnaryOperator artwork) {
         var settings = TableSettings.get();
         if (!immersive && (settings.show(TableSettings.Information.ROUND) || settings.show(TableSettings.Information.REMAINING))) {
             int header = Math.min(280, Math.max(84, width - 224));
             MahjongUi.panel(g, 8, 7, header, 26);
+            occupied.add(new ScreenRectangle(8, 7, header, 26));
             if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(g, font,
                 state.indicator() == null ? state.roundLabel() : state.indicator().title(), 12, 10, header - 8, MahjongUi.TEXT, false);
             if (settings.show(TableSettings.Information.REMAINING)) MahjongUi.text(g, font,
@@ -51,6 +67,7 @@ final class TableHud {
             boolean turn = seat == state.turn() && settings.show(TableSettings.Information.TURN);
             boolean disconnected = member.presence() == PlayerPresence.DISCONNECTED;
             surface(g, x, y, w, h, immersive, seat == state.viewerSeat(), turn);
+            occupied.add(new ScreenRectangle(x, y, w, h));
             int inset = settings.show(TableSettings.Information.NAMES) ? PlayerPortrait.draw(g, member.participant(),
                 x + (immersive ? 8 : 5), y + (immersive ? 8 : 2), immersive ? 32 : 10) : 0;
             Component name = settings.show(TableSettings.Information.NAMES)
@@ -81,10 +98,16 @@ final class TableHud {
                 g.renderTooltip(font, hover, mouseX, mouseY);
             }
         }
-        if (state.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {
-            int scale = immersive ? 2 : 1, x = immersive ? 220 : width - 100, y = immersive ? 550 : 84, span = 90 * scale;
+        if (room.exitVote() == null && state.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {
+            int scale = immersive ? 2 : 1;
+            var label = Component.translatable("ui.mchjong.focus");
+            int preferred = immersive ? TableCanvas.card(1).bottom() + 4 * scale : 84;
+            var bounds = TableStatusLayout.focus(width, height, (font.width(label) + 27) * scale,
+                17 * scale, 4 * scale, preferred, occupied);
+            if (bounds == null || bounds.width() < 22 * scale) return;
+            int x = bounds.left(), y = bounds.top(), span = bounds.width();
             MahjongUi.panel(g, x, y, span, 17 * scale);
-            text(font, g, Component.translatable("ui.mchjong.focus"), x + 4 * scale, y + 5 * scale, span - 22 * scale, MahjongUi.ACCENT, scale);
+            text(font, g, label, x + 4 * scale, y + 5 * scale, span - 22 * scale, MahjongUi.ACCENT, scale);
             TileGui.tileArtwork(g, state.focus().tile(), x + span - 15 * scale, y + scale, 9 * scale, false, false, false, false, 0, preset, material, back, backPreset, artwork);
         }
     }

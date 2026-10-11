@@ -241,6 +241,7 @@ public final class SichuanTableScreen extends Screen {
                 graphics.drawCenteredString(font, Component.translatable("sichuan.mchjong.void_first_discard"),
                     canvasWidth / 2, immersive() ? 183 : 43, MahjongUi.MUTED);
             graphics.pose().popPose();
+            updateHints();
             renderSeats(graphics, view, mx, my);
             renderClaims(graphics, view);
             if (hand != null) {
@@ -254,7 +255,6 @@ public final class SichuanTableScreen extends Screen {
                 TableAnimation.of(table()).render(graphics, board, hand, TableCanvas.HEIGHT - 60, Util.getMillis(),
                     deck.preset(), deck.material(), deck.back(), deck.backPreset(), tile -> TileMesh.artwork(deck.tile(tile)));
             }
-            updateHints();
             graphics.pose().pushPose(); graphics.pose().translate(0, 0, 600);
             TableExitControls.renderVote(graphics, font, table().clientTableRoom(), uiWidth(), uiHeight(), textScale);
             super.render(graphics, mx, my, partialTick);
@@ -274,7 +274,8 @@ public final class SichuanTableScreen extends Screen {
     private void renderSeats(GuiGraphics g, SichuanSession.View view, int mouseX, int mouseY) {
         var deck = table().clientSichuanDeck();
         TableHud.render(font, g, TableBoardState.live(view.game()), table().clientTableRoom(), view.game().seats().stream().map(SichuanTableScene::status).toList(),
-            uiWidth(), immersive(), deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
+            uiWidth(), uiHeight(), immersive(), TableHud.exclusions(this, privateHandBounds(), hints.popupBounds(), board),
+            deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
     }
     private void renderClaims(GuiGraphics graphics, SichuanSession.View view) {
         var claims = SichuanTableScene.claims(view.game()).stream().filter(claim -> claim.winners().size() > 1).toList();

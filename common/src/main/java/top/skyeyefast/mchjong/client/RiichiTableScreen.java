@@ -59,7 +59,6 @@ public final class RiichiTableScreen extends Screen {
     private Component informationTooltip;
     private final RiichiHud information = new RiichiHud();
     private int actionTop;
-    private int actionLeft;
     private int actionHeight;
     private ScreenRectangle privateHandBounds;
     private RiichiView handlingDrag;
@@ -366,7 +365,6 @@ public final class RiichiTableScreen extends Screen {
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
         if (view.actions().stream().noneMatch(action -> action.type() == RiichiAction.Type.RIICHI)) choosingRiichi = false;
         buildToolbar(view);
-        actionLeft = 10;
         automation.build(layoutWidth, immersive() ? layoutHeight - 32 : hand == null ? layoutHeight - 17 : hand.top() - 8,
             immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
@@ -393,11 +391,9 @@ public final class RiichiTableScreen extends Screen {
             int stripWidth = columns * boxWidth + (columns - 1) * buttonGap;
             startX = layoutWidth - stripWidth - 32;
             actionTop = (hand == null ? layoutHeight - 112 : hand.top() - 12) - rows * (buttonHeight + buttonGap);
-            actionLeft = startX;
         } else {
             int scale = immersive() ? 2 : 1;
             int actionWidth = layoutWidth - 20 * scale - (!immersive() && automation.available() ? automation.width(layoutWidth) + 8 : 0);
-            actionLeft = layoutWidth - 10 * scale - actionWidth;
             columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, actionWidth / (88 * scale))));
             boxWidth = Math.min(132 * scale, (actionWidth - (columns - 1) * 4 * scale) / columns);
             rows = Math.max(1, (count + columns - 1) / columns);
@@ -847,7 +843,6 @@ public final class RiichiTableScreen extends Screen {
         layoutTurnControls(view);
         hoveredTile = transform.contains(mouseX, mouseY) ? pick(drawMouseX, drawMouseY) : Tile.ABSENT;
         renderHandling(graphics, view, drawMouseX, drawMouseY);
-        informationTooltip = information.tooltip(drawMouseX, drawMouseY);
         TableSettings settings = TableSettings.get();
         boolean inputEnabled = !decision.pending() && !dealing()
             && (!TableResults.available(view) || Util.getMillis() - resultStarted >= 500);
@@ -868,8 +863,6 @@ public final class RiichiTableScreen extends Screen {
             }
         }
         int statusScale = immersive() ? 2 : 1;
-        if (choosingRiichi) renderStatus(graphics, Component.translatable("ui.mchjong.choose_riichi"),
-            actionTop - 14 * statusScale, MahjongUi.ACCENT);
         if (hand != null && results == null) hand.render(graphics, selectedTile, hoveredTile, tile -> {
             for (var piece : scene) if (piece.area() == RiichiTableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
@@ -886,18 +879,11 @@ public final class RiichiTableScreen extends Screen {
                 Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack(), tileBackPreset());
         }
         updateHints(view);
+        if (!TableResults.available(view)) information.renderFocus(font, graphics, view, layoutWidth, layoutHeight, immersive(),
+            TableHud.exclusions(this, privateHandBounds, hints.popupBounds(), board), facePreset());
+        informationTooltip = information.tooltip(drawMouseX, drawMouseY);
         super.render(graphics, drawMouseX, drawMouseY, partialTick);
-        if (dealing()) renderStatus(graphics, Component.translatable(immersive() ? "ui.mchjong.dealing.immersive" : "ui.mchjong.dealing"),
-            actionTop - 14 * statusScale, MahjongUi.ACCENT);
-        else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
-            var cues = animation().cues(Util.getMillis());
-            int cueY = actionTop - ((choosingRiichi ? 14 : 0) + cues.size() * 13 + 1) * statusScale;
-            for (var cue : cues) {
-                renderStatus(graphics, playerName(view, cue.seat()).copy().append("  ").append(Component.translatable(cue.key())),
-                    cueY, MahjongUi.ACCENT);
-                cueY += 13 * statusScale;
-            }
-        }
+        renderStatuses(graphics, view);
         if (!turnClock.visible && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
                 : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help." + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
@@ -932,10 +918,8 @@ public final class RiichiTableScreen extends Screen {
         privateHandBounds = privateHandBounds(view);
         int bottom = privateHandBounds.top() - 6 * scale;
         // Keep a stable clock lane even between turns, so controls never jump as time expires.
-        int captions = (choosingRiichi ? 14 : 0) + (dealing() ? 14
-            : TableSettings.get().animations && animation() != null ? animation().cues(Util.getMillis()).size() * 13 : 0);
-        if (!immersive() && bottom - 28 - actionHeight - captions < information.bottom() + 4
-            && privateHandBounds.bottom() + 6 + captions + actionHeight + 28 <= uiHeight() - 24)
+        if (!immersive() && bottom - 28 - actionHeight < information.bottom() + 4
+            && privateHandBounds.bottom() + 6 + actionHeight + 28 <= uiHeight() - 24)
             bottom = uiHeight() - 24;
         int top = bottom - 28 * scale - actionHeight;
         int shift = top - actionTop;
@@ -983,14 +967,27 @@ public final class RiichiTableScreen extends Screen {
             (int) Math.min(uiHeight(), Math.ceil(bottom)) - y);
     }
 
-    private void renderStatus(GuiGraphics graphics, Component text, int y, int color) {
+    private void renderStatuses(GuiGraphics graphics, RiichiView view) {
+        if (TableResults.available(view)) return;
+        var captions = new ArrayList<Component>();
+        if (choosingRiichi) captions.add(Component.translatable("ui.mchjong.choose_riichi"));
+        if (dealing()) captions.add(Component.translatable(immersive() ? "ui.mchjong.dealing.immersive" : "ui.mchjong.dealing"));
+        else if (TableSettings.get().animations && animation() != null) for (var cue : animation().cues(Util.getMillis()))
+            captions.add(playerName(view, cue.seat()).copy().append("  ").append(Component.translatable(cue.key())));
+        if (captions.isEmpty()) return;
         int scale = immersive() ? 2 : 1;
-        int left = immersive() ? Math.min(actionLeft, uiWidth() - 560) : actionLeft;
+        var occupied = TableHud.exclusions(this, privateHandBounds, hints.popupBounds(), board);
+        occupied.addAll(information.bounds());
+        int textWidth = captions.stream().mapToInt(font::width).max().orElse(0) * scale;
+        var bounds = TableStatusLayout.of(uiWidth(), uiHeight(), textWidth,
+            ((captions.size() - 1) * 13 + font.lineHeight) * scale, 4 * scale, occupied);
+        if (bounds == null) return;
         graphics.pose().pushPose();
-        graphics.pose().translate(left, y, 0);
+        graphics.pose().translate(bounds.left(), bounds.top(), 0);
         graphics.pose().scale(scale, scale, 1);
-        MahjongUi.text(graphics, font, text, 0, 0,
-            (uiWidth() - left - (board == null && hints.visible ? 36 : 10)) / scale, color, true, true);
+        for (int line = 0; line < captions.size(); line++)
+            MahjongUi.text(graphics, font, captions.get(line), 0, line * 13,
+                bounds.width() / scale, MahjongUi.MUTED, true, true);
         graphics.pose().popPose();
     }
 

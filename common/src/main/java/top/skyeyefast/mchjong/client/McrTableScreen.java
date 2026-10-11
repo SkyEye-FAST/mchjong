@@ -223,6 +223,7 @@ public final class McrTableScreen extends Screen {
                 g.drawCenteredString(font, Component.translatable("mcr.mchjong.flower_replacement",
                     view.participants().get(view.game().turn()).name()), w / 2, immersive() ? 183 : 43, MahjongUi.ACCENT);
             g.pose().popPose();
+            updateHints();
             renderSeats(g, view, mx, my);
             if (hand != null) {
                 var deck = table().clientMcrDeck();
@@ -235,7 +236,6 @@ public final class McrTableScreen extends Screen {
                 TableAnimation.of(table()).render(g, board, hand, TableCanvas.HEIGHT - 60, Util.getMillis(),
                     deck.preset(), deck.material(), deck.back(), deck.backPreset(), tile -> TileMesh.artwork(deck.tile(tile)));
             }
-            updateHints();
             g.pose().pushPose(); g.pose().translate(0, 0, 600);
             TableExitControls.renderVote(g, font, table().clientTableRoom(), uiWidth(), uiHeight(), s);
             super.render(g, mx, my, partialTick);
@@ -259,7 +259,8 @@ public final class McrTableScreen extends Screen {
                 return Component.translatable("wind.mchjong." + new String[]{"east", "south", "west", "north"}[Math.floorMod(seat - view.game().dealer(), 4)])
                     .append("  ").append(Component.translatable(player.winForbidden() ? "mcr.mchjong.win_forbidden" : "mcr.mchjong.flowers", player.flowers().size()));
             }).toList(),
-            uiWidth(), immersive(), deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
+            uiWidth(), uiHeight(), immersive(), TableHud.exclusions(this, privateHandBounds(), hints.popupBounds(), board),
+            deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
     }
     private int clockBottom() {
         if (hand != null) return hand.top() - 12;

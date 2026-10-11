@@ -106,7 +106,6 @@ final class InputSmoke {
         require(!screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Switching view lost riichi selection mode");
         switchView(screen);
         require(screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Returning to immersive lost riichi selection mode");
-        screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
         screen.resetView();
     }
 

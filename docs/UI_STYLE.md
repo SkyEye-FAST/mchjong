@@ -397,13 +397,11 @@ furiten badge below it. Each plaque contains only portrait, name, wind and score
 turn, riichi and presence use small marks. The central
 device carries the round, remaining tiles, turn direction and graphical honba/riichi
 point sticks with counts. It must not spell out honba or deposits.
-MCR and Sichuan mahjong use a separate compact instrument panel: a short round caption
-above a larger remaining-tile count, with four owner-positioned seat badges.
-MCR badges show seat winds and the caption uses the actual prevailing wind.
-Sichuan mahjong badges show authorized void suits or the public won state; unpublished
-void choices remain blank. A brass edge marks the dealer and the active seat uses
-the shared selected surface. ROUND, REMAINING, TURN and the variant's WINDS or
-STATUS preferences remain independent. Native panels have no deposit counters.
+MCR, Sichuan mahjong and Taiwanese mahjong use a compact instrument panel with a
+short round caption above a larger remaining-tile count. The MCR caption uses the
+actual prevailing wind. Player plaques carry seat winds, authorized void suits and
+the public won state. ROUND, REMAINING and TURN control the instrument independently
+of the plaques' WINDS and STATUS preferences. Native panels have no deposit counters.
 Use the same resource-pack tile faces and server-issued actions as seated play.
 In replay diagrams, dim tsumogiri and mark tedashi. Live play keeps both at normal
 brightness and distinguishes their movement by animation. The sideways riichi discard
@@ -417,7 +415,10 @@ font size.
 The bottom-left control hint uses that same enlarged size. In both views, show
 the move allowance as large warm-white digits with a smaller `+reserve` in the accent color,
 right-aligned above the private hand. Reserve a separate clock lane below the
-action buttons; riichi prompts and animation cues grow upward above the buttons.
+action buttons. Center riichi prompts and animation cues horizontally in the upper
+part of the screen, using muted text and an area clear of player cards, controls,
+the clock, hint popups, the central device and the private hand. Keep the current
+discard card at the right edge, clear of these elements.
 Seated placement follows the animated tile-box projection, including melds and
 selection lift. Immersive placement uses the raised hand's top edge. Clock labels
 remain localized in hover details and narration, and the last five total seconds
@@ -427,7 +428,7 @@ when its projection leaves insufficient room above and sufficient room below.
 Size immersive toolbar buttons from their translated captions at that scale, including padding.
 Riichi and animation captions, exit-vote panels and controls, settlement navigation
 and player-information tooltips use the same 2x content scale. Reserve matching
-line spacing above the action rail; multiple animation cues grow upward.
+line spacing in the centered caption area for multiple animation cues.
 Wait previews use twice the seated size for their focus target, tile faces, counts
 and heading. Reserve the enlarged popup's height when avoiding player plaques and actions.
 Immersive play has exactly one 1280 × 800 virtual layout. Minecraft GUI scale, window
@@ -602,7 +603,8 @@ is checked at 320 × 240; immersive controls always use the fixed 1280 × 800 vi
 canvas and are only uniformly scaled by the outer letterbox transform. These preferences belong to the server's
 seated player, reset at the start of each hand, and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
-text stay in the action-side gutter. Sorting starts enabled. The other options start
+text use separate areas. Countdown stays beside the actions; riichi and animation
+captions stay centered and clear of other interface elements. Sorting starts enabled. The other options start
 disabled. A qualifying win takes priority over automatic north extraction, discards and
 skipped calls. Without automatic wins, the win decision remains explicit. MCR uses
 eight non-flower fan. Sichuan mahjong uses its issued win and discard choices. Automatic

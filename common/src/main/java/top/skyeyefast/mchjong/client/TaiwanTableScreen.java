@@ -242,7 +242,8 @@ public final class TaiwanTableScreen extends Screen {
                     .append("  ").append(Component.translatable("taiwan.mchjong.flowers", player.flowers().size()))
                     .append(player.ready() == top.skyeyefast.mchjong.engine.TaiwanWinContext.Ready.NONE ? Component.empty() : Component.literal("\n").append(Component.translatable("taiwan.mchjong.ready")));
             }).toList(),
-            uiWidth(), immersive(), deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
+            uiWidth(), uiHeight(), immersive(), TableHud.exclusions(this, privateHandBounds(), hints.popupBounds(), board),
+            deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
     }
     private int clockBottom() {
         if (hand != null) return hand.top() - 12;

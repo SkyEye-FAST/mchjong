@@ -55,6 +55,11 @@ final class RiichiHints extends TableHintsButton {
 
     record Layout(int x, int y, int width, int height, int step, int tileWidth, int columns) {}
 
+    net.minecraft.client.gui.navigation.ScreenRectangle popupBounds() {
+        return visible && isHoveredOrFocused() && popup != null
+            ? new net.minecraft.client.gui.navigation.ScreenRectangle(popup.x(), popup.y(), popup.width(), popup.height()) : null;
+    }
+
     static Layout layout(int rightBound, int leftBound, int topBound, int bottom, int count, int scale) {
         if (count == 0) return null;
         int available = (rightBound - leftBound) / scale;
