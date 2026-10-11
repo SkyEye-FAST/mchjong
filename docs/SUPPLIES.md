@@ -45,21 +45,21 @@ data, shared across dimensions and retained across player deaths and reconnects.
 Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
 are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
 autumn, winter, plum, orchid, bamboo and chrysanthemum in Kansai, written `1q..8q`.
-Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴); Sichuan,
-Hong Kong, Taiwan and Fujian's
-`5q..8q` show plum, orchid, chrysanthemum and bamboo (梅蘭菊竹).
+The Kanto face preset's `5q..8q` images show fortune, prosperity, longevity and
+nobility (福禄寿貴). In the Sichuan, Hong Kong, Taiwan and Fujian face presets,
+the `5q..8q` images show plum, orchid, chrysanthemum and bamboo (梅蘭菊竹).
 Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
 Only faces `4`, `13`, `22` can have `red = true`. Material is one of the twelve
 wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or
 `amethyst`. Invalid faces, red combinations and denominations are rejected by
 the component codecs. Identical components stack normally. Undyed tile backs use
-their material texture and selected pattern; default cloth is cyan and stool cushions are white.
+their material texture and selected pattern. Default cloth is cyan and stool cushions are white.
 
 All custom components are immutable codec values with persistence and network
-serialization. No item IDs are generated for particular faces, back colors, woods
-or denominations. Placed furniture projects its item components into its block
-entity, including drops and pick-block results. Private box contents are never
-part of a furniture appearance update.
+serialization. General item IDs use components to represent faces, back colors,
+woods and denominations. Placed furniture projects its item components into its
+block entity, including drops and pick-block results. Furniture appearance updates
+carry public components, while box contents remain private.
 
 ## Implementation ownership
 
@@ -80,11 +80,11 @@ synchronized Gradle outputs and reproducibility checks.
 
 ## MCR stock boundary
 
-`McrDeck.select` uses the existing box/component validation and inspects one case
-without consuming or rewriting its contents. A selected set contains four
+`McrDeck.select` validates one case using the existing box/component rules and
+preserves its contents. A selected set contains four
 ordinary copies of each of the 34 kinds and one of each of the eight flowers.
 All selected tiles share material, back color, face preset and back preset.
-Spare tiles remain in the case; red markings do not substitute for missing
+Spare tiles remain in the case. Red markings do not substitute for missing
 ordinary fives. Each returned deck supplies the standard 144 physical engine
 identities. `McrDeck.tile` explicitly maps physical flower IDs to their item
 faces, independently of ordinary `Tile.kind` analysis.
@@ -95,7 +95,7 @@ appearance and point-stick reservations unchanged. It is a supply check;
 cloth, room readiness, active-match locking and start authorization belong to
 the table lifecycle that consumes the selection.
 
-## Taiwan stock boundary
+## Taiwanese mahjong stock boundary
 
 `TaiwanDeck.select` validates one case independently through the existing supplies
 parser. Pocket selects four ordinary copies of each kind and eight distinct
@@ -103,7 +103,7 @@ flowers (144 physical identities); Southern selects the 136 ordinary identities.
 Red fives cannot replace ordinary fives. Every selected tile shares material,
 back color, face preset and back preset. Extra tiles remain in inventory.
 `TableEquipment.taiwanStock` checks each case separately without pooling contents
-or changing Riichi stock/point-stick reservations. Taiwan flower identities use
+or changing Riichi stock/point-stick reservations. Taiwanese flower identities use
 its own deck boundary; `McrDeck` remains specific to MCR.
 
 ## Recipe catalogue and identity
@@ -115,7 +115,7 @@ wood types. Flowers and red fives share the existing tile item.
 
 Recipe identity distinguishes wood, material, back color, face preset, face, red
 markings, denomination and complete container components. An outer custom name
-is cosmetic for lookup; crafting still applies the source recipe's name-preservation
+is cosmetic for lookup. Crafting still applies the source recipe's name-preservation
 rules. Examples are built from the recipes in the loaded datapack. Every cycling
 ingredient is accepted only when the source recipe produces the displayed output
 with identical components and count.
@@ -128,6 +128,6 @@ uses the viewer's normal crafting category. Dye colors cycle only when crafting
 yields the exact displayed output.
 
 Arbitrarily rearranged, mixed-material or specially named contents retain exact
-identities and follow the same server recipes; these unbounded layouts are not
-all pre-enumerated as viewer examples. See [Verification](VERIFICATION.md) for
+identities and follow the same server recipes. Viewer examples show representative
+layouts. See [Verification](VERIFICATION.md) for
 native transaction, conservation and loaded-recipe checks.

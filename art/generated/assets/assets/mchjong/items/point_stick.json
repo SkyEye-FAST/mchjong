@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "mchjong:item/point_stick",
+    "model": {
+      "type": "mchjong:supply"
+    }
+  }
+}

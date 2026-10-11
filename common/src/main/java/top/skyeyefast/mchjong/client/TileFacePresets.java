@@ -66,11 +66,9 @@ public final class TileFacePresets {
                 var id = new TileFacePreset(Identifier.fromNamespaceAndPath(path.getNamespace(), name));
                 if (!TileFacePreset.BUILTINS.contains(id)) return;
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
-                Definition definition = new Definition(Identifier.parse(json.get("atlas").getAsString()),
-                    Identifier.parse(json.get("glyphs").getAsString()));
-                if (resources.getResource(definition.atlas()).isEmpty() || resources.getResource(definition.glyphs()).isEmpty())
-                    throw new IllegalArgumentException("Missing atlas or glyph texture");
-                loaded.put(id, definition);
+                var images = TileFaceImages.load(resources, Identifier.parse(json.get("tiles").getAsString()),
+                    json.get("blank_white_dragon").getAsBoolean());
+                loaded.put(id, register(id, images, "builtin_faces", dynamic));
             } catch (java.io.IOException | RuntimeException error) {
                 com.mojang.logging.LogUtils.getLogger().error("Cannot load tile face preset {}", path, error);
             }
@@ -81,7 +79,7 @@ public final class TileFacePresets {
             var root = Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong/presets");
             var archives = PresetArchives.loadDirectory(root.resolve("faces"), PresetArchives.Kind.FACE);
             for (var entry : archives.faces().entrySet())
-                composed.put(entry.getKey(), TileFaceImages.compose(entry.getValue().tiles()));
+                composed.put(entry.getKey(), TileFaceImages.compose(entry.getValue().tiles(), true));
             for (var entry : archives.faces().entrySet()) {
                 loaded.put(entry.getKey(), register(entry.getKey(), composed.remove(entry.getKey()), "local_faces", dynamic));
                 names.put(entry.getKey(), entry.getValue().name());
@@ -162,7 +160,7 @@ public final class TileFacePresets {
         var locations = new HashSet<Identifier>();
         var composed = new HashMap<TileFacePreset, TileFaceImages.Pair>();
         try {
-            for (var entry : images.entrySet()) composed.put(entry.getKey(), TileFaceImages.compose(entry.getValue().tiles()));
+            for (var entry : images.entrySet()) composed.put(entry.getKey(), TileFaceImages.compose(entry.getValue().tiles(), true));
         } catch (IOException | RuntimeException failure) {
             for (var pair : composed.values()) { pair.atlas().close(); pair.glyphs().close(); }
             throw failure;

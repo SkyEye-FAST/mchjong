@@ -1,6 +1,6 @@
 # Building and contributing
 
-[Documentation](README.md) · [Project overview](../README.md)
+[Documentation](README.md) | [Project overview](../README.md)
 
 ## Building from source
 
@@ -75,7 +75,7 @@ Follow the versioning and signed-commit requirements in the contributor instruct
 Synchronize into `compat/1.20.1` and `compat/26.1.2` only when explicitly
 requested, preserving shared gameplay while adapting actual Minecraft and loader
 API boundaries.
-The 1.20.1 port builds Fabric and Forge with a Java 17 runtime; the 26.1.2 port
+The 1.20.1 port builds Fabric and Forge with a Java 17 runtime. The 26.1.2 port
 builds Fabric and NeoForge with Java 25. Quilt consumes the matching Fabric JAR.
 
 Synchronize resources, documentation and formatting configuration with code.
@@ -83,13 +83,13 @@ Keep each branch's dependency versions, module set and single-version snapshot
 workflow. Original optional mods and cross-loader ports share one README row;
 name the concrete distributions below the table. Pin usable upstream prereleases
 to an exact build and verify their checksums and installed/absent behavior before
-marking them supported. A source branch alone does not establish compatibility.
+marking them supported.
 
 The release workflow on `main` builds its three loader artifacts, both 1.20.1
 artifacts from `.github/compat-1.20.1-ref`, and both 26.1.2 artifacts from
 `.github/compat-26.1.2-ref`. Update each pin after reviewing and validating a port
 batch. All checkouts receive the same mod version; filenames include Minecraft
-version and loader. A main commit does not automatically advance the pins.
+version and loader. Advance the pins explicitly after validation.
 Tags and publication belong to `main`; port snapshots build only their own version.
 Each verified artifact is published sequentially in this order: 1.21.1
 Fabric/Quilt, NeoForge, Forge; 1.20.1 Fabric/Quilt, Forge; then 26.1.2
@@ -98,20 +98,18 @@ dependency on both platforms.
 
 Use [Verification](VERIFICATION.md) for checks and record their exact scope before
 advancing a release pin. The [compatibility tables](../README.md#compatibility)
-describe supported adapters, not a substitute for runtime acceptance.
+describe supported adapters. Verification records runtime acceptance.
 
 ### Synchronizing a batch with Git
 
 Keep one worktree per branch and finish the main batch before starting a port.
-Use the same committed main SHA for both ports; do not advance main until both
-have been reviewed and tested. No synchronization script or additional state file
-is needed: each port's latest synchronization merge records its previous main
-source as the second parent.
+Use the same committed main SHA for both ports. Advance main after both
+have been reviewed and tested. Each port's latest synchronization merge records
+its previous main source as the second parent.
 
-Apply the difference between successive **main sources**, rather than an ordinary
-merge of the complete main tree. The return merges deliberately preserve main's
-profile, so the ordinary merge base can be a port commit; using that tree as the
-patch base would reintroduce unrelated Minecraft and loader differences.
+Apply the difference between successive **main sources**. Return merges preserve
+main's profile, so the ordinary merge base can be a port commit. Successive main
+sources isolate the shared changes from Minecraft and loader differences.
 
 In each clean port worktree, inspect the previous merge and prepare the update
 with Git Bash (or another Bash shell):
@@ -126,10 +124,10 @@ git merge --no-ff --no-commit -s ours "$source"
 git apply --3way --index build/compat.patch
 ```
 
-The `ours` merge records the parent relationship; the patch supplies the actual
+The `ours` merge records the parent relationship. The patch supplies the actual
 shared changes. Resolve patch conflicts for that port's APIs, review the staged
-diff, and retain its Java target, loaders and dependencies. If the patch is empty,
-there is no code to apply. To abandon preparation, use `git merge --abort`.
+diff, and retain its Java target, loaders and dependencies. An empty patch leaves
+the port unchanged. Use `git merge --abort` to abandon preparation.
 Run the focused runtime checks and `buildAll --warning-mode fail` with the port's
 JDK before creating its signed merge commit:
 
@@ -153,6 +151,6 @@ git verify-commit HEAD
 git push origin main compat/1.20.1 compat/26.1.2
 ```
 
-The return commit changes only the pins; its parents make main descend from both
+The return commit changes only the pins. Its parents make main descend from both
 verified port tips. For the next batch, use the ports' second parents again,
 excluding the release-pin files from the patch as above.

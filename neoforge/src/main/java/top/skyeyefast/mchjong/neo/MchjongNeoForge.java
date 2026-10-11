@@ -32,6 +32,8 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 public final class MchjongNeoForge {
     public MchjongNeoForge(IEventBus bus, net.neoforged.fml.ModContainer container) {
         top.skyeyefast.mchjong.compat.maid.MaidData.register(bus);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.AddServerReloadListenersEvent event) ->
+            event.addListener(MahjongContent.id("yaku_sets"), new top.skyeyefast.mchjong.config.YakuSets()));
         if (net.neoforged.fml.loading.FMLEnvironment.getDist() == net.neoforged.api.distmarker.Dist.CLIENT)
             MchjongNeoForgeClient.registerConfigScreen(container);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
@@ -112,7 +114,7 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("17");
+        var registrar = event.registrar("19");
         registrar.playToServer(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToClient(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE, top.skyeyefast.mchjong.network.VoiceAppearancePayload.CODEC,
@@ -191,6 +193,8 @@ public final class MchjongNeoForge {
         });
         registrar.playToClient(RiichiViewPayload.TYPE, RiichiViewPayload.CODEC,
             (payload, context) -> ClientRiichiNetworking.receive(payload));
+        registrar.playToClient(top.skyeyefast.mchjong.network.YakuSetsPayload.TYPE, top.skyeyefast.mchjong.network.YakuSetsPayload.CODEC,
+            (payload, context) -> top.skyeyefast.mchjong.client.ClientYakuSets.receive(payload));
         registrar.playToClient(top.skyeyefast.mchjong.network.McrViewPayload.TYPE,
             top.skyeyefast.mchjong.network.McrViewPayload.CODEC,
             (payload, context) -> top.skyeyefast.mchjong.client.ClientMcrNetworking.receive(payload));

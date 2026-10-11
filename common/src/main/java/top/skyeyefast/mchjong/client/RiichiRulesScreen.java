@@ -98,7 +98,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
             .filter(option -> option.visible(draft)).toList();
         var presets = Arrays.stream(RiichiPreset.values()).filter(rule -> rule.players() == draft.players()).toList();
         layout = SettingsLayout.of(width, height, presetExpanded || mode == Mode.PRESET ? 0 : RiichiRuleOption.Group.values().length * 22,
-            presetExpanded ? 24 + presets.size() * 24 : 48 + options.size() * 24 + 14);
+            presetExpanded ? 24 + presets.size() * 24 : 72 + options.size() * 24 + 14);
         int span = layout.bodyWidth(), left = layout.bodyLeft();
         Component preset = Component.translatable("rules.mchjong.preset", Component.translatable(draft.preset().presetKey()))
             .append(presetExpanded ? " ▲" : " ▼");
@@ -136,13 +136,30 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
                 .bounds(layout.left(), layout.contentTop() + i * 22, layout.rail(), 20)
                 .tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
-        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 48 - 14) / 24);
+        boolean ancientToggle = draft.preset() == RiichiPreset.MAHJONG_SOUL_4;
+        addRenderableWidget(MahjongButton.create(ClientYakuSets.selectionLabel(draft.yakuSelection()), ignored ->
+            minecraft.setScreen(new YakuSelectionScreen(this, draft.yakuSelection(), set -> {
+                draft = draft.withYakuSelection(set); mode = Mode.CUSTOM; rejected = false;
+            }, () -> host() && pending == null && !stale() && table.worldPolicy() != null && table.worldPolicy().allowCustomRules(), !draft.sanma())))
+            .bounds(left, layout.contentTop() + 48, ancientToggle ? span / 2 - 2 : span, 20).build());
+        if (ancientToggle) {
+            var ancient = top.skyeyefast.mchjong.engine.BuiltinYakuSets.MAHJONG_SOUL_ANCIENT;
+            long enabledCount = ancient.awards().stream().filter(a -> draft.yakuSelection().enabled(a.id())).count();
+            boolean enabled = enabledCount == ancient.awards().size();
+            var toggle = addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.toggle",
+                Component.translatable("rules.mchjong.yaku_set.ancient"), Component.translatable(enabled ? "rules.mchjong.yes"
+                    : enabledCount > 0 ? "rules.mchjong.yaku_set.partial" : "rules.mchjong.no")), ignored -> {
+                draft = draft.withYakuSelection(draft.yakuSelection().withSet(ancient, !enabled)); mode = Mode.CUSTOM; rejected = false; init();
+            }).bounds(left + span / 2 + 2, layout.contentTop() + 48, span - span / 2 - 2, 20).build().selected(enabledCount > 0));
+            toggle.active = host() && pending == null && !stale() && table.worldPolicy() != null && table.worldPolicy().allowCustomRules();
+        }
+        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 72 - 14) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows);
         page = Math.clamp(page, 0, pages - 1);
         int optionSpan = span - 24;
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
-            int y = layout.contentTop() + 48 + i * 24;
+            int y = layout.contentTop() + 72 + i * 24;
             var label = option.floatingPlayers() < 0 ? Component.translatable(option.translationKey(), option.placementRank())
                 : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
             var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())

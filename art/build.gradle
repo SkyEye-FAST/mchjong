@@ -27,20 +27,19 @@ tasks.register('renderAssets', JavaExec) {
         if (outputDir.exists() && !outputDir.deleteDir()) {
             throw new GradleException("Could not clean ${outputDir}")
         }
-        args renderedAssets.get().asFile.absolutePath, presetDirectory.absolutePath
+        args renderedAssets.get().asFile.absolutePath
     }
     outputs.dir renderedAssets
     inputs.files sourceSets.main.allSource
-    inputs.files presetSources
     systemProperty 'java.io.tmpdir', renderTemp.get().asFile.absolutePath
     systemProperty 'java.awt.headless', 'true'
 }
 
-// Sync removes retired resources instead of leaving stale atlas cells in the jars.
+// Sync removes retired files from the checked-in resources.
 tasks.register('generateAssets', Sync) {
     dependsOn 'renderAssets'
     from renderedAssets
-    into rootProject.layout.buildDirectory.dir('generated/assets')
+    into layout.projectDirectory.dir('generated/assets')
 }
 
 def renderedData = layout.buildDirectory.dir('renderedData')
@@ -64,10 +63,11 @@ tasks.register('generateData', Sync) {
 
 test {
     useJUnitPlatform()
-    dependsOn generateAssets, generateData
+    dependsOn generateData
+    mustRunAfter generateAssets
     doFirst { testTemp.get().asFile.mkdirs() }
     systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
-    systemProperty 'mchjong.resources', rootProject.layout.buildDirectory.dir('generated/assets').get().asFile.absolutePath
+    systemProperty 'mchjong.resources', layout.projectDirectory.dir('generated/assets').asFile.absolutePath
     systemProperty 'mchjong.data', rootProject.layout.buildDirectory.dir('generated/data').get().asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
     systemProperty 'mchjong.sourceRoot', rootProject.projectDir.absolutePath
@@ -77,7 +77,7 @@ test {
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/patchouli_books')
     inputs.file rootProject.file('common/src/main/resources/assets/mchjong/sounds.json')
-    inputs.dir rootProject.layout.buildDirectory.dir('generated/assets')
+    inputs.dir layout.projectDirectory.dir('generated/assets')
     inputs.dir rootProject.layout.buildDirectory.dir('generated/data')
     inputs.files presetSources
     doFirst {

@@ -1,0 +1,8 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "mchjong:furniture/wood_oak"
+    }
+  ]
+}

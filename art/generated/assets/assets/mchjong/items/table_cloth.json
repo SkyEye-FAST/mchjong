@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "mchjong:item/table_cloth",
+    "model": {
+      "type": "mchjong:supply"
+    }
+  }
+}

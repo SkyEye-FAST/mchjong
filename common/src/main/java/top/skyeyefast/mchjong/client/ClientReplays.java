@@ -11,7 +11,6 @@ import net.minecraft.network.chat.Component;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayCodec;
-import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.TenhouReplay;
 import top.skyeyefast.mchjong.network.ReplayPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -77,7 +76,7 @@ public final class ClientReplays {
 
     public static Path export(ReplayMatch match) throws IOException {
         Path path = Minecraft.getInstance().gameDirectory.toPath().resolve("replays/mchjong").resolve(match.id() + ".json");
-        byte[] contents = TableNetworking.JSON.toJson(match.variant() == MahjongVariant.RIICHI ? TenhouReplay.export(match) : match).getBytes(StandardCharsets.UTF_8);
+        byte[] contents = TableNetworking.JSON.toJson(TenhouReplay.supports(match) ? TenhouReplay.export(match) : match).getBytes(StandardCharsets.UTF_8);
         ReplayStore.atomicWrite(path, contents);
         return path.toAbsolutePath();
     }

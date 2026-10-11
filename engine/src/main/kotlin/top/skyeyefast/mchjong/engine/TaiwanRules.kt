@@ -13,6 +13,7 @@ class TaiwanRules(
     val taiLimit: Int?,
     val reserve: Reserve = Reserve.SIXTEEN_PLUS_KONGS,
     val payment: Payment = Payment(),
+    val yakuSelection: YakuSelection = YakuSelection.defaults(MahjongVariant.TAIWAN),
 ) {
     enum class Reserve { FIXED_SIXTEEN, SIXTEEN_PLUS_KONGS }
     @JvmRecord data class Payment(val base: Long = 1, val perTai: Long = 1, val dealerTai: Int = 1, val repeatTai: Int = 2) {
@@ -40,8 +41,10 @@ class TaiwanRules(
     val values: Map<Pattern, Int> = java.util.Map.copyOf(values)
     val exclusions: Map<Pattern, Set<Pattern>> = java.util.Map.copyOf(exclusions.mapValues { java.util.Set.copyOf(it.value) })
     val sources: Map<Pattern, Source> = java.util.Map.copyOf(sources)
+    fun value(pattern: Pattern): Int = if (yakuSelection.enabled("mchjong:taiwan/" + pattern.name.lowercase(java.util.Locale.ROOT))) values.getValue(pattern) else 0
     init {
         require(name.isNotBlank())
+        require(yakuSelection.variant() == MahjongVariant.TAIWAN)
         require(values.keys == Pattern.entries.toSet() && sources.keys == values.keys)
         require(values.values.all { it in 0..1000 } && (taiLimit == null || taiLimit in 1..1000))
         require(sources.values.all { it.url.startsWith("https://") && it.clause.isNotBlank() })

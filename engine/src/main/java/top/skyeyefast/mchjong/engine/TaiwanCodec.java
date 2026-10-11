@@ -19,14 +19,15 @@ import java.util.stream.Collectors;
 
 /** Bounded Taiwan JSON boundaries. Gson and the private live game never cross the public API. */
 public final class TaiwanCodec {
-    private static final int MAX_CHARS = 65_536;
+    public static final int MAX_RULES_CHARS = 262_144;
+    private static final int MAX_CHARS = 524_288;
     private static final int MAX_SESSION_CHARS = 8 * 1024 * 1024;
     private static final Gson JSON = new GsonBuilder().disableJdkUnsafe().serializeNulls().create();
 
     private TaiwanCodec() {}
 
-    public static String encodeRules(TaiwanGameState.Rules rules) { return encode(java.util.Objects.requireNonNull(rules)); }
-    public static TaiwanGameState.Rules decodeRules(String json) { return decode(json, TaiwanGameState.Rules.class); }
+    public static String encodeRules(TaiwanGameState.Rules rules) { return encode(java.util.Objects.requireNonNull(rules), MAX_RULES_CHARS); }
+    public static TaiwanGameState.Rules decodeRules(String json) { return decode(json, TaiwanGameState.Rules.class, MAX_RULES_CHARS); }
 
     public static String save(TaiwanGame game) { return encode(game.save()); }
 
@@ -104,7 +105,7 @@ public final class TaiwanCodec {
             while (reader.peek() != JsonToken.END_DOCUMENT) {
                 switch (reader.peek()) {
                     case BEGIN_OBJECT, BEGIN_ARRAY -> {
-                        if (names.size() >= 16) throw new JsonParseException("Taiwan data is nested too deeply");
+                        if (names.size() >= 32) throw new JsonParseException("Taiwan data is nested too deeply");
                         if (reader.peek() == JsonToken.BEGIN_OBJECT) reader.beginObject();
                         else reader.beginArray();
                         names.push(new HashSet<>());

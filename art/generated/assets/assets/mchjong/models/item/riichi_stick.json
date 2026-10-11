@@ -1,0 +1,77 @@
+{
+  "textures": {
+    "stick": "mchjong:item/riichi_stick",
+    "particle": "mchjong:item/riichi_stick"
+  },
+  "elements": [
+    {
+      "from": [
+        2.4,
+        0,
+        7.52
+      ],
+      "to": [
+        13.6,
+        0.4,
+        8.48
+      ],
+      "shade": false,
+      "faces": {
+        "up": {
+          "texture": "#stick",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#stick",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#stick",
+          "uv": [
+            0,
+            8,
+            0,
+            8
+          ]
+        },
+        "south": {
+          "texture": "#stick",
+          "uv": [
+            0,
+            8,
+            0,
+            8
+          ]
+        },
+        "east": {
+          "texture": "#stick",
+          "uv": [
+            0,
+            8,
+            0,
+            8
+          ]
+        },
+        "west": {
+          "texture": "#stick",
+          "uv": [
+            0,
+            8,
+            0,
+            8
+          ]
+        }
+      }
+    }
+  ]
+}

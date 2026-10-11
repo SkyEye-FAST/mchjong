@@ -4,6 +4,8 @@ import com.mojang.blaze3d.platform.NativeImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.ResourceManager;
 import top.skyeyefast.mchjong.config.PresetArchives;
 
 /** Compose independently supplied tile engravings into the renderer's fixed cell layout. */
@@ -11,7 +13,16 @@ final class TileFaceImages {
     record Pair(NativeImage atlas, NativeImage glyphs) {}
     private TileFaceImages() {}
 
-    static Pair compose(Map<String, byte[]> tiles) throws IOException {
+    static Pair load(ResourceManager resources, Identifier directory, boolean blankWhiteDragon) throws IOException {
+        var tiles = new java.util.HashMap<String, byte[]>();
+        for (String key : PresetArchives.TILE_KEYS) {
+            var location = directory.withPath(path -> "textures/" + path + "/" + key + ".png");
+            try (var stream = resources.open(location)) { tiles.put(key, stream.readAllBytes()); }
+        }
+        return compose(tiles, blankWhiteDragon);
+    }
+
+    static Pair compose(Map<String, byte[]> tiles, boolean blankWhiteDragon) throws IOException {
         // Ownership transfers to the returned pair; the caller installs and closes both textures.
         @SuppressWarnings("resource") var atlas = new NativeImage(2048, 4096, true);
         @SuppressWarnings("resource") var glyphs = new NativeImage(2048, 4096, true);
@@ -26,7 +37,7 @@ final class TileFaceImages {
                 try (var source = NativeImage.read(new ByteArrayInputStream(bytes))) {
                     if (source.getWidth() < 1 || source.getHeight() < 1 || source.getWidth() > 2048 || source.getHeight() > 2048)
                         throw new IOException("Invalid tile image dimensions: " + PresetArchives.TILE_KEYS.get(face));
-                    if (face == 31) continue;
+                    if (face == 31 && blankWhiteDragon) continue;
                     for (int y = 0; y < 320; y++) for (int x = 0; x < 240; x++) {
                         int color = sample(source, (x + .5) * source.getWidth() / 240 - .5,
                             (y + .5) * source.getHeight() / 320 - .5);
@@ -36,16 +47,21 @@ final class TileFaceImages {
                     }
                 }
             }
-            for (int y = 4064; y < 4096; y++) for (int x = 2016; x < 2048; x++) {
-                atlas.setPixel(x, y, 0xffffffff);
-                glyphs.setPixel(x, y, 0xffffffff);
-            }
+            swatch(atlas, glyphs);
             for (int y = 0; y < glyphs.getHeight(); y++) for (int x = 0; x < glyphs.getWidth(); x++)
                 glyphs.setPixel(x, y, overWhite(glyphs.getPixel(x, y)));
             return new Pair(atlas, glyphs);
         } catch (IOException | RuntimeException failure) {
             atlas.close(); glyphs.close();
             throw failure;
+        }
+    }
+
+    private static void swatch(NativeImage atlas, NativeImage glyphs) {
+        // Material colors must stay independent of the white-dragon engraving.
+        for (int y = 4064; y < 4096; y++) for (int x = 2016; x < 2048; x++) {
+            atlas.setPixel(x, y, 0xffffffff);
+            glyphs.setPixel(x, y, 0xffffffff);
         }
     }
 

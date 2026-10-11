@@ -43,7 +43,7 @@ class RiichiAudioEventsTest {
     }
 
     @Test void receiptWaitsForEachRecordingThenShowsPointsBeforeTheGrade() {
-        var score = new HandScore(3, 60, 0, 8000, 0, 0, List.of("Richi"), 2);
+        var score = new HandScore(3, 60, 0, 8000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), 2);
         var wins = List.of(new RiichiView.Win(1, 0, 4, score));
         var readout = new ResultReadout(receipt(1, 1, wins), 0);
         assertNull(readout.tick(400, true));
@@ -78,7 +78,7 @@ class RiichiAudioEventsTest {
     }
 
     @Test void silentMultiWinnerReceiptsAdvanceOnceAndCanBeSkippedWithoutReplaying() {
-        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of("Richi"), 0);
+        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), 0);
         var view = receipt(1, 1, List.of(new RiichiView.Win(1, 0, 4, score), new RiichiView.Win(2, 0, 4, score)));
         var readout = new ResultReadout(view, 0);
         var events = new ArrayList<ResultReadout.Event>();
@@ -122,9 +122,11 @@ class RiichiAudioEventsTest {
         }
     }
 
-    @Test void receiptOrdersYakuAndUsesOpenHandHanFromTheScoringLibrary() {
+    @Test void receiptOrdersYakuAndUsesTheAwardedHan() {
         var score = new HandScore(9, 40, 0, 16000, 0, 0,
-            List.of("Honitsu", "RoundWind", "Chanta", "SelfWind", "Haku", "Richi", "Ippatsu"), 0);
+            List.of(new HandScore.Yaku("Honitsu", 3, false), new HandScore.Yaku("RoundWind", 1, false),
+                new HandScore.Yaku("Chanta", 2, false), new HandScore.Yaku("SelfWind", 1, false),
+                new HandScore.Yaku("Haku", 1, false), new HandScore.Yaku("Richi", 1, false), new HandScore.Yaku("Ippatsu", 1, false)), 0);
         var win = new RiichiView.Win(1, 0, 4, score);
         var closed = receipt(1, 1, List.of(win));
         var rows = ScoreAnnouncements.rows(closed, win);
@@ -134,9 +136,19 @@ class RiichiAudioEventsTest {
         var seats = seats();
         seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.TRIPLET, List.of(124, 125, 126), 0, 124)), List.of()));
         var openWin = new RiichiView.Win(1, 0, 4, new HandScore(6, 40, 0, 12000, 0, 0,
-            List.of("Honitsu", "RoundWind", "Chanta", "SelfWind", "Haku"), 0));
+            List.of(new HandScore.Yaku("Honitsu", 2, false), new HandScore.Yaku("RoundWind", 1, false),
+                new HandScore.Yaku("Chanta", 1, false), new HandScore.Yaku("SelfWind", 1, false), new HandScore.Yaku("Haku", 1, false)), 0));
         var open = ScoreAnnouncements.rows(receipt(1, 1, List.of(openWin), seats, List.of()), openWin);
         assertEquals(List.of(1, 1, 1, 1, 2), open.stream().map(ScoreAnnouncements.Row::han).toList());
+    }
+
+    @Test void receiptsDoNotReconstructValuesFromTheBuiltinYakuRegistry() {
+        var score = new HandScore(5, 30, 0, 8000, 0, 0,
+            List.of(new HandScore.Yaku("house:five_gates", 3, false), new HandScore.Yaku("Richi", 2, false)), 0);
+        var win = new RiichiView.Win(1, 0, 4, score);
+        var rows = ScoreAnnouncements.rows(receipt(1, 1, List.of(win)), win);
+        assertEquals(List.of(2, 3), rows.stream().map(ScoreAnnouncements.Row::han).toList());
+        assertEquals("yaku.riichi", rows.getFirst().voice());
     }
 
     @Test void bonusesHaveSeparateCountsAndThirteenOrMoreUsesOneRecording() {
@@ -146,7 +158,7 @@ class RiichiAudioEventsTest {
             List.of(), List.of(), List.of(120, 121), true, true, false));
         var wall = new ArrayList<>(Collections.nCopies(14, -1));
         wall.set(8, 108); // East indicator: two South tiles count as ura.
-        var win = new RiichiView.Win(1, 0, 60, new HandScore(9, 30, 0, 16000, 0, 0, List.of("Richi"), 8));
+        var win = new RiichiView.Win(1, 0, 60, new HandScore(9, 30, 0, 16000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), 8));
         var rows = ScoreAnnouncements.rows(receipt(1, 1, List.of(win), seats, wall), win);
         assertEquals(List.of("yaku.riichi", "yaku.dora_3", "yaku.dora", "yaku.dora_2", "yaku.dora_2"),
             rows.stream().map(ScoreAnnouncements.Row::voice).toList());
@@ -157,12 +169,12 @@ class RiichiAudioEventsTest {
         seats.set(1, new RiichiView.Seat(false, "Player", true, false, false, 25000,
             player.hand().subList(1, 14), -2, List.of(), List.of(), player.norths(), true, true, false));
         wall.set(8, 116); // West indicator: extracted North tiles also count as ura.
-        var redRon = new RiichiView.Win(1, 0, 272, new HandScore(7, 30, 0, 12000, 0, 0, List.of("Richi"), 6));
+        var redRon = new RiichiView.Win(1, 0, 272, new HandScore(7, 30, 0, 12000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), 6));
         var ronRows = ScoreAnnouncements.rows(receipt(1, 1, List.of(redRon), seats, wall), redRon);
         assertEquals(List.of(1, 1, 1, 2, 2), ronRows.stream().map(ScoreAnnouncements.Row::han).toList(),
             "Include the claimed red tile and ura on extracted North tiles exactly once");
         for (int count : List.of(1, 2, 12, 13, 14, 20)) {
-            var counted = new RiichiView.Win(1, 0, 4, new HandScore(count + 1, 30, 0, 32000, 0, 0, List.of("Richi"), count));
+            var counted = new RiichiView.Win(1, 0, 4, new HandScore(count + 1, 30, 0, 32000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), count));
             var last = ScoreAnnouncements.rows(receipt(1, 1, List.of(counted)), counted).getLast();
             assertEquals("yaku.dora" + (count == 1 ? "" : count < 13 ? "_" + count : "_many"), last.voice());
             assertEquals(count, last.han());
@@ -171,7 +183,9 @@ class RiichiAudioEventsTest {
 
     @Test void yakumanOrderExcludesOrdinaryYakuAndAllBonuses() {
         var win = new RiichiView.Win(1, 0, 4, new HandScore(78, 0, 6, 192000, 0, 0,
-            List.of("Daisushi", "SuankoTanki", "Tsuiso", "Chihou", "Richi", "Haku"), 13));
+            List.of(new HandScore.Yaku("Daisushi", 26, true), new HandScore.Yaku("SuankoTanki", 26, true),
+                new HandScore.Yaku("Tsuiso", 13, true), new HandScore.Yaku("Chihou", 13, true),
+                new HandScore.Yaku("Richi", 1, false), new HandScore.Yaku("Haku", 1, false)), 13));
         var rows = ScoreAnnouncements.rows(receipt(1, 1, List.of(win)), win);
         assertEquals(List.of("yaku.chihou", "yaku.tsuuiisou", "yaku.suuankou_tanki", "yaku.daisuushii"),
             rows.stream().map(ScoreAnnouncements.Row::voice).toList());
@@ -253,7 +267,7 @@ class RiichiAudioEventsTest {
             assertEquals(List.of(reason), sounds(before, after));
             assertTrue(sounds(after, view(3, 1, RiichiView.Phase.MATCH_END, seats(), reason)).isEmpty());
         }
-        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of("Richi"), 0);
+        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), 0);
         var multiple = receipt(2, 1, List.of(new RiichiView.Win(1, 0, 4, score), new RiichiView.Win(2, 0, 4, score)));
         var voices = RiichiAudioEvents.between(before, multiple).stream().filter(cue -> cue.voice() != null).toList();
         assertEquals(List.of(1, 2), voices.stream().map(RiichiAudioEvents.Cue::seat).toList());

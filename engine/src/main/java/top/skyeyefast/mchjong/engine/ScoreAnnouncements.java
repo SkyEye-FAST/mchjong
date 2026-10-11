@@ -18,7 +18,7 @@ public final class ScoreAnnouncements {
         "Tenhou", "Chihou", "Daisangen", "Suanko", "Tsuiso", "Lyuiso", "Chinroto", "Kokushi",
         "Shousushi", "Sukantsu", "Churen", "ChurenNineWaiting", "SuankoTanki", "KokushiThirteenWaiting", "Daisushi");
     private static final List<String> WINDS = List.of("east", "south", "west", "north");
-    public record Row(String translationKey, int han, String voice) {}
+    public record Row(String translationKey, int han, String voice, String awardId) {}
     public static final Map<String, String> SUBTITLES;
     static {
         var subtitles = new LinkedHashMap<String, String>();
@@ -41,6 +41,7 @@ public final class ScoreAnnouncements {
     private ScoreAnnouncements() {}
 
     public static String yaku(String name) {
+        if (name.contains(":")) return null;
         return "yaku." + YakuCatalog.translationKey(name).substring("yaku.mchjong.".length());
     }
 
@@ -49,15 +50,17 @@ public final class ScoreAnnouncements {
         var score = win.score();
         var player = view.seats().get(win.seat());
         var result = new ArrayList<Row>();
-        var values = RiichiHandAnalyzer.yakuValues(score.yaku(), player.melds().stream().allMatch(Meld::closed), view.rules());
-        values.stream().filter(value -> score.yakuman() == 0 || value.yakuman())
-            .sorted(Comparator.comparingInt(value -> ORDER.indexOf(value.name()))).forEach(value -> {
+        score.yaku().stream().filter(value -> score.yakuman() == 0 || value.yakuman())
+            .sorted(Comparator.comparingInt((HandScore.Yaku value) -> {
+                int index = ORDER.indexOf(value.name());
+                return index < 0 ? ORDER.size() : index;
+            }).thenComparing(HandScore.Yaku::name)).forEach(value -> {
                 String voice = switch (value.name()) {
                     case "SelfWind" -> "yaku.seat_wind_" + WINDS.get(Math.floorMod(win.seat() - view.dealer(), view.rules().players()));
                     case "RoundWind" -> "yaku.round_wind_" + WINDS.get(view.round() / view.rules().players());
                     default -> yaku(value.name());
                 };
-                result.add(new Row(YakuCatalog.translationKey(value.name()), value.yakuman() ? 0 : value.han(), voice));
+                result.add(new Row(YakuCatalog.translationKey(value.name()), value.yakuman() ? 0 : value.han(), voice, value.name()));
             });
         if (score.yakuman() == 0 && score.dora() > 0) {
             var tiles = new ArrayList<>(player.hand());
@@ -86,7 +89,7 @@ public final class ScoreAnnouncements {
 
     private static void bonus(List<Row> rows, String name, int count) {
         if (count > 0) rows.add(new Row("yaku.mchjong." + name, count,
-            "yaku.dora" + (count == 1 ? "" : count <= 12 ? "_" + count : "_many")));
+            "yaku.dora" + (count == 1 ? "" : count <= 12 ? "_" + count : "_many"), null));
     }
 
     /** Use the server's payment, including kiriage and preset caps, not han alone. */

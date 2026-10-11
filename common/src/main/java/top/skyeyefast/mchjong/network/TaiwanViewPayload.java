@@ -30,7 +30,7 @@ public record TaiwanViewPayload(BlockPos pos, String view, TableRoomView room, T
     public static final StreamCodec<RegistryFriendlyByteBuf, TaiwanViewPayload> CODEC = new StreamCodec<>() {
         @Override public TaiwanViewPayload decode(RegistryFriendlyByteBuf buffer) {
             var pos = buffer.readBlockPos();
-            var view = buffer.readUtf(65536);
+            var view = buffer.readUtf(524288);
             var room = TableNetworking.JSON.fromJson(buffer.readUtf(8192), TableRoomView.class);
             TaiwanDeck deck = null;
             if (buffer.readBoolean()) {
@@ -47,7 +47,7 @@ public record TaiwanViewPayload(BlockPos pos, String view, TableRoomView room, T
                 TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.world.WorldSettings.Policy.class));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, TaiwanViewPayload value) {
-            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), 65536);
+            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), 524288);
             buffer.writeUtf(TableNetworking.JSON.toJson(value.room()), 8192);
             buffer.writeBoolean(value.deck() != null);
             if (value.deck() != null) {

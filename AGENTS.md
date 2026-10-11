@@ -13,7 +13,8 @@ Shared contracts are in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - `fabric`, `forge`, `neoforge`: loader registration and lifecycle adapters;
   gameplay and presentation belong in `common`.
 - `art`: deterministic asset and server-data generation, with separate outputs.
-  Edit source generators rather than generated textures, models or recipes.
+  Client resources are checked in under `art/generated/assets`. Edit source generators
+  and refresh the checked-in files with `:art:generateAssets`; server data stays in build output.
 - `common/src/smoke`: shared client/server checks; loader adapters live in
   `fabric/src/smoke` and `neoforge/src/smoke`. `forge/src/smoke` owns bootstrap checks.
 - `common/src/ponderData`: shared Minecraft-native build-time generation of Ponder
@@ -39,13 +40,13 @@ compatibility profiles and `mod_version` are manual decisions, not bot updates.
 
 ## Interface, resources and documentation
 
-Documentation ownership under `docs/`: player operations in `PLAYING.md`,
-`SURVIVAL.md`, `ROOMS.md`; registry/persistence/recipes in `SUPPLIES.md`; module
-contracts in `ARCHITECTURE.md`; UI in `UI_STYLE.md`; dependencies in
-`COMPATIBILITY.md`; build/ports/releases in `DEVELOPMENT.md`; checks in
-`VERIFICATION.md`. Link to the owning guide instead of duplicating it.
+Under `docs/`, player operations belong in `PLAYING.md`, `SURVIVAL.md` and `ROOMS.md`.
+`SUPPLIES.md` owns registry, persistence and recipe contracts. `ARCHITECTURE.md`
+owns module contracts, and `UI_STYLE.md` owns interface guidance.
+`COMPATIBILITY.md` covers dependencies, `DEVELOPMENT.md` covers builds, ports and
+releases, and `VERIFICATION.md` covers checks. Link to the owning guide.
 Meaningful changes get one `CHANGELOG.md` entry under `## [Unreleased]`
-(`Added`, `Changed`, `Fixed`); documentation cleanup and routine checks do not.
+(`Added`, `Changed`, `Fixed`). Documentation cleanup and routine checks do not.
 
 For UI/table changes, read [UI_STYLE.md](docs/UI_STYLE.md). Reuse `MahjongUi`,
 `MahjongButton`, `MahjongSlider`, `MahjongEditBox` and shared render/picking geometry.
@@ -58,7 +59,8 @@ suffixes. Rule titles use standard Riichi terminology; mechanics go in descripti
 Do not use middle dots (`·`) as generic UI separators. Use natural localized
 phrasing, appropriate punctuation or separate lines. Consult vanilla Minecraft's
 language files to align terminology, phrasing,
-punctuation and spacing conventions for each locale:
+punctuation and spacing conventions for each locale.
+
 - `zh_cn`: Strictly no spaces between CJK and ASCII alphanumeric characters or
   format specifiers. Fullwidth punctuation (`：`, `（）`, `……`), curly double
   quotes `“”` (never corner quotes `「」` or straight `"`). Follow vanilla Simplified
@@ -76,9 +78,27 @@ punctuation and spacing conventions for each locale:
   subtitles, and tooltips. Direct imperatives for player actions. Follow vanilla terminology.
 Resource paths/generation follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md).
 
-Guides describe current capabilities, permissions and privacy, not retired features,
-speculative roadmaps or unrelated comparisons. Keep third-party attribution in
+Guides describe current capabilities, permissions and privacy. Keep third-party attribution in
 `NOTICE.md`/license notices and version support in Compatibility sections.
+
+Apply these writing rules to every repository document, including guides,
+notices, the changelog and these contributor instructions.
+
+- Describe current behavior with concise, positive statements. Remove repetitive
+  disclaimers, unnecessary exclusions and comparisons with retired behavior.
+  Preserve facts that define rules, eligibility, permissions, privacy and validation scope.
+- Write complete, natural sentences. Include the nouns, subjects, articles,
+  prepositions and logical connections needed to make each statement clear.
+  Shorten prose by removing repetition while preserving grammatical completeness.
+  Use complete game and rule names in prose, and name the resource or other object
+  being described. Preserve the exact names of interface labels, presets and code identifiers.
+- Use dates when they identify releases, source editions or records that depend
+  on time. Describe current guides directly, keeping review timestamps in Git history.
+- Prefer periods and ordinary conjunctions to chains of colons and semicolons.
+  Use colons for necessary labels or introductions, and retain punctuation required
+  by code, resource identifiers, URLs, citations and license text.
+- Keep each Markdown list compact, with a blank line around the list and between
+  sections. Separate list items with blank lines when they contain multiple paragraphs.
 
 ## Code comments
 
@@ -91,7 +111,7 @@ speculative roadmaps or unrelated comparisons. Keep third-party attribution in
   reasons; remove code narration, duplicate prose, empty templates and development diaries.
   Put longer design context in the owning guide under `docs/`.
 - Identify the applicable ruleset or clause for special rules. For compatibility
-  workarounds, state the cause, affected version and removal condition; cite real
+  workarounds, state the cause, affected version and removal condition. Cite real
   issues or regression tests when available.
 - In KDoc, prefer parameter links in prose. Add tags when useful, without requiring
   documentation for every method or a comment coverage target.
@@ -117,7 +137,7 @@ Keep `mod_version` on `-SNAPSHOT`; ordinary commits do not bump it. After a rele
 use the next patch Snapshot as a development placeholder. For an explicit release,
 reassess SemVer from actual changes or follow the user's requested version; update
 the target Snapshot first if necessary. Tags are bare SemVer matching `mod_version`
-without `-SNAPSHOT`; the workflow supplies the formal version to published JARs.
+without `-SNAPSHOT`. The workflow supplies the formal version to published JARs.
 Move Unreleased entries into `## [x.y.z] - YYYY-MM-DD`, retain an empty Unreleased
 section and update changelog links. Then advance to the next patch Snapshot.
 

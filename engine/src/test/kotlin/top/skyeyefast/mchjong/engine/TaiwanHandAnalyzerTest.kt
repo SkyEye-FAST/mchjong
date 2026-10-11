@@ -18,8 +18,8 @@ class TaiwanHandAnalyzerTest {
         assertEquals(0, TaiwanHandAnalyzer.shanten(hand, emptyList(), 0))
         assertEquals(setOf(32), TaiwanHandAnalyzer.waits(hand, emptyList(), 0))
         val scored = TaiwanHandAnalyzer.score(hand, emptyList(), 0, complete.last(), context, TaiwanPreset.POCKET_COMMON.rules())!!
-        assertEquals(1, scored.awards.single { it.pattern == TaiwanRules.Pattern.SEAT_FLOWER }.tai)
-        assertTrue(scored.awards.any { it.pattern == TaiwanRules.Pattern.FIVE_CONCEALED_TRIPLETS })
+        assertEquals(1, scored.awards.single { it.nativePattern() == TaiwanRules.Pattern.SEAT_FLOWER }.tai)
+        assertTrue(scored.awards.any { it.nativePattern() == TaiwanRules.Pattern.FIVE_CONCEALED_TRIPLETS })
         assertEquals(5, scored.shape.groups.size)
         val visible = listOf(Tile.id(32, 1, false), Tile.id(32, 1, false), hand.last(), FlowerTile.SPRING.id())
         assertEquals(2, TaiwanHandAnalyzer.analyze(hand, emptyList(), 0, visible).effectiveTiles.single().remaining)

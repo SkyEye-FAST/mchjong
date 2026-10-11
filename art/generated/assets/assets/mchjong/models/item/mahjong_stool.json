@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:builtin/entity",
+  "textures": {
+    "particle": "mchjong:furniture/wood_oak"
+  },
+  "gui_light": "side"
+}

@@ -1,0 +1,543 @@
+{
+  "variant": "riichi",
+  "name": {
+    "en_us": "Mahjong Soul Ancient Yaku",
+    "ja_jp": "雀魂の古役",
+    "zh_cn": "雀魂古役",
+    "zh_tw": "雀魂古役"
+  },
+  "awards": [
+    {
+      "id": "mahjongsoul:tsubame_gaeshi",
+      "name": {
+        "en_us": "Swallow Reversal",
+        "ja_jp": "燕返し",
+        "zh_cn": "燕返",
+        "zh_tw": "燕返"
+      },
+      "description": {
+        "en_us": "Win on another player's first Riichi declaration discard.",
+        "ja_jp": "他家の最初の立直宣言牌でロン。",
+        "zh_cn": "荣和他家的第一张立直宣言牌。",
+        "zh_tw": "榮和他家的第一張立直宣言牌。"
+      },
+      "when": {
+        "type": "flags",
+        "values": [
+          "discard",
+          "riichi_discard"
+        ]
+      },
+      "award": {
+        "type": "han",
+        "closed": 1,
+        "open": 1
+      }
+    },
+    {
+      "id": "mahjongsoul:kanburi",
+      "name": {
+        "en_us": "After a Kan",
+        "ja_jp": "槓振り",
+        "zh_cn": "杠振",
+        "zh_tw": "槓振"
+      },
+      "description": {
+        "en_us": "Win on the discard immediately following another player's Kan.",
+        "ja_jp": "他家の槓直後の打牌でロン。",
+        "zh_cn": "荣和他家开杠后的舍牌。",
+        "zh_tw": "榮和他家開槓後的捨牌。"
+      },
+      "when": {
+        "type": "flags",
+        "values": [
+          "discard",
+          "after_kong_discard"
+        ]
+      },
+      "award": {
+        "type": "han",
+        "closed": 1,
+        "open": 1
+      }
+    },
+    {
+      "id": "mahjongsoul:four_open_melds",
+      "name": {
+        "en_us": "Four Open Melds",
+        "ja_jp": "十二落抬",
+        "zh_cn": "十二落抬",
+        "zh_tw": "十二落抬"
+      },
+      "description": {
+        "en_us": "Win with four open melds; concealed Kans do not count.",
+        "ja_jp": "暗槓を除く四副露で和了。",
+        "zh_cn": "四副露后和牌，暗杠不计入副露数。",
+        "zh_tw": "四副露後和牌，暗槓不計入副露數。"
+      },
+      "when": {
+        "type": "open_melds",
+        "min": 4,
+        "max": 4
+      },
+      "award": {
+        "type": "han",
+        "closed": 1,
+        "open": 1
+      }
+    },
+    {
+      "id": "mahjongsoul:uumen_sai",
+      "name": {
+        "en_us": "Five Gates",
+        "ja_jp": "五門斉",
+        "zh_cn": "五门齐",
+        "zh_tw": "五門齊"
+      },
+      "description": {
+        "en_us": "Use all three suits, a wind, and a dragon.",
+        "ja_jp": "萬子・筒子・索子・風牌・三元牌をすべて含む。",
+        "zh_cn": "和牌中同时含有万、筒、索、风牌和三元牌。",
+        "zh_tw": "和牌中同時含有萬、筒、索、風牌和三元牌。"
+      },
+      "when": {
+        "type": "categories",
+        "values": [
+          "man",
+          "pin",
+          "sou",
+          "wind",
+          "dragon"
+        ]
+      },
+      "award": {
+        "type": "han",
+        "closed": 2,
+        "open": 2
+      }
+    },
+    {
+      "id": "mahjongsoul:sanrenkou",
+      "name": {
+        "en_us": "Three Consecutive Triplets",
+        "ja_jp": "三連刻",
+        "zh_cn": "三连刻",
+        "zh_tw": "三連刻"
+      },
+      "description": {
+        "en_us": "Use three consecutive triplets or Kans in one suit.",
+        "ja_jp": "同じ種類の連続する三つの刻子または槓子を含む。",
+        "zh_cn": "同一花色中有三组点数连续的刻子或杠子。",
+        "zh_tw": "同一花色中有三組點數連續的刻子或槓子。"
+      },
+      "when": {
+        "type": "consecutive_triplets"
+      },
+      "award": {
+        "type": "han",
+        "closed": 2,
+        "open": 2
+      }
+    },
+    {
+      "id": "mahjongsoul:isshoku_sanjun",
+      "name": {
+        "en_us": "Three Identical Sequences",
+        "ja_jp": "一色三順",
+        "zh_cn": "一色三同顺",
+        "zh_tw": "一色三同順"
+      },
+      "description": {
+        "en_us": "Use three identical sequences. Open hands lose one Han.",
+        "ja_jp": "同じ順子を三組含む。食い下がり一翻。",
+        "zh_cn": "有三组完全相同的顺子，副露减1番。",
+        "zh_tw": "有三組完全相同的順子，副露減 1 番。"
+      },
+      "when": {
+        "type": "same_sequences",
+        "min": 3,
+        "max": 4
+      },
+      "award": {
+        "type": "han",
+        "closed": 3,
+        "open": 2
+      },
+      "excludes": [
+        "mchjong:riichi/iipeikou"
+      ]
+    },
+    {
+      "id": "mahjongsoul:ippin_moyue",
+      "name": {
+        "en_us": "Moon from the Well",
+        "ja_jp": "一筒摸月",
+        "zh_cn": "一筒摸月",
+        "zh_tw": "一筒摸月"
+      },
+      "description": {
+        "en_us": "Draw the final live-wall tile and win on 1-Pin.",
+        "ja_jp": "海底の一筒でツモ和了。",
+        "zh_cn": "以最后一张海底牌一筒自摸和牌。",
+        "zh_tw": "以最後一張海底牌一筒自摸和牌。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "flags",
+            "values": [
+              "self_draw",
+              "last_draw"
+            ]
+          },
+          {
+            "type": "winning_tile",
+            "values": [
+              "1p"
+            ]
+          }
+        ]
+      },
+      "award": {
+        "type": "han",
+        "closed": 5,
+        "open": 5
+      },
+      "excludes": [
+        "mchjong:riichi/haitei_raoyue"
+      ]
+    },
+    {
+      "id": "mahjongsoul:chuupin_raoyui",
+      "name": {
+        "en_us": "Fish from the River",
+        "ja_jp": "九筒撈魚",
+        "zh_cn": "九筒捞鱼",
+        "zh_tw": "九筒撈魚"
+      },
+      "description": {
+        "en_us": "Win by Ron on a final discard of 9-Pin.",
+        "ja_jp": "河底の九筒でロン和了。",
+        "zh_cn": "以九筒河底荣和。",
+        "zh_tw": "以九筒河底榮和。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "flags",
+            "values": [
+              "discard",
+              "last_discard"
+            ]
+          },
+          {
+            "type": "winning_tile",
+            "values": [
+              "9p"
+            ]
+          }
+        ]
+      },
+      "award": {
+        "type": "han",
+        "closed": 5,
+        "open": 5
+      },
+      "excludes": [
+        "mchjong:riichi/houtei_raoyui"
+      ]
+    },
+    {
+      "id": "mahjongsoul:renhou",
+      "name": {
+        "en_us": "Blessing of Man",
+        "ja_jp": "人和",
+        "zh_cn": "人和",
+        "zh_tw": "人和"
+      },
+      "description": {
+        "en_us": "As a non-dealer, win by Ron before your first draw and before any call.",
+        "ja_jp": "子が鳴きのない第一巡、自分の最初のツモ前にロン。",
+        "zh_cn": "闲家在无人鸣牌的第一巡、自己首次摸牌前荣和。",
+        "zh_tw": "閒家在無人鳴牌的第一巡、自己首次摸牌前榮和。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "closed",
+            "values": [
+              "true"
+            ]
+          },
+          {
+            "type": "flags",
+            "values": [
+              "discard",
+              "human_win"
+            ]
+          }
+        ]
+      },
+      "award": {
+        "type": "yakuman",
+        "closed": 1,
+        "open": 0
+      }
+    },
+    {
+      "id": "mahjongsoul:daisuurin",
+      "name": {
+        "en_us": "Big Numbers",
+        "ja_jp": "大数隣",
+        "zh_cn": "大数邻",
+        "zh_tw": "大數鄰"
+      },
+      "description": {
+        "en_us": "Seven pairs from 2 through 8 in Man.",
+        "ja_jp": "萬子の二から八を各二枚使う七対子。",
+        "zh_cn": "万子二至八各两张组成七对子。",
+        "zh_tw": "萬子二至八各兩張組成七對子。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "shape",
+            "values": [
+              "seven_pairs"
+            ]
+          },
+          {
+            "type": "closed",
+            "values": [
+              "true"
+            ]
+          },
+          {
+            "type": "tiles",
+            "values": [
+              "2m",
+              "3m",
+              "4m",
+              "5m",
+              "6m",
+              "7m",
+              "8m"
+            ],
+            "min": 14,
+            "max": 14
+          }
+        ]
+      },
+      "award": {
+        "type": "yakuman",
+        "closed": 1,
+        "open": 0
+      }
+    },
+    {
+      "id": "mahjongsoul:daisharin",
+      "name": {
+        "en_us": "Big Wheels",
+        "ja_jp": "大車輪",
+        "zh_cn": "大车轮",
+        "zh_tw": "大車輪"
+      },
+      "description": {
+        "en_us": "Seven pairs from 2 through 8 in Pin.",
+        "ja_jp": "筒子の二から八を各二枚使う七対子。",
+        "zh_cn": "筒子二至八各两张组成七对子。",
+        "zh_tw": "筒子二至八各兩張組成七對子。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "shape",
+            "values": [
+              "seven_pairs"
+            ]
+          },
+          {
+            "type": "closed",
+            "values": [
+              "true"
+            ]
+          },
+          {
+            "type": "tiles",
+            "values": [
+              "2p",
+              "3p",
+              "4p",
+              "5p",
+              "6p",
+              "7p",
+              "8p"
+            ],
+            "min": 14,
+            "max": 14
+          }
+        ]
+      },
+      "award": {
+        "type": "yakuman",
+        "closed": 1,
+        "open": 0
+      }
+    },
+    {
+      "id": "mahjongsoul:daichikurin",
+      "name": {
+        "en_us": "Bamboo Forest",
+        "ja_jp": "大竹林",
+        "zh_cn": "大竹林",
+        "zh_tw": "大竹林"
+      },
+      "description": {
+        "en_us": "Seven pairs from 2 through 8 in Sou.",
+        "ja_jp": "索子の二から八を各二枚使う七対子。",
+        "zh_cn": "索子二至八各两张组成七对子。",
+        "zh_tw": "索子二至八各兩張組成七對子。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "shape",
+            "values": [
+              "seven_pairs"
+            ]
+          },
+          {
+            "type": "closed",
+            "values": [
+              "true"
+            ]
+          },
+          {
+            "type": "tiles",
+            "values": [
+              "2s",
+              "3s",
+              "4s",
+              "5s",
+              "6s",
+              "7s",
+              "8s"
+            ],
+            "min": 14,
+            "max": 14
+          }
+        ]
+      },
+      "award": {
+        "type": "yakuman",
+        "closed": 1,
+        "open": 0
+      }
+    },
+    {
+      "id": "mahjongsoul:ishino_uenimo_sannen",
+      "name": {
+        "en_us": "Three Years on a Stone",
+        "ja_jp": "石の上にも三年",
+        "zh_cn": "石上三年",
+        "zh_tw": "石上三年"
+      },
+      "description": {
+        "en_us": "Win on the final draw or discard after Double Riichi.",
+        "ja_jp": "ダブル立直で海底または河底和了。",
+        "zh_cn": "两立直后海底自摸或河底荣和。",
+        "zh_tw": "兩立直後海底自摸或河底榮和。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "closed",
+            "values": [
+              "true"
+            ]
+          },
+          {
+            "type": "flags",
+            "values": [
+              "double_riichi"
+            ]
+          },
+          {
+            "any": [
+              {
+                "type": "flags",
+                "values": [
+                  "last_draw"
+                ]
+              },
+              {
+                "type": "flags",
+                "values": [
+                  "last_discard"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "award": {
+        "type": "yakuman",
+        "closed": 1,
+        "open": 0
+      }
+    },
+    {
+      "id": "mahjongsoul:dai_chisei",
+      "name": {
+        "en_us": "Big Seven Stars",
+        "ja_jp": "大七星",
+        "zh_cn": "大七星",
+        "zh_tw": "大七星"
+      },
+      "description": {
+        "en_us": "Seven pairs using every honor kind.",
+        "ja_jp": "七種類の字牌を各二枚使う七対子。",
+        "zh_cn": "七种字牌各两张组成七对子。",
+        "zh_tw": "七種字牌各兩張組成七對子。"
+      },
+      "when": {
+        "all": [
+          {
+            "type": "shape",
+            "values": [
+              "seven_pairs"
+            ]
+          },
+          {
+            "type": "closed",
+            "values": [
+              "true"
+            ]
+          },
+          {
+            "type": "tiles",
+            "values": [
+              "1z",
+              "2z",
+              "3z",
+              "4z",
+              "5z",
+              "6z",
+              "7z"
+            ],
+            "min": 14,
+            "max": 14
+          }
+        ]
+      },
+      "award": {
+        "type": "yakuman",
+        "closed": 2,
+        "open": 0
+      },
+      "excludes": [
+        "mchjong:riichi/tsuuiisou"
+      ]
+    }
+  ]
+}

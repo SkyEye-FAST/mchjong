@@ -9,6 +9,7 @@ import java.util.Set;
 /** Canonical mapping between scoring engine / library yaku identifiers and localized translation keys. */
 public final class YakuCatalog {
     private static final Map<String, String> TRANSLATION_KEYS;
+    private static final Set<String> NATIVE_IDS;
 
     static {
         var map = new LinkedHashMap<String, String>();
@@ -60,6 +61,8 @@ public final class YakuCatalog {
         map.put("Tsumo", "yaku.mchjong.menzen_tsumo");
         map.put("WRichi", "yaku.mchjong.double_riichi");
         TRANSLATION_KEYS = Collections.unmodifiableMap(map);
+        NATIVE_IDS = map.values().stream().map(key -> "mchjong:riichi/" + key.substring("yaku.mchjong.".length()))
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     public static String translationKey(String name) {
@@ -73,6 +76,24 @@ public final class YakuCatalog {
 
     public static Set<String> allTranslationKeys() {
         return Set.copyOf(TRANSLATION_KEYS.values());
+    }
+
+    public static String awardId(String name) {
+        if (name.contains(":")) return name;
+        var key = TRANSLATION_KEYS.get(name);
+        if (key == null) throw new IllegalArgumentException("Unknown native Riichi award: " + name);
+        return "mchjong:riichi/" + key.substring("yaku.mchjong.".length());
+    }
+
+    public static Set<String> nativeIds() {
+        return NATIVE_IDS;
+    }
+
+    public static Set<String> customExclusionIds() {
+        var special = Set.of("Tenhou", "Chihou", "Daisangen", "Suanko", "Tsuiso", "Lyuiso", "Chinroto", "Kokushi",
+            "Shousushi", "Sukantsu", "Churen", "ChurenNineWaiting", "SuankoTanki", "KokushiThirteenWaiting", "Daisushi", "Renhou", "Nagashi");
+        return TRANSLATION_KEYS.keySet().stream().filter(name -> !special.contains(name)).map(YakuCatalog::awardId)
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     private YakuCatalog() {}

@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "mchjong:item/mahjong_stool",
+    "model": {
+      "type": "mchjong:supply"
+    }
+  }
+}

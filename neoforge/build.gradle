@@ -32,7 +32,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger()
 sourceSets.main {
     java.srcDir '../common/src/main/java'
     resources.srcDir '../common/src/main/resources'
-    resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
+    resources.srcDir rootProject.file('art/generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
 }
 
@@ -93,7 +93,9 @@ test {
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData'
+    with rootProject.tileFaceResources
+    dependsOn ':art:generateData'
+    mustRunAfter ':art:generateAssets'
     def properties = [
         version: project.version,
         minecraft_version: rootProject.minecraft_version,

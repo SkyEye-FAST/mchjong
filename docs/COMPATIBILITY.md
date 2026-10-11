@@ -13,14 +13,13 @@ Branch synchronization, Java boundaries and release pins are documented in
 
 ## Embedded engine dependencies
 
-The engine declares Maven Central releases `top.skyeyefast:mcr-mahjong:0.1.1`,
-`top.skyeyefast:taiwan-mahjong:0.1.0` and
+All three engine profiles declare Maven Central coordinates `top.skyeyefast:mcr-mahjong:0.1.1`,
+`top.skyeyefast:taiwan-mahjong:0.2.0` and
 `io.github.ssttkkl:mahjong-utils-jvm:0.7.7`. The exact pins live in
-`gradle.properties`. The engine Shadow JAR relocates the Taiwan and MCR libraries
+`gradle.properties`. The engine Shadow JAR relocates the Taiwanese mahjong and MCR libraries
 under `top.skyeyefast.mchjong.internal.taiwan` and
 `top.skyeyefast.mchjong.internal.mcr`, together with its private Kotlin runtime.
-Each profile's loaders consume the same `embeddedEngine` artifact with no
-external engine dependency graph.
+Each profile's loaders consume the same self-contained `embeddedEngine` artifact.
 The analysis contracts are described in
 [Architecture](ARCHITECTURE.md#hand-analysis-boundaries).
 
@@ -53,7 +52,7 @@ The 26.1.2 Fabric and NeoForge profiles use Patchouli 26.1-94, supplied to
 development runs with `-PwithPatchouli=true`. The book item opens `mchjong:guide`;
 book definitions and localized content are shared resources. Install Patchouli
 on the server as well as the client for crafting and the initial book grant.
-The dependency is compile-only and is not bundled. See the
+The dependency is compile-only. See the
 [handbook controls](PLAYING.md#in-game-handbook) and
 [focused checks](VERIFICATION.md#patchouli-handbook).
 

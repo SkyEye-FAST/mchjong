@@ -38,7 +38,7 @@ object TaiwanBot {
             val counts = (hand + melds.flatMap { it.tiles() }).groupingBy(Tile::kind).eachCount()
             val held = IntArray(34); hand.forEach { held[Tile.kind(it)]++ }
             val available = IntArray(34) { kind -> (kind * 4..<kind * 4 + 4).count { it !in visible } }
-            fun value(pattern: TaiwanRules.Pattern) = rules.values.getValue(pattern).toDouble()
+            fun value(pattern: TaiwanRules.Pattern) = rules.value(pattern).toDouble()
             val closed = melds.none { !it.closed() }
             val concealment = if (closed) maxOf(value(TaiwanRules.Pattern.CONCEALED), value(TaiwanRules.Pattern.CONCEALED_SELF_DRAW)) else 0.0
             val honors = listOf(Tile.RED to TaiwanRules.Pattern.RED_DRAGON, Tile.GREEN to TaiwanRules.Pattern.GREEN_DRAGON,

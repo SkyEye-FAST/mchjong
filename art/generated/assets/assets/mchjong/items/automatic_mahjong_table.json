@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "mchjong:item/automatic_mahjong_table",
+    "model": {
+      "type": "mchjong:supply"
+    }
+  }
+}

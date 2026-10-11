@@ -186,15 +186,6 @@ public final class McrTableScreen extends Screen {
         }
         return tile;
     }
-    private TableHand.Point point(int tile) {
-        if (hand != null) return hand.point(tile, selected, hovered);
-        var view = view(); if (view == null) return null;
-        for (var piece : McrTableScene.build(view.game())) if (ownHand(piece) && piece.tile() == tile) {
-            var point = projection().project(TableAnimation.of(table()).worldPose(piece, Util.getMillis()).position().add(0, selected(piece) ? .035 : 0, 0), .01);
-            return point == null ? null : new TableHand.Point((int) point.x(), (int) point.y());
-        }
-        return null;
-    }
 
     @Override public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         framePartial = partialTick;

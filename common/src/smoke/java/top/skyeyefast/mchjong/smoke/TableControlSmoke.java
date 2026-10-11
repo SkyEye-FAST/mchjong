@@ -32,10 +32,11 @@ final class TableControlSmoke {
     private int originalWidth, originalHeight, originalScale;
     private top.skyeyefast.mchjong.world.WorldSettings.Policy originalWorldPolicy;
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
+    private final CustomYakuSmoke customYaku = new CustomYakuSmoke(top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
-        int timeout = stage == 7 ? GAME_START_TIMEOUT_TICKS : DEFAULT_TIMEOUT_TICKS;
+        int timeout = stage == 7 ? GAME_START_TIMEOUT_TICKS : stage == 35 ? 1200 : DEFAULT_TIMEOUT_TICKS;
         if (ticks > timeout) throw new IllegalStateException("Table controls timed out at stage " + stage);
         if (reseated != null && reseated.isDone()) reseated.join();
         var view = table.clientView();
@@ -208,6 +209,8 @@ final class TableControlSmoke {
             next(19);
         } else if (stage == 19 && client.screen instanceof RiichiTableScreen && ticks > 5) {
             require(configuration.rules().startingPoints() == 32100, "Cancel changed server rules");
+            next(35);
+        } else if (stage == 35 && customYaku.tick(client, table)) {
             click(client, "settings.mchjong.scopes");
             click(client, "settings.mchjong.scope.world");
             next(26);
