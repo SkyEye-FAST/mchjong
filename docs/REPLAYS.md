@@ -2,7 +2,7 @@
 
 ## Viewing and exporting
 
-Open **Replays** from the table overlay, or use these server commands:
+Open **Replays** from the table overlay, or use these server commands.
 
 ```text
 /mchjong replays
@@ -23,26 +23,26 @@ click also opens it. **Delete** (or the Delete key while the list is focused) op
 a confirmation screen; Escape or Cancel does not change any records. Deletion
 retains the active filter and sort order and returns to its first page.
 
-The browser labels Riichi, MCR, Sichuan and Taiwan records separately. All four use the
+The browser labels Riichi, MCR, Sichuan mahjong and Taiwanese mahjong records separately. All four use the
 same table viewer, player cards, timeline, playback speeds and navigation.
-The upper hand selector opens a scrollable list for direct hand selection; the
+The upper hand selector opens a scrollable list for direct hand selection. The
 viewpoint control rotates any participant to the bottom seat. Playback supports
 0.5x, 1x, 2x and 4x speed. Lower controls seek to the initial deal, step backward,
 play/pause, step forward, or seek to settlement, and the timeline allows direct
 seeking. The Wall button opens the initial physical wall. Previous/Next Decision
 buttons jump between reviewable decisions for the current viewpoint.
 
-Playback steps are semantic table actions rather than raw recorder events. Riichi
+Playback steps represent semantic table actions. Riichi
 deposit acceptance and dora reveals are folded into the declaration, discard or
 kan that caused them. Frames retain hands, rivers, calls, public extractions,
-points and revealed indicators. Taiwan shows only the selected viewpoint's
-concealed identities and covered kongs, including settlement; other concealed
+points and revealed indicators. Taiwanese mahjong shows only the selected viewpoint's
+concealed identities and covered kongs, including settlement. Other concealed
 hands stay hidden. Switching viewpoint applies that player's visibility anew.
 Gold river borders distinguish hand discards from tsumogiri; sideways tiles mark
 riichi discards. Settlement uses a dedicated panel with the recorded point changes,
 winning tile, yaku, dora/ura indicators and final standings when the match ended.
 Riichi yaku rows retain their scored han and natural-yakuman status in the hand
-score; playback and export do not look up their values in the current yaku catalog.
+score. Playback and export use those recorded values.
 The wall view groups the original stacks by seat, dims tiles already used at the
 current replay position, distinguishes the dead wall and indicators, and marks the
 next live draw. Decision frames show the server-issued legal choices and highlight
@@ -53,31 +53,31 @@ live improving-tile count; hovering a candidate lists the improving tile kinds a
 remaining copies. These counts deliberately use only information visible to that
 player at the decision (their own hand, public discards/calls/norths and revealed
 indicators), even though an authorized replay can display every concealed hand.
-They are structural shape information, not an AI recommendation or expected-value
-estimate.
+They describe the hand's structural shape and available improving tiles.
 
 The viewer provides read-only playback of matches recorded by this server.
 Live games and their clocks continue independently during replay viewing.
 
 MCR playback retains the sealed 144-tile opening, hands, flowers, native melds,
-fan and wrong-win penalties. Sichuan retains its 108-tile wall, void suits,
+fan and wrong-win penalties. Sichuan mahjong retains its 108-tile wall, void suits,
 retired winners and cumulative scores. Settlement tabs show every win/fan,
-point changes and final standings. MCR penalties and Sichuan payments use the
-shared details page; the original ledger order, transfers, related entries,
+point changes and final standings. MCR penalties and Sichuan mahjong payments use the
+shared details page. The original ledger order, transfers, related entries,
 refunds and draw deductions remain intact. Use the wheel or PgUp/PgDn for dense
 details. **View table** returns to the final hand diagram without losing the
 current viewpoint or replay position.
 
-Riichi export is explicit: **Export Tenhou JSON** writes UTF-8 JSON to
+Click **Export Tenhou JSON** to write Riichi UTF-8 JSON to
 `<game directory>/replays/mchjong/<match UUID>.json`, using an atomic replacement.
 The chat shows the full path or the screen reports a failure. Re-exporting the
-same match replaces that match's local export. No file is opened automatically
-and nothing is uploaded to an external service. MCR and Sichuan use **Export replay
+same match replaces that match's local export. Exports remain local, and the player
+opens the saved file. MCR and Sichuan mahjong use **Export replay
 JSON**, writing their native sealed match record to the same local directory.
-Taiwan uses the same native export. Riichi matches with any changed award selection also
+Taiwanese mahjong uses the same native export. Riichi matches with any changed award selection also
 use **Export replay JSON**. Both variants' native records retain full award definitions,
-localized names, individual switches and scored values; they do not depend on the server's current
-data packs. Tenhou export requires default award selection, even when no custom award was earned.
+localized names, individual switches and scored values, preserving the match's
+original data-pack definitions. Tenhou export requires default award selection,
+including matches where no custom award was earned.
 
 ## Privacy and persistence
 
@@ -89,53 +89,52 @@ immutable rule-specific hand record appended to its match. Riichi hands seal the
 initial physical wall order, break position, replacement slots and indicator
 slots. MCR hands seal all 144 physical wall slots, both dice rolls, the break,
 raw opening hands, flower replacements, actions, penalties and settlement.
-Sichuan hands seal all 108 physical wall slots, both dice, dealer, starting
+Sichuan mahjong hands seal all 108 physical wall slots, both dice, dealer, starting
 cumulative scores, initial hands, void suits, every accepted choice, public
 events, the complete settlement ledger and ending cumulative scores. Secret
 first-discard selections are physical tile choices in the decisions; playback
-enforces the binding. Sichuan rules and fan names distinguish MIL SBR from T/TFMJ.
-Taiwan hands independently seal their 136/144 fixed physical slots, three dice,
+enforces the binding. Sichuan mahjong rules and fan names distinguish MIL SBR from T/TFMJ.
+Taiwanese mahjong hands independently seal their 136/144 fixed physical slots, three dice,
 rules, round/dealer/continuation, raw opening zones, accepted decisions and
 automatic flowers/replacements, ready/call/kong/robbery/win events, exact terminal
 state, settlement and long cumulative scores. Initial replacement events precede
-the first decision; compulsory flower victories require no invented player action.
+the first decision. Compulsory flower victories require no invented player action.
 Running recipient views hide other players' selections until the tile is played.
-MCR and
-Sichuan and Taiwan playback reexecute recorded decisions against their respective
-rules, checking every event and settlement rather than storing view snapshots. The
-archive contains completed hands without an RNG seed; live views never expose a
-future wall. Private table saves retain active recording state and queued
+MCR, Sichuan mahjong and Taiwanese mahjong playback reexecute recorded decisions against
+their respective rules and check every event and settlement. The archive seals completed hands.
+Live views keep future wall identities and the RNG seed private.
+Private table saves retain active recording state and queued
 completed hands across a restart.
 
 Server records live at `<world>/data/mchjong/replays/<match UUID>.json`.
-Small `by-player/<player UUID>/` indexes support browsing without exposing other
-players' match lists. Fetches check the canonical match's human-participant IDs
+Small `by-player/<player UUID>/` indexes let each player browse their own match
+list. Fetches check the canonical match's human-participant IDs
 in addition to its index; possession of a UUID or forged index is insufficient.
 Spectators and training bots do not gain retrieval permissions. Administrators
 with direct filesystem access can naturally read the server's files.
 
-Deleting a replay removes only the requesting participant's reference. It never
-revokes another participant's access and never deletes a previously exported local
-file. Deletion checks the canonical record's participant IDs, not merely the index.
+Deleting a replay removes the requesting participant's reference. Other participants
+retain access, and previously exported local files remain available.
+Deletion checks the canonical record's participant IDs as well as the index.
 A small `.deleted` marker persists beside the player's index so a later finished
 hand, a queued save or a server restart cannot recreate the deleted entry. Once
 every human participant has deleted their reference, the canonical archive is
 removed as well. These markers remain part of the world backup.
 
-Riichi and MCR finished hands update the archive atomically. Sichuan and Taiwan retain each
-sealed hand in the private session during play and archives the complete match
-once it ends; closing an unfinished match archives the hands already sealed.
-Acknowledged Sichuan/Taiwan archives are not queued again after restoration or returning
+Riichi and MCR finished hands update the archive atomically. Sichuan mahjong and Taiwanese mahjong retain each
+sealed hand in the private session during play and archive the complete match
+once it ends. Closing an unfinished match archives the hands already sealed.
+Acknowledged Sichuan mahjong and Taiwanese mahjong archives are not queued again after restoration or returning
 to the lobby. Pending writes also remain
 in the table's normal saved game data until all index updates succeed. An I/O
-failure is logged and retried after sixty seconds; it does not acknowledge or
-silently discard the queued record. Successful records survive table removal,
+failure is logged and retried after sixty seconds. The queued record remains
+pending until success. Successful records survive table removal,
 rematches, disconnects and server restarts. Normal world backups should include
 the archive directory.
 
 Retrieval is rate-limited per player. Transfers are separate from live snapshots,
 split into bounded chunks, checked for identity/order, and reassembled only at
-completion. An incomplete transfer expires after thirty seconds; disconnects
+completion. An incomplete transfer expires after thirty seconds. Disconnects
 clear it. A canonical archive is limited to 8 MiB and transfer memory is bounded.
 The server and client validate recorded timelines before retrieval and presentation.
 JSON validation requires complete typed fields, mutually exclusive rule payloads,
@@ -149,7 +148,7 @@ export format preserves MChjong's actual match rules and payments.
 The starting dealer becomes encoded seat zero. Sanma has an empty fourth seat,
 zero-filled fourth score entries, no red manzu, and round numbering that skips
 East 4, South 4, and so on. Tiles use 11–47 with red fives 51–53. Drawn-tile
-discards use `60`; a riichi declaration prefixes its discard with `r`. Chi, pon,
+discards use `60`. A riichi declaration prefixes its discard with `r`. Chi, pon,
 open/closed/added kan and north extraction use `c`, `p`, `m`, `a`, `k` and `f44`.
 Called-tile position preserves the caller/discarder relation.
 

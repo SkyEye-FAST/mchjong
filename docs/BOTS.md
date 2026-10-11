@@ -1,11 +1,11 @@
 # Training opponent analysis
 
-## Taiwan built-in opponent
+## Taiwanese mahjong built-in opponent
 
-Taiwan rooms offer one built-in opponent through the shared add/remove and
+Taiwanese mahjong rooms offer one built-in opponent through the shared add/remove and
 fill-seat controls under world `allowBots` policy. It uses one deterministic policy.
 One human and three built-in Bots can finish East, South, West and North, including
-repeat dealers. External Bots are unavailable for Taiwan.
+repeat dealers. Taiwanese mahjong uses built-in Bots.
 
 `TaiwanBot.choose` accepts only its recipient-safe `TaiwanView` and returns an
 issued action index. Legal wins take priority. Discards use
@@ -15,23 +15,24 @@ potential and openness. Value can outweigh some effective copies. Discard retrea
 are limited to one shanten, and are excluded when a ready shape is available
 or fewer than 24 drawable tiles remain. Equal evaluations use the lowest physical ID.
 Availability deduplicates the Bot's tiles, public rivers, exposed melds and focus.
-Covered opponent kongs, opponent hands, future wall identities and seeds never
-enter analysis. A simulated discard remains publicly known.
+Analysis receives only the Bot's own hand and public information. Covered opponent
+kongs, opponent hands, future wall identities and seeds remain outside its inputs.
+A simulated discard remains publicly known.
 
 Live waits use the current scorer for ordinary discard and self-draw, current
-winds, flowers and ready declaration. Caps and exclusions come from the rules;
-preset names do not select behavior. Incomplete hands use copy-aware honor,
+winds, flowers and ready declaration. Caps and exclusions come from the rules.
+The policy reads the rule values directly. Incomplete hands use copy-aware honor,
 triplet, flush and concealment support estimates. Pung fits reserve a separate head;
 flush fits use a six-target beam with physical copy budgets and five group slots.
 Missing and scarce copies discount routes, and exhausted targets are excluded.
-Alternatives compete without adding hypothetical awards; only live waits use
+Alternatives compete using their own evidence. Only live waits use
 actual combined scorer tai. These estimates influence the bounded speed/value
 tradeoff. A legal ready
 discard competes with ordinary discards and wins an otherwise equal comparison.
 
 Chows and pongs simulate their best legal mandatory discard. They require a
 shanten improvement, at least two additional effective copies, or a clear scored
-wait-value gain; merely offering a call supplies no benefit. Kongs first preserve
+wait-value gain. Calls that meet none of these criteria are passed. Kongs first preserve
 the shanten of the guaranteed continuation that discards the replacement. They
 then compare one replacement/best-discard step weighted by publicly unseen
 ordinary copies, including scorer-confirmed replacement wins. A small expected
@@ -53,13 +54,13 @@ three Bots. See [Rooms](ROOMS.md#mcr-bot-rooms) for preparation and pause contro
 minimum-fan qualification for issued win actions; qualifying wins take priority.
 Discard analysis combines `McrHandAnalyzer`'s structural shanten and effective
 tiles with `McrBotRoutes`' gradual evidence for reaching eight non-flower fan.
-The library supplies special-form distances; copy-consuming targets cover seven
+The library supplies special-form distances. Copy-consuming targets cover seven
 pairs, thirteen orphans, lesser/greater honors and knitted tiles, knitted straight,
 pungs, half/full flush, outside/terminal hands, pure straight, pure shifted/triple
 chows, pure shifted pungs, mixed shifted/triple chows, mixed straight, all types
 and upper/middle/lower tiles. Fixed melds occupy actual slots and restrict shapes.
-Missing copies discount each route continuously; an exhausted indispensable kind
-excludes its target. Alternatives compete rather than adding hypothetical fan.
+Missing copies discount each route continuously. An exhausted indispensable kind
+excludes its target. Alternatives compete using their own evidence.
 Regular targets are confirmed by the existing scorer for each missing kind that
 could finish the hand, so an unrelated retained pair cannot invent a wait bonus.
 Six-fan routes need a scorer-confirmed companion or concealed-hand contribution.
@@ -71,9 +72,9 @@ feasibility and retention can outweigh wider raw effective tiles or a one-shante
 retreat; larger discard retreats are excluded. Equal evaluations use the lowest
 physical tile ID. Availability deduplicates owned tiles, public rivers, exposed
 melds and the offered tile. Concealed opponents and wall identities never enter
-evaluation. Route fitting uses a bounded beam and a missing-copy cutoff; its
-feasibility is heuristic evidence, not a calibrated probability or an exhaustive
-search of every winning hand.
+evaluation. Route fitting uses a bounded beam and a missing-copy cutoff. Its
+feasibility supplies heuristic route evidence from the bounded search. Legal waits
+and scored values come from the hand analyzer.
 `ChineseBotDanger` estimates each opponent's loss exposure from public melds,
 discard history, ordinary copy availability and wall count. Flowers increase
 exposure but never supply the eight-fan qualification gate. MCR ron charges every
@@ -91,11 +92,11 @@ waits twelve ticks before Bot decisions, while the session also owns automatic
 draws and flower replacements. Bot actions and completed-hand confirmations share
 the normal room pause, exit and persistence lifecycle.
 
-## Sichuan built-in opponent
+## Sichuan mahjong built-in opponent
 
 SBR 2025 and T/TFMJ 01—2024 rooms offer one built-in Bot through the shared room
 controls and world `allowBots` policy. One human and three Bots can finish all
-eight hands. See [Rooms](ROOMS.md#sichuan-bot-rooms) for preparation and pauses.
+eight hands. See [Rooms](ROOMS.md#sichuan-mahjong-bot-rooms) for preparation and pauses.
 
 `SichuanBot` reads only its seat's recipient-safe `SichuanView` and selects an
 issued action index. Decisions are deterministic. Void selection combines suit
@@ -104,7 +105,7 @@ suit together with a legal secret physical first discard; heavenly void leaves
 that choice unbound. Issued actions preserve the bound discard and force clearing
 the void suit before ordinary discards.
 
-`SichuanHandAnalyzer` reuses mahjong-utils regular shapes and accounts for Sichuan
+`SichuanHandAnalyzer` reuses mahjong-utils regular shapes and accounts for Sichuan mahjong
 seven pairs, where a four counts as two pairs. `SichuanBotValue` fits gradual,
 copy-consuming targets for seven pairs, all pungs, full flush, roots and declared
 kongs, including full-flush combinations. The analyzer validates and scores the
@@ -118,7 +119,7 @@ scoring implementation.
 Discards combine route value and distance with shanten and remaining effective
 copies, allowing at most one shanten of retreat. Equal evaluations prefer shape
 efficiency and then the lowest physical ID. Public availability deduplicates the
-Bot's tiles, rivers, melds and focus; a simulated discard remains visible. The
+Bot's tiles, rivers, melds and focus. A simulated discard remains visible. The
 revealed middle tiles of a concealed kong identify all four copies. Opponent hands
 and future wall identities stay hidden.
 Public danger is tracked separately for each active opponent. Their void suit
@@ -134,7 +135,7 @@ Legal wins are accepted. Pungs must improve the same evaluation after their best
 mandatory discard. Kongs compare the concealed remainder before replacement, so
 discarding the unknown replacement preserves the evaluated shape. Immediate income
 under the current rules can settle a close comparison, but cannot justify worse
-shanten; delayed added kongs supply no such income. Flower-pig sanctions suppress
+shanten. Delayed added kongs supply no such income. Flower-pig sanctions suppress
 this income preference. The server waits twelve ticks, leaves Bot clocks inactive, confirms
 completed hands automatically and saves pending delay, roster and replay flags.
 
@@ -155,7 +156,7 @@ Restart the Minecraft server after changing the file. At startup it requests
 room seat choice beside EASY and HARD. The room offers external Bots only for their advertised
 player count and exact rule preset. The adapter currently advertises `TENHOU_4`
 and `TENHOU_3` for its respective models. The room save keeps only the stable
-Bot ID; the endpoint remains in administrator-owned configuration.
+Bot ID. The endpoint remains in administrator-owned configuration.
 
 The server sends each bot's opening hand, public hand events, current legal
 actions and decision token. Other players' drawn tile identities are hidden.
@@ -164,7 +165,7 @@ for each seat and hand. Requests include `protocol_version: 1`, the selected
 `bot_id` and exact `preset`. The reply contains only an index from that request's
 legal actions. The server checks the echoed version, Bot ID, table, session,
 hand, seat and decision before applying it. An unavailable service, timeout or
-invalid reply appears as a short room error; the selected external seat waits
+invalid reply appears as a short room error. The selected external seat waits
 for administrator intervention. EASY and HARD continue to use
 the built-in engine bot. Lobby and settlement automation stays in the game engine.
 
@@ -234,7 +235,7 @@ replacement declarations, receives a search slot first, followed by replacement
 declarations before competing ordinary discards.
 Replacement declarations require a searched continuation within the bounded budget.
 Continuation leaves use immediate efficiency and legal wait value. Current action
-costs and the terminal state use one common utility scale; an expanded candidate
+costs and the terminal state use one common utility scale. An expanded candidate
 adds the next discard's risk once at that later step. No-next-turn decisions use
 the current state as their common endpoint.
 
@@ -248,10 +249,10 @@ also consumes distinct kinds, so a quad cannot count as two chiitoitsu pairs.
 Pinfu and outside-hand fits inspect retained heads, complete groups and fragments,
 with pinfu distinguishing two-sided support from edge/closed fragments.
 
-The `missing` value is a structural deficit, not another exact shanten
-number. Its exponential decay supplies gradual `progress` as supporting tiles are
-kept or discarded. This is heuristic evidence, not a calibrated completion
-probability or a legal-yaku assertion. A target requiring unavailable copies is
+The `missing` value measures a structural deficit. Its exponential decay supplies
+gradual `progress` as supporting tiles are kept or discarded. This heuristic
+guides route evaluation, while `RiichiHandAnalyzer` and `BotValue` determine
+legal yaku and completed-hand values. A target requiring unavailable copies is
 excluded. Scores, custom yaku minima and completed waits remain owned by
 `RiichiHandAnalyzer` and `BotValue`.
 
@@ -259,7 +260,7 @@ Alternatives compete: the selected plan has one primary route and at most one
 discounted compatible companion. Sequence templates do not accumulate with
 triplet or seven-pairs templates. Suit restrictions, outside/simple conflicts and
 mandatory dragon yakuhai are accounted for before combining evidence. Route
-retention is capped below a shanten step; it does not replace the offensive
+retention is capped below a shanten step. It does not replace the offensive
 retreat gate or public-information defence.
 
 An undeclared closed hand receives a distance-discounted riichi option in route
@@ -339,7 +340,7 @@ scoring with the conditional ura scenarios described above.
 public riichi, meld/yakuhai content, exposed bonuses, dealer status and elapsed
 turns. Genbutsu is opponent-specific. Discards that pass the ron response window
 after an accepted riichi are also safe against that player. Public event order
-establishes this evidence; confirmed kan/north declarations clear that player's
+establishes this evidence. Confirmed kan/north declarations clear that player's
 accumulated mask. Suji only reduces the sequence component;
 walls and visible honor counts retain residual pair/special-hand risk. Several
 weak signals combine to increase discard risk, balanced against remaining draw
@@ -352,7 +353,7 @@ fixed triplet/kan groups also establish two han of toitoi in conditional payout.
 On the final discard with no live wall remaining, a no-more-dangerous alternative
 can preserve formal tenpai or nagashi mangan instead of future development value.
 Formal tenpai shares settlement's structural-wait predicate, including dead and
-yakuless waits. Nagashi eligibility also shares settlement's rule checks; another
+yakuless waits. Nagashi eligibility also shares settlement's rule checks. Another
 player's qualifying nagashi replaces noten payments. This comparison prioritizes
 the current hand's draw settlement while retaining the ordinary danger estimate.
 
@@ -361,7 +362,7 @@ opposing value weighted by its public threat pressure, multiple threats and
 late-match score gaps. Riichi supplies full pressure; uncertain open hands supply
 their estimated pressure. Full folding orders
 discards by safety before efficiency, allowing completed groups to be broken.
-Each candidate's resulting hand determines its attack/defence mode; a viable,
+Each candidate's resulting hand determines its attack/defence mode. A viable,
 fast, valuable call is compared before folding the unchanged hand.
 HARD can also keep safe reserves while continuing a valuable hand. An already
 declared hand still compares legal replacement actions with its forced discard.

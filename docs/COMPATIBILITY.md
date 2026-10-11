@@ -15,8 +15,8 @@ Reusable validation commands and their scope are in
 [Verification](VERIFICATION.md). The README tables list
 supported adapters, while each compatibility branch pins its own dependencies.
 
-JEI profiles cover Fabric and NeoForge 26.1.2; Fabric, Forge and NeoForge
-1.21.1; and Fabric and Forge 1.20.1. EMI covers Fabric and NeoForge 1.21.1 and
+JEI profiles cover Fabric and NeoForge 26.1.2, Fabric, Forge and NeoForge 1.21.1,
+and Fabric and Forge 1.20.1. EMI covers Fabric and NeoForge 1.21.1 and
 Fabric and Forge 1.20.1. REI covers Fabric and NeoForge 1.21.1 and 26.1.2, plus
 Fabric and Forge 1.20.1. Optional Ponder tutorials cover Fabric and NeoForge
 1.21.1 and both 1.20.1 loaders.
@@ -29,12 +29,11 @@ Branch synchronization and release artifact selection are documented in
 The main engine declares Maven Central coordinates `top.skyeyefast:mcr-mahjong:0.1.1`,
 `top.skyeyefast:taiwan-mahjong:0.2.0` and
 `io.github.ssttkkl:mahjong-utils-jvm:0.7.7`. The exact pins live in
-`gradle.properties`. The engine Shadow JAR relocates the Taiwan and MCR libraries
+`gradle.properties`. The engine Shadow JAR relocates the Taiwanese mahjong and MCR libraries
 under `top.skyeyefast.mchjong.internal.taiwan` and
 `top.skyeyefast.mchjong.internal.mcr`, together with its private Kotlin runtime.
-Each profile's loaders consume the same `embeddedEngine` artifact with no
-external engine dependency graph.
-The 1.20.1 and 26.1.2 port profiles retain Taiwan 0.1.0.
+Each profile's loaders consume the same self-contained `embeddedEngine` artifact.
+The 1.20.1 and 26.1.2 port profiles retain version 0.1.0 of the Taiwanese mahjong library.
 The analysis contracts are described in
 [Architecture](ARCHITECTURE.md#hand-analysis-boundaries).
 
@@ -57,8 +56,8 @@ development runs. Forge and NeoForge provide the button through their native
 mod-list config-screen APIs. All three open the same local settings and preset
 pages, which save to `config/mchjong-client.toml`.
 
-Forge selects JEI from the shared viewer flag and otherwise stays on its base
-profile, so configuring Forge does not prevent an EMI run on another loader.
+Forge selects JEI from the shared viewer flag and otherwise uses its base profile.
+EMI remains available on other loaders.
 `-PforgeRecipeBrowser=none` or `jei` can override its profile explicitly.
 
 ### Patchouli handbook
@@ -67,7 +66,7 @@ The 1.21.1 Fabric and NeoForge profiles use Patchouli 1.21.1-93, supplied to
 development runs with `-PwithPatchouli=true`. The book item opens `mchjong:guide`;
 book definitions and localized content are shared resources. Install Patchouli
 on the server as well as the client for crafting and the initial book grant.
-The dependency is compile-only and is not bundled. See the
+The dependency is compile-only. See the
 [handbook controls](PLAYING.md#in-game-handbook) and
 [focused checks](VERIFICATION.md#patchouli-handbook).
 
@@ -83,7 +82,7 @@ recipe viewers and focused validation commands.
 The `compat/1.20.1` artifacts provide the same workshop with Create 6.0.8 on
 Forge and Create Fabric 6.0.8.1 on Fabric. Production code targets Java 17.
 Native machine transaction checks, installed recipe viewers and four-language
-Ponder playback pass on both loaders; both also pass the Create-absent client
+Ponder playback pass on both loaders. Both also pass the Create-absent client
 profile. The release pin selects the validated compatibility batch.
 
 ### Maid players
@@ -91,7 +90,7 @@ profile. The release pin selects the validated compatibility batch.
 The 26.1.2 branch supports pinned Touhou Little Maid and Orihime test builds on
 NeoForge and Fabric. Its [compatibility guide](https://github.com/SkyEye-FAST/mchjong/blob/compat/26.1.2/docs/COMPATIBILITY.md)
 records the exact upstream release assets, SHA-256 digests and Forge Config API
-Port dependency. These are optional prereleases, not bundled parts of MChjong.
+Port dependency. These optional prereleases are distributed separately.
 
 The 1.20.1 compatibility branch provides the same task through Touhou Little
 Maid 1.5.3-forge+mc1.20.1 on Forge and Orihime

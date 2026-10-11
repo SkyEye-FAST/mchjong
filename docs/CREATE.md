@@ -1,7 +1,7 @@
 # Create workshop
 
-Create machines can produce, print, dye and pack mahjong supplies without opening
-the mahjong box menu. The workshop uses the same item components and container
+Create machines produce, print, dye and pack mahjong supplies.
+The workshop uses the same item components and container
 rules as hand crafting and the box menu.
 
 ## Production
@@ -19,9 +19,10 @@ Set the saw's output filter to the desired blank tile or point stick. Six tile
 materials yield a 144-tile set. The ordinary stonecutter still yields 16 blanks
 per material; ordinary crafting yields 24 blank sticks per bone block.
 
-For marking sticks, white means 100 points, blue 1,000, yellow 5,000, red 10,000
-and black -10,000. Each mixer batch uses one dye rather than one dye per eight
-sticks at a crafting table.
+For marking sticks, white dye produces 100-point sticks, blue dye produces
+1,000-point sticks, yellow dye produces 5,000-point sticks, red dye produces
+10,000-point sticks and black dye produces −10,000-point sticks. Each mixer batch
+uses one dye for sixteen sticks. A crafting-table batch uses one dye for eight sticks.
 
 ## Boxes and printing plates
 
@@ -38,15 +39,15 @@ S C S       C = chest
 
 A printing plate uses three iron ingots across the bottom row and paper above
 the middle ingot. The reusable `mchjong:mahjong_printing_plate` can retain its
-custom name. The press prints the default Kansai faces; the mahjong box switches
+custom name. The press prints the default Kansai faces. The mahjong box switches
 finished sets to any available face preset.
 
 ## Printing a complete set
 
 Supply a basin under a press with an empty box, **144 identical blank tiles**, one
 mahjong dye and a printing plate. A normal inventory holds the blanks as
-64 + 64 + 16; the basin accepts these separate stacks without increasing item
-stack limits. Every blank must have identical material, back coloring and other
+64 + 64 + 16. The basin accepts these separate stacks at their normal stack limits.
+Every blank must have identical material, back coloring and other
 components. The result has Kansai faces, with four ordinary copies of each numbered/honor face
 and one of each flower: 144 tiles total.
 
@@ -56,13 +57,13 @@ moving blank tiles into the box. A box already holding blanks can be completed
 to 144 and printed with the same operation.
 
 Keep a complete output route available for both the box and plate. A blocked
-output pauses processing without consuming materials. Printing retains the blank
+output pauses processing and preserves all materials. Printing retains the blank
 tiles' material, back color and custom components, and the box's own name.
 
 ## Coloring backs
 
 In a mixer and basin, **one vanilla dye treats two targets**. A target is one
-whole tile stack or one valid mahjong box; a pair may contain both kinds. For
+whole tile stack or one valid mahjong box. A pair may contain both kinds. For
 example, two complete boxes and one blue dye produce two blue-backed sets.
 Supply two separate occupied stack slots: equal tiles naturally merge until
 their normal maximum stack size is reached.
@@ -72,8 +73,8 @@ preset, material and names are retained, as are the box's point sticks, dice and
 other valid contents. Glass tiles use their colored-glass appearance.
 
 One undo dye removes back coloring from two targets through the same mixer
-operation. Both targets must change; an already matching target waits for a
-different batch without consuming the reagent. The mixer changes backs only.
+operation. Both targets must change. An already matching target waits for a
+different batch and preserves the reagent. The mixer changes backs only.
 
 ## Red fives and packing
 
@@ -85,12 +86,12 @@ the remaining tiles retain their original components.
 To pack supplies, put a box and loose tiles, point sticks or dice into a basin
 under a press, without a printing plate. Matching components merge before empty
 slots are used. The transaction respects all 45 tile slots, nine point-stick
-slots and the dice slot; it never places supplies in the dye compartment.
+slots and the dice slot, keeping the dye compartment reserved.
 Insufficient space leaves the inputs untouched. The resulting box can go into
 the mahjong table's internal equipment storage.
 
-Packing four spare reds into a standard 144-tile box produces a universal stock:
-one red 5m, two red 5p and one red 5s. The 148 tiles occupy exactly 45 tile slots
+Packing four spare reds into a standard 144-tile box produces a universal stock
+containing one red 5m, two red 5p and one red 5s. The 148 tiles occupy exactly 45 tile slots
 and cover the no-red, three-red and four-red options. Their material, back and
 face preset must agree with the printed set for those rule options to use them.
 
@@ -105,12 +106,12 @@ supported languages.
 The workshop supports Minecraft 1.21.1 with NeoForge and Create 6.0.10, and
 Minecraft 1.20.1 with Forge and Create 6.0.8 or Fabric and Create Fabric 6.0.8.1.
 Install Create on the server and clients using the workshop. Its dependency is
-optional; the base mod continues to load independently. The loader's generated
+optional. The base mod continues to load independently. The loader's generated
 Create recipes are guarded by a mod-presence condition. Dependency versions
 remain in `gradle.properties`.
 
-The NeoForge runtime accepts Ponder 1.0.82 bundled with Create 6.0.10; a separate
-newer Ponder installation is not required. The 1.20.1 artifacts share the same
+The NeoForge runtime accepts Ponder 1.0.82 bundled with Create 6.0.10.
+The 1.20.1 artifacts share the same
 workshop operations and adapt only loader registration, native NBT ingredients
 and inventory access. Both include JEI/EMI displays and Ponder tutorials.
 
@@ -130,7 +131,7 @@ gradlew.bat :neoforge:test --tests top.skyeyefast.mchjong.neo.CreateProcessingTe
 gradlew.bat :neoforge:runSmokeClient -PwithCreate=true -PwithPonder=true -PsmokePonder=true -PrecipeBrowser=jei
 ```
 
-On `compat/1.20.1`, the focused checks share the same native transaction fixture:
+On `compat/1.20.1`, the focused checks share the same native transaction fixture.
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PwithCreate=true -PsmokeCreate=true -PrecipeBrowser=emi

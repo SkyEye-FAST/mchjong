@@ -1,6 +1,6 @@
 # Build download sources
 
-The loader subprojects use the following download sources:
+The loader subprojects use the following download sources.
 
 | Downloads | Source | Configuration |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ publishers' Maven repositories. Machine-specific download overrides belong in
 the user's Gradle configuration or environment.
 
 ForgeGradle 7 runs Minecraft Mavenizer on a Java 25 toolchain. Gradle provisions
-that build toolchain through the Foojay resolver when it is not installed; the
+that build toolchain through the Foojay resolver when it is not installed. The
 Minecraft 1.21.1 mod and development client still target Java 21. Forge's Mavenizer
 and Slime Launcher are separate Java processes, so any local proxy configuration
 must also reach those processes. Proxy credentials and machine-specific settings
@@ -28,14 +28,14 @@ belong outside the repository.
 
 NeoForm Runtime supports the `NFRT_ASSET_REPOSITORY` environment variable for
 the client asset object repository. Set it before starting Gradle or the IDE.
-For PowerShell:
+Run the following commands in PowerShell.
 
 ```powershell
 $env:NFRT_ASSET_REPOSITORY = 'https://bmclapi2.bangbang93.com/assets/'
 ./gradlew.bat :neoforge:downloadAssets --console=plain
 ```
 
-For Bash:
+Run the following command in Bash.
 
 ```sh
 NFRT_ASSET_REPOSITORY=https://bmclapi2.bangbang93.com/assets/ ./gradlew :neoforge:downloadAssets --console=plain
@@ -43,7 +43,7 @@ NFRT_ASSET_REPOSITORY=https://bmclapi2.bangbang93.com/assets/ ./gradlew :neoforg
 
 The same environment variable applies to `:neoforge:runClient` and
 `:neoforge:runSmokeClient`. Fabric supports `loom_resources_base` in the user's
-Gradle properties. These local overrides do not change CI download sources.
+Gradle properties. These overrides apply to local runs. CI uses its configured sources.
 
 ## Verification and sources
 
@@ -54,9 +54,9 @@ Use JDK 21 and the checked-in Gradle wrapper:
 ./gradlew :fabric:downloadAssets :neoforge:downloadAssets --console=plain
 ```
 
-Existing caches can satisfy downloads without contacting a mirror. A successful
-cached build verifies configuration compatibility, not a complete fresh download.
-Check the exact artifact and version when diagnosing a repository failure.
+Existing caches may satisfy downloads locally. A successful cached build verifies
+configuration compatibility. Check a fresh download of the exact artifact and
+version when diagnosing a repository failure.
 
 ## Upstream resources
 

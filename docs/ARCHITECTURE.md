@@ -19,7 +19,7 @@ allows it.
   legal-action derivation, hand analysis, scoring, bot evaluation helpers and
   replay-format transformation. Kotlin APIs called from Java keep ordinary JVM
   entry points (`@JvmStatic`, `@JvmField`, `@JvmRecord` or explicit fields where
-  required), so Java orchestration does not need Kotlin-specific call shapes. The
+  required), giving Java orchestration ordinary Java call shapes. The
   engine Shadow archive embeds and relocates mahjong-utils, mcr-mahjong, taiwan-mahjong, Kotlin
   and kotlinx. Each loader embeds that self-contained artifact without requiring
   an external Kotlin language mod or MCR library. Engine production
@@ -36,19 +36,20 @@ allows it.
 * `fabric/src/main/java`: Fabric registration/networking only.
 * `forge/src/main/java`: Forge registration/networking and client extension binding.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
-* `common/src/smoke`: shared loader smoke harnesses; each loader keeps only its
+* `common/src/smoke`: shared loader smoke harnesses. Each loader keeps only its
   lifecycle adapter and metadata in its own `src/smoke`.
 * `common/src/ponderData`: shared native-NBT Ponder generator source, compiled
   independently by both loader projects.
-* `art`: deterministic preparation of native face-preset images, client model
-  descriptors, plus a separate server-data generator. Client resources are checked
-  in under `art/generated/assets` and refreshed explicitly; loader builds package
-  those files. Each supplied preset includes independent textures for all ordinary,
-  red-five and flower designs; render textures are composed on resource reload.
+* `art`: deterministic texture and client-model generation, plus a separate
+  server-data generator. Client resources are checked in under `art/generated/assets`
+  and refreshed explicitly. Loader builds package those files and the images,
+  definitions and notice from `presets/tile_faces` directly. Each supplied face
+  preset includes independent textures for ordinary tiles, red fives and flowers.
+  Render textures are composed on resource reload.
 
 `compat/1.20.1` is a version-adaptation branch, synchronized from stable batches
 on `main`. It targets Fabric and Forge. Features and engine changes originate on
-`main`; the compatibility branch only changes Minecraft APIs, loader adapters,
+`main`. The compatibility branch only changes Minecraft APIs, loader adapters,
 metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
 Artifact names include both loader and Minecraft version to keep releases distinct.
 
@@ -57,10 +58,10 @@ Artifact names include both loader and Minecraft version to keep releases distin
 `TaiwanHandAnalyzer` is the sole production boundary to the independent
 Kotlin/JVM 17 `taiwan-mahjong` library, resolved from Maven Central.
 The analyzer owns physical identity and
-meld-provenance conversion; the library owns five-meld sixteen-tile structure,
+meld-provenance conversion. The library owns five-meld sixteen-tile structure,
 analysis and source-qualified tai scoring. `TaiwanGame` and `TaiwanSession` own
-the Taiwan runtime without changing that algorithm/score boundary.
-See [Taiwan integration design](TAIWAN_DESIGN.md) for ownership
+the Taiwanese mahjong runtime without changing that algorithm/score boundary.
+See [Taiwanese mahjong integration design](TAIWAN_DESIGN.md) for ownership
 and the separate match-layer contract.
 
 `Meld.Type` names physical structures: sequence, triplet, open quad, concealed
@@ -78,18 +79,18 @@ responses finish. MCR save and session records accept only their current format.
 legal actions, hints, replays and bots. `HandScore` retains immutable per-yaku
 names, open-hand-adjusted han and natural-yakuman markers from the selected
 interpretation. Individual natural-yakuman values precede the configured
-compound cap; the score's total and payments retain that cap. Receipts, recordings
+compound cap. The score's total and payments retain that cap. Receipts, recordings
 and replay exports read these values directly. Riichi session format 6 is the
 only accepted format.
 
 `RiichiRules.yakuSelection` and `TaiwanRules.yakuSelection` own immutable `YakuSelection`
 snapshots containing full `YakuSet` definitions, enabled custom IDs and disabled native IDs. `YakuCondition`
-is a bounded declarative tree over `YakuFacts`; each variant's facts adapter constructs facts
+is a bounded declarative tree over `YakuFacts`. Each variant's facts adapter constructs facts
 for each native winning decomposition and tile placement. Custom awards and
 simultaneous exclusions are evaluated before selecting the best payment.
 The engine performs no resource lookup while scoring or replaying. Native fu,
 structural shapes and game lifecycle remain separate from custom awards. Native
-switches apply before native exclusions and yakuman precedence. Taiwan flower
+switches apply before native exclusions and yakuman precedence. Taiwanese mahjong flower
 switches also gate their corresponding automatic events. `BuiltinYakuSets` reads
 the bundled Mahjong Soul ancient example through the ordinary authoring codec.
 
@@ -97,10 +98,10 @@ Common `YakuSets` loads server data packs through each loader's reload listener.
 It atomically replaces a bounded public catalog and synchronizes it once per
 player connection and successful reload. Rule proposals carry disabled native IDs
 and, for each custom set, its ID, SHA-256 definition digest and a 16-bit award mask.
-The digest binds each mask to the reviewed definition order; the server supplies
+The digest binds each mask to the reviewed definition order. The server supplies
 all definitions and rejects unknown bits before ordinary host,
 decision, world-policy and stock checks. A reload never mutates a table's frozen
-snapshot. See [Rules](RULES.md#custom-riichi-and-taiwan-awards) for the authoring syntax.
+snapshot. See [Rules](RULES.md#custom-riichi-and-taiwanese-mahjong-awards) for the authoring syntax.
 
 `McrHandAnalyzer` is the sole production
 boundary to mcr-mahjong. Its public methods accept engine tile IDs, `Meld` values
@@ -114,7 +115,7 @@ The library's MIT license and upstream attribution remain in the bundled archive
 `RiichiGame`, `RiichiRules`, `RiichiView` and `RiichiAction` own the Riichi match contract.
 `McrGame` independently runs four-player MCR matches through engine-owned actions.
 
-MCR analysis takes the concealed hand before drawing or winning:
+MCR analysis takes the concealed hand before drawing or winning.
 `concealed.size() + 3 * melds.size() == 13`, with the winning tile supplied
 separately. Owner/supplier seats use `0..3`; seat/round winds in `McrWinContext`
 use the `Tile.EAST`, `SOUTH`, `WEST` and `NORTH` kind constants. Structural waits
@@ -143,7 +144,7 @@ A hand reset clears the corresponding rule-specific zones.
 
 `McrWall` owns 144 fixed physical slots, with front draws and tail replacements.
 A drawn flower moves to the player's flower area. `McrGame` issues a
-`REPLACE_FLOWER` decision to its owner; each accepted declaration takes exactly one
+`REPLACE_FLOWER` decision to its owner. Each accepted declaration takes exactly one
 tail tile, issuing another decision if it is a flower. Exhaustion returns
 `Tile.ABSENT` and retains flowers already collected. The wall's conservation check covers the remaining physical wall and
 all player-owned zones. The Riichi `Wall` independently owns its 136/108-tile
@@ -155,7 +156,7 @@ identities to `McrSession.configureEquipment`. Selection is read-only and keeps 
 item faces separate from ordinary analysis kinds. See [Supply data](SUPPLIES.md#mcr-stock-boundary).
 
 `McrWallLayout` owns four walls of eighteen stacks, with upper/lower slots in
-each stack. Columns run from the owner's right to left; clockwise traversal
+each stack. Columns run from the owner's right to left. Clockwise traversal
 visits walls in the opposite order to player turns. `McrOpening` records both
 two-die rolls, the second roller and the first drawable stack after the counted
 break. The first roll counts the dealer as one to select the second roller;
@@ -165,22 +166,22 @@ both rolls use the server-owned seed.
 
 `McrWall.takeRaw` takes a named physical slot for initial packets and the dealer's
 jump. `drawRaw` takes the next occupied front slot and `replaceRaw` takes the next tail slot. Independent front and back
-cursors skip taken slots; both traversals take a stack's upper tile before its
+cursors skip taken slots. Both traversals take a stack's upper tile before its
 lower tile. Tile identities remain in their physical slots until taken.
 `McrSettlement` keeps normal wins and exhaustive draws in its `Result` contract;
 below-minimum declarations produce separate `Penalty` events. Self-draw charges
-each opponent eight plus total fan points; discard wins charge the discarder that
+each opponent eight plus total fan points. Discard wins charge the discarder that
 amount and the other opponents eight each. A wrong-win penalty transfers ten
 points to each opponent, independently of hand results.
 
-## Taiwan engine runtime
+## Taiwanese mahjong engine runtime
 
 `TaiwanWallLayout` is the fixed 136/144-slot contract shared by logic, private
-saves and `TaiwanTableScene`. `TaiwanWall` marks taken slots absent rather than
-rotating identities. Its front traversal is upper/lower in increasing physical
+saves and `TaiwanTableScene`. `TaiwanWall` marks taken slots absent and keeps
+identities in their original slots. Its front traversal is upper/lower in increasing physical
 slot order from the cut; tail replacement reverses that order. The no-flower
 seventeen-stack overflow and numbered-side traversal are frozen project preset
-rules. Exact indexing and source limits belong to [Taiwan design](TAIWAN_DESIGN.md#opening-and-wall-representation).
+rules. Exact indexing and source limits belong to [Taiwanese mahjong design](TAIWAN_DESIGN.md#opening-and-wall-representation).
 
 `TaiwanGameState` accepts only format 3; `TaiwanSession.State` accepts only format 4. Game restore
 checks physical conservation, player structure/provenance, cursor occupancy,
@@ -193,8 +194,8 @@ passing restriction and response status. Completion publishes awards and payment
 without hand/decomposition exposure. Wall slots never disclose future identities.
 `TaiwanCodec` enforces complete typed fields, duplicate/unknown-field rejection,
 32 nesting levels, a 524,288-character game/view bound, a 262,144-character rules bound and an 8 MiB session bound.
-Rules freeze all selected custom sets and individual switches. Taiwan receipts retain namespaced IDs,
-actual tai and native source citations; custom awards have no fabricated citation.
+Rules freeze all selected custom sets and individual switches. Taiwanese mahjong receipts retain namespaced IDs,
+actual tai and native source citations. Custom awards have no fabricated citation.
 Candidate scoring precedes the tai cap and preserves separate flower/hand payments.
 
 `TaiwanSession` owns one four-wind match, completing sixteen dealer positions
@@ -202,14 +203,14 @@ while allowing dealer wins/exhaustion to repeat even the last position. Cumulati
 scores derive from completed terminal hand proofs and the current settlement.
 Rules, stock, future seed, clocks, result reading time and acknowledgements persist;
 restore validates the dealer/wind/continuation chain and renews room incarnation.
-Absence and exit votes pause the session; authenticated human acknowledgement or
+Absence and exit votes pause the session. Authenticated human acknowledgement or
 200 active ticks advances a nonfinal result. Clocks are recipient-only in views.
 This human/built-in-Bot session uses `MahjongVariant.TAIWAN` throughout the shared room
 lifecycle. Every `TableSession` requires a concrete variant. `selectVariant` creates
-its session, and `TableSessionCodec` dispatches the registered Taiwan envelope to
+its session, and `TableSessionCodec` dispatches the registered Taiwanese mahjong envelope to
 `TaiwanCodec`; there is one world persistence path.
 
-`TaiwanDeck` owns Taiwan equipment admission independently of `McrDeck`, reusing
+`TaiwanDeck` owns Taiwanese mahjong equipment admission independently of `McrDeck`, reusing
 case component parsing and tile artwork. Pocket requires 144 physical tiles
 (136 ordinary tiles and eight flowers); Southern requires the 136 ordinary tiles.
 Cases are selected individually with uniform material, back and face preset.
@@ -223,8 +224,8 @@ match or room decision. Rules and clock edits are host-only lobby operations;
 custom values respect world policy. All loaders register these shared handlers.
 `TaiwanLobbyScreen`, `TaiwanRulesScreen`, `TaiwanTableScreen` and
 `TaiwanResultsScreen` provide preparation, issued actions, public settlement and
-next-hand acknowledgement. The shared clock editor sends Taiwan clock requests.
-`TaiwanTableScene` consumes Taiwan's fixed physical slots for both wall sizes,
+next-hand acknowledgement. The shared clock editor sends Taiwanese mahjong clock requests.
+`TaiwanTableScene` consumes the Taiwanese wall's fixed physical slots for both wall sizes,
 with sixteen-tile hands, public flowers/rivers and five native meld groups.
 Chinese meld/flower placement, HUD, buttons and seated/immersive controls are
 shared presentation primitives. Covered opponent kongs and hands remain hidden
@@ -234,8 +235,8 @@ with the existing analyzer and current scorer. Shared room controls admit built-
 Bots through one built-in option and automatically ready them. The session schedules
 them after twelve active ticks with inactive Bot clocks and automatic nonfinal
 result confirmations. One human and three Bots can complete all four winds,
-including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwan-built-in-opponent).
-Taiwan records native replays through the shared archive and browser and shares
+including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwanese-mahjong-built-in-opponent).
+Taiwanese mahjong records native replays through the shared archive and browser and shares
 the room convenience-hint setting. External Bot integration remains unavailable.
 
 ## MCR match orchestration
@@ -248,14 +249,14 @@ ends the match. Points start at zero and retain both win payments and penalties.
 Construction follows `McrWallLayout.initialDeal`: three four-tile packets to each
 player, then the dealer takes the first and third remaining stacks' upper tiles.
 South, West and North take the next available front slots. In traversal indices,
-the final five raw takes are 48, 52, 49, 50 and 51; the next front take is 53.
+the final five raw takes are 48, 52, 49, 50 and 51. The next front take is 53.
 Only after these 53 physical tiles have been allocated does the game expose
 flowers. `INITIAL_FLOWERS` issues replacement decisions in East, South, West,
 North order, completing each seat's chain before advancing. Ordinary and kong
-draws that encounter a flower enter `REPLACE_FLOWER`; the automatic table takes
+draws that encounter a flower enter `REPLACE_FLOWER`. The automatic table takes
 each replacement from the tail. Pending hand deficits and the phase/turn survive
 save and restore without consuming another tile. The game tracks the actual draw origin separately from the
-end of the wall; a flower replacement is distinct from a kong replacement,
+end of the wall. A flower replacement is distinct from a kong replacement,
 including a flower drawn after declaring a kong.
 
 `McrLegalActions` derives the current `McrAction` choices. `McrGame.act` accepts a
@@ -307,13 +308,13 @@ rejects duplicate fields and checks numeric/boolean types before binding records
 Restoration checks physical conservation, hand and meld structure, wall bounds,
 claim ownership, penalty/stop-win consistency and completed winning results.
 Legal actions are regenerated from the restored position. Previously submitted
-responses must still be valid and remain submitted; a completed reaction window
+responses must still be valid and remain submitted. A completed reaction window
 cannot be restored as pending. Restore advances revision and decision so the saved
 decision token cannot be reused. A partial response advances only revision,
 leaving the shared decision valid for the other responders.
 
 The save record is separate from recipient data. Restore failures are reported
-to the storage caller; the codec never substitutes a new match.
+to the storage caller. The codec never substitutes a new match.
 
 ### MCR recipient views
 
@@ -333,7 +334,7 @@ Only the recipient receives their legal actions, engine-calculated minimum-fan
 win qualification and submitted-response status.
 Other players' action choices and responses are absent from the data model.
 The public focus contains the offered discard or added-kong tile, not another
-player's response. Below-minimum structural wins remain issued actions; a
+player's response. Below-minimum structural wins remain issued actions. A
 subsequent wrong-win event updates points and the stop-win flag independently
 of the hand result.
 
@@ -344,7 +345,7 @@ construction enforces concealed-data redaction, so private state is not a valid
 view document. Snapshot revision reflects partial-response changes without
 invalidating the other players' shared decision token.
 
-## Sichuan match orchestration
+## Sichuan mahjong match orchestration
 
 `SichuanSession` owns a four-seat room with human and built-in Bot participants,
 the explicit `SichuanRules` contract,
@@ -359,7 +360,7 @@ one fan independently of its immediate kong payment.
 `SichuanRoomSettings` publishes the complete authoritative `SichuanRules`, clock
 settings and world-policy editing permission in every room snapshot, including
 the lobby where `SichuanSession.view` remains null. Preset identity is derived by
-exact equality with either preset; changing any field displays Custom, and restoring
+exact equality with either preset. Changing any field displays Custom, and restoring
 all preset values restores its label. The engine always reads the complete rules,
 never the preset name. `SichuanRuleOption` supplies only field bounds, boolean or
 integer type, translation keys and Basic / Kongs / Draw & settlement groups.
@@ -385,7 +386,7 @@ All regression names below belong to `SichuanGameTest`.
 | MIL Art. 10(1), (2) | Only completed timely added kongs collect income. Robbery retains the pung and awards robbery, distinct from a shooting discard. | `timelyAddedKongChargesEachActivePlayerButDelayedAddedKongIsFree`, `addedKongChainsIncludeOnlySettledIncomeAndRobberyIsNotAShootingDiscard` |
 | MIL Art. 4; T/TFMJ 9.3.5 | `passedFan` compares capped fan, including declined self-draws. Drawing or becoming non-ready clears the restriction. Comparing capped rather than raw pattern fan is the declared interpretation of the fan-comparison wording. | `passedWinsBlockSameFanUntilDrawingAndSurviveRestore` |
 | MIL Art. 10(3), Art. 11 | `readyValue` maximizes structural value without win circumstances. Natural flower pigs are not ready. Active flower pigs lose 24 competition points, stop winning, refund retained kong income and can call for readiness. Sanctioned ready hands neither pay nor collect ready payments. | `finalTileChecksPassiveFlowerPigsAndMaximumReadyValue`, `maximumReadyValueExcludesWinCircumstancesAndSanctionedReadyPigCannotCollect`, `drawPaymentsUseTheRecipientsLargestStructuralWinRatherThanLastTileBonus` |
-| MIL Art. 10(1); T/TFMJ 9.3.4, 10.2.1 | `refundKongs` refunds retained non-ready receipts at exhaustion, including natural flower pigs; ready players and winners retain theirs. Transferred receipts are consumed. Retrospective recovery of previously transferred payments is not explicit in T/TFMJ; this table treats completed transfers and rounding charges as final. | `exhaustiveDrawChargesActiveFlowerPigsAndRefundsNotReadyKongs`, `exhaustiveChecksRetainReadyKongsAndDoNotRefundAlreadyTransferredIncome` |
+| MIL Art. 10(1); T/TFMJ 9.3.4, 10.2.1 | `refundKongs` refunds retained non-ready receipts at exhaustion, including natural flower pigs; ready players and winners retain theirs. Transferred receipts are consumed. Retrospective recovery of previously transferred payments is not explicit in T/TFMJ. This table treats completed transfers and rounding charges as final. | `exhaustiveDrawChargesActiveFlowerPigsAndRefundsNotReadyKongs`, `exhaustiveChecksRetainReadyKongsAndDoNotRefundAlreadyTransferredIncome` |
 | MIL Art. 9; T/TFMJ 3.4, 9.4, 10.2.1(c) | All simultaneous winners retire. Three winners finish without draw checks. First winner deals next; simultaneous first winners select their supplier; no winner retains the dealer. | `multipleWinsKeepOnePhysicalTileAndFinishAtThree`, `thirdWinnerEndsWithoutDrawChecksOrKongRefundsEvenForTheLastNonReadyPlayer`, `firstWinnerDealsNextAndNoWinRetainsDealerWithFreshVoiding` |
 | MIL Art. 5(2), Art. 4(5); T/TFMJ 7.3.1–7.3.2 | Both presets use `matchHands=8`. MIL leaves the event length to its competition regulations; T/TFMJ explicitly permits eight hands or a time limit, with organizer overrides. Decision clocks and result-reading time belong to the session. | `eightHandsRetainLedgerDerivedTotalsAndOnlyFinalHandEndsMatch`, `allHumanConfirmationsAdvanceOnceAndMatchEndIsTerminalForTheSession` |
 
@@ -404,7 +405,7 @@ stays private until played and must be used even after a draw or intervening cal
 passed-win fan and retirement. `SichuanAction` is an independent issued-action
 contract. Its legal-actions layer admits void-suit discards first, permits pung
 and kong only in the other suits, and requires the void suit to be cleared before
-winning. Ordinary shapes use the existing library's common-hand analysis; Sichuan
+winning. Ordinary shapes use the existing library's common-hand analysis. Sichuan mahjong
 seven pairs, roots, fan and ready-value interpretation belong to `SichuanHandAnalyzer`.
 
 `SichuanGame` follows `VOIDING → TURN ↔ REACTION → HAND_END`, with the final hand
@@ -427,7 +428,7 @@ The completed result derives deltas from the retained ledger. Match scores deriv
 from completed-hand ledgers and the current live ledger, with no independent
 mutable score balance. Hand records preserve the dealer, scored result and ledger.
 `adjudicateActiveFlowerPig` is a server/referee operation requiring an observed
-violation; its ledger deduction preserves the sanction even after the suit clears.
+violation. Its ledger deduction preserves the sanction even after the suit clears.
 
 `SichuanSession` stays `PLAYING` at `HAND_END`, retaining the result while waiting
 for `confirmNextHand` from authenticated, correctly mounted humans or a
@@ -436,7 +437,7 @@ this period. Advancement
 calls `SichuanGame.nextHand`, determines the next dealer, shuffles from the saved
 future seed, deals in dealer order and enters fresh simultaneous `VOIDING`.
 Clocks replenish per-hand reserves at that boundary. Confirmations use session
-lifecycle authority rather than `SichuanAction`. Only `MATCH_END` sets the room to
+lifecycle authority. Only `MATCH_END` sets the room to
 `FINISHED`.
 
 `SichuanCodec` encodes explicit game/session saves separately from recipient views,
@@ -467,7 +468,7 @@ provides configured-match cumulative standings and the issued return-to-lobby co
 
 ### Shared rooms and rule sessions
 
-`MahjongVariant` selects Riichi, MCR, Sichuan or Taiwan through explicit built-in dispatch. `TableSession` owns
+`MahjongVariant` selects Riichi, MCR, Sichuan mahjong or Taiwanese mahjong through explicit built-in dispatch. `TableSession` owns
 the table UUID, host, participants, seats, readiness, observed presence, variant,
 request incarnation, convenience-hint setting, exit controls and room lifecycle. `RoomSeating` owns the
 concealed wind lottery. `TableRoomView` projects this state and recipient-specific
@@ -478,7 +479,7 @@ A variant change creates a new concrete session with the target variant's capaci
 retaining eligible human seats and fresh preparation state. `RiichiSession`
 owns Riichi room rules, equipment, visibility, bot choices, rewards, replay queue
 and match lifecycle. It creates one `RiichiGame` when play begins and clears it
-on return to the lobby. `RiichiGame` has only active match phases; its private
+on return to the lobby. `RiichiGame` has only active match phases. Its private
 actions, wall, scores, replay recording and settlement belong to that match.
 `TableRoomView` contains only common room state. `RiichiRoomSettings` projects
 Riichi rules and lobby configuration; `RiichiView` projects only an active match,
@@ -496,8 +497,8 @@ the drawn tile, falling back to the first legal discard. Win declarations remain
 explicit. Forced draws and flower replacements advance after twelve server ticks.
 Shared exit votes pause actions, clocks and completed-hand acknowledgements. The
 last player to leave their stool chooses whether to keep the match paused or close
-it; a retained match resumes when a player returns. Both the vote and leave decision
-survive private table saves. Bots confirm completed hands automatically; completed
+it. A retained match resumes when a player returns. Both the vote and leave decision
+survive private table saves. Bots confirm completed hands automatically. Completed
 hands advance after all human confirmations or a 200-tick reading period.
 Session saves retain decision age, remaining move
 allowances, hand reserves and confirmations alongside the pending game decision.
@@ -512,7 +513,7 @@ one shanten of retreat. Calls require strict improvement under the same evaluati
 after the best mandatory discard; kongs check a guaranteed continuation across
 publicly possible replacements. The session schedules bots after twelve ticks,
 without charging their clocks, and retains the same delay across partial responses
-and saves. Shared `allowBots` policy controls preparation; active matches retain
+and saves. Shared `allowBots` policy controls preparation. Active matches retain
 their roster. See [Bot analysis](BOTS.md#mcr-built-in-opponent).
 
 `TableHost` adapts one `TableSession` to Minecraft equipment and external bots.
@@ -523,7 +524,7 @@ envelope and variant dispatch. Each rule codec serializes an explicit session
 state containing the common room record and its own match record when play has
 started. Runtime game objects are reconstructed by the owning session; participant
 identity lives only in the room record. Presence is reconstructed from live
-mounts after loading; a fresh incarnation and decision invalidate requests from
+mounts after loading. A fresh incarnation and decision invalidate requests from
 before restoration. The block entity stores the private session JSON as UTF-8
 NBT bytes so completed replay queues fit beyond NBT's single-string limit.
 
@@ -554,7 +555,7 @@ Match scenes and settlement screens retain their rule-specific contents.
 issued action index. One deterministic policy ranks void suits by tile count,
 pair/triplet/connected support and shape efficiency, binding a legal physical
 first discard for SBR. Issued wins take priority. Discards use
-`SichuanHandAnalyzer`'s existing regular-shape library and Sichuan quad-pair
+`SichuanHandAnalyzer`'s existing regular-shape library and Sichuan mahjong quad-pair
 analysis, with deduplicated public remaining copies. `SichuanBotValue` fits copy-aware
 seven-pairs, all-pungs, full-flush and root/kong targets, with completed targets validated and valued by the same analyzer. Routes
 compete using distance, scarcity and capped payout; fixed melds immediately remove
@@ -562,15 +563,15 @@ incompatible routes. Discards allow at most one shanten of retreat. Calls compar
 the same evaluation after the mandatory discard; immediate rule-configured kong
 income can settle a close comparison without buying worse shanten. The session uses
 the shared Bot room lifecycle and world policy, waits twelve ticks and leaves Bot clocks inactive. Bot identities and
-replay participant flags survive restores. See [Bot analysis](BOTS.md#sichuan-built-in-opponent).
+replay participant flags survive restores. See [Bot analysis](BOTS.md#sichuan-mahjong-built-in-opponent).
 
-### Sichuan physical presentation
+### Sichuan mahjong physical presentation
 
 `SichuanTableScene` owns the 108-slot wall with fourteen stacks at even seats and
 thirteen at odd seats, compact unclaimed rivers, flat meld rails and source hand
 indices. Its geometry is independent of Riichi player-count layouts. Public
 discard-win aliases are grouped by supplier and physical tile for multi-win
-indicators; they do not duplicate the claimed tile in the scene.
+indicators. They do not duplicate the claimed tile in the scene.
 `SichuanSceneRenderer` renders these pieces with `SichuanDeck` appearance and the
 shared tile meshes and materials. `SichuanViewPayload` supplies that uniform case
 appearance and cloth alongside the redacted recipient view, not private stock.
@@ -606,10 +607,10 @@ The dimensional and visibility contracts are in [Interface style](UI_STYLE.md#mc
 for camera input and view switching, and `TableCanvas` for the opaque 1280 × 800
 canvas, letterboxing and pointer conversion. The world renderer consumes
 `McrTableScene.build`; `TableBoardState` supplies the same shared immersive
-rails, rivers, perspective solids and player plaques used by Riichi and Sichuan,
+rails, rivers, perspective solids and player plaques used by Riichi and Sichuan mahjong,
 with a private `TableHand` in the foreground. `TilePicking` intersects the MCR piece's
 actual `TileDimensions` envelope and orientation.
-Hand selection resolves only issued discard indices; other declarations use
+Hand selection resolves only issued discard indices. Other declarations use
 native action buttons with localized names and tile previews. View changes retain
 selection and leave the world camera pose intact. Settlement carries the selected
 view into the next hand.
@@ -625,17 +626,17 @@ Forge's item extension field without importing loader types into shared items.
 `RiichiPreset` defines named presets; `RiichiRules` is the complete immutable,
 validated snapshot used by the engine, public views, saves and native replays. `RiichiRuleOption`
 defines field bounds, translation keys, categories and preset defaults. Runtime
-logic reads individual settings instead of branching on a preset identity.
+logic reads the individual settings.
 `RiichiRulesPayload` carries a bounded proposal and the current table identity and
-decision. Only the room host can apply it before play; clients retain a draft
+decision. Only the room host can apply it before play. Clients retain a draft
 until server acknowledgement. Rule changes clear all readiness and recheck boxes.
-Preset metadata distinguishes supported table options from custom changes; the
+Preset metadata distinguishes supported table options from custom changes. The
 editor shows options, read-only details and custom settings separately. The view
 payload adds six public red-stock capability bits (three compositions for each
 player count), not box contents. The server independently authorizes every
 proposed red composition against stock.
 
-`SichuanRulesPayload` carries all thirteen bounded Sichuan fields, table UUID,
+`SichuanRulesPayload` carries all thirteen bounded Sichuan mahjong fields, table UUID,
 incarnation and lobby decision. All three loaders route it through the shared
 reach and participant authorization boundary to `SichuanSession.configureRules`.
 Only the host can change rules before play, subject to world custom-rule policy;
@@ -643,7 +644,7 @@ stale decisions, old incarnations and running-match edits are rejected without
 changing state. Accepted changes clear everyone's readiness and advance the room
 decision. Existing session saves retain the full rules through lobby and match
 restoration. `SichuanViewPayload` always carries room settings alongside an
-optional redacted match view; the client atomically accepts settings with the
+optional redacted match view. The client atomically accepts settings with the
 room revision and rejects disagreement with active match rules. Lobby, table
 and receipt screens use these server-confirmed values, never a local draft.
 
@@ -665,9 +666,9 @@ wind permutation is persisted server-side; `TableRoomView` sends only revealed w
 available choices, host seat, seated/away/disconnected presence and Bot choice.
 Rule-specific player state stays in the active match, while `TableSession` keeps
 the room roster through wind assignment. A lobby member retains their assigned
-room seat while moving between stools; active private views require a matching mount.
+room seat while moving between stools. Active private views require a matching mount.
 Mount presence is transient and
-is reconstructed from `SeatEntity` passengers; it is never accepted from a client
+is reconstructed from `SeatEntity` passengers. It is never accepted from a client
 or a saved room. Nearby room members retain preparation controls while relocating,
 but active-game actions and private hands require the correct physical seat.
 Physical dismount in the lobby releases room membership immediately. During an
@@ -680,11 +681,11 @@ An idle lobby closes and releases all seats once every human is disconnected,
 including after the dismount grace period expires.
 An active match pauses its settlement, clocks and automatic actions as soon as no
 human is seated. The last player to dismount normally chooses to keep the paused
-match or end it; connection loss and invalidated seats keep it paused by default.
+match or end it. Connection loss and invalidated seats keep it paused by default.
 The match resumes when a human returns to an assigned stool.
 The default-on personal automatic seating option requests relocation after seat
 assignment or reopening a reserved table during preparation. Its payload contains only table position
-and identity; the server derives the destination from membership and validates
+and identity. The server derives the destination from membership and validates
 the player, distance, stool and mount before moving them.
 
 Physical companion players use an `entityBot` identity in the engine and public
@@ -692,7 +693,7 @@ seat view. Their UUID and display name survive wind assignment and difficulty
 changes, while decisions use the same private-view training AI. The shared table
 adapter authorizes recruitment through the companion's nearby living owner,
 validates actual stools and mounts, and synchronizes companion presence. Missing
-companions release lobby membership after the presence grace period; during play
+companions release lobby membership after the presence grace period. During play
 a training bot continues their place. The maid extension in `compat/maid` uses
 the maid mods' task, core-brain and typed task-data APIs. Fabric discovers it via
 the Orihime extension entrypoint; NeoForge uses the maid extension annotation.
@@ -741,7 +742,7 @@ settings and preset screens; Fabric uses optional Mod Menu while Forge and
 NeoForge register their native config-screen factories.
 `MahjongBoxMenu` has its own registered type on both loaders, with ordinary slot
 and carrier-index synchronization. `MahjongBoxScreen` reads that menu to paint
-inventory wells and a packing summary; it never writes stored components.
+inventory wells and a packing summary. It never writes stored components.
 Face printing uses a bounded cosmetic-ID payload tied to the current menu. The server validates the complete
 136/144-tile input, then commits all tile slots and dye
 consumption together. Tile, point-stick and dye compartments have distinct
@@ -749,8 +750,8 @@ native insertion ranges. `TileFacePreset` is an immutable resource-ID component;
 ZIPs in `config/mchjong/presets/faces/` and `config/mchjong/server-presets/faces/`
 supply the client selector.
 `PresetDirectory` detects stable ZIP changes on client and server ticks.
-Server ZIPs are loaded at startup and refreshed during play; their individual
-tile images are sent to joining and already connected players; clients assemble render atlases. An
+Server ZIPs are loaded at startup and refreshed during play. Their individual
+tile images are sent to joining and already connected players. Clients assemble render atlases. An
 unavailable ID displays Kansai artwork. The
 deck's face and back presets are synchronized as public appearance, independently of private
 container contents.
@@ -759,7 +760,7 @@ its lifetime is bound to the specific idle table and nearby player. `MahjongTabl
 shows the selected complete set and cloth readiness without changing equipment.
 `PointStickMenu` exposes all four drawer rows for hand payments, with withdrawals
 authorized per player and practice-bot ownership. `PointStickScreen` shows stored
-currency beside the referee's score; only ordinary inventory transactions move
+currency beside the referee's score. Only ordinary inventory transactions move
 the physical sticks. Signed 32-bit reference scores use paired native data slots.
 Lifetime checks bind the menu to its player, current mount and exact table.
 Both manual and automatic tables require a cloth and a box covering the selected
@@ -781,9 +782,9 @@ The server owns the wall, hands, legal actions and settlement. Requests contain 
 action index and decision token, never tiles or a claimed score. Snapshots are built for
 each recipient: opponents' concealed tiles and unrevealed wall tiles are replaced
 with hidden sentinels **before serialization**. `PlayerHandVisibility` is saved per
-room; the host can change it during preparation, clearing readiness. ALL authorizes
+room. The host can change it during preparation, clearing readiness. ALL authorizes
 all concealed hand identities in participant snapshots, RIICHI does so only for
-participants who have declared riichi, and SELF keeps opponents concealed. `openHands` is a separate room option:
+participants who have declared riichi, and SELF keeps opponents concealed. `openHands` is a separate room option.
 it physically lays down the hands and therefore makes their faces public in world
 rendering. Settlement exposure remains public in every mode.
 
@@ -804,7 +805,7 @@ tree to enable controls and submits the existing permission-checked commands;
 only synchronized table snapshots update the displayed policy values.
 Ownership follows a UUID, not the lowest numbered human seat.
 Persistent server NBT is separate
-from the client update tag. A table is not a global singleton.
+from the client update tag. Each table owns its state.
 
 The seated overlays project the actual 3D table, with `TableSettings` supplying
 the matching eye and FOV to world rendering and picking. `SeatedCameraState` owns
@@ -827,15 +828,15 @@ all variants. `MeldLayout` retains each rule's concealed and upgraded-kong displ
 `TableBoard` owns projected anchors and the flat replay layout. `TableHand`,
 `TileDimensions`, `TileMesh` and `TilePicking` share hand, mesh and intersection responsibilities.
 `TableDeal` supplies deal timing; `RiichiAnimation` retains Riichi declarations
-and `TableAnimation` adapts MCR/Sichuan deal, draw, discard and world transitions.
+and `TableAnimation` adapts MCR and Sichuan mahjong deal, draw, discard and world transitions.
 World picking samples the same pose as rendering. Recipient/view changes clear
-motion sources instead of reconstructing private identities.
+motion sources to preserve recipient privacy.
 
 `TableResultState` adapts native fan, yaku, score and payment records without
 recomputing rules. `TableResults` owns receipt, point changes, final standings and
 payment pages; `ResultReadout` sequences rows and the score transition.
 `TableResultsScreen` composes the common canvas, camera, navigation and controls
-for MCR/Sichuan protocol adapters. `ReplayPresentation` adapts each native replay
+for MCR and Sichuan mahjong protocol adapters. `ReplayPresentation` adapts each native replay
 timeline to `ReplayScreen`, the shared decision panel and initial wall panel.
 Rendering remains read-only and consumes only authorized data.
 
@@ -843,7 +844,7 @@ Rendering remains read-only and consumes only authorized data.
 room and settlement views. Missing player-list entries use the native default
 skin, practice bots use a distinct shared-palette robot, and maid companions
 use the maid mod's default Reimu icon. Companion model names resolve on the client.
-Portrait rendering does not add network requests or store skin data in engine snapshots.
+Portrait rendering uses client skin data independently of engine snapshots.
 
 `TenpaiHints` caches structural waits per concealed hand, meld set and discard
 kind, separately from snapshot-based availability. `VisibleTiles` deduplicates
@@ -855,7 +856,7 @@ this information when the room host enables convenience hints during preparation
 world-policy permission to every variant. `McrHints` and `SichuanHints` independently
 consume their recipient-safe views and existing analyzers. MCR waits carry scorer
 non-flower fan for ordinary discard/self-draw contexts and current public claim
-circumstances. Sichuan uses structural scores and `readyValue`, with its recipient's
+circumstances. Sichuan mahjong uses structural scores and `readyValue`, with its recipient's
 passed-win restriction. Public physical tile accounting excludes opponent hands
 and wall identities. `TableHintsButton` shares the native focus target and icon;
 `TaiwanHints` consumes only `TaiwanView`, using `TaiwanHandAnalyzer` and the view's
@@ -864,13 +865,13 @@ previews and per-wait capped ron/self-draw tai. It counts unique physical IDs fr
 the owner's hand/melds/flowers, public rivers/exposed melds and current focus;
 covered opponent kongs, opponent hands and future wall identities are excluded.
 Exhausted structural waits remain visible at zero. Ordinary future-win contexts
-retain only confirmed flowers, winds and READY declarations; they never assume
+retain only confirmed flowers, winds and READY declarations. They never assume
 last tiles, replacements, robbery or opening wins. A current public reaction focus
 separately carries its known last-discard/robbing context. Passing keeps structural
 waits and marks the current win restriction. Spectators get no private analysis.
-`TableHints` formats the MCR/Sichuan/Taiwan results above the existing projected private
+`TableHints` formats the MCR, Sichuan mahjong and Taiwanese mahjong results above the existing projected private
 hand without introducing a common analysis interface.
-Taiwan's seated and immersive adapters gate analysis on the synchronized room/world
+The Taiwanese mahjong seated and immersive adapters gate analysis on the synchronized room/world
 policy before calling the analyzer, sharing native focus, tile rows and pagination.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
 `BotValue` (legal scoring and payout scenarios), `BotYakuPotential` (gradual,
@@ -886,7 +887,7 @@ transitions; hidden slots never acquire guessed identities. Wall assembly and
 packet dealing reconstruct hidden source poses without sending private wall data.
 Interrupted transitions start from their sampled pose, and repeated snapshots do
 not restart motion. Changing viewer permissions clears the presentation history.
-Training opponents receive an opening grace period; the engine never waits for
+Training opponents receive an opening grace period. The engine never waits for
 client animation callbacks. `TilePicking` clips a camera ray against the same
 animated oriented tile box used by the renderer.
 
@@ -906,16 +907,16 @@ settlement. Rendering and drag previews remain read-only.
 manual wall ownership, rendering, picking and animation. Players advance in the
 opposite, counterclockwise seat order. Each hand uses two server-rolled dice to
 count a wall from the current dealer, then skips that many stacks from its owner's
-right end. The opening's left side starts the live wall; its right side holds the
+right end. The opening's left side starts the live wall. Its right side holds the
 dead wall. Three-player tables use the same counting across their three walls.
 Live draws take the upper tile before the
-lower; the dead wall is indexed from its opposite end. A replacement leaves its
+lower. The dead wall is indexed from its opposite end. A replacement leaves its
 wall slot empty while the last live tile becomes dead in place. Revealing dora or ura
 does not change their physical layers. This follows the deal in the
 [EMA Riichi rules](https://mahjong-europe.org/portal/images/docs/Riichi-rules-2025-EN.pdf).
 
 `TableResults` is a separate, narrated single-screen receipt widget. It uses compact
-hands, yaku columns and point tables rather than a scroll viewport. Multiple ron
+hands, yaku columns and point tables in one viewport. Multiple ron
 winners have clickable tabs. It displays server-authored deltas and final scores without recalculating settlement or
 inventing a private tie-break order. Input stays in `RiichiTableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
@@ -942,7 +943,7 @@ change points or advance the stage immediately. Bots need no acknowledgement;
 the fallback still expires if a client never acknowledges. Each settlement stage
 advances early when every human player confirms its skip action. Match settlement
 then adds a 200-tick final-standings stage before restoring the roster.
-`RiichiView` synchronizes the remaining duration and skip confirmations; the saved decision
+`RiichiView` synchronizes the remaining duration and skip confirmations. The saved decision
 age preserves the countdown across reloads. `RiichiTableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
 
@@ -950,10 +951,9 @@ stage boundary, including when opened partway through settlement.
 settings. See [Interface style](UI_STYLE.md) for its shared layout contract. The top toolbar offers individual
 leave and host-only dissolution. `RiichiHud` keeps player summaries along the screen edge and puts
 long names and supplementary details in hover text. Action buttons stay along
-the lower edge rather than covering the table center. The Riichi concealed run stays
-centered whenever the right-corner melds leave enough space; otherwise it shifts
-left by exactly the missing clearance, rather than centering in the remaining
-space. Only an actual drawn tile occupies the separate draw slot; unused draw
+the lower edge, keeping the table center clear. The Riichi concealed run stays
+centered whenever the right-corner melds leave enough space. Otherwise it shifts
+left by exactly the missing clearance. Only an actual drawn tile occupies the separate draw slot; unused draw
 and meld slots cannot push a waiting hand left. `MeldLayout` supplies the real
 occupied width, including sideways calls and front-aligned added kans, to both hand
 clearance and meld rendering.
@@ -962,11 +962,11 @@ colliders, furniture and seating. Riichi melds are anchored at the owner's right
 corner, beside the hand at the same depth. Extracted norths form one continuous run
 to the left of the hand, clear of the adjacent player's corner. The table's
 two-slot inventory stores up to two cases inside the furniture. Chinese variants
-use left-side public melds and an independent automatic-table wall rail; their
+use left-side public melds and an independent automatic-table wall rail. Their
 physical contract is in [Interface style](UI_STYLE.md#mcr-physical-layout).
 Rivers pack six visible tiles per row, close gaps
 left by calls and account for the width of sideways riichi discards. Hiding rivers
-is a local rendering preference; it also forces the remaining-wall count and
+is a local rendering preference. It also forces the remaining-wall count and
 current claimed-tile preview to remain visible, without changing game records.
 
 `TableSessionControlPayload` carries shared convenience-hint configuration, exit requests, votes and last-player
@@ -980,7 +980,7 @@ session revision, preserving clocks, decision tokens and submitted reactions.
 `McrAutomation`, `SichuanAutomation` and `RiichiAutoPlay` independently choose
 current issued action indices: claim enabled wins, wait for unhandled wins,
 pass skipped calls, then discard only the legal physical draw. MCR checks eight
-non-flower fan before treating `WIN` as qualifying; Sichuan uses the server-issued
+non-flower fan before treating `WIN` as qualifying. Sichuan mahjong uses the server-issued
 `WIN` and legal discards, preserving passed-win restrictions, void-suit priority
 and SBR first-discard binding. Bots use their independent policies.
 The client `TableAutomation` shares native controls, acknowledgement/focus handling
@@ -988,7 +988,7 @@ and seated/immersive layouts. Riichi adds sort hand and three-player north extra
 `RiichiControlPayload` carries those Riichi-only switches and open hands. These controls
 remain separate from match-action indices. Every loader checks the loaded table,
 table identity and current decision or vote token. Exit requests and votes require
-the sender's physical seat; a leave decision requires the pending actor. In the
+the sender's physical seat. A leave decision requires the pending actor. In the
 lobby only the host
 can dissolve the room. During play, one human can end the table immediately.
 Otherwise every human must agree, including reserved seats;
@@ -1011,7 +1011,7 @@ generation supplies the same structure to both loader artifacts. See
 [Ponder integration](PONDER.md) for the installed and base-client checks.
 
 Survival checks use real server players, menus and levels in the shared smoke
-source set rather than introducing null-world behavior into production code.
+source set.
 The ordinary-table client smoke projects real tile positions and sends pointer
 drags for shuffle, walls, packet dealing and draws, followed by normal discard
 and exit controls. `PointStickMenuSmoke` exercises native transfers, splitting,
@@ -1020,17 +1020,17 @@ Box menu lifetime is bound to the current menu and exact carrier
 stack, with immediate vanilla container-component persistence. Dedicated tile,
 point-stick and dye slots share vanilla click validation. Face printing previews
 the entire 136/144-tile transaction, then commits it with exactly one ordinary
-dye consumed; creative dye is retained. Presets are immutable item components.
+dye consumed. Creative dye is retained. Presets are immutable item components.
 Crafting rules stay in `recipe/`, and neither loader carries separate rules.
 Face and back preset selections are applied together in one server-owned inventory
-transaction, consuming one ordinary Mahjong dye when either changes; creative
+transaction, consuming one ordinary Mahjong dye when either changes. Creative
 Mahjong dye remains available.
 
 Optional Create machine adapters live in NeoForge's `compat/create` package.
 `MahjongSupplies` owns component-preserving red-five conversion, stick marking,
 batch back coloring, default-Kansai full-set printing and atomic box packing. Crafting and
 Create both delegate to those pure transformations. Native Create machinery
-executes immutable snapshot recipes with exact-component ingredients; the
+executes immutable snapshot recipes with exact-component ingredients. The
 integration only adapts inventory admission, recipe selection and output
 capacity at its machine boundaries. Create data is generated separately and
 packaged only in that loader profile. See [Create workshop](CREATE.md).
@@ -1051,25 +1051,25 @@ metadata into each artifact.
 
 Tile faces and tile backs are independent materials. Back presets use ZIPs in
 `config/mchjong/presets/backs/` and `config/mchjong/server-presets/backs/`.
-Resource selection and reloads do not affect server rules,
-tile IDs or private snapshots. See `ASSETS.md` for the resource contract.
+Resource selection and reloads update client presentation. The server retains
+authority over rules, tile IDs and private snapshots. See `ASSETS.md` for the resource contract.
 Riichi stick presets use the corresponding `sticks/` directories. Their model
 dimensions are bounded before transfer, while each player stores a personal
 selection in the client TOML settings. The server broadcasts only selections
-from its own stick presets; a client-only selection stays on that player's client.
+from its own stick presets. A client-only selection stays on that player's client.
 
 `TimeControl` is enforced by `RiichiGame`, `McrSession` and `SichuanSession`: per-hand reserves and fresh decision
 allowances are independent for each active responder. They use `TimeControl.Clock`
 to spend move time before reserve. Client interpolation and
 warning sounds have no authority over deadlines. Lobby changes require the host
 and invalidate ready votes. `TableInvitations` binds expiring requests to player
-and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
+and table UUIDs. Acceptance rechecks seating, distance, loaded chunks and phase.
 
 `RiichiAudioEvents` is a pure snapshot-to-cue transformation, while `RiichiAudio`
 owns client effects and recorded voice playback. Voice ZIPs use the client and
-server `voices/` directories; the client decodes them through Minecraft's sound
+server `voices/` directories. The client decodes them through Minecraft's sound
 engine and enforces an eight-second limit. Server-authorized voice selections
-are broadcast by player name; action cues carry their originating seat so each
+are broadcast by player name. Action cues carry their originating seat so each
 listener resolves the speaker's voice. No game logic depends on an audio
 completion callback. See `AUDIO.md` for the recording contract.
 
@@ -1079,7 +1079,7 @@ Replay recording and playback live in the Minecraft-independent engine.
 `ReplayMatch` holds shared identity, participants, variant, timestamps and
 completion state; `RiichiReplay`, `McrReplay`, `SichuanReplay` and `TaiwanReplay` own independent
 completed-hand types, and exactly one payload matches the selected variant.
-MCR, Sichuan and Taiwan record complete physical openings and accepted server decisions,
+MCR, Sichuan mahjong and Taiwanese mahjong record complete physical openings and accepted server decisions,
 then reconstruct read-only event frames by executing their own game rules and
 checking each event. `SichuanReplayHand` seals the 108 physical wall slots, dice
 and dealer, starting cumulative scores, initial hands, void suits, issued choices
@@ -1087,7 +1087,7 @@ and dealer, starting cumulative scores, initial hands, void suits, issued choice
 public events, complete settlement ledger and ending cumulative scores. Its hand
 chain checks dealer succession and cumulative scores independently of live views.
 `SichuanSession` retains sealed hands throughout the match and queues the completed
-match once; closing a match queues its already sealed hands. Private session saves
+match once. Closing a match queues its already sealed hands. Private session saves
 retain the current recorder, sealed hands and unacknowledged archives. Restoration
 reexecutes the recorder and verifies it against the saved game, and validates queued
 archives without applying payments or requeuing acknowledged records.
@@ -1103,7 +1103,7 @@ the current decision cursor, including zero, without invented player decisions.
 choice and checks regenerated options, events/cursors, conservation and complete
 terminal state. `TaiwanReplay` validates wind/dealer/repeat and score succession;
 sixteen completed dealer positions finish the match. `ReplayMatch.Header` retains
-Taiwan's final scores as long values and derives ranks before display conversion.
+the Taiwanese match's final scores as long values and derives ranks before display conversion.
 `TaiwanSession` persists its recorder, sealed hands and archive queue, reexecutes
 the active recorder against its saved game and queues one complete four-wind
 match. Closing early archives only sealed hands. Acknowledgement survives restores.
@@ -1113,7 +1113,7 @@ permissions and commands, and `ReplayTransfer` handles bounded reassembly.
 `ReplayCodec` checks complete typed JSON fields and validates rule-specific timelines.
 The shared browser lists each variant and final standings; `ReplayScreen` uses
 native timelines through `ReplayPresentation` for common navigation and receipts.
-Sealed Riichi/MCR/Sichuan playback exposes all hands through replay frames. Taiwan
+Sealed Riichi mahjong, MCR and Sichuan mahjong playback exposes all hands through replay frames. Taiwanese mahjong
 presentation projects the selected player's hand and covered kongs separately for
 each viewpoint, including settlement, while keeping other hands hidden. Its wall
 panel uses `TaiwanWallLayout`; hand, meld, flower, river and receipt primitives

@@ -38,7 +38,7 @@ Both loader descriptors declare it as optional; gameplay runs independently.
 The scenes manipulate furniture and equipment in Ponder's isolated display
 world, using MChjong's existing models and component types. Ponder's structure
 backup restores each scene on replay. The structure generator in
-`common/src/ponderData` uses Minecraft's native NBT encoder; each loader runs its
+`common/src/ponderData` uses Minecraft's native NBT encoder. Each loader runs its
 own `generatePonder` task before resource processing. Both loader JARs contain the same generated
 `assets/mchjong/ponder/table.nbt` resource.
 The NeoForge profile also generates a taller `workshop.nbt` template, keeping
@@ -50,7 +50,7 @@ The release artifacts contain MChjong's integration code and tutorial resources.
 
 ## Development and validation
 
-Select the affected loader's tutorial check:
+Select the affected loader's tutorial check.
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PwithPonder=true -PsmokePonder=true --console=plain
@@ -65,19 +65,18 @@ For interactive development, add `-PwithPonder=true` to `:fabric:runClient` or
 `:neoforge:runClient`.
 
 For tutorial-only changes, add `-PsmokePonder=true` to the installed-Ponder smoke
-commands to run the existing registration, language, replay and visual checks
-without repeating gameplay tests. A recipe viewer selected with
+commands to run registration, language, replay and visual checks. A recipe viewer selected with
 `-PrecipeBrowser=jei` or `-PrecipeBrowser=emi` is also checked. Add
 `-PwithCreate=true` on NeoForge to include both workshop scenes and their five
 item entries. This profile checks twelve item entries and five storyboards.
 Use `-PsmokeBrowser=true -PrecipeBrowser=jei` or `emi` for recipe-viewer-only
-checks, without repeating Ponder playback or unrelated gameplay scenarios.
+checks.
 
 The installed-Ponder checks validate all seven item entries, three storyboards,
 representative Latin/CJK text, plugin reload, full playback, replay restoration and native
 Ponder screens. They run after the same gameplay checks as the ordinary smoke.
 Evidence is saved in `fabric/build/smoke/ponder-evidence` and
-`neoforge/build/smoke/ponder-evidence`; each contains `PASS.txt`,
+`neoforge/build/smoke/ponder-evidence`. Each contains `PASS.txt`,
 `ponder-checks.txt` and any explicitly requested screenshots under `screenshots`.
 Ordinary smoke evidence remains in each loader's `build/smoke/evidence`.
 Installed-Ponder runs use `fabric/build/smoke/ponder-run` for the Fabric game directory;
@@ -95,6 +94,6 @@ NeoForge. Dependency versions are selected in `gradle.properties`. Use the
 loader-specific Ponder artifact for the same Minecraft release.
 
 The NeoForge Create profile uses the Ponder 1.0.82 bundled with Create 6.0.10.
-Its optional dependency accepts that version without another Ponder download.
+Its optional dependency accepts the bundled version.
 Workshop scenes have a separate taller structure so the machines above their
 basins remain visible and are included in Ponder's replay backup.
