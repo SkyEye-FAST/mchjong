@@ -9,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(19)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(20)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(VoiceChoicePayload.TYPE, VoiceChoicePayload.CODEC, (payload, context) -> {
@@ -79,6 +79,8 @@ final class ForgeNetworking {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .clientbound()
+            .addMain(top.skyeyefast.mchjong.network.YakuSetsPayload.TYPE, top.skyeyefast.mchjong.network.YakuSetsPayload.CODEC,
+                (payload, context) -> top.skyeyefast.mchjong.client.ClientYakuSets.receive(payload))
             .addMain(VoiceAppearancePayload.TYPE, VoiceAppearancePayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.VoicePresets.receive(payload))
             .addMain(RiichiViewPayload.TYPE, RiichiViewPayload.CODEC,

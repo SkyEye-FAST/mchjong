@@ -290,7 +290,7 @@ public final class TaiwanSession extends TableSession {
                         TimeControl control, List<TimeControl.Clock> clocks, int age, int confirmed, long futureSeed,
                         List<TaiwanGameState> completed, TaiwanGameState game, ReplayMatch replay,
                         TaiwanReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 2;
+        public static final int FORMAT = 3;
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(control);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks); completed = List.copyOf(completed);

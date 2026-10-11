@@ -13,6 +13,6 @@ public record ExternalBot(String id, String name, int playerCount, List<RiichiPr
     }
 
     public boolean supports(RiichiRules rules) {
-        return playerCount == rules.players() && presets.contains(rules.preset());
+        return rules.yakuSet().isEmpty() && playerCount == rules.players() && presets.contains(rules.preset());
     }
 }

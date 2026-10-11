@@ -6,9 +6,11 @@ import java.util.Objects;
 import static top.skyeyefast.mchjong.engine.RiichiRuleOption.*;
 
 /** A complete immutable rules snapshot. Presets supply values, never hidden runtime exceptions. */
-public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> settings) {
+public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> settings, YakuSet yakuSet) {
     public RiichiRules {
         Objects.requireNonNull(preset);
+        Objects.requireNonNull(yakuSet);
+        if (yakuSet.variant() != MahjongVariant.RIICHI) throw new IllegalArgumentException("Not a Riichi award set");
         var copy = new EnumMap<RiichiRuleOption, Integer>(RiichiRuleOption.class);
         copy.putAll(settings);
         settings = java.util.Collections.unmodifiableMap(copy);
@@ -22,17 +24,18 @@ public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> se
     public static RiichiRules from(RiichiPreset preset) {
         var values = new EnumMap<RiichiRuleOption, Integer>(RiichiRuleOption.class);
         for (var option : RiichiRuleOption.values()) values.put(option, option.defaultValue(preset));
-        return new RiichiRules(preset, values);
+        return new RiichiRules(preset, values, YakuSet.empty(MahjongVariant.RIICHI));
     }
     public int get(RiichiRuleOption option) { return settings.get(option); }
     public boolean enabled(RiichiRuleOption option) { return get(option) != 0; }
     public RiichiRules with(RiichiRuleOption option, int value) {
         var values = new EnumMap<>(settings);
         values.put(option, value);
-        return new RiichiRules(preset, values);
+        return new RiichiRules(preset, values, yakuSet);
     }
+    public RiichiRules withYakuSet(YakuSet value) { return new RiichiRules(preset, settings, value); }
     public boolean custom() {
-        return settings.entrySet().stream().anyMatch(entry -> !preset.adjustable(entry.getKey())
+        return !yakuSet.isEmpty() || settings.entrySet().stream().anyMatch(entry -> !preset.adjustable(entry.getKey())
             && entry.getValue() != entry.getKey().defaultValue(preset));
     }
 

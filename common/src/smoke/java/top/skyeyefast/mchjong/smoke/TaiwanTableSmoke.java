@@ -29,6 +29,7 @@ final class TaiwanTableSmoke {
     private int selectedTile;
     private UUID incarnation;
     private UUID replayId;
+    private final CustomYakuSmoke customYaku = new CustomYakuSmoke(MahjongVariant.TAIWAN);
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
         check(++ticks < 6600, "Taiwan smoke timed out at " + stage);
@@ -86,7 +87,11 @@ final class TaiwanTableSmoke {
                     .map(net.minecraft.client.gui.components.EditBox.class::cast).findFirst().orElseThrow();
                 check(payment.getValue().isEmpty(), "Explanation lost incomplete payment input");
                 payment.setValue("1"); press(client, "taiwan.mchjong.presets");
-                press(client, "taiwan.mchjong.preset.southern_common"); press(client, "gui.done"); stage = 5;
+                press(client, "taiwan.mchjong.preset.southern_common"); press(client, "gui.done"); stage = 31;
+            }
+            case 31 -> {
+                if (table.clientTaiwanSettings().rules().flowers() != TaiwanRules.Flowers.NONE) break;
+                if (customYaku.tick(client, table)) stage = 5;
             }
             case 5 -> {
                 if (!(client.screen instanceof TaiwanLobbyScreen) || table.clientTaiwanSettings().rules().flowers() != TaiwanRules.Flowers.NONE) break;

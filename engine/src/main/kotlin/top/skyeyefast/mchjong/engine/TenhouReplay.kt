@@ -14,8 +14,11 @@ private val ReplayMatch.redFives: RedFives get() = requireNotNull(riichi).redFiv
  */
 object TenhouReplay {
     @JvmStatic
+    fun supports(match: ReplayMatch): Boolean = match.variant == MahjongVariant.RIICHI && match.rules.yakuSet().isEmpty()
+
+    @JvmStatic
     fun export(match: ReplayMatch): Map<String, Any> {
-        require(match.variant == MahjongVariant.RIICHI) { "Tenhou export requires a Riichi replay" }
+        require(supports(match)) { "Tenhou export requires Riichi without custom awards" }
         require(match.hands.isNotEmpty()) { "There are no completed hands to export" }
         val root = linkedMapOf<String, Any>()
         root["ver"] = "2.3"
@@ -188,9 +191,9 @@ object TenhouReplay {
             details.add(if (win.from < 0) who else externalSeat(match, win.from))
             details.add(if (win.pao < 0) who else externalSeat(match, win.pao))
             details.add(score(win.score, win.from < 0, win.seat == hand.dealer))
-            for (yaku in win.yaku) {
-                val value = if (yaku.yakuman) "役満" else "${yaku.han}飜"
-                details.add("${yakuName(yaku.name, hand, win.seat, match.rules.players())}($value)")
+            for (yaku in win.score.yaku()) {
+                val value = if (yaku.yakuman()) "役満" else "${yaku.han()}飜"
+                details.add("${yakuName(yaku.name(), hand, win.seat, match.rules.players())}($value)")
             }
             if (win.dora > 0) details.add("ドラ(${win.dora}飜)")
             if (win.ura > 0) details.add("裏ドラ(${win.ura}飜)")

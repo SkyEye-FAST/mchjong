@@ -78,7 +78,15 @@ object TaiwanHandAnalyzer {
         val effectiveTiles: List<EffectiveTile> = java.util.List.copyOf(effectiveTiles)
     }
     @JvmRecord data class Discard(val kind: Int, val analysis: Analysis)
-    @JvmRecord data class Award(val pattern: TaiwanRules.Pattern, val units: Int, val tai: Int, val source: TaiwanRules.Source)
+    @JvmRecord data class Award(val id: String, val units: Int, val tai: Int, val source: TaiwanRules.Source?) {
+        init {
+            require(id.length <= 128 && id.matches(Regex("[a-z0-9_.-]+:[a-z0-9_./-]+")))
+            require(units in 1..34 && tai in 1..34_000)
+            require((nativePattern() != null) == (source != null))
+        }
+        fun nativePattern(): TaiwanRules.Pattern? = if (id.startsWith("mchjong:taiwan/"))
+            TaiwanRules.Pattern.valueOf(id.substringAfter('/').uppercase(java.util.Locale.ROOT)) else null
+    }
     class Score(val shape: Shape, val winningGroup: Int, awards: List<Award>, val rawTai: Int, val tai: Int) {
         val awards: List<Award> = java.util.List.copyOf(awards)
     }
@@ -105,10 +113,11 @@ object TaiwanHandAnalyzer {
             validateWinningTile(concealed, melds, owner, replacementTile)
             top.skyeyefast.taiwan.ReplacementWin(libraryHand(concealed, melds), Tile.kind(replacementTile), c)
         }
-        return TaiwanScoring.flowerWin(c.flowers, top.skyeyefast.taiwan.FlowerEvent.valueOf(event.name), libraryRules(rules), replacement)?.let {
-            FlowerScore(Award(TaiwanRules.Pattern.valueOf(it.award.pattern.name), it.award.units, it.award.tai,
-                TaiwanRules.Source(it.award.source.url, it.award.source.clause)), it.handScore?.let(::score), it.rawTai, it.tai)
-        }
+        return TaiwanScoring.flowerWinCandidates(c.flowers, top.skyeyefast.taiwan.FlowerEvent.valueOf(event.name), libraryRules(rules), replacement).map {
+            val hand = it.handScore?.let { candidate -> score(candidate, concealed + replacementTile, melds, replacementTile, context, rules) }
+            val raw = it.award.tai + (hand?.rawTai ?: 0)
+            FlowerScore(award(it.award), hand, raw, minOf(raw, rules.taiLimit ?: Int.MAX_VALUE))
+        }.maxWithOrNull(compareBy<FlowerScore> { it.tai }.thenBy { it.rawTai })
     }
 
     @JvmStatic
@@ -139,7 +148,9 @@ object TaiwanHandAnalyzer {
     @JvmStatic
     fun score(concealed: List<Int>, melds: List<Meld>, owner: Int, winningTile: Int, context: TaiwanWinContext, rules: TaiwanRules): Score? {
         validateWinningTile(concealed, melds, owner, winningTile)
-        return TaiwanScoring.score(libraryHand(concealed, melds), Tile.kind(winningTile), libraryContext(context), libraryRules(rules))?.let(::score)
+        return TaiwanScoring.candidates(libraryHand(concealed, melds), Tile.kind(winningTile), libraryContext(context), libraryRules(rules))
+            .map { score(it, concealed + winningTile, melds, winningTile, context, rules) }
+            .maxWithOrNull(compareBy<Score> { it.tai }.thenBy { it.rawTai })
     }
 
     private fun visibleKinds(concealed: List<Int>, melds: List<Meld>, visible: List<Int>): List<Int> {
@@ -164,9 +175,20 @@ object TaiwanHandAnalyzer {
     private fun analysis(value: top.skyeyefast.taiwan.HandAnalysis) = Analysis(value.shanten, value.effectiveTiles.map {
         EffectiveTile(it.kind, it.remaining)
     })
-    private fun score(value: top.skyeyefast.taiwan.TaiwanScore) = Score(shape(value.shape), value.winningGroup,
-        value.awards.map { Award(TaiwanRules.Pattern.valueOf(it.pattern.name), it.units, it.tai, TaiwanRules.Source(it.source.url, it.source.clause)) },
-        value.rawTai, value.tai)
+    private fun award(value: top.skyeyefast.taiwan.TaiAward) = Award("mchjong:taiwan/" + value.pattern.name.lowercase(java.util.Locale.ROOT),
+        value.units, value.tai, TaiwanRules.Source(value.source.url, value.source.clause))
+
+    private fun score(value: top.skyeyefast.taiwan.TaiwanScore, complete: List<Int>, melds: List<Meld>, winningTile: Int,
+                      context: TaiwanWinContext, rules: TaiwanRules): Score {
+        val facts = TaiwanYakuFacts.of(value, complete, melds, winningTile, context)
+        val matched = rules.yakuSet.matching(facts)
+        val excluded = YakuSet.excluded(matched)
+        val awards = value.awards.map(::award).filter { it.id !in excluded } + matched.filter { it.id() !in excluded }.map {
+            Award(it.id(), 1, it.reward().closed(), null)
+        }
+        val raw = awards.sumOf { it.tai }
+        return Score(shape(value.shape), value.winningGroup, awards, raw, minOf(raw, rules.taiLimit ?: Int.MAX_VALUE))
+    }
 
     private fun libraryContext(c: TaiwanWinContext) = top.skyeyefast.taiwan.WinContext(
         top.skyeyefast.taiwan.WinMethod.valueOf(c.method.name), c.seatWind, c.roundWind, c.flowerNumber,

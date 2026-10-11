@@ -39,6 +39,13 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.server.packs.PackType.SERVER_DATA)
+            .registerReloadListener(new net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener() {
+                @Override public net.minecraft.resources.ResourceLocation getFabricId() { return MahjongContent.id("yaku_sets"); }
+                @Override public void onResourceManagerReload(net.minecraft.server.packs.resources.ResourceManager resources) {
+                    new top.skyeyefast.mchjong.config.YakuSets().onResourceManagerReload(resources);
+                }
+            });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(
             top.skyeyefast.mchjong.config.ServerPresets::tick);
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
@@ -122,6 +129,7 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TaiwanClockPayload.TYPE, top.skyeyefast.mchjong.network.TaiwanClockPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.RiichiVisibilityPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(RiichiViewPayload.TYPE, RiichiViewPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.YakuSetsPayload.TYPE, top.skyeyefast.mchjong.network.YakuSetsPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.McrViewPayload.TYPE,
             top.skyeyefast.mchjong.network.McrViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.SichuanViewPayload.TYPE,

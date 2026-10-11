@@ -75,6 +75,20 @@ public final class YakuCatalog {
         return Set.copyOf(TRANSLATION_KEYS.values());
     }
 
+    public static String awardId(String name) {
+        if (name.contains(":")) return name;
+        var key = TRANSLATION_KEYS.get(name);
+        if (key == null) throw new IllegalArgumentException("Unknown native Riichi award: " + name);
+        return "mchjong:riichi/" + key.substring("yaku.mchjong.".length());
+    }
+
+    public static Set<String> customExclusionIds() {
+        var special = Set.of("Tenhou", "Chihou", "Daisangen", "Suanko", "Tsuiso", "Lyuiso", "Chinroto", "Kokushi",
+            "Shousushi", "Sukantsu", "Churen", "ChurenNineWaiting", "SuankoTanki", "KokushiThirteenWaiting", "Daisushi", "Renhou", "Nagashi");
+        return TRANSLATION_KEYS.keySet().stream().filter(name -> !special.contains(name)).map(YakuCatalog::awardId)
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
     private YakuCatalog() {}
 }
 

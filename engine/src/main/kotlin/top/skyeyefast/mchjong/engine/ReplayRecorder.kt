@@ -124,7 +124,7 @@ internal class ReplayRecorder(game: RiichiGame) {
         if (tile >= 0 && all.size + player.melds.size * 3 == 13) all += tile
         player.melds.forEach { all.addAll(it.tiles()) }
         all.addAll(player.norths)
-        val bonuses = score.yakuman() == 0 && !score.yaku().contains("Renhou")
+        val bonuses = score.yakuman() == 0 && !score.hasYaku("Renhou")
         val red = if (bonuses) all.count(Tile::red) else 0
         val north = if (bonuses) player.norths.size else 0
         var ura = 0
@@ -144,7 +144,6 @@ internal class ReplayRecorder(game: RiichiGame) {
             pao,
             bonus,
             0,
-            if (score.yaku().contains("Nagashi")) emptyList() else RiichiHandAnalyzer.yakuValues(score.yaku(), player.closed(), game.rules),
             maxOf(0, score.dora() - red - ura - north),
             ura,
             red,

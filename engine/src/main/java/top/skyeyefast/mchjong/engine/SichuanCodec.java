@@ -63,7 +63,7 @@ public final class SichuanCodec {
             while (reader.peek() != JsonToken.END_DOCUMENT) {
                 switch (reader.peek()) {
                     case BEGIN_OBJECT, BEGIN_ARRAY -> {
-                        if (names.size() >= 16) throw new JsonParseException("Sichuan document nested too deeply");
+                        if (names.size() >= 32) throw new JsonParseException("Sichuan document nested too deeply");
                         if (reader.peek() == JsonToken.BEGIN_OBJECT) reader.beginObject(); else reader.beginArray();
                         names.push(new HashSet<>());
                     }

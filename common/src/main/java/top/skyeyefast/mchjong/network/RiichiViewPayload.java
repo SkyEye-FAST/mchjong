@@ -19,20 +19,20 @@ public record RiichiViewPayload(BlockPos pos, String view, boolean open, boolean
     public static final Type<RiichiViewPayload> TYPE = new Type<>(MahjongContent.id("riichi_view"));
     public static final StreamCodec<RegistryFriendlyByteBuf, RiichiViewPayload> CODEC = new StreamCodec<>() {
         @Override public RiichiViewPayload decode(RegistryFriendlyByteBuf buffer) {
-            return new RiichiViewPayload(buffer.readBlockPos(), buffer.readUtf(32767), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
+            return new RiichiViewPayload(buffer.readBlockPos(), buffer.readUtf(131072), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
                 TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.engine.TableRoomView.class),
-                TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.engine.RiichiRoomSettings.class),
+                TableNetworking.JSON.fromJson(buffer.readUtf(65536), top.skyeyefast.mchjong.engine.RiichiRoomSettings.class),
                 TableNetworking.JSON.fromJson(buffer.readUtf(2048), top.skyeyefast.mchjong.world.BotServiceState.class),
                 TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.world.WorldSettings.Policy.class),
                 buffer.readEnum(MahjongVariant.class));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, RiichiViewPayload value) {
-            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), 32767); buffer.writeBoolean(value.open());
+            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), 131072); buffer.writeBoolean(value.open());
             buffer.writeBoolean(value.controlReply());
             buffer.writeBoolean(value.leaveDecision());
             buffer.writeByte(value.redOptions());
             buffer.writeUtf(TableNetworking.JSON.toJson(value.room()), 8192);
-            buffer.writeUtf(TableNetworking.JSON.toJson(value.settings()), 8192);
+            buffer.writeUtf(TableNetworking.JSON.toJson(value.settings()), 65536);
             buffer.writeUtf(TableNetworking.JSON.toJson(value.botService()), 2048);
             buffer.writeUtf(TableNetworking.JSON.toJson(value.world()), 8192);
             buffer.writeEnum(value.variant());

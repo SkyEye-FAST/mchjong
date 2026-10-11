@@ -45,7 +45,7 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
         return RoomLobby.host(room) && room.lobby() && !pending;
     }
     private void rebuild() {
-        clearWidgets(); left = (width - 280) / 2; top = (height - 194) / 2;
+        clearWidgets(); left = (width - 280) / 2; top = (height - 218) / 2;
         for (int i = 0; i < 2; i++) {
             int index = i;
             addRenderableWidget(new MahjongButton(left + 8 + i * 134, top + 26, 130, 20,
@@ -69,10 +69,14 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
             var reserve = addRenderableWidget(new MahjongButton(left + 8, top + 110, 240, 20,
                 Component.translatable("taiwan.mchjong.reserve." + draft.reserve().name().toLowerCase(java.util.Locale.ROOT)), ignored -> {
                     draft = new TaiwanGameState.Rules(draft.name(), draft.values(), draft.exclusions(), draft.sources(), draft.flowers(), draft.flowerSets(), draft.pinfu(), draft.replacements(), draft.taiLimit(),
-                        draft.reserve() == TaiwanRules.Reserve.FIXED_SIXTEEN ? TaiwanRules.Reserve.SIXTEEN_PLUS_KONGS : TaiwanRules.Reserve.FIXED_SIXTEEN, draft.payment());
+                        draft.reserve() == TaiwanRules.Reserve.FIXED_SIXTEEN ? TaiwanRules.Reserve.SIXTEEN_PLUS_KONGS : TaiwanRules.Reserve.FIXED_SIXTEEN, draft.payment(), draft.yakuSet());
                     rebuild();
                 }));
             reserve.active = editable() && table().clientTaiwanSettings().rulesEditable();
+            addRenderableWidget(new MahjongButton(left + 8, top + 134, 264, 20,
+                Component.translatable("rules.mchjong.yaku_set.select", ClientYakuSets.text(draft.yakuSet().name())), ignored ->
+                    minecraft.setScreen(new YakuSetScreen(this, draft.yakuSet(), set -> { draft = draft.withYakuSet(set); rebuild(); },
+                        () -> editable() && table().clientTaiwanSettings().rulesEditable()))));
         } else {
             base = field(0, left + 8, top + 70, draft.payment().base());
             perTai = field(1, left + 144, top + 70, draft.payment().perTai());
@@ -83,7 +87,7 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
                 Component.translatable("taiwan.mchjong.payment." + keys[i]), Component.translatable("taiwan.mchjong.payment." + keys[i] + ".description"),
                 "manual.mchjong.entry.taiwan_payments.page_1", left + 116 + i % 2 * 136, top + 50 + i / 2 * 48));
         }
-        apply = addRenderableWidget(new MahjongButton(left + 8, top + 166, 130, 20, Component.translatable("gui.done"), ignored -> {
+        apply = addRenderableWidget(new MahjongButton(left + 8, top + 190, 130, 20, Component.translatable("gui.done"), ignored -> {
             if (page == 1 && readPayment() == null) return;
             var current = table().clientTableRoom();
             if (!editable() || minecraft.getConnection() == null) return;
@@ -91,7 +95,7 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
             minecraft.getConnection().send(PayloadPackets.serverbound(new TaiwanRulesPayload(pos, current.tableId(), current.incarnation(), current.decision(), draft)));
             rebuild();
         }).primary());
-        addRenderableWidget(new MahjongButton(left + 144, top + 166, 128, 20, Component.translatable("gui.cancel"), ignored -> onClose()));
+        addRenderableWidget(new MahjongButton(left + 144, top + 190, 128, 20, Component.translatable("gui.cancel"), ignored -> onClose()));
         apply.active = editable();
     }
     private MahjongEditBox field(int index, int x, int y, long value) {
@@ -104,17 +108,17 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
     private TaiwanRules.Payment readPayment() {
         try {
             var value = new TaiwanRules.Payment(Long.parseLong(base.getValue()), Long.parseLong(perTai.getValue()), Integer.parseInt(dealer.getValue()), Integer.parseInt(repeat.getValue()));
-            draft = new TaiwanGameState.Rules(draft.name(), draft.values(), draft.exclusions(), draft.sources(), draft.flowers(), draft.flowerSets(), draft.pinfu(), draft.replacements(), draft.taiLimit(), draft.reserve(), value);
+            draft = new TaiwanGameState.Rules(draft.name(), draft.values(), draft.exclusions(), draft.sources(), draft.flowers(), draft.flowerSets(), draft.pinfu(), draft.replacements(), draft.taiLimit(), draft.reserve(), value, draft.yakuSet());
             return value;
         } catch (IllegalArgumentException invalid) { return null; }
     }
     @Override public void render(GuiGraphics g, int x, int y, float partial) {
-        MahjongUi.panel(g, left, top, 280, 194);
+        MahjongUi.panel(g, left, top, 280, 218);
         MahjongUi.text(g, font, pending ? Component.translatable("rules.mchjong.pending") : title, left + 8, top + 8, 264, MahjongUi.TEXT, false);
         if (page == 1) {
             String[] keys = {"base", "per_tai", "dealer", "repeat"};
             for (int i = 0; i < 4; i++) MahjongUi.text(g, font, Component.translatable("taiwan.mchjong.payment." + keys[i]), left + 8 + i % 2 * 136, top + 56 + i / 2 * 48, 104, MahjongUi.MUTED, false);
-        } else MahjongUi.text(g, font, Component.translatable("taiwan.mchjong.stock", draft.flowers() == TaiwanRules.Flowers.NONE ? 136 : 144), left + 8, top + 144, 264, MahjongUi.MUTED, false);
+        } else MahjongUi.text(g, font, Component.translatable("taiwan.mchjong.stock", draft.flowers() == TaiwanRules.Flowers.NONE ? 136 : 144), left + 8, top + 168, 264, MahjongUi.MUTED, false);
         super.render(g, x, y, partial);
     }
     @Override public void onClose() { minecraft.setScreen(parent); }

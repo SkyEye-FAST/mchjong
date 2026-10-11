@@ -347,6 +347,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     private void sendView(ServerPlayer player, boolean open, boolean controlReply) {
+        top.skyeyefast.mchjong.config.YakuSets.sendIfChanged(player);
         TableSession current = serverSession();
         if (current != null) switch (current.variant()) {
             case MCR -> { sendMcrView(player, open, controlReply); return; }
@@ -826,9 +827,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public void configureRules(ServerPlayer player, top.skyeyefast.mchjong.network.RiichiRulesPayload payload) {
         var current = participantSession(player);
+        var set = top.skyeyefast.mchjong.config.YakuSets.find(payload.yakuSetId(), top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
+        var rules = set == null || !top.skyeyefast.mchjong.engine.YakuSetCodec.digest(set).equals(payload.yakuSetDigest()) ? null : payload.rules(set);
         if (current != null && current.tableId().equals(payload.tableId())
-            && equipment.canSupplyReds(payload.rules().sanma(), payload.rules().redFives())
-            && current.configureRules(player.getUUID(), payload.decision(), payload.rules())) {
+            && rules != null && equipment.canSupplyReds(rules.sanma(), rules.redFives())
+            && current.configureRules(player.getUUID(), payload.decision(), rules)) {
             serverRiichiSession(); // Recheck both physical boxes against the accepted rules before publishing readiness.
             setChanged();
             sentRevision = -1;
@@ -865,8 +868,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var session = serverSession() instanceof TaiwanSession taiwan ? taiwan : null;
         if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
             || authorizedViewer(player) == null) return;
-        if (session.tableId().equals(payload.tableId()) && session.incarnation().equals(payload.incarnation())
-            && session.configureRules(player.getUUID(), payload.decision(), payload.rules().restore())) {
+        var set = top.skyeyefast.mchjong.config.YakuSets.find(payload.yakuSetId(), MahjongVariant.TAIWAN);
+        if (set != null && top.skyeyefast.mchjong.engine.YakuSetCodec.digest(set).equals(payload.yakuSetDigest())
+            && session.tableId().equals(payload.tableId()) && session.incarnation().equals(payload.incarnation())
+            && session.configureRules(player.getUUID(), payload.decision(), payload.rules(set).restore())) {
             serverHost();
             setChanged();
             sentRevision = -1;

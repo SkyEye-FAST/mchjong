@@ -82,11 +82,11 @@ internal object RiichiSettlement {
         val liable = LinkedHashMap<Int, Int>()
         if (score.yakuman() == 0) return liable
         val player = game.players[seat]
-        if (player.dragonPao >= 0 && score.yaku().contains("Daisangen")) merge(liable, player.dragonPao, 1)
-        if (player.windPao >= 0 && score.yaku().contains("Daisushi")) {
+        if (player.dragonPao >= 0 && score.hasYaku("Daisangen")) merge(liable, player.dragonPao, 1)
+        if (player.windPao >= 0 && score.hasYaku("Daisushi")) {
             merge(liable, player.windPao, if (game.rules.doubleYakuman()) 2 else 1)
         }
-        if (player.kanPao >= 0 && score.yaku().contains("Sukantsu")) merge(liable, player.kanPao, 1)
+        if (player.kanPao >= 0 && score.hasYaku("Sukantsu")) merge(liable, player.kanPao, 1)
         if (game.rules.wholeHandPao() && liable.isNotEmpty()) {
             val payer = liable.keys.first()
             liable.clear()
@@ -137,7 +137,7 @@ internal object RiichiSettlement {
                     if (seat == game.dealer) 12000 else 8000,
                     4000,
                     if (seat == game.dealer) 4000 else 2000,
-                    listOf("Nagashi"),
+                    listOf(HandScore.Yaku("Nagashi", 5, false)),
                     0,
                 )
                 game.wins.add(RiichiView.Win(seat, -1, Tile.ABSENT, score))

@@ -51,6 +51,8 @@ public final class MchjongClient implements ClientModInitializer {
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
         ClientPlayNetworking.registerGlobalReceiver(RiichiViewPayload.TYPE,
             (payload, context) -> context.client().execute(() -> ClientRiichiNetworking.receive(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.YakuSetsPayload.TYPE,
+            (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientYakuSets.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.McrViewPayload.TYPE,
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientMcrNetworking.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanViewPayload.TYPE,

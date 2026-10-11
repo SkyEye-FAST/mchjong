@@ -27,7 +27,7 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
                     ? s.exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten" : "ui.mchjong.no_winner"), MahjongVariant.RIICHI);
         }).toList();
         var wins = view.wins().stream().map(w -> {
-            var rows = ScoreAnnouncements.rows(view, w).stream().map(r -> new Row(Component.translatable(r.translationKey()),
+            var rows = ScoreAnnouncements.rows(view, w).stream().map(r -> new Row(ClientYakuSets.awardName(view.rules().yakuSet(), r.awardId(), r.translationKey()),
                 r.han() > 0 ? Component.translatable("ui.mchjong.han", r.han()) : Component.empty(), r.voice())).toList();
             String limit = ScoreAnnouncements.limit(w.score(), w.seat() == view.dealer());
             return new Win(w.seat(), w.tile(), w.from() < 0 ? Component.translatable("result.mchjong." + view.result())
@@ -60,7 +60,7 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
         }).toList();
         var wins = hand.wins().stream().map(w -> {
             var rows = new java.util.ArrayList<Row>();
-            for (var y : w.yaku()) rows.add(new Row(Component.translatable(YakuCatalog.translationKey(y.name())),
+            for (var y : w.score().yaku()) rows.add(new Row(ClientYakuSets.awardName(match.riichi().rules().yakuSet(), y.name(), YakuCatalog.translationKey(y.name())),
                 y.yakuman() ? Component.empty() : Component.translatable("ui.mchjong.han", y.han()), null));
             int bonus = w.dora() + w.ura() + w.redDora() + w.nukiDora();
             if (bonus > 0) rows.add(new Row(Component.translatable("ui.mchjong.dora", bonus), Component.empty(), null));
@@ -135,9 +135,9 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
             viewer, seats, wins, result.deltas(), ranks(seats), List.of(), List.of(), payments);
     }
     static TableResultState taiwan(TaiwanSession.View view) {
-        return taiwan(TableBoardState.live(view),view.game().result(),view.participants());
+        return taiwan(TableBoardState.live(view),view.game().result(),view.participants(),view.rules().yakuSet());
     }
-    static TableResultState taiwan(TableBoardState board, TaiwanView.Result result, List<TableParticipant> participants) {
+    static TableResultState taiwan(TableBoardState board, TaiwanView.Result result, List<TableParticipant> participants, YakuSet yakuSet) {
         var seats = java.util.stream.IntStream.range(0, 4).mapToObj(i -> {
             var s = board.seats().get(i); var p = participants.get(i);
             return new Seat(s.points(), s.hand(), s.melds(), i == board.viewerSeat(), Component.literal(p.name()), true, p.bot(), p.entityBot(),
@@ -147,7 +147,8 @@ record TableResultState(Component heading, int viewerSeat, List<Seat> seats, Lis
         if (result.winner() != null) {
             var awards = new java.util.ArrayList<>(result.awards());
             if (result.flowerAward() != null) awards.add(result.flowerAward());
-            var rows = awards.stream().map(a -> new Row(Component.translatable("taiwan.mchjong.pattern." + a.pattern().name().toLowerCase(Locale.ROOT)),
+            var rows = awards.stream().map(a -> new Row(a.nativePattern() == null ? ClientYakuSets.awardName(yakuSet, a.id(), null)
+                : Component.translatable("taiwan.mchjong.pattern." + a.nativePattern().name().toLowerCase(Locale.ROOT)),
                 Component.translatable("taiwan.mchjong.tai", a.tai()), null)).toList();
             wins.add(new Win(result.winner(), Tile.ABSENT, result.supplier() == null ? Component.translatable("taiwan.mchjong.action.self_drawn")
                 : Component.translatable("ui.mchjong.ron_from", seats.get(result.supplier()).name()),

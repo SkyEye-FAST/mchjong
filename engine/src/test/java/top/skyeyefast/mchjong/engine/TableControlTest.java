@@ -43,7 +43,7 @@ class TableControlTest {
         assertTrue(custom.custom());
         assertThrows(IllegalArgumentException.class, () -> custom.with(RiichiRuleOption.IPPATSU, 2));
         assertThrows(IllegalArgumentException.class, () -> custom.with(RiichiRuleOption.STARTING_POINTS, 28001));
-        assertThrows(IllegalArgumentException.class, () -> new RiichiRules(RiichiPreset.WRC, java.util.Map.of()));
+        assertThrows(IllegalArgumentException.class, () -> new RiichiRules(RiichiPreset.WRC, java.util.Map.of(), YakuSet.empty(MahjongVariant.RIICHI)));
         assertThrows(UnsupportedOperationException.class, () -> custom.settings().put(RiichiRuleOption.IPPATSU, 1));
         RiichiSession lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.M_LEAGUE, 1);
         lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);

@@ -98,7 +98,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
             .filter(option -> option.visible(draft)).toList();
         var presets = Arrays.stream(RiichiPreset.values()).filter(rule -> rule.players() == draft.players()).toList();
         layout = SettingsLayout.of(width, height, presetExpanded || mode == Mode.PRESET ? 0 : RiichiRuleOption.Group.values().length * 22,
-            presetExpanded ? 24 + presets.size() * 24 : 48 + options.size() * 24 + 14);
+            presetExpanded ? 24 + presets.size() * 24 : 72 + options.size() * 24 + 14);
         int span = layout.bodyWidth(), left = layout.bodyLeft();
         Component preset = Component.translatable("rules.mchjong.preset", Component.translatable(draft.preset().presetKey()))
             .append(presetExpanded ? " ▲" : " ▼");
@@ -136,13 +136,18 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
                 .bounds(layout.left(), layout.contentTop() + i * 22, layout.rail(), 20)
                 .tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
-        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 48 - 14) / 24);
+        addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.yaku_set.select", ClientYakuSets.text(draft.yakuSet().name())), ignored ->
+            minecraft.setScreen(new YakuSetScreen(this, draft.yakuSet(), set -> {
+                draft = draft.withYakuSet(set); mode = Mode.CUSTOM; rejected = false;
+            }, () -> host() && pending == null && !stale() && table.worldPolicy() != null && table.worldPolicy().allowCustomRules())))
+            .bounds(left, layout.contentTop() + 48, span, 20).build());
+        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 72 - 14) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows);
         page = Math.clamp(page, 0, pages - 1);
         int optionSpan = span - 24;
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
-            int y = layout.contentTop() + 48 + i * 24;
+            int y = layout.contentTop() + 72 + i * 24;
             var label = option.floatingPlayers() < 0 ? Component.translatable(option.translationKey(), option.placementRank())
                 : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
             var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())

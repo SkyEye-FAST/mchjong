@@ -44,9 +44,16 @@ public record TaiwanView(long revision, long decision, TaiwanGameState.Rules rul
         if (result != null) {
             var awards = new java.util.ArrayList<>(result.awards());
             if (result.flowerAward() != null) awards.add(result.flowerAward());
-            for (var award : awards) if (award.pattern() == null || award.units() < 1 || award.units() > 34
-                || award.tai() != rules.values().get(award.pattern()) * award.units() || !award.source().equals(rules.sources().get(award.pattern())))
-                throw new IllegalArgumentException("Invalid public Taiwan award");
+            if (awards.stream().map(TaiwanHandAnalyzer.Award::id).distinct().count() != awards.size())
+                throw new IllegalArgumentException("Duplicate public Taiwan award");
+            for (var award : awards) {
+                var nativePattern = award.nativePattern();
+                var custom = rules.yakuSet().find(award.id());
+                boolean valid = nativePattern != null
+                    ? award.tai() == rules.values().get(nativePattern) * award.units() && Objects.equals(award.source(), rules.sources().get(nativePattern))
+                    : custom != null && award.units() == 1 && award.tai() == custom.reward().closed() && award.source() == null;
+                if (!valid) throw new IllegalArgumentException("Invalid public Taiwan award");
+            }
             var totals = new long[4];
             for (var transfer : result.transfers()) {
                 if (!Objects.equals(result.winner(),transfer.to()) || transfer.base() != rules.payment().base()

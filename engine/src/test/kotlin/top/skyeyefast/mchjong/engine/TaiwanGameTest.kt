@@ -76,7 +76,7 @@ class TaiwanGameTest {
         assertEquals(TaiwanGame.Phase.FINISHED, game.phase)
         val result = game.settlement!!
         assertEquals(1, result.winner)
-        assertEquals(TaiwanRules.Pattern.EIGHT_FLOWERS, result.flowerScore!!.award.pattern)
+        assertEquals(TaiwanRules.Pattern.EIGHT_FLOWERS, result.flowerScore!!.award.nativePattern())
         assertNull(result.score)
         assertEquals(16, game.player(1).concealed.size)
         assertEquals(3, result.transfers.size)
@@ -93,8 +93,8 @@ class TaiwanGameTest {
         act(game, 1, Type.WIN)
         val result = game.settlement!!
         assertEquals(3, result.transfers.size)
-        assertTrue(result.score!!.awards.any { it.pattern == TaiwanRules.Pattern.REPLACEMENT_WIN })
-        assertTrue(result.score.awards.any { it.pattern == TaiwanRules.Pattern.SELF_DRAW })
+        assertTrue(result.score!!.awards.any { it.nativePattern() == TaiwanRules.Pattern.REPLACEMENT_WIN })
+        assertTrue(result.score.awards.any { it.nativePattern() == TaiwanRules.Pattern.SELF_DRAW })
         assertEquals(listOf(1, 0, 0), result.transfers.map { it.dealerTai })
         game.checkConservation()
     }
@@ -123,7 +123,7 @@ class TaiwanGameTest {
         assertEquals(2, robbed.settlement!!.winner)
         assertEquals(1, robbed.settlement!!.supplier)
         assertEquals(Meld.Type.TRIPLET, robbed.player(1).melds.single().type())
-        assertTrue(robbed.settlement!!.score!!.awards.any { it.pattern == TaiwanRules.Pattern.ROBBING_KONG })
+        assertTrue(robbed.settlement!!.score!!.awards.any { it.nativePattern() == TaiwanRules.Pattern.ROBBING_KONG })
         assertEquals(0, robbed.wall.kongs)
         val completed = pending()
         pass(completed)

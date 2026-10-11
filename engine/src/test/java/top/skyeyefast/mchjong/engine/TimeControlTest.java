@@ -97,7 +97,7 @@ class TimeControlTest {
         RiichiGame game = game(2, 1);
         RiichiSettlement.abort(game, "nine_terminals");
         game.wins = List.of(new RiichiView.Win(0, 1, 0,
-            new HandScore(5, 40, 0, 12000, 0, 0, List.of("Richi", "Chanta"), 2)));
+            new HandScore(5, 40, 0, 12000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false), new HandScore.Yaku("Chanta", 2, false)), 2)));
         int limit = ScoreAnnouncements.maximumTicks(game.wins);
         int[] reserve = game.reserveTicks.clone();
         assertEquals(limit, game.view(null).settlementTicks());
