@@ -189,7 +189,7 @@ class GameLifecycleTest {
         game.players[0].points += 25100;
         RiichiSettlement.abort(game, "nine_terminals");
         game.wins = List.of(new RiichiView.Win(0, 1, 4,
-            new HandScore(5, 30, 0, 12000, 0, 0, List.of("Richi"), 4)));
+            new HandScore(5, 30, 0, 12000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), 4)));
         int maximum = ScoreAnnouncements.maximumTicks(game.wins);
         assertEquals(maximum + RiichiGame.SETTLEMENT_TICKS, game.view(null).settlementTicks());
         var deltas = List.copyOf(game.deltas);
@@ -217,7 +217,7 @@ class GameLifecycleTest {
         UUID player = game.players[0].member.id;
         RiichiSettlement.abort(game, "nine_terminals");
         game.wins = List.of(new RiichiView.Win(0, 1, 4,
-            new HandScore(5, 30, 0, 12000, 0, 0, List.of("Richi"), 4)));
+            new HandScore(5, 30, 0, 12000, 0, 0, List.of(new HandScore.Yaku("Richi", 1, false)), 4)));
         assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         RiichiView hand = game.view(player);
         int skip = index(hand, RiichiAction.Type.SKIP_SETTLEMENT);

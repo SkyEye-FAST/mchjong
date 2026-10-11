@@ -116,7 +116,7 @@ public final class ReplayScreen extends Screen {
             .bounds(10, height - 28, bottomSpan, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.wall"), ignored -> toggleWall())
             .bounds(14 + bottomSpan, height - 28, bottomSpan, 20).build());
-        addRenderableWidget(MahjongButton.create(Component.translatable(match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI ? "replay.mchjong.export" : "replay.mchjong.export_native"), ignored -> export())
+        addRenderableWidget(MahjongButton.create(Component.translatable(top.skyeyefast.mchjong.engine.TenhouReplay.supports(match) ? "replay.mchjong.export" : "replay.mchjong.export_native"), ignored -> export())
             .bounds(18 + bottomSpan * 2, height - 28, bottomSpan, 20).build());
 
         result = addRenderableWidget(new TableResults(font, playback.result(), PRESET, top.skyeyefast.mchjong.item.TileMaterial.BONE,

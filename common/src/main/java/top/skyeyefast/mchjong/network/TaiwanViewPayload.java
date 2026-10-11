@@ -28,7 +28,7 @@ public record TaiwanViewPayload(BlockPos pos, String view, TableRoomView room, T
     public static final ResourceLocation TYPE = MahjongContent.id("taiwan_view");
     public static TaiwanViewPayload decode(FriendlyByteBuf buffer) {
         var pos = buffer.readBlockPos();
-        var view = buffer.readUtf(65536);
+        var view = buffer.readUtf(524288);
         var room = TableNetworking.JSON.fromJson(buffer.readUtf(8192), TableRoomView.class);
         TaiwanDeck deck = null;
         if (buffer.readBoolean()) {
@@ -45,7 +45,7 @@ public record TaiwanViewPayload(BlockPos pos, String view, TableRoomView room, T
             TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.world.WorldSettings.Policy.class));
     }
     @Override public void write(FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(this.pos()); buffer.writeUtf(this.view(), 65536);
+        buffer.writeBlockPos(this.pos()); buffer.writeUtf(this.view(), 524288);
         buffer.writeUtf(TableNetworking.JSON.toJson(this.room()), 8192);
         buffer.writeBoolean(this.deck() != null);
         if (this.deck() != null) {

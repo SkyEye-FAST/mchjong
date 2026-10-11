@@ -33,7 +33,6 @@ final class CameraSmoke {
         var camera = client.gameRenderer.getMainCamera();
         if (sample < 3) {
             var seat = (SeatEntity) client.player.getVehicle();
-            var pose = TableSettings.get().camera();
             double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
             double normal = TableSettings.get().cameraFov(client.options.fov().get(),
                 (double) client.getWindow().getWidth() / client.getWindow().getHeight());

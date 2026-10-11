@@ -812,11 +812,6 @@ public final class RiichiTableScreen extends Screen {
         return true;
     }
 
-    private Vec3 grip(RiichiTableScene.Piece piece) {
-        Vec3 eye = minecraft.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(pos, Vec3.ZERO));
-        return RiichiHandling.grip(piece, eye);
-    }
-
     private boolean overWidget(double x, double y) {
         return children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .anyMatch(widget -> widget.visible && x >= widget.getX() && x < (widget.getX() + widget.getWidth()) && y >= widget.getY() && y < (widget.getY() + widget.getHeight()));

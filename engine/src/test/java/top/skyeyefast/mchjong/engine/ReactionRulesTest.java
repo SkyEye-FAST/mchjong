@@ -428,7 +428,7 @@ class ReactionRulesTest {
         f.act(1, RiichiAction.Type.RON); f.passOthers();
         assertTrue(f.game.players[0].norths.isEmpty());
         assertEquals(0, f.game.wall.replacementIndex);
-        assertFalse(f.game.view(null).wins().getFirst().score().yaku().contains("Chankan"));
+        assertFalse(f.game.view(null).wins().getFirst().score().hasYaku("Chankan"));
         assertEquals(0, f.game.view(null).wins().getFirst().score().yakuman());
     }
 }

@@ -5,7 +5,6 @@ import java.util.function.UnaryOperator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import top.skyeyefast.mchjong.client.TileDiagram;
 import top.skyeyefast.mchjong.item.TileFacePreset;

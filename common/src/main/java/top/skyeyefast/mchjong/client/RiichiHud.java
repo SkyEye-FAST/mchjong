@@ -8,7 +8,6 @@ import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.TableRoomView;
@@ -19,7 +18,6 @@ import top.skyeyefast.mchjong.world.BotServiceState;
 /** Edge-aligned, compact information. Detailed counts and status belong in hover text, not over the hand. */
 final class RiichiHud {
     private static final String[] WINDS = {"east", "south", "west", "north"};
-    private static final ResourceLocation STICK_ICONS = ResourceIds.of("mchjong", "textures/gui/stick_icons.png");
     private record Region(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
@@ -292,7 +290,8 @@ final class RiichiHud {
 
     static void stick(GuiGraphics graphics, int x, int y, boolean riichi, int scale) {
         int width = 14 * scale, height = 4 * scale;
-        graphics.blit(STICK_ICONS, x, y, width, height, 0, riichi ? 0 : 32, 384, 32, 384, 64);
+        graphics.blit(top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "textures/gui/sprites/hud/" + (riichi ? "riichi_stick" : "honba_stick") + ".png"),
+            x, y, width, height, 0, 0, 384, 32, 384, 32);
     }
 
     private static void text(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color) {

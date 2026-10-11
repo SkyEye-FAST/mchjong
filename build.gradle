@@ -3,6 +3,24 @@ plugins {
     id 'com.diffplug.spotless' version "${spotless_version}"
 }
 
+ext.tileFaceResources = copySpec {
+    from(file('presets/tile_faces')) {
+        include '*/tiles/*.png'
+        into 'assets/mchjong/textures/tile_faces'
+    }
+    from(file('presets/tile_faces')) {
+        include '*/theme_metadata.json'
+        includeEmptyDirs = false
+        eachFile { details ->
+            details.path = "assets/mchjong/tile_face_presets/${details.relativePath.segments[0]}.json"
+        }
+    }
+    from(file('presets/tile_faces/NOTICE.md')) {
+        into 'META-INF/licenses'
+        rename { 'tile-face-presets-NOTICE.md' }
+    }
+}
+
 allprojects {
     repositories {
         exclusiveContent {
@@ -80,7 +98,7 @@ spotless {
         leadingTabsToSpaces(4)
     }
     format 'json', {
-        target 'common/src/main/resources/**/*.json'
+        target 'common/src/main/resources/**/*.json', 'art/generated/assets/**/*.json', 'art/generated/assets/**/*.mcmeta', 'presets/tile_faces/**/*.json'
         trimTrailingWhitespace()
         endWithNewline()
         leadingTabsToSpaces(2)
@@ -91,6 +109,10 @@ spotless {
         trimTrailingWhitespace()
         endWithNewline()
     }
+}
+
+tasks.matching { it.name.startsWith('spotlessJson') }.configureEach {
+    mustRunAfter ':art:generateAssets'
 }
 
 tasks.register('buildAll') {

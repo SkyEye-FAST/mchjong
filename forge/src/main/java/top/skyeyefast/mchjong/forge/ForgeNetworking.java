@@ -10,7 +10,7 @@ final class ForgeNetworking {
 
     static void register() {
         var channel = NetworkRegistry.ChannelBuilder.named(ResourceIds.of("mchjong", "play"))
-            .networkProtocolVersion(() -> "19").clientAcceptedVersions("19"::equals).serverAcceptedVersions("19"::equals).simpleChannel();
+            .networkProtocolVersion(() -> "21").clientAcceptedVersions("21"::equals).serverAcceptedVersions("21"::equals).simpleChannel();
         channel.messageBuilder(VoiceChoicePayload.class, 0, NetworkDirection.PLAY_TO_SERVER)
             .encoder(VoiceChoicePayload::write).decoder(VoiceChoicePayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());
@@ -123,6 +123,9 @@ final class ForgeNetworking {
         channel.messageBuilder(TaiwanViewPayload.class, 29, NetworkDirection.PLAY_TO_CLIENT)
             .encoder(TaiwanViewPayload::write).decoder(TaiwanViewPayload::decode)
             .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.ClientTaiwanNetworking.receive(payload)).add();
+        channel.messageBuilder(YakuSetsPayload.class, 30, NetworkDirection.PLAY_TO_CLIENT)
+            .encoder(YakuSetsPayload::write).decoder(YakuSetsPayload::decode)
+            .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.ClientYakuSets.receive(payload)).add();
         PayloadPackets.initialize(payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_SERVER),
             payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_CLIENT));
     }

@@ -200,7 +200,7 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
         var publicResult = new TaiwanView.Result(result.winner(),result.supplier(),score == null ? List.of() : score.awards(),
             flower == null ? null : flower.award(),flower != null ? flower.rawTai() : score == null ? 0 : score.rawTai(),
             flower != null ? flower.tai() : score == null ? 0 : score.tai(),result.transfers(),result.deltas(),result.nextDealer(),result.nextContinuation());
-        return new ReplayPresentation(frames,List.copyOf(decisions),TableResultState.taiwan(frames.get(frames.size() - 1).board(),publicResult,participants(match)),
+        return new ReplayPresentation(frames,List.copyOf(decisions),TableResultState.taiwan(frames.get(frames.size() - 1).board(),publicResult,participants(match),match.taiwan().rules().yakuSelection()),
             initial.wall(),List.copyOf(sides),size,List.of(),List.of(),java.util.stream.IntStream.range(0,size)
                 .mapToObj(i -> TaiwanWallLayout.drawSlot(size,initial.opening().restore(),i)).toList());
     }

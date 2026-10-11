@@ -204,9 +204,10 @@ class TaiwanRuntimeTest {
         act(game,0,Type.CONCEALED_KONG,0)
         reject(game) { it.getAsJsonArray("players")[0].asJsonObject.getAsJsonArray("melds")[0].asJsonObject.addProperty("fromSeat",1) }
         val doc=TaiwanCodec.save(game)
-        for (bad in listOf(doc.replaceFirst("\"format\":1","\"format\":1,\"format\":1"),doc.replaceFirst("\"format\":1","\"format\":2"),
-            doc.replaceFirst("\"format\":1","\"format\":1.5"),doc.replaceFirst("\"format\":1","\"format\":\"1\""),doc.replaceFirst("\"format\":1,",""),
-            doc.replaceFirst("\"format\":1","\"format\":1,\"unknown\":false"),doc+"{}", " ".repeat(65537),"{\"x\":"+"[".repeat(17)+"0"+"]".repeat(17)+"}"))
+        val format = "\"format\":${TaiwanGameState.FORMAT}"
+        for (bad in listOf(doc.replaceFirst(format,"$format,$format"),doc.replaceFirst(format,"\"format\":0"),
+            doc.replaceFirst(format,"\"format\":1.5"),doc.replaceFirst(format,"\"format\":\"2\""),doc.replaceFirst("$format,",""),
+            doc.replaceFirst(format,"$format,\"unknown\":false"),doc+"{}", " ".repeat(131073),"{\"x\":"+"[".repeat(33)+"0"+"]".repeat(33)+"}"))
             assertThrows(IllegalArgumentException::class.java) { TaiwanCodec.restore(bad) }
         assertThrows(IllegalArgumentException::class.java) { TaiwanCodec.decodeView(doc) }
         assertThrows(IllegalArgumentException::class.java) { TaiwanCodec.restore(TaiwanCodec.encodeView(game.view(0))) }

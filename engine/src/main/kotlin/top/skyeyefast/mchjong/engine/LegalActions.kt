@@ -68,7 +68,7 @@ internal object LegalActions {
                 after, melds, wait * 4, tsumo, game.wind(seat), game.round / game.rules.players(),
                 0, listOf("Richi"), game.rules
             )
-            if (previous != null && (next == null || !next.yaku().containsAll(previous.yaku()))) return false
+            if (previous != null && (next == null || previous.yaku().any { !next.hasYaku(it.name()) })) return false
         }
         return true
     }
@@ -83,7 +83,7 @@ internal object LegalActions {
             player.river.none { Tile.kind(it.tile()) in waits }
         ) {
             val score = score(game, seat, game.lastTile, false)
-            val kokushi = score?.yaku()?.any { it.startsWith("Kokushi") } == true
+            val kokushi = score?.yaku()?.any { it.name().startsWith("Kokushi") } == true
             val pending = game.pending
             val permitted = pending == null || when (pending.type()) {
                 ADDED_KAN -> true
@@ -154,8 +154,13 @@ internal object LegalActions {
             if (player.firstTurn && game.uninterrupted) extra += if (seat == game.dealer) "Tenhou" else "Chihou"
         } else if (game.pending?.type() == ADDED_KAN) extra += "Chankan"
         else if (game.pending == null && game.wall.remaining() == 0) extra += "Houtei"
-        if (!tsumo && game.rules.renhouMangan() && seat != game.dealer && player.firstTurn && game.uninterrupted) {
+        if (!tsumo && seat != game.dealer && player.firstTurn && game.uninterrupted) {
             extra += "Renhou"
+        }
+        if (!tsumo && game.pending == null) {
+            val discarder = game.players[game.turn]
+            if (discarder.pendingRiichi) extra += "RiichiDiscard"
+            if (discarder.rinshan) extra += "AfterKongDiscard"
         }
         val dora = HandBonuses.count(
             player.hand, player.melds, player.norths, tile,

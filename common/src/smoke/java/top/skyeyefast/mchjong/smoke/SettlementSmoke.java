@@ -205,7 +205,8 @@ final class SettlementSmoke {
         } else if (ticks == 80) {
             capture(client, output, "13-settlement-ranking.png");
             var win = new RiichiView.Win(0, 2, 126, new HandScore(78, 0, 6, 288000, 0, 0,
-                List.of("Daisushi", "SuankoTanki", "Tsuiso", "Tenhou"), 0));
+                List.of(new HandScore.Yaku("Daisushi", 26, true), new HandScore.Yaku("SuankoTanki", 26, true),
+                    new HandScore.Yaku("Tsuiso", 13, true), new HandScore.Yaku("Tenhou", 13, true)), 0));
             var changes = List.of(288000, 0, -288000, 0);
             var seats = new ArrayList<RiichiView.Seat>();
             for (int seat = 0; seat < fixture.seats().size(); seat++) {
@@ -330,8 +331,11 @@ final class SettlementSmoke {
                 true, false, false, points[seat], hand, Tile.ABSENT, melds, original.river(), List.of(), seat == 0, seat < 2, false));
         }
         var wins = List.of(new RiichiView.Win(0, 2, 126, new HandScore(10, 40, 0, 24000, 8000, 8000,
-                List.of("Richi", "Ippatsu", "Chanta", "Sanshoku", "Haku", "SelfWind", "RoundWind"), 1)),
-            new RiichiView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Honitsu", "Chanta", "Haku"), 1)));
+                List.of(new HandScore.Yaku("Richi", 1, false), new HandScore.Yaku("Ippatsu", 1, false),
+                    new HandScore.Yaku("Chanta", 2, false), new HandScore.Yaku("Sanshoku", 2, false),
+                    new HandScore.Yaku("Haku", 1, false), new HandScore.Yaku("SelfWind", 1, false), new HandScore.Yaku("RoundWind", 1, false)), 1)),
+            new RiichiView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000,
+                List.of(new HandScore.Yaku("Honitsu", 2, false), new HandScore.Yaku("Chanta", 1, false), new HandScore.Yaku("Haku", 1, false)), 1)));
         return new RiichiView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), RiichiView.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
             List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT)), wins, "ron",

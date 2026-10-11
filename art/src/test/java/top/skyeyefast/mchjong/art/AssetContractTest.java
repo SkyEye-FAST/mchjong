@@ -99,46 +99,36 @@ class AssetContractTest {
     }
 
     @Test
-    void atlasContainsEveryDistinctFaceAtItsDeclaredCoordinates() throws Exception {
+    void sourcePresetsContainEveryDistinctFaceWithoutGeneratedCopies() throws Exception {
         Set<String> designs = new HashSet<>();
         for (String preset : TileArtwork.PRESETS) {
-            String prefix = preset.equals("kansai") ? "" : preset + "/";
-            BufferedImage atlas = ImageIO
-                    .read(resources.resolve("assets/mchjong/textures/" + prefix + "tiles.png").toFile());
-            assertEquals(2048, atlas.getWidth());
-            assertEquals(4096, atlas.getHeight());
+            Path directory = artwork.resolve(preset + "/tiles");
+            var definition = JsonParser.parseString(Files.readString(artwork.resolve(preset + "/theme_metadata.json"))).getAsJsonObject();
+            assertEquals(preset, definition.get("id").getAsString());
+            assertEquals("mchjong:tile_faces/" + preset + "/tiles", definition.get("tiles").getAsString());
+            assertEquals(preset.equals("kansai") || preset.equals("kanto"), definition.get("blank_white_dragon").getAsBoolean());
             Set<String> hashes = new HashSet<>();
-            var reference = new TileArtwork(artwork, preset);
             for (int i = 0; i < 45; i++) {
-                assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/" + i + ".png")),
-                        "Unused individual face shipped");
-                BufferedImage tile = reference.face(i);
-                assertEquals(256, tile.getWidth());
-                assertEquals(384, tile.getHeight());
-                int[] actual = atlas.getRGB(i % 8 * 256, i / 8 * 384, 256, 384, null, 0, 256);
-                assertArrayEquals(tile.getRGB(0, 0, 256, 384, null, 0, 256), actual, preset + ": " + i);
-                assertTrue(Arrays.stream(actual).allMatch(pixel -> pixel >>> 24 == 255), "Opaque face " + i);
+                BufferedImage image = ImageIO.read(directory.resolve(TileArtwork.tileKey(i) + ".png").toFile());
+                assertNotNull(image);
+                assertTrue(image.getWidth() > 0 && image.getWidth() <= 2048);
+                assertTrue(image.getHeight() > 0 && image.getHeight() <= 2048);
+                int[] actual = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
                 var pixels = java.nio.ByteBuffer.allocate(actual.length * Integer.BYTES);
                 pixels.asIntBuffer().put(actual);
                 String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(pixels.array()));
                 hashes.add(hash);
                 if (i == 0)
                     designs.add(hash);
-                if (i == 31 && (preset.equals("kansai") || preset.equals("kanto")))
-                    assertTrue(Arrays.stream(tile.getRGB(8, 8, 240, 368, null, 0, 240))
-                            .allMatch(pixel -> pixel == 0xffffffff), "White dragon remains blank");
-                else {
-                    var glyph = reference.glyph(i);
-                    long ink = Arrays.stream(glyph.getRGB(0, 0, 256, 384, null, 0, 256))
-                        .filter(pixel -> pixel >>> 24 >= 128).count();
-                    assertTrue(ink > 500 && ink < 256 * 384 / 2, preset + ": visible engraving without tile background on " + i);
-                }
             }
             assertEquals(45, hashes.size(), "Distinct numbered, honor, red and flower faces");
-            assertTrue(Arrays.stream(atlas.getRGB(2016, 4064, 32, 32, null, 0, 32))
-                    .allMatch(pixel -> pixel == 0xffffffff), "Neutral material swatch");
         }
         assertEquals(TileArtwork.PRESETS.size(), designs.size(), "The presets must not render the same ordinary faces");
+        assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile_faces")), "Tile source images must not be stored twice");
+        assertFalse(Files.exists(resources.resolve("assets/mchjong/tile_face_presets")), "Preset definitions must not be stored twice");
+        assertFalse(Files.exists(resources.resolve("META-INF/licenses/tile-face-presets-NOTICE.md")), "Preset notice must not be stored twice");
+        for (String preset : TileArtwork.PRESETS)
+            assertFalse(Files.exists(resources.resolve("META-INF/licenses/" + preset + "-source.json")), "Preset metadata must not be stored twice");
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/edge.png")));
     }
 
@@ -161,7 +151,6 @@ class AssetContractTest {
         assertEquals(45, TileArtwork.FACE_KEYS.size());
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.tileKey(-1));
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.tileKey(45));
-        assertThrows(IllegalArgumentException.class, () -> new TileArtwork(artwork, "unknown"));
     }
 
     @Test
@@ -192,17 +181,18 @@ class AssetContractTest {
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
         var cloth = ImageIO.read(resources.resolve("assets/mchjong/textures/furniture/cloth_pattern.png").toFile());
         assertTrue(Arrays.stream(cloth.getRGB(0, 0, cloth.getWidth(), cloth.getHeight(), null, 0, cloth.getWidth())).allMatch(pixel -> pixel == 0));
-        var sticks = ImageIO.read(resources.resolve("assets/mchjong/textures/point_sticks.png").toFile());
+        var sticks = ImageIO.read(resources.resolve("assets/mchjong/textures/point_stick/1000.png").toFile());
+        var honba = ImageIO.read(resources.resolve("assets/mchjong/textures/point_stick/100.png").toFile());
         var riichi = ImageIO.read(resources.resolve("assets/mchjong/textures/item/riichi_stick.png").toFile());
-        var hudSticks = ImageIO.read(resources.resolve("assets/mchjong/textures/gui/stick_icons.png").toFile());
-        assertArrayEquals(sticks.getRGB(0, 64, 384, 32, null, 0, 384), riichi.getRGB(0, 0, 384, 32, null, 0, 384));
-        assertEquals(384, hudSticks.getWidth());
-        assertEquals(64, hudSticks.getHeight());
-        assertArrayEquals(sticks.getRGB(0, 64, 384, 32, null, 0, 384), hudSticks.getRGB(0, 0, 384, 32, null, 0, 384));
-        assertArrayEquals(sticks.getRGB(0, 32, 384, 32, null, 0, 384), hudSticks.getRGB(0, 32, 384, 32, null, 0, 384));
-        var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
-                "plain.png", "cloth_pattern.png", "riichi_stick.png", "stick_icons.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
+        var hudRiichi = ImageIO.read(resources.resolve("assets/mchjong/textures/gui/sprites/hud/riichi_stick.png").toFile());
+        var hudHonba = ImageIO.read(resources.resolve("assets/mchjong/textures/gui/sprites/hud/honba_stick.png").toFile());
+        assertArrayEquals(sticks.getRGB(0, 0, 384, 32, null, 0, 384), riichi.getRGB(0, 0, 384, 32, null, 0, 384));
+        assertArrayEquals(sticks.getRGB(0, 0, 384, 32, null, 0, 384), hudRiichi.getRGB(0, 0, 384, 32, null, 0, 384));
+        assertArrayEquals(honba.getRGB(0, 0, 384, 32, null, 0, 384), hudHonba.getRGB(0, 0, 384, 32, null, 0, 384));
+        var expectedTextures = new HashSet<>(Set.of("back.png",
+                "plain.png", "cloth_pattern.png", "riichi_stick.png", "honba_stick.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
                 "mahjong_manual.png", "mahjong_printing_plate.png", "incomplete_mahjong_box.png", "creeper.png", "mojang.png"));
+        for (int points : PointStickArtwork.POINTS) expectedTextures.add(points + ".png");
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         for (int face = 1; face <= 6; face++) expectedTextures.add("dice_" + face + ".png");
@@ -211,18 +201,20 @@ class AssetContractTest {
                     .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())
                     .collect(java.util.stream.Collectors.toSet()), "Only textures referenced at runtime should ship");
         }
-        assertTrue(Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("kanto"));
-        assertFalse(
-                Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("unauthorized"));
-        for (String preset : List.of("sichuan", "taiwan", "fujian")) {
-            String notice = Files.readString(resources.resolve("META-INF/licenses/" + preset + "-source.json"));
-            assertTrue(notice.contains(preset));
-            assertFalse(notice.contains("unauthorized"));
-            JsonObject metadata = JsonParser.parseString(notice).getAsJsonObject();
-            assertFalse(metadata.has("details"), preset + " should not retain details");
+        assertTrue(Files.readString(artwork.resolve("kansai/theme_metadata.json")).contains("lietxia"));
+        assertTrue(Files.readString(artwork.resolve("hong_kong/theme_metadata.json")).contains("samoheen"));
+    }
+
+    @Test
+    void creeperBackUsesTheVanillaPixelGrid() throws Exception {
+        var image = ImageIO.read(resources.resolve("assets/mchjong/textures/preset/back/creeper.png").toFile());
+        String[] mask = {"........", "........", ".##..##.", ".##..##.",
+            "...##...", "..####..", "..####..", "..#..#.."};
+        for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
+            int col = (x - 64) / 16, row = (y - 112) / 16;
+            boolean ink = x >= 64 && x < 192 && y >= 112 && y < 240 && mask[row].charAt(col) == '#';
+            assertEquals(ink ? 0xffeee5d3 : 0, image.getRGB(x, y), x + "," + y);
         }
-        assertTrue(Files.readString(resources.resolve("META-INF/licenses/kansai-source.json")).contains("lietxia"));
-        assertTrue(Files.readString(resources.resolve("META-INF/licenses/hong_kong-source.json")).contains("samoheen"));
     }
 
     @Test
@@ -297,21 +289,28 @@ class AssetContractTest {
     }
 
     @Test
-    void generationIsByteForByteReproducible(@TempDir Path second) throws Exception {
-        GenerateAssets.main(new String[] { second.toString(), artwork.toString() });
-        assertFalse(Files.exists(second.resolve("data")), "Artwork must not generate server data");
-        GenerateData.main(new String[] { second.resolve("server").toString() });
-        try (var files = Files.walk(data)) {
-            for (Path file : files.filter(Files::isRegularFile).toList())
-                assertArrayEquals(Files.readAllBytes(file),
-                        Files.readAllBytes(second.resolve("server").resolve(data.relativize(file))));
+    void checkedInResourcesMatchGeneration(@TempDir Path generated) throws Exception {
+        Path assets = generated.resolve("assets");
+        Path server = generated.resolve("data");
+        GenerateAssets.main(new String[] { assets.toString() });
+        assertFalse(Files.exists(assets.resolve("data")), "Artwork must not generate server data");
+        GenerateData.main(new String[] { server.toString() });
+        assertSameFiles(resources, assets);
+        assertSameFiles(data, server);
+    }
+
+    private static void assertSameFiles(Path checkedIn, Path generated) throws Exception {
+        List<Path> expected;
+        List<Path> actual;
+        try (var files = Files.walk(generated)) {
+            expected = files.filter(Files::isRegularFile).map(generated::relativize).sorted().toList();
         }
-        try (var files = Files.walk(resources)) {
-            for (Path file : files.filter(Files::isRegularFile).toList()) {
-                Path counterpart = second.resolve(resources.relativize(file));
-                assertTrue(Files.isRegularFile(counterpart), file.toString());
-                assertArrayEquals(Files.readAllBytes(file), Files.readAllBytes(counterpart), file.toString());
-            }
+        try (var files = Files.walk(checkedIn)) {
+            actual = files.filter(Files::isRegularFile).map(checkedIn::relativize).sorted().toList();
         }
+        assertEquals(expected, actual, checkedIn + ": refresh with the :art:generate tasks");
+        for (Path file : expected)
+            assertArrayEquals(Files.readAllBytes(generated.resolve(file)),
+                    Files.readAllBytes(checkedIn.resolve(file)), checkedIn.resolve(file).toString());
     }
 }

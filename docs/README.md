@@ -1,9 +1,9 @@
 # Documentation
 
-[Project overview](../README.md) · [Changelog](../CHANGELOG.md)
+[Project overview](../README.md) | [Changelog](../CHANGELOG.md)
 
 MChjong is a Minecraft mahjong mod supporting three- and four-player Riichi,
-MCR, Sichuan and sixteen-tile Taiwan gameplay.
+MCR, Sichuan mahjong and sixteen-tile Taiwanese mahjong gameplay.
 
 ## Playing
 

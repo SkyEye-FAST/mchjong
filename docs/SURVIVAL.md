@@ -1,7 +1,7 @@
 # Survival equipment and play
 
 The survival loop is deliberately short: build furniture, cut blanks in a
-stonecutter, engrave a set in its box, then store the box inside a clothed table.
+stonecutter, engrave a set in its box, then store the box inside a table covered with a cloth.
 It uses vanilla crafting and stonecutting with batch preparation for full sets.
 
 ## Recipe browsing
@@ -12,7 +12,7 @@ printing is performed inside a held box. The supplies catalogue places empty
 and complete cases together and lists point sticks in ascending denomination.
 
 Component-aware crafting views show the marking reagent and one or eight blank
-sticks in separate crafting slots; the result contains the same number of marked
+sticks in separate crafting slots. The result contains the same number of marked
 sticks. Back-dye examples include 144 blanks and four 1,000-point sticks in their
 separate compartment. Hover the case stacks to inspect their actual contents.
 Back dyeing changes the relevant color
@@ -32,7 +32,8 @@ in any arrangement to craft the [Mahjong Handbook](PLAYING.md#in-game-handbook).
 All three ingredients are consumed. Each player also receives one handbook on
 first joining the world with Patchouli installed on the server.
 
-Ordinary table, output one; all seven ingredients use the same wood family:
+The following recipe produces one ordinary table. All seven ingredients use the
+same wood family.
 
 ```text
 S S S       S = wooden slab
@@ -40,7 +41,8 @@ S . S       F = wooden fence
 F . F       . = empty
 ```
 
-Padded wooden stools, output two, with slabs and fences from the same wood family:
+The following recipe produces two padded wooden stools. The slabs and fences
+use the same wood family.
 
 ```text
 C C       C = white carpet
@@ -48,7 +50,8 @@ S S       S = wooden slab
 F F       F = wooden fence
 ```
 
-Automatic table, output one and preserve the ordinary table's wood and name:
+The following recipe produces one automatic table and preserves the ordinary
+table's wood and name.
 
 ```text
 I R I       I = iron ingot, R = redstone dust
@@ -72,11 +75,11 @@ A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
 Choose face and back presets in their selection screens, then press **Apply**
 on the main box screen. Changing either or both together consumes one mahjong
-dye; creative mahjong dye remains unchanged.
+dye. Creative mahjong dye remains unchanged.
 
 One each of black, red, green, blue and white dye make one mahjong dye, shapeless. Ordinary
-mahjong dye stacks to 64; creative mahjong dye stacks to one and is supplied
-through the creative catalogue, not survival crafting or loot.
+mahjong dye stacks to 64. Creative mahjong dye stacks to one and is supplied
+through the creative catalogue.
 
 Open a box and put exactly **136 or 144 matching blanks** into its tile slots.
 Insert mahjong dye into the dedicated dye slot, open **Face preset**, and
@@ -85,13 +88,13 @@ The 136-tile set has four ordinary copies of each face and no red fives;
 144 additionally includes one of each of the eight flowers. These sets occupy
 34 and 42 stacks respectively.
 One ordinary dye is consumed per successful
-operation; creative dye remains unchanged, even when used by a survival player.
+operation. Creative dye remains unchanged, even when used by a survival player.
 Materials, back colors and point sticks are preserved. Invalid counts, mixed
-blanks, invalid selections and already-matching no-red sets do not consume anything.
+blanks, invalid selections and already-matching no-red sets leave all ingredients intact.
 
 Choose **Kansai**, **Kanto** or **Hong Kong** from the box's face preset screen.
 Four sample tiles appear beside each design. All three designs are built into
-the mod; the selection applies to inventory items, the world table, immersive hands,
+the mod. The selection applies to inventory items, the world table, immersive hands,
 action previews and settlement. Reprinting an existing complete set applies
 the face preset and restores ordinary fives, including when the
 selected face preset is already in use. Other tile components are preserved. Tile-back
@@ -126,11 +129,10 @@ matching dye produce eight marked sticks:
 | Red dye | 10,000 |
 | Black dye | −10,000 |
 
-Already marked sticks cannot be remarked. Component-preserving crafting operations
-use shared custom crafting serializers, not ingredients that accidentally
-ignore component values. They still use the vanilla crafting grid. The recipes
-are documented here; component-dependent recipes are special
-recipes. Face printing instead uses the box's server-authorized menu button.
+Stick marking requires unmarked sticks. Component-preserving operations use
+shared custom crafting serializers that retain component values in the vanilla
+crafting grid. These are special recipes. Face printing uses the box's
+server-authorized menu button.
 
 ## Stonecutting
 
@@ -154,8 +156,8 @@ shift-transfer, number keys, offhand swaps, dragging, double-click collection,
 throwing and creative cloning. Neither the carrier nor another box can be
 inserted. Changes persist immediately in `minecraft:container`. Closing the
 menu, replacing it, losing the carrier slot or dying permanently invalidates
-that menu; returning the carrier does not revive an old handle. Oversized or nested
-command-created containers cannot be silently truncated by opening or crafting.
+that menu. Returning the carrier does not revive an old handle. Oversized or nested
+command-created containers retain their full contents when opened or crafted.
 
 Both tables need a clear 3 by 3 footprint, clear space immediately above it and
 solid support beneath the center. Place stools two blocks from the center on
@@ -168,7 +170,7 @@ Right-click either table, including any footprint cell, to open its two-case
 storage screen. Each slot holds one box inside the table, keeping the playing surface clear.
 Empty and incomplete boxes can be stored and retrieved. The first complete box
 compatible with the selected rules, reading left to right, supplies the game;
-the second box is not combined with it. Changing rules rechecks the box selection.
+the second box remains separate. Changing rules rechecks the box selection.
 Use normal clicks, shift-clicks or number-key swaps to move cases. The server
 checks distance, table identity and match state on every transaction. Closing
 the screen, leaving range, breaking the table or starting a match permanently
@@ -178,21 +180,20 @@ The table selects exactly 136 tiles for four-player play or 108 for sanma,
 with the chosen red-five composition and matching material, back color and face
 preset. Every required ordinary and red face must be sufficiently stocked in
 one box. Additional copies, unused faces, unengraved tiles, flowers and point
-sticks remain in storage. Surplus tiles with a different appearance do not
-invalidate an otherwise complete matching subset. The box
-is transferred into table storage, not copied, including when using creative
-inventory transfers. There is no free virtual set when a table is empty.
+sticks remain in storage. Surplus tiles with a different appearance leave a
+complete matching subset valid. The box transfers into table storage with all
+contents, including creative inventory transfers. Play requires an installed set.
 
 Use a cloth on either table to install or replace it. Both table types require
-a cloth before play; a bare wooden table cannot ready players or start practice.
+a cloth before players can ready or start practice.
 To remove the cloth, end the match, empty both hands and sneak-use the top.
 Retrieve point sticks through the side drawers' container slots.
-Equipment collection takes priority over spectator interaction; a sneak-click
+Equipment collection takes priority over spectator interaction. A sneak-click
 opens the spectator view only when it does not collect any equipment.
 Breaking a table returns its furniture, both stored boxes, cloth and stored point sticks; equipment
-storage is cleared before spawning drops so occupancy-cell removal cannot
-duplicate the contents. An unfinished hand is not fabricated into a result.
-Explosion drop decay still follows vanilla rules for the furniture block; the
+storage is cleared before spawning drops to return each item once.
+Only completed hands produce results.
+Explosion drop decay still follows vanilla rules for the furniture block. The
 world tests disable that decay when asserting an exact furniture-item count.
 Stored equipment is returned once by the removal callback.
 
@@ -203,14 +204,14 @@ for each participating seat: 25000 points uses ten 100s, four 1000s, two 5000s
 and one 10000. A 30000-point start adds one 5000; 35000 adds one 10000.
 Custom starts retain the small payment denominations and adjust the remainder.
 Missing denominations are topped up from the installed cases in one transaction;
-insufficient combined stock prevents starting without moving any supplies.
+starting requires sufficient combined stock and leaves supplies intact otherwise.
 When bankruptcy is disabled, each seat also needs one −10000 bust stick.
 Bone meal, white dye and black dye craft two dice. The complete creative case
 includes two dice.
 
-An ordinary table offers these server-authorized actions:
+An ordinary table offers these server-authorized actions.
 
-1. Ready the players; the dealer sweeps the face-down tiles across the felt to shuffle.
+1. Ready the players. The dealer sweeps the face-down tiles across the felt to shuffle.
 2. Each participant drags their highlighted loose tiles toward their own wall.
 3. Once every wall is built, the dealer picks up the two central dice and rolls
    them to determine the opening. Hover the central dice to see both faces and
@@ -246,16 +247,16 @@ Auto kita uses the referee's legal declarations, including riichi restrictions
 and opponents' robbery responses, before considering an automatic discard. Preferences remain
 with the player across hands and saves and reset when their seat is released.
 For three-player rules, the engine uses the appropriate 108 tiles. The omitted
-28 tiles are optional stock and remain in the box when present. No stored tiles
-are consumed by playing. Completed hands use the existing replay archive.
+28 tiles are optional stock and remain in the box when present. Playing preserves
+stored tiles. Completed hands use the existing replay archive.
 
 ## Glass, backs and physical point sticks
 
 Glass bodies use an alpha-blended render pass and a transparent glyph
 atlas. Colored backs remain opaque.
-Hidden hands reach unauthorized clients only as hidden sentinels, and the
-renderer never resolves a face texture for such a sentinel. Moving a camera
-behind a glass tile therefore cannot reveal an opponent's printed face.
+Hidden hands reach unauthorized clients as hidden sentinels. The renderer uses
+covers for these sentinels, keeping opponents' printed faces private from every
+camera angle.
 
 The default back is a neutral texture tinted by the 16 dye colors. Custom
 back presets supply a transparent pattern selected in the mahjong box.
@@ -278,7 +279,7 @@ During play, payments stay within the table: backpack insertion, removal and
 hotbar exchanges are locked. Closing returns any unpaid cursor sticks to the
 drawers and returns the player to the table overlay. Ending or abandoning the
 match restores the opening drawer contents and returns the two dice to their
-case. These reserved supplies are not consumed or duplicated by play.
+case. Play preserves these reserved supplies.
 
 The screen pairs each physical total with the referee's signed game score.
 Scores provide the settlement reference; players handle the actual currency

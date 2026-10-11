@@ -67,13 +67,6 @@ data class ReplayHand(
     }
 
     @JvmRecord
-    data class Yaku(val name: String, val han: Int, val yakuman: Boolean) {
-        init {
-            require(name.length <= 128 && han in 0..26) { "Invalid recorded yaku" }
-        }
-    }
-
-    @JvmRecord
     data class Win(
         val seat: Int,
         val from: Int,
@@ -83,7 +76,6 @@ data class ReplayHand(
         val pao: Int,
         val honba: Int,
         val sticks: Int,
-        val yaku: List<Yaku>,
         val dora: Int,
         val ura: Int,
         val redDora: Int,
@@ -136,10 +128,9 @@ data class ReplayHand(
         for (win in wins) {
             require(
                 win.seat in 0 until players && win.from in -1 until players && win.pao in -1 until players &&
-                    win.deltas.size == players && win.yaku.size <= 64 && win.score.yaku().size <= 64,
+                    win.deltas.size == players,
             ) { "Invalid replay win" }
             Tile.kind(win.tile)
-            require(win.score.yaku().none { it == null || it.length > 128 }) { "Invalid replay yaku name" }
         }
     }
 

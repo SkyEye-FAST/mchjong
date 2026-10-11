@@ -6,9 +6,13 @@ import java.util.Objects;
 import static top.skyeyefast.mchjong.engine.RiichiRuleOption.*;
 
 /** A complete immutable rules snapshot. Presets supply values, never hidden runtime exceptions. */
-public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> settings) {
+public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> settings, YakuSelection yakuSelection) {
     public RiichiRules {
         Objects.requireNonNull(preset);
+        Objects.requireNonNull(yakuSelection);
+        if (yakuSelection.variant() != MahjongVariant.RIICHI) throw new IllegalArgumentException("Not a Riichi award set");
+        if (preset.players() == 3 && yakuSelection.sets().stream().anyMatch(s -> s.id().equals(BuiltinYakuSets.MAHJONG_SOUL_ANCIENT_ID)))
+            throw new IllegalArgumentException("Mahjong Soul ancient awards require four players");
         var copy = new EnumMap<RiichiRuleOption, Integer>(RiichiRuleOption.class);
         copy.putAll(settings);
         settings = java.util.Collections.unmodifiableMap(copy);
@@ -22,17 +26,18 @@ public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> se
     public static RiichiRules from(RiichiPreset preset) {
         var values = new EnumMap<RiichiRuleOption, Integer>(RiichiRuleOption.class);
         for (var option : RiichiRuleOption.values()) values.put(option, option.defaultValue(preset));
-        return new RiichiRules(preset, values);
+        return new RiichiRules(preset, values, YakuSelection.defaults(MahjongVariant.RIICHI));
     }
     public int get(RiichiRuleOption option) { return settings.get(option); }
     public boolean enabled(RiichiRuleOption option) { return get(option) != 0; }
     public RiichiRules with(RiichiRuleOption option, int value) {
         var values = new EnumMap<>(settings);
         values.put(option, value);
-        return new RiichiRules(preset, values);
+        return new RiichiRules(preset, values, yakuSelection);
     }
+    public RiichiRules withYakuSelection(YakuSelection value) { return new RiichiRules(preset, settings, value); }
     public boolean custom() {
-        return settings.entrySet().stream().anyMatch(entry -> !preset.adjustable(entry.getKey())
+        return !yakuSelection.isDefault() || settings.entrySet().stream().anyMatch(entry -> !preset.adjustable(entry.getKey())
             && entry.getValue() != entry.getKey().defaultValue(preset));
     }
 
@@ -73,7 +78,7 @@ public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> se
     public boolean doubleYakuman() { return enabled(DOUBLE_YAKUMAN); }
     public boolean compoundYakuman() { return enabled(COMPOUND_YAKUMAN); }
     public boolean doubleWindPairFu() { return enabled(DOUBLE_WIND_PAIR_FU); }
-    public boolean renhouMangan() { return enabled(RENHOU_MANGAN); }
+    public boolean renhouMangan() { return enabled(RENHOU_MANGAN) && yakuSelection.enabled(YakuCatalog.awardId("Renhou")); }
     public boolean allows(RedFives reds) {
         return reds == redFives();
     }
@@ -82,7 +87,7 @@ public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> se
     public boolean tripleRonDraw() { return enabled(TRIPLE_RON_DRAW); }
     public boolean bankruptcy() { return enabled(BANKRUPTCY); }
     public boolean abortiveDraws() { return enabled(ABORTIVE_DRAWS); }
-    public boolean nagashiMangan() { return enabled(NAGASHI_MANGAN); }
+    public boolean nagashiMangan() { return enabled(NAGASHI_MANGAN) && yakuSelection.enabled(YakuCatalog.awardId("Nagashi")); }
     public boolean nagashiAllowsCalls() { return enabled(NAGASHI_ALLOWS_CALLS); }
     public boolean agariYame() { return enabled(AGARI_YAME); }
     public boolean extension() { return enabled(EXTENSION); }

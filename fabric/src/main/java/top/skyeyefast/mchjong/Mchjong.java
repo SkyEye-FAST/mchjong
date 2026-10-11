@@ -37,6 +37,13 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.server.packs.PackType.SERVER_DATA)
+            .registerReloadListener(new net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener() {
+                @Override public net.minecraft.resources.ResourceLocation getFabricId() { return MahjongContent.id("yaku_sets"); }
+                @Override public void onResourceManagerReload(net.minecraft.server.packs.resources.ResourceManager resources) {
+                    new top.skyeyefast.mchjong.config.YakuSets().onResourceManagerReload(resources);
+                }
+            });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(
             top.skyeyefast.mchjong.config.ServerPresets::tick);
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {

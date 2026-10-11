@@ -8,14 +8,13 @@ import net.minecraft.resources.ResourceLocation;
 
 /** Lit tile surfaces: smooth printed faces and crisp low-resolution body materials. */
 public final class TileRenderTypes extends RenderType {
-    public static final RenderType FACES = faceMaterial(TileMesh.GLYPHS);
     private static final java.util.Map<ResourceLocation, RenderType> FACE_TYPES = new java.util.HashMap<>();
     public static RenderType faces(top.skyeyefast.mchjong.item.TileFacePreset preset) {
         var texture = TileMesh.glyphs(preset);
         if (texture.equals(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation()))
             return RenderType.entityCutout(texture);
-        return FACE_TYPES.computeIfAbsent(texture, location -> TileFacePresets.dynamicTexture(location)
-            ? material("mchjong_tile_faces", new TextureStateShard(location, true, false)) : faceMaterial(location));
+        return FACE_TYPES.computeIfAbsent(texture, location ->
+            material("mchjong_tile_faces", new TextureStateShard(location, true, true)));
     }
     public static final ResourceLocation PLAIN = ResourceIds.of("mchjong", "textures/tile/plain.png");
     public static final RenderType BACKS = material("mchjong_tile_backs", PLAIN);
@@ -30,7 +29,10 @@ public final class TileRenderTypes extends RenderType {
                 .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(CULL)
                 .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false)));
     }
-    public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
+    private static final java.util.Map<ResourceLocation, RenderType> STICKS = new java.util.HashMap<>();
+    public static RenderType sticks(int points) {
+        return STICKS.computeIfAbsent(FurnitureMesh.stickTexture(points), texture -> material("mchjong_point_sticks", texture));
+    }
     private static final java.util.Map<ResourceLocation, RenderType> GUI = guiTypes(false);
     private static final java.util.Map<ResourceLocation, RenderType> GUI_DEPTH = guiTypes(true);
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =
@@ -84,7 +86,6 @@ public final class TileRenderTypes extends RenderType {
 
     private static java.util.Map<ResourceLocation, RenderType> guiTypes(boolean depth) {
         var result = new java.util.HashMap<ResourceLocation, RenderType>();
-        result.put(TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS, true, depth));
         result.put(TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK, true, depth));
         for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
             var texture = bodyTexture(material);
@@ -112,10 +113,6 @@ public final class TileRenderTypes extends RenderType {
         return material(name, new TextureStateShard(texture, blur, false));
     }
 
-    private static RenderType faceMaterial(ResourceLocation texture) {
-        return material("mchjong_tile_faces", new FaceTextureState(texture));
-    }
-
     private static RenderType material(String name, TextureStateShard texture) {
         // Vanilla entityCutoutNoCull (including entitySmoothCutout) forces nearest sampling.
         return create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536,
@@ -140,13 +137,4 @@ public final class TileRenderTypes extends RenderType {
     }
     private static final java.util.Map<ResourceLocation, RenderType> CLOTH = new java.util.HashMap<>();
 
-    private static final class FaceTextureState extends TextureStateShard {
-        private final ResourceLocation location;
-        FaceTextureState(ResourceLocation location) { super(location, true, true); this.location = location; }
-        @Override public void setupRenderState() {
-            var textures = net.minecraft.client.Minecraft.getInstance().getTextureManager();
-            if (!(textures.getTexture(location) instanceof TileFaceTexture)) textures.register(location, new TileFaceTexture(location));
-            super.setupRenderState();
-        }
-    }
 }

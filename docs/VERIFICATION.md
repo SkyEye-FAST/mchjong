@@ -1,10 +1,10 @@
 # Verification
 
-Choose the smallest existing check that exercises the changed boundary. Full
-suites belong to broad synchronizations and release acceptance, not every edit.
-Dependency versions are in [Compatibility](COMPATIBILITY.md); builds and release
-procedures are in [Development](DEVELOPMENT.md). Use JDK 21 to build this branch;
-the production artifacts and Minecraft runtime target Java 17.
+Choose the smallest existing check that exercises the changed boundary. Use full
+suites for broad synchronizations and release acceptance.
+Dependency versions are in [Compatibility](COMPATIBILITY.md). Builds and release
+procedures are in [Development](DEVELOPMENT.md). Use JDK 21 to build this branch.
+The production artifacts and Minecraft runtime target Java 17.
 
 ## Build and loader checks
 
@@ -17,8 +17,8 @@ gradlew.bat :fabric:runSmokeServer :forge:runSmokeServer --console=plain
 
 `buildAll` covers engine, presentation, generated assets/data and loader builds.
 `--no-parallel --max-workers=2` bounds resource use. Dedicated-server launcher
-checks use isolated directories and `--initSettings`; they cover entrypoint and
-settings initialization, not simulated worlds. The default EULA is unchanged.
+checks use isolated directories and `--initSettings`. They cover entrypoint and
+settings initialization. The default EULA remains in effect.
 Snapshot CI limits Gradle to two workers and uploads test reports, XML results,
 problem reports and the build log even when the build fails.
 
@@ -116,6 +116,22 @@ config-screen factory.
 
 ## Test ownership and acceptance
 
+`CustomYakuTest` covers strict definitions, exclusion cycles, minimum-han
+qualification, per-interpretation selection, ron triplet concealment, yakuman
+payments and rule persistence. `YakuSelectionTest` covers all 14 bundled ancient
+awards, open-hand values, contained-award exclusions, disabled native yakuman,
+game-certified event flags, multiple sets and frozen individual switches.
+`YakuSetsTest` covers real data-pack resource
+discovery, atomic failed reloads, frozen snapshots, digests and Minecraft packet
+codecs. `CustomYakuSmoke`, inside the shared table-control smoke, installs and
+reloads an actual server data pack, switches individual default/custom awards and
+combines them with the Mahjong Soul ancient preset through the UI,
+checks synchronized snapshots and rejects stale/unknown selections before cleanup.
+
+```text
+gradlew.bat :engine:test --tests "*Yaku*Test" :fabric:test --tests "*YakuSetsTest" --warning-mode fail --console=plain
+```
+
 `McrWallTest` owns the 144-tile domain, independent flower identities, repeated
 tail replacements, exhaustion and conservation across player-owned zones.
 `McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
@@ -128,15 +144,15 @@ engine-issued actions and calls engine conservation validation after every
 accepted action. Multiple shuffled openings are checked through initial flower
 replacement/voiding, post-deal, midgame, late game and termination. Claims are
 preferred and wins passed to exercise public areas through wall exhaustion.
-No full-wall-plus-maximum-river/hand/meld capacity fixture constrains geometry.
-Run shared checks with:
+Geometry checks use the listed real gameplay positions.
+Run the following commands for the shared checks.
 
 ```text
 gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*SichuanPresentationTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain
 ```
 
 `TileMeshTest` and `TilePickingTest` cover the shared three-axis envelope transform;
-`ChinesePickingTest` retains MCR/Sichuan seated visibility as walls empty.
+`ChinesePickingTest` retains MCR and Sichuan mahjong seated visibility as walls empty.
 
 The Fabric automatic-table MCR client fixture below verifies native case admission,
 flower/item identities, appearance matching and the supplied-stock session boundary.
@@ -150,7 +166,7 @@ replacement and responses through the independent MCR view and action path, open
 settlement and confirms the next hand. It also keeps a match paused after the
 last dismount and resumes it when everyone returns. It then fetches the sealed
 MCR replay and checks initial display, event stepping and viewpoint switching.
-On Fabric, run:
+Run the following commands on Fabric.
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PsmokeMcrAuto=true "-PsmokeScreenshots=mcr-auto-replay.png,mcr-auto-replay-settlement.png" --warning-mode fail --console=plain
@@ -166,7 +182,7 @@ added-kong distinctions, multi-win blood battle, T/TFMJ linked call transfers an
 rounding, MIL last-kong refunds, flower-pig
 deductions, maximum ready payments, eight-hand lifecycle, session confirmations,
 private views and explicit save/restore. The clause mapping is in
-[Sichuan match orchestration](ARCHITECTURE.md#sichuan-match-orchestration). Run
+[Sichuan mahjong match orchestration](ARCHITECTURE.md#sichuan-mahjong-match-orchestration). Run
 `gradlew.bat :engine:test --tests "*SichuanGameTest" --warning-mode fail --console=plain`.
 `SichuanReplayTest` owns sealed physical openings, recorder restoration,
 serialization and rule-executed event consistency, secret selection reconstruction,
@@ -188,30 +204,30 @@ restrictions and lobby/match save restoration. Run
 `gradlew.bat :engine:test --tests "*SichuanRoomSettingsTest" --warning-mode fail --console=plain`.
 
 `ConvenienceHintsTest` owns the shared room hint setting, world-policy restriction,
-save/variant retention across all four variants, MCR structural versus eight-non-flower-fan waits, Sichuan
+save/variant retention across all four variants, MCR structural versus eight-non-flower-fan waits, Sichuan mahjong
 void tiles and structural/capped ready values, and public-copy accounting. The
 MCR privacy fixture and `SichuanGameTest.hintsIgnoreOpponentsConcealedHandsAndFutureWallIdentities`
 change private hands and wall identities without changing hint results.
 `SichuanGameTest.passedWinsBlockSameFanUntilDrawingAndSurviveRestore` also checks
 recipient-only restriction projection. Run with `:engine:test --tests "*ConvenienceHintsTest"
 --tests "*SichuanGameTest" --tests "*TenpaiHintsTest" --warning-mode fail --console=plain`.
-The MCR automatic-table and Sichuan client smokes enable hints through the shared
+The MCR automatic-table and Sichuan mahjong client smokes enable hints through the shared
 room control, select a discard and focus the native hint widget. Opt-in captures
 are `mcr-auto-hints.png` and `sichuan-hints.png` in their respective evidence directories.
 `ServerIntegrationTest.actualMinecraftCodecsRoundTripOnlyDeclaredPayloads` also
-checks Sichuan proposals and settings at both field bounds and rejects malformed
+checks Sichuan mahjong proposals and settings at both field bounds and rejects malformed
 numeric proposals through the native codec.
 `PhysicalSuppliesTest.sichuanStock*` owns native single-case stock admission.
 `SichuanPresentationTest` owns both 108-slot physical layouts, recipient-safe scene
 projection, multi-win aliases and faithful result-ledger formatting. Run
 `gradlew.bat :fabric:test --tests "*SichuanPresentationTest" --warning-mode fail --console=plain`.
-The focused real-client Sichuan smoke checks variant selection, server-confirmed
+The focused real-client Sichuan mahjong smoke checks variant selection, server-confirmed
 rule drafts and preset restoration, old-snapshot rejection,
 non-host/stale/incarnation payload rejection, the
 108-tile subset, private suit/first-discard declarations, NBT restoration, seated and immersive
 physical-tile selection and discard, exit
 voting, result screens, duplicate confirmation packets, next-hand privacy,
-eight-hand completion, shared-browser retrieval, Sichuan replay event/hand
+eight-hand completion, shared-browser retrieval, Sichuan mahjong replay event/hand
 navigation, final standings and return to the lobby. It then uses native room
 packets to add/remove/fill three Bots, restores their NBT roster and completes an
 eight-hand T/TFMJ match with one real human, automatic confirmations, final client
@@ -261,7 +277,11 @@ arbitration, wrong-win continuation/stop-win, kong transaction boundaries,
 server-derived winning facts and the complete sixteen-hand lifecycle.
 `McrHandAnalyzerTest` owns the explicit tile/meld/context conversions, basic
 library calls, flower exclusion and fan-result projection. `ScoringBridgeTest`
-owns the existing Riichi scoring adapter. Run these engine boundaries with:
+owns the existing Riichi scoring adapter, including stored open-hand reductions
+and natural-yakuman values. `HandScoreTest` owns immutable scored entries, unknown
+award-name preservation and rejection of malformed or obsolete name-only data.
+`RiichiAudioEventsTest` checks that receipts consume stored values without a yaku
+registry lookup. Run these engine boundaries with:
 
 ```text
 gradlew.bat :engine:test --tests "*Mcr*Test" --tests "*WallInvariantTest" --tests "*ScoringBridgeTest" --tests "*GameLifecycleTest" :engine:shadowJar --configure-on-demand --warning-mode fail --console=plain
@@ -272,34 +292,34 @@ recipient privacy. Lifecycle/manual checks exercise both player counts; enumerat
 presets only where rules differ. `CompactTableLayoutTest` owns hand clearance and
 picking; `TableLayoutTest` owns melds, rivers and walls. Replay storage/authorization
 belongs to `ReplayStoreTest`, and bounded chunk reassembly to `ReplayTransferTest`.
-The storage suite also checks Sichuan/Taiwan browser headers, final standings, participant
+The storage suite also checks Sichuan mahjong and Taiwanese mahjong browser headers, final standings, participant
 permissions and altered-event rejection. Run
 `gradlew.bat :fabric:test --tests "*ReplayStoreTest" --warning-mode fail --console=plain`.
 Asset tests cover deterministic output, texture/model contracts, translation key
 parity, duplicate keys, placeholders and literal source references.
-`ReplayPresentationTest` checks static MCR/Sichuan/Taiwan hand selectors and every frame's
+`ReplayPresentationTest` checks static MCR, Sichuan mahjong and Taiwanese mahjong hand selectors and every frame's
 remaining wall count from real played openings through exhaustion, including both
-Sichuan presets, both Taiwan wall sizes and Taiwan viewpoint/settlement privacy.
+Sichuan mahjong presets, both Taiwanese mahjong wall sizes and Taiwanese mahjong viewpoint/settlement privacy.
 Run `:fabric:test --tests "*ReplayPresentationTest"`.
 `ChinesePickingTest` checks the projected centers of every concealed hand tile
 against the same oriented tile boxes, in real post-deal, midgame and late-game
 positions from all four seats at 320 × 240. Run `:fabric:test --tests "*ChinesePickingTest"`.
 The settlement smoke also checks complete operation hints at the minimum viewport
-and Sichuan short badge widths in all four languages; full suit names remain in
-player-card hover details and Sichuan screen narration.
+and Sichuan mahjong short badge widths in all four languages; full suit names remain in
+player-card hover details and Sichuan mahjong screen narration.
 
 `RecipeBrowserDataSmoke` exercises loaded recipes and native NBT identity.
 Shared box, point-stick and equipment fixtures use real players,
 menus and worlds: clicks, shift transfers, splits, dragging, hotbar/offhand swaps,
 carrier invalidation, 136/144-tile printing, reagent consumption and conservation.
 They check placement/headroom, occupancy-cell removal, explosions, private/public
-save separation and recoverable sanma stock. Do not introduce null-world behavior
-into production to support these checks.
+save separation and recoverable sanma stock. These checks exercise production
+behavior in real worlds.
 
 The default client run owns ordinary-table physical handling, live rule and
 control packets, replay archival, command fetch, chunk transfer, timeline seeking
 and the Tenhou export button. Settlement and seating profiles own their rendering
-fixtures; the default run does not repeat them. Taiwan owns cross-variant lobby
+fixtures. The default run does not repeat them. Taiwanese mahjong owns cross-variant lobby
 routing, and MCR owns shared non-Riichi automation controls. Smoke-only mouse
 hooks keep the desktop cursor free and verify its native mode.
 
@@ -307,7 +327,7 @@ hooks keep the desktop cursor free and verify its native mode.
 
 For a small fix, run its owning test or focused smoke once. Add another check only
 when a failure or a changed boundary justifies it. A shared implementation normally
-needs one representative loader; compile each affected API adapter. Use additional
+needs one representative loader. Compile each affected API adapter. Use additional
 locales, viewports or player counts only for different behavior or layout risks.
 Full builds and complete client suites are reserved for broad changes and releases.
 
@@ -320,7 +340,7 @@ gradlew.bat :fabric:runSmokeClient -PsmokeSeating=true -PsmokeScreenshots=41-lay
 
 Choose normally one or two affected states from the owning fixture. Screenshot
 filenames are defined at its capture calls. The selected profile replaces its old
-evidence directory; captures stay in ignored build output. Inspect requested images
+evidence directory. Captures stay in ignored build output. Inspect requested images
 and the fresh `PASS.txt`, `FAIL.txt` and logs. Compilation verifies API use, while
 visual acceptance requires viewing the affected state.
 
@@ -328,10 +348,10 @@ Report commands, results and coverage limits in the delivery message or PR.
 Guides retain reusable instructions and current contracts; individual run logs,
 screenshot inventories, timings and experiment histories remain outside tracked docs.
 
-## Taiwan hand library
+## Taiwanese mahjong hand library
 
-All three Minecraft profiles declare the Maven Central release
-`top.skyeyefast:taiwan-mahjong:0.1.0`. Verify the engine adapter and embedded artifact contract:
+All three profiles declare `top.skyeyefast:taiwan-mahjong:0.2.0`.
+Verify the engine adapter and embedded artifact contract.
 
 ```text
 gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar --warning-mode fail --console=plain
@@ -343,11 +363,17 @@ flower victories. `TaiwanHandAnalyzerTest` owns physical identity/provenance,
 named flower mapping, public-copy deduplication and the library-free engine API.
 `buildAll` includes the engine's adapter and runtime tests.
 
-`TaiwanHintsTest` owns shanten/effective tiles, legal discard previews, multiple
+`TaiwanCustomYakuTest` owns candidate selection before custom tai/caps, simultaneous
+exclusions, disabled native awards and flower triggers, discard-completed triplets, separate flower components and frozen
+game/view/session/replay round trips. `YakuSetsTest` checks the server catalog and
+both variants' digest-bound award-mask proposals. The shared client smoke selects
+individual native/data-pack awards in both rule screens and rejects stale definitions.
+
+`TaiwanHintsTest` owns shanten numbers, effective tiles, legal discard previews, multiple
 waits with distinct ron/self-draw tai, Pocket/Southern and current-rule caps,
 concealment/honors/winds/known flowers, passing/READY, exhausted waits and physical
 river/meld/focus aliases. It excludes covered opponent kongs, private hands,
-future wall order and spectator analysis; only current public reaction context
+future wall order and spectator analysis. Only current public reaction context
 can add situational tai. Run
 `gradlew.bat :engine:test --tests "*TaiwanHintsTest" --tests "*ConvenienceHintsTest" --warning-mode fail --console=plain`.
 
@@ -362,13 +388,11 @@ rejection, chi/pong priority, nearest ron independent of response order, all thr
 kong forms, robbery before committing an added kong, replacement self-draw,
 passing/reset, ready locking, flower payer routing, reserve policies and exhaustion.
 Seeded games finish with conserved stock and balanced transfers in both presets.
-These verify the source-composed contract in [Taiwan design](TAIWAN_DESIGN.md),
-including its explicitly identified house choices. Dice-count evidence is an
-indexed teaching appendix whose full PDF could not be fetched. No-flower dice overflow
-and tail-layer traversal are frozen project preset rules, rather than temporary semantics. Combined
-flower cap/base allocation and the exact non-winning-discard interpretation lack
-a single complete publisher specification. Eight-and-a-half pairs remains outside
-the selected profiles; the library ledger records the conflicting historical rules.
+These verify the source-composed contract in [Taiwanese mahjong design](TAIWAN_DESIGN.md),
+including its project-defined choices. The indexed teaching appendix supplies
+dice-count evidence. The presets define no-flower dice overflow, tail-layer
+traversal, combined flower cap/base allocation and non-winning-discard behavior.
+The library ledger records the source interpretations.
 `TaiwanRuntimeTest` owns fixed slot/cursor contracts across both stocks, every
 dealer/dice sum, action-by-action persistence, legal/still-submitted reactions,
 pending added-kong commit/robbery, passing/ready restore, concealed-kong and
@@ -389,8 +413,9 @@ incarnation/mount authorization, recipient-only clocks/response privacy,
 paused/restored allowances and exit votes, partial hand acknowledgements,
 exhaustion/repeat dealer, wind progression, guaranteed final-dealer repeat,
 complete four-wind matches for both presets and cumulative-score idempotence.
-The deterministic legal-action test driver is not a production Bot.
-`TaiwanBotTest` owns win priority, bounded shanten/effective-copy/value tradeoffs,
+The deterministic legal-action driver supplies actions for tests.
+`TaiwanBotTest` owns win priority and bounded tradeoffs among shanten numbers,
+effective-copy counts and scored values,
 attainable and publicly exhausted scoring routes, live-wait
 quality and current-rule scoring, conservative and beneficial calls/replacements,
 hidden-hand/wall independence, shared room Bot controls/world policy, delayed
@@ -410,7 +435,7 @@ gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true "-PsmokeScreenshots=taiwan
 ```
 
 The focused Fabric profile uses one real client and three mounted human test
-identities. It switches Riichi/MCR/Sichuan/Taiwan lobbies, edits both presets through
+identities. It switches Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong lobbies, edits both presets through
 registered packets, checks 136/144 case admission and seats four participants.
 It exercises initial flower replacement, native calls, recipient/spectator privacy,
 seated and immersive discard selection, focused convenience-hint previews and
@@ -429,14 +454,15 @@ affected playback states. Use
 `-PsmokeScreenshots=taiwan-hints-seated.png,taiwan-hints-immersive.png` for the
 native hints focus in both views. Variant switching retains the shared setting;
 disabling world policy removes the hint widget and restoring policy keeps the
-room choice disabled. The legal-action driver is test-only. Taiwan external
-Bot is not supported.
+room choice disabled. The legal-action driver supplies test inputs.
+Taiwanese mahjong uses built-in Bots.
 
-### Taiwan compatibility profiles
+### Taiwanese mahjong compatibility profiles
 
-Both compatibility profiles retain main's Taiwan game/save/view/replay semantics.
-Use each branch's toolchain (JDK 21 build / Java 17 Minecraft on 1.20.1; JDK 25
-on 26.1.2), build that branch's two loader artifacts, and run this focused subset:
+Both compatibility profiles retain main's Taiwanese mahjong gameplay, persistence,
+recipient views and replay contracts. Use JDK 21 for the build and Java 17 for
+Minecraft 1.20.1, or JDK 25 for 26.1.2. Build that branch's two loader artifacts
+and run the following focused checks.
 
 ```text
 gradlew.bat :engine:test --tests "*TaiwanGameTest.openingUsesFourPacketsAndRoundBasedFlowers" --tests "*TaiwanBotTest.issuedWinsAlwaysTakePriorityInBothPresets" --tests "*TaiwanReplayTest.bothWallsOrdinaryPlayAndRecorderRestoreKeepExactPhysicalState" --tests "*TaiwanHintsTest.shantenEffectiveTilesAndLegalDiscardPreview" :fabric:test --tests "*TaiwanPresentationTest" --warning-mode fail --console=plain
@@ -444,7 +470,7 @@ gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true --warning-mode fail --cons
 ```
 
 Build with `:fabric:build :forge:build -x test` on 1.20.1 or
-`:fabric:build :neoforge:build -x test` on 26.1.2; the focused tests above run
+`:fabric:build :neoforge:build -x test` on 26.1.2. The focused tests above run
 separately. The real client fixture checks variant registration, both native
 stocks, a complete opening/match, Bot control/decisions, NBT, Replay/hints and
 seated/immersive packets. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`, `PASS.txt`
@@ -455,7 +481,7 @@ The 26.1.2 native server boundary also runs `:neoforge:test --tests
 On 26.1.2, `ImmersiveDepthTest` checks table vertices against the native GUI
 projection's clip range and retains near-to-far face ordering. Run
 `:fabric:test --tests "*ImmersiveDepthTest" --warning-mode fail`; inspect
-`taiwan-immersive.png` from the Taiwan client profile to verify the tabletop,
+`taiwan-immersive.png` from the Taiwanese mahjong client profile to verify the tabletop,
 opponent tiles and center instrument remain visible.
 
 ## Bot checks
@@ -492,13 +518,13 @@ and `35-rules-wide.png`; personal presets use `33-personal-presets-320x240.png`.
 The shared presentation is checked on all three Minecraft profiles with
 `buildAll --warning-mode fail` and the Fabric `smokeMcrAuto`, `smokeSichuan`,
 `smokeSettlement`, `smokeManual` and `smokeVisibility` client profiles. MCR and
-Sichuan checks exercise the shared immersive canvas, physical hand picking,
+Sichuan mahjong checks exercise the shared immersive canvas, physical hand picking,
 settlements and replays while retaining their own rules and hidden information.
-The Sichuan picking check switches back to the physical table and verifies the
+The Sichuan mahjong picking check switches back to the physical table and verifies the
 same tile remains selected.
 
 The adjacent bot-advisor project owns decision and overlay-placement tests.
 Its development smoke installer can add the matching loader JAR to a focused
 run and removes it afterward. Run its `mcr-auto`, `sichuan` and `seating` profiles
-to check the three native rule adapters against actual client screens; these
+to check the three native rule adapters against actual client screens. These
 installed checks complement the advisor's decision tests.

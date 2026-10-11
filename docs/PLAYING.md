@@ -1,8 +1,8 @@
 # Playing at a table
 
-[Documentation](README.md) · [Project overview](../README.md)
+[Documentation](README.md) | [Project overview](../README.md)
 
-MChjong features three- and four-player riichi mahjong, four-player MCR, Sichuan and Taiwan on
+MChjong features three- and four-player riichi mahjong, four-player MCR, Sichuan mahjong and Taiwanese mahjong on
 automatic tables. See
 [Rules and presets](RULES.md) for available presets and custom settings.
 
@@ -13,13 +13,13 @@ automatic tables. See
 Install the matching optional Patchouli build and use the Mahjong Handbook item
 to open it. The handbook includes equipment recipes, seating, controls, settlement,
 replays and customization in all four supported languages. Separate Riichi, MCR,
-Sichuan and Taiwan chapters explain play from dealing to match end, with complete
+Sichuan mahjong and Taiwanese mahjong chapters explain play from dealing to match end, with complete
 award indexes, illustrated hands, payment examples and preset differences. The
 [Rules guide](RULES.md) also collects these player rules.
 Click an award in a settlement to read its explanation and illustrated example.
 Click the winner tabs to switch hands. Rule settings offer a `?` beside each option.
-These explanations work without Patchouli. When installed, the Handbook button
-opens the corresponding entry and page; closing the book returns to the explanation,
+These explanations are available in-game. With Patchouli installed, the Handbook button
+opens the corresponding entry and page. Closing the book returns to the explanation,
 and Back or Escape returns to the original screen.
 Each player receives one on first joining a world with Patchouli installed on the
 server. Craft additional copies with a book, green dye and any mahjong tile, or
@@ -50,15 +50,14 @@ a stool to sit. Right-click the table to manage its two case slots. Crouch-click
 both hands empty collects the cloth from the tabletop. Retrieve boxes through
 the storage screen. Cloth and box changes require the lobby.
 When no equipment is collected, crouch-clicking opens the spectator view.
-Clicking your stool again reopens the controls
-without creating another seat. Press Esc to close the overlay while staying seated;
+Clicking your stool again reopens its existing controls. Press Esc to close the overlay while staying seated;
 dismount with Minecraft's sneak control after closing it.
 
 ### Automatic-table MCR
 
 In the automatic-table lobby, the host selects MCR from the rule sidebar. Fill
 all four seats with humans and built-in Bots, and store a complete standard
-144-tile box with eight flowers and a cloth. Assign seats; each human takes their
+144-tile box with eight flowers and a cloth. Assign seats. Each human takes their
 assigned stool and presses Ready. Bots are ready automatically. For one human
 and three Bots, follow [Rooms and permissions](ROOMS.md#computer-players). The host can set move time and the per-hand reserve in Match settings → Time control before
 play. The table runs a fixed sixteen-hand match.
@@ -73,22 +72,22 @@ Personal Settings offers a view reset.
 Use the Chow, Pung, Melded Kong, Added Kong, Concealed Kong, Win and Pass buttons
 when offered. The table automatically draws and replaces flowers. Initial flower
 replacements proceed in East, South, West, North order. Each replacement takes one
-tile from the wall's tail; another flower continues the replacement. Flowers stay visible in
+tile from the wall's tail. Another flower continues the replacement. Flowers stay visible in
 their own area. A structural win remains
-declarable below eight non-flower points; declaring it applies the wrong-win
+declarable below eight non-flower points. Declaring it applies the wrong-win
 penalty and marks that player as forbidden to win again during the current hand.
 The action clock spends move time before the hand reserve. At timeout, responses
 pass and turns discard the drawn tile, or a legal hand tile after a claim. Winning
 requires an explicit declaration. These deadlines continue for absent players
 while someone remains seated. Exit votes and a fully unoccupied table pause play
-and clocks; returning to a retained table resumes the remaining time.
+and clocks. Returning to a retained table resumes the remaining time.
 Settlement shows localized fan names and payments. The next hand starts after all
 human confirmations or ten seconds, retaining the chosen view; Bots confirm automatically. The match ends
 after the sixteenth hand.
 
-### Automatic-table Sichuan
+### Automatic-table Sichuan mahjong
 
-Select Sichuan from the lobby sidebar, fill its four seats with humans and
+Select **Sichuan** from the lobby sidebar to play Sichuan mahjong, fill its four seats with humans and
 built-in Bots, and supply a uniform case covering the 108 suited tiles and a
 cloth. The host chooses MIL SBR 2025 or T/TFMJ 01—2024 in the rule editor before
 each human takes their assigned stool and presses Ready; Bots are ready
@@ -98,21 +97,22 @@ With MIL SBR, select a hand tile and confirm the void-suit action to secretly bi
 its suit and that physical tile as your first discard. A naturally absent suit
 has a suit-only action and binds no tile. All four void suits appear together;
 other players cannot see the bound tile before it is discarded. T/TFMJ asks only
-for the suit. Draws are automatic; calls, wins and discards use issued actions.
+for the suit. Draws are automatic. Calls, wins and discards use issued actions.
 Results retain the selected preset's fan names and payments. Confirm the next
-hand or wait ten seconds; the eighth hand shows cumulative standings.
-See [Sichuan rule contracts](ARCHITECTURE.md#sichuan-match-orchestration)
+hand or wait ten seconds. The eighth hand shows cumulative standings.
+See [Sichuan mahjong rule contracts](ARCHITECTURE.md#sichuan-mahjong-match-orchestration)
 for settlement differences and [Replays](REPLAYS.md) for recorded selections.
 
-### Automatic-table Taiwan
+### Automatic-table Taiwanese mahjong
 
-Select Taiwan from the lobby sidebar and fill all four seats with human players.
+Select **Taiwan** from the lobby sidebar to play Taiwanese mahjong, and fill all
+four seats with human players.
 Supply a cloth and one matching case: Pocket common uses 136 ordinary tiles plus
 eight flowers; Southern common uses the 136 ordinary tiles without flowers.
 Choose the preset in Taiwanese rules, set move/reserve time in Time control,
 assign seats and have each player sit at their assigned stool and press Ready.
 
-The dealer starts with seventeen tiles and the others with sixteen. Draws and
+The dealer starts with seventeen tiles, and each nondealer starts with sixteen tiles. Draws and
 flower replacements are automatic. Select a physical tile to discard; Chow,
 Pong, Kong, Ready, Win and Pass buttons appear when legal. The same mouse selection,
 confirmation and view buttons apply. Ready
@@ -127,7 +127,7 @@ of East, South, West and North to end the match. Exit votes and absence pause th
 room, and saved tables resume with their current decisions and scores.
 Shared room controls provide built-in Bots, native replays and convenience hints;
 see [Rooms](ROOMS.md) and [Replays](REPLAYS.md) for access and operation.
-See [Taiwan rules](RULES.md#taiwan) for preset and payment settings.
+See [Taiwanese mahjong rules](RULES.md#taiwanese-mahjong) for preset and payment settings.
 
 ## Point-stick payments
 
@@ -136,7 +136,7 @@ world, click its front while seated, or press E in the seated overlay. The nativ
 drawers: take sticks from your own row and place them in the recipient's row to
 pay. Each drawer holds nine stacks, including mixed denominations. Shift-click
 stores inventory sticks in the drawer you opened. During a match, withdrawal is
-limited to your own drawer; the practice host also handles training players'
+limited to your own drawer. The practice host also handles training players'
 drawers. Closing the container returns to the seated view.
 
 The container displays physical totals beside the referee's game scores as a
@@ -166,28 +166,28 @@ expire resumes the same decision without granting extra thinking time. A failed
 vote has a 30-second cooldown. Disconnecting or dismounting does not count as
 agreement or remove a participant from the vote. Successful exit releases every
 seat and returns the table to the lobby. Completed hands stay in the replay
-archive; an unfinished hand is not scored.
+archive. An unfinished hand is not scored.
 
 ## Controls and views
 
 Click tiles directly on the physical table. Personal settings offer single-click,
 double-click, or select-and-confirm discards. Shift-click selects without
 discarding. In Riichi, turning off **Sort hand** keeps the current
-tile order. Drag a tile onto another tile to move it within your hand; drag it
+tile order. Drag a tile onto another tile to move it within your hand. Drag it
 up by at least 48 GUI pixels to discard it. In immersive view, the threshold
 is 96 pixels on the fixed virtual canvas. A shorter drag keeps the tile in
 your hand. Single-click and double-click remain discard choices.
 Click Discard to confirm the selected tile, Riichi to choose a riichi discard,
 or Pass to skip a response. Riichi highlights only legal discard candidates and
 requires confirmation. Right-click or Esc cancels a selection before closing the
-overlay. Right-drag looks freely around the seated table; the wheel moves closer
+overlay. Right-drag looks freely around the seated table. The wheel moves closer
 or farther away. Shift-right-drag pans across the table; Shift-wheel adjusts height.
 Reset the seated view in Personal Settings. Distance and height sliders preserve
 the current look direction.
 Use the top-bar view button to switch between the seated and immersive
 views. Immersive play uses one fixed 1280 × 800 virtual mahjong layout: your large
 clickable hand and raised rack form the foreground. Riichi melds lie flat at each
-owner's right-hand table corner; MCR, Sichuan and Taiwan melds begin on the owner's left
+owner's right-hand table corner. MCR, Sichuan mahjong and Taiwanese mahjong melds begin on the owner's left
 and extend right. Four rivers surround the compact central table device.
 One perspective camera projects the cloth, solid tiles and upright opponent hands.
 Long melds wrap into the owner's inner corner. Compact player plaques remain at
@@ -195,10 +195,10 @@ the table edges, and the rivers preserve six discards per row with sideways riic
 tiles aligned to the row's top edge. Draws animate into the hand and discards into the river. Tsumogiri is dimmed in the
 river while tedashi remains at normal brightness and follows a more pronounced discard
 arc. The central device uses point-stick icons for honba and riichi deposits.
-Minecraft GUI scale and window dimensions do not reflow this layout. The complete
+Minecraft GUI scale and window dimensions preserve this layout. The complete
 1280 × 800 canvas is uniformly scaled to the largest size that fits the window, with
 solid black letterbox or pillarbox bars around the unused area. Small windows keep the
-same proportions and rendering instead of switching to another layout.
+same proportions and rendering.
 It remains usable under ceilings and other world obstructions, with the same
 discard modes and mouse controls. Closing the overlay reveals the world again.
 Ordinary-table handling actions are available as buttons in immersive view.
@@ -207,18 +207,18 @@ Click the side drawer to manage point sticks, or use Point Sticks in immersive v
 The compact top bar shows points and essential table information; hover over a
 player card for detailed status. Player names have skin portraits; practice bots
 use a distinct robot portrait. The concealed run stays centered, with a separate
-drawn-tile slot. Riichi melds extend left from your right corner at hand depth; the hand
+drawn-tile slot. Riichi melds extend left from your right corner at hand depth. The hand
 shifts left only when the actual tiles need room. Chinese melds extend right from
 your left, and the hand shifts right only when an actual group needs room. The Camera settings include **Show discards on the table**.
 Hiding the rivers always keeps the remaining wall count visible, even when that
 information would otherwise be disabled. This is a local presentation preference
-and does not change game rules or replay records.
+with game rules and replay records maintained by the server.
 
 ## Automatic-table quick controls
 
-Riichi, MCR and Sichuan automatic-table matches offer auto win, no calls and
+Riichi, MCR and Sichuan mahjong automatic-table matches offer auto win, no calls and
 auto discard. Riichi additionally offers auto sort and auto kita in three-player games.
-The side arrow switches between localized initials and full labels; each option
+The side arrow switches between localized initials and full labels. Each option
 remains clickable and keyboard-accessible in either presentation. Filled or
 outlined state marks and hover labels identify the current setting. Each change
 waits for the server's acknowledgement. Preferences are private to your seat,
@@ -226,16 +226,16 @@ survive save/restore and reset each hand: sorting starts enabled and the other
 options start disabled. Immersive play places the same controls below your hand.
 Auto win takes priority. With auto win disabled, a qualifying win waits for your
 decision even if no calls or auto discard is enabled. MCR auto win requires eight
-non-flower fan and never declares a below-minimum win. Sichuan respects the
-server's passed-win restriction. No calls passes MCR chow/pung/kong and Sichuan
+non-flower fan. Sichuan mahjong respects the
+server's passed-win restriction. No calls passes MCR chow/pung/kong and Sichuan mahjong
 pung/kong reactions. Auto discard plays only the physical tile just drawn when
-that discard is legal; Sichuan waits when void-suit priority or SBR's bound first
+that discard is legal. Sichuan mahjong waits when void-suit priority or SBR's bound first
 discard requires another tile. Riichi auto kita uses legal north extractions
 before automatic discards, while a possible win always takes priority.
 
 ## Results and progression
 
-The following readout and reveal options describe Riichi; Taiwan progression and
+The following readout and reveal options describe Riichi. Taiwanese mahjong progression and
 privacy are described in its table section above.
 
 Results reveal yaku one at a time with the selected voice preset, followed by
@@ -245,7 +245,7 @@ when several players ron.
 Separate tabs show hand details, animated point changes and server-authoritative
 final standings. Large windows show point summaries alongside the hand;
 shorter windows keep the dedicated point-change tab available. **View table** hides the receipt without
-advancing play. The first **Skip wait** finishes the local readout; another
+advancing play. The first **Skip wait** finishes the local readout. Another
 **Skip wait** advances to the next stage. Otherwise, after seated players finish
 their readouts, the server leaves ten seconds to inspect the receipt before
 continuing. Final standings have a separate ten-second stage before returning to
@@ -257,9 +257,9 @@ independently of the game rules in the interaction settings.
 The lobby host can open **Time control** or run `/mchjong clock 20 5`: a shared
 20-second reserve per hand plus a fresh 5-second allowance for each turn or
 reaction. The move allowance is used first. Answered reactions stop their own
-clock; dealing and settlement do not consume time. The server enforces timeouts
+clock. Dealing and settlement leave the clock unchanged. The server enforces timeouts
 even with the overlay closed or a player disconnected: pass a reaction or discard
-the drawn tile (a legal hand tile after a call), never automatically claim a win.
+the drawn tile (a legal hand tile after a call). Winning requires a declaration.
 Drawn-tile discards and hand discards have distinct animation paths and cues.
 
 ## Invitations and audio

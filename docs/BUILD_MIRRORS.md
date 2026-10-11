@@ -1,6 +1,6 @@
 # Build download sources
 
-The loader subprojects use the following download sources:
+The loader subprojects use the following download sources.
 
 | Downloads | Source | Configuration |
 | --- | --- | --- |
@@ -28,9 +28,9 @@ Use JDK 21 and the checked-in Gradle wrapper:
 ./gradlew :fabric:downloadAssets --console=plain
 ```
 
-Existing caches can satisfy downloads without contacting a mirror. A successful
-cached build verifies configuration compatibility, not a complete fresh download.
-Check the exact artifact and version when diagnosing a repository failure.
+Existing caches may satisfy downloads locally. A successful cached build verifies
+configuration compatibility. Check a fresh download of the exact artifact and
+version when diagnosing a repository failure.
 
 ## Upstream resources
 

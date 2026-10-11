@@ -34,7 +34,7 @@ class ScoringBridgeTest {
                 dora, List.of("Richi", "Ippatsu"), rules);
             assertNotNull(score);
             assertEquals(dora == 2 ? 7700 : 32000, score.ron());
-            assertFalse(score.yaku().contains("Ippatsu"));
+            assertFalse(score.hasYaku("Ippatsu"));
         }
         assertTrue(base.ippatsu());
         assertTrue(base.kiriageMangan());
@@ -67,7 +67,29 @@ class ScoringBridgeTest {
         var hand = TestHands.tiles("1122m3344p5566s77z");
         var score = RiichiHandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0, 0, List.of(), RiichiPreset.TENHOU_4.config());
         assertNotNull(score); assertEquals(25, score.fu()); assertEquals(1600, score.ron());
-        assertTrue(score.yaku().contains("Chitoi"));
+        assertTrue(score.hasYaku("Chitoi"));
+        assertEquals(List.of(new HandScore.Yaku("Chitoi", 2, false)), score.yaku());
+    }
+
+    @Test void awardedValuesRetainOpenHandReductionAndSpecialYakumanValues() {
+        var hand = TestHands.tiles("123456m789m55z");
+        var meld = TestHands.meld(Meld.Type.SEQUENCE, "123m");
+        var open = RiichiHandAnalyzer.score(hand.subList(0, 10), List.of(meld), hand.getLast(), false,
+            1, 0, 0, List.of(), RiichiPreset.TENHOU_4.config());
+        assertNotNull(open);
+        assertEquals(2, open.yaku().stream().filter(y -> y.name().equals("Honitsu")).findFirst().orElseThrow().han());
+        assertEquals(1, open.yaku().stream().filter(y -> y.name().equals("Ittsu")).findFirst().orElseThrow().han());
+        assertEquals(open.han(), open.yaku().stream().mapToInt(HandScore.Yaku::han).sum());
+
+        var orphans = TestHands.tiles("19m19p19s1234567z1m");
+        for (var preset : List.of(RiichiPreset.MAHJONG_SOUL_4, RiichiPreset.TENHOU_4)) {
+            var score = RiichiHandAnalyzer.score(orphans.subList(0, 13), List.of(), orphans.getLast(), false,
+                1, 0, 8, List.of(), preset.config());
+            var award = score.yaku().getFirst();
+            assertTrue(award.yakuman());
+            assertEquals(preset.mahjongSoul() ? 26 : 13, award.han());
+            assertEquals(score.han(), award.han());
+        }
     }
 
     @Test void bonusesAloneDoNotSatisfyTheOneYakuMinimum() {
@@ -119,7 +141,7 @@ class ScoringBridgeTest {
             assertEquals(rules.kiriageMangan() ? 8000 : 7700, score.ron(), rules.name());
             var ippatsu = RiichiHandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0,
                 0, List.of("Richi", "Ippatsu"), rules.config());
-            assertEquals(rules.ippatsu(), ippatsu.yaku().contains("Ippatsu"));
+            assertEquals(rules.ippatsu(), ippatsu.hasYaku("Ippatsu"));
         }
     }
 
@@ -130,7 +152,7 @@ class ScoringBridgeTest {
                 dora, List.of("Renhou"), RiichiPreset.WRC.config());
             assertNotNull(score);
             assertEquals(dora == 7 ? 16000 : 8000, score.ron());
-            assertEquals(dora != 7, score.yaku().contains("Renhou"));
+            assertEquals(dora != 7, score.hasYaku("Renhou"));
             if (dora != 7) assertEquals(0, score.dora());
         }
     }

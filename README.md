@@ -1,6 +1,6 @@
 # MChjong
 
-[![Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml/badge.svg?branch=compat%2F1.20.1)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
+[![Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml/badge.svg?branch=main)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
 [![Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml/badge.svg)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 
 MChjong brings playable mahjong tables into Minecraft, with shared gameplay and
@@ -8,7 +8,7 @@ presentation across its supported Fabric, Forge and NeoForge builds.
 
 MChjong supports **three- and four-player riichi mahjong**, featuring
 Mahjong Soul, Tenhou, M.League, JPML A and WRC presets with configurable table
-options, plus four-player MCR, Sichuan and Taiwan on automatic tables. See
+options, plus four-player MCR, Sichuan mahjong and Taiwanese mahjong on automatic tables. See
 [Playing](docs/PLAYING.md) and [Rules and presets](docs/RULES.md) for details.
 
 ## Features
@@ -22,7 +22,7 @@ options, plus four-player MCR, Sichuan and Taiwan on automatic tables. See
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
 - Resource-pack tile designs and recorded voices
 - Optional Create production lines with efficient cutting, printing, dyeing and packing
-- Optional four-language Patchouli handbook with equipment, controls, complete Riichi/MCR/Sichuan/Taiwan rules, award indexes and replay guidance
+- Optional four-language Patchouli handbook with equipment, controls, complete Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong rules, award indexes and replay guidance
 
 ## Installation
 
@@ -36,22 +36,22 @@ For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 
 ## Compatibility
 
-Current build profiles support these Minecraft versions and loaders:
+Current build profiles support these Minecraft versions and loaders.
 
-| Minecraft | Development branch | Java runtime | Loader artifacts | Quilt | Taiwan |
+| Minecraft | Development branch | Java runtime | Loader artifacts | Quilt | Taiwanese mahjong |
 | --- | --- | --- | --- | --- | --- |
 | 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact | Playable |
 | 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact | Playable |
 | 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact | Playable |
 
-Taiwan is playable on all three profiles, with Pocket/Southern 144/136-tile
+Taiwanese mahjong is playable on all three profiles, with Pocket/Southern 144/136-tile
 stocks, complete four-wind matches, one built-in Bot option, native replays and
-convenience hints. All profiles embed the Maven Central release
-`top.skyeyefast:taiwan-mahjong:0.1.0`. See
-[Taiwan verification](docs/VERIFICATION.md#taiwan-hand-library) for the focused
+convenience hints. All three profiles declare `top.skyeyefast:taiwan-mahjong:0.2.0`
+for custom Riichi and Taiwanese mahjong award sets. See
+[Taiwanese mahjong verification](docs/VERIFICATION.md#taiwanese-mahjong-hand-library) for the focused
 artifact, build and client checks.
 
-Optional integrations are scoped to the loader named in each cell:
+Optional integrations are scoped to the loader named in each cell.
 
 | Integration | 1.21.1 | 1.20.1 | 26.1.2 |
 | --- | --- | --- | --- |
@@ -64,28 +64,30 @@ Optional integrations are scoped to the loader named in each cell:
 | Create workshop | NeoForge | Fabric, Forge | — |
 | Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 
-The table describes shipped adapters; installed-mod and gameplay validation are
+The table lists shipped adapters. Installed-mod and gameplay validation are
 recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
 Fabric uses Create Fabric for Create and Touhou Little Maid: Orihime for Touhou
-Little Maid; these ports share their original mod's row. Install the build for
-your Minecraft version and loader, not the original mod alongside its port.
-An em dash marks a profile without that integration. Quilt reuses Fabric adapters
+Little Maid. These ports share their original mod's row. Install the matching
+build for your Minecraft version and loader. Each port replaces the original mod
+in its profile. An em dash marks an unavailable integration. Quilt reuses Fabric adapters
 when the corresponding dependency also supports Quilt.
 
-The current build profile targets **Minecraft 1.20.1** and **Java 17**, using
-Fabric Loader 0.19.5 with Fabric API or Forge 47.4.23. Build with JDK 21.
+The 26.1.2 development builds come from `compat/26.1.2`; 1.20.1 builds come
+from `compat/1.20.1`. The 1.21.1 profile requires Fabric Loader 0.16.10 or newer
+with Fabric API, Forge 52.1.16 or newer, or NeoForge 21.1.250 or newer.
 
-The optional [Create workshop](docs/CREATE.md) supports Create 6.0.8 on Forge
-and Create Fabric 6.0.8.1, with shared JEI/EMI displays and Ponder tutorials.
-
-Optional Ponder tutorials cover placement, equipment and seated play. This profile
-targets Ponder 1.0.92 with its declared dependencies. Optional recipe
-viewers provide component-aware supply recipes. See
+On 1.21.1 and 1.20.1, optional Ponder tutorials cover placement, equipment and
+seated play. Optional recipe viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.
 
-On 1.20.1, Touhou Little Maid on Forge and Touhou Little Maid: Orihime on
-Fabric add a Mahjong task for maids. During work hours, a maid can take an empty
+The optional [Create workshop](docs/CREATE.md) automates supply production
+through Create on Minecraft 1.21.1 NeoForge and
+Minecraft 1.20.1 Fabric and Forge.
+
+On 1.21.1, Touhou Little Maid on NeoForge and Touhou Little Maid: Orihime on
+Fabric add a Mahjong task for maids. The 1.20.1 and 26.1.2 branches provide the
+corresponding integrations. During work hours, a maid can take an empty
 stool at her owner's table and play as a computer opponent.
 
 ## Getting started

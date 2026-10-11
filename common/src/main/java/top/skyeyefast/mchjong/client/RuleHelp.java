@@ -11,7 +11,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.SichuanRuleOption;

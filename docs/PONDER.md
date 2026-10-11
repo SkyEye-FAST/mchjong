@@ -38,7 +38,7 @@ Both loader descriptors declare it as optional; gameplay runs independently.
 The scenes manipulate furniture and equipment in Ponder's isolated display
 world, using MChjong's existing models and item data. Ponder's structure
 backup restores each scene on replay. The structure generator in
-`common/src/ponderData` uses Minecraft's native NBT encoder; each loader runs its
+`common/src/ponderData` uses Minecraft's native NBT encoder. Each loader runs its
 own `generatePonder` task before resource processing. Both loader JARs contain the same generated
 `assets/mchjong/ponder/table.nbt` resource.
 Both loaders also generate a taller `workshop.nbt` template, keeping
@@ -50,7 +50,7 @@ The release artifacts contain MChjong's integration code and tutorial resources.
 
 ## Development and validation
 
-Select the affected loader's tutorial check:
+Select the affected loader's tutorial check.
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PwithPonder=true -PsmokePonder=true --console=plain
@@ -65,13 +65,12 @@ For interactive development, add `-PwithPonder=true` to `:fabric:runClient` or
 `:forge:runClient`.
 
 For tutorial-only changes, add `-PsmokePonder=true` to the installed-Ponder smoke
-commands to run the existing registration, language, replay and visual checks
-without repeating gameplay tests. A recipe viewer selected with
+commands to run registration, language, replay and visual checks. A recipe viewer selected with
 `-PrecipeBrowser=jei` or `-PrecipeBrowser=emi` is also checked. Add
 `-PwithCreate=true` on either loader to include both workshop scenes and their five
 item entries. This profile checks twelve item entries and five storyboards.
 Use `-PsmokeBrowser=true -PrecipeBrowser=jei` or `emi` for recipe-viewer-only
-checks, without repeating Ponder playback or unrelated gameplay scenarios.
+checks.
 
 The installed-Ponder checks validate all seven item entries, three storyboards,
 representative Latin/CJK text, plugin reload, full playback, replay restoration and native

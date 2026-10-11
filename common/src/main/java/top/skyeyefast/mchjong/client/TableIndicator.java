@@ -30,7 +30,7 @@ public final class TableIndicator {
     /** The machine housing remains visible even before a match snapshot exists. */
     public static void renderStandby(PoseStack pose, MultiBufferSource buffers, int light) {
         housing(pose, buffers, light);
-        var vertices = buffers.getBuffer(TileRenderTypes.FACES);
+        var vertices = buffers.getBuffer(TileRenderTypes.BACKS);
         for (int seat = 0; seat < 4; seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
@@ -41,7 +41,7 @@ public final class TableIndicator {
     }
 
     private static void housing(PoseStack pose, MultiBufferSource buffers, int light) {
-        var vertices = buffers.getBuffer(TileRenderTypes.FACES);
+        var vertices = buffers.getBuffer(TileRenderTypes.BACKS);
         TileMesh.box(pose, vertices, (float) -HALF_WIDTH, (float) TableGeometry.FELT_Y, (float) -HALF_WIDTH,
             (float) HALF_WIDTH, SURFACE - .004f, (float) HALF_WIDTH, 0xff243c40, light);
         TileMesh.box(pose, vertices, -.25f, SURFACE - .004f, -.25f, .25f, SURFACE, .25f, 0xff101e23, light);
@@ -63,7 +63,7 @@ public final class TableIndicator {
     }
     private static void render(TableBoardState view, boolean playing, boolean winds, PoseStack pose, MultiBufferSource buffers, int light) {
         housing(pose, buffers, light);
-        var vertices = buffers.getBuffer(TileRenderTypes.FACES);
+        var vertices = buffers.getBuffer(TileRenderTypes.BACKS);
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));

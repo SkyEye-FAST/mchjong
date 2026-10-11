@@ -17,20 +17,20 @@ public record RiichiViewPayload(BlockPos pos, String view, boolean open, boolean
     }
     public static final ResourceLocation TYPE = MahjongContent.id("riichi_view");
     public static RiichiViewPayload decode(FriendlyByteBuf buffer) {
-        return new RiichiViewPayload(buffer.readBlockPos(), buffer.readUtf(32767), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
+        return new RiichiViewPayload(buffer.readBlockPos(), buffer.readUtf(524288), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
             TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.engine.TableRoomView.class),
-            TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.engine.RiichiRoomSettings.class),
+            TableNetworking.JSON.fromJson(buffer.readUtf(262144), top.skyeyefast.mchjong.engine.RiichiRoomSettings.class),
             TableNetworking.JSON.fromJson(buffer.readUtf(2048), top.skyeyefast.mchjong.world.BotServiceState.class),
             TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.world.WorldSettings.Policy.class),
             buffer.readEnum(MahjongVariant.class));
     }
     @Override public void write(FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(this.pos()); buffer.writeUtf(this.view(), 32767); buffer.writeBoolean(this.open());
+        buffer.writeBlockPos(this.pos()); buffer.writeUtf(this.view(), 524288); buffer.writeBoolean(this.open());
         buffer.writeBoolean(this.controlReply());
         buffer.writeBoolean(this.leaveDecision());
         buffer.writeByte(this.redOptions());
         buffer.writeUtf(TableNetworking.JSON.toJson(this.room()), 8192);
-        buffer.writeUtf(TableNetworking.JSON.toJson(this.settings()), 8192);
+        buffer.writeUtf(TableNetworking.JSON.toJson(this.settings()), 262144);
         buffer.writeUtf(TableNetworking.JSON.toJson(this.botService()), 2048);
         buffer.writeUtf(TableNetworking.JSON.toJson(this.world()), 8192);
         buffer.writeEnum(this.variant());

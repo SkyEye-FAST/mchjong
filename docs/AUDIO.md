@@ -21,8 +21,8 @@ Minecraft resource pack's `mchjong:voice.*` events.
 
 `MahjongSounds` registers the `mchjong:table.<name>` events below. `sounds.json`
 references project-owned mono Ogg Vorbis files at `sounds/table/<name>.ogg`.
-Riichi, MCR and Sichuan share the physical sound vocabulary. Repeated/cosmetic
-snapshots stay silent; revealing a concealed kong is not another kong sound.
+Riichi, MCR and Sichuan mahjong share the physical sound vocabulary. Repeated/cosmetic
+snapshots stay silent. Revealing a concealed kong is not another kong sound.
 Native Minecraft widgets retain their normal click feedback.
 
 | Event suffix | Meaning | Source |
@@ -34,7 +34,7 @@ Native Minecraft widgets retain their normal click feedback.
 | `riichi_stick` | The declaration stick lands | Table / Blocks |
 | `dice` | Dice roll and settle | Table / Blocks |
 | `table_mechanical` | Automatic-table opening/build motion | Table / Blocks |
-| `score_reveal` | Winner points or MCR/Sichuan receipt appears | UI / Master |
+| `score_reveal` | Winner points or MCR and Sichuan mahjong receipt appears | UI / Master |
 | `grade_reveal` | Applicable Riichi grade appears with its voice | UI / Master |
 | `ui_accent` | Local turn attention | UI / Master |
 | `countdown` | Last-five-seconds warning | UI / Master |
@@ -62,21 +62,21 @@ winner follows explicit `YAKU → POINTS → LIMIT → NEXT_WINNER` presentation
 After the last yaku, at least 300 ms of silence precedes points and `score_reveal`.
 Points hold alone for 750 ms before the applicable grade recording and
 `grade_reveal`. Ordinary hands omit LIMIT entirely and finish after the points
-hold; grade names are not played as a ladder. Multiple winners complete these
+hold. Each limit hand plays its applicable grade recording. Multiple winners complete these
 stages independently in order, ending with `COMPLETE`. Missing
-recordings and muted voices retain a short visual cadence rather than blocking
-the receipt. Sound volume and animation settings remain independent.
+recordings and muted voices preserve a short visual cadence while the receipt
+continues. Sound volume and animation settings remain independent.
 
 Resizing and cosmetic table updates retain progress. Selecting another winner,
 changing result pages, hiding or closing the receipt completes the local readout
 and stops pending recordings. The first Skip wait during a readout reveals the
 full receipt; pressing it again sends the server's stage-skip action. Once all
 seated players finish, the server leaves a ten-second reading period. A bounded
-fallback prevents unavailable clients from holding the table indefinitely.
+fallback releases the table when a client remains unavailable.
 The match-end recording belongs to final standings, after the hand readout.
 
-The mod does not bundle character recordings or invoke device text-to-speech.
-The default events remain silent until a resource pack supplies recordings.
+Resource packs supply character recordings. The default events stay silent until
+recordings are installed.
 
 ## ZIP voice presets
 
@@ -86,7 +86,7 @@ joining players and refreshes online players when the archives change. Selecting
 a server voice shares that choice so other players hear the speaker's recordings.
 A client-only ZIP affects that player's playback. The selector separates Server
 and Local presets, marks built-in entries in Server, and shows names and IDs in tooltips. Each ZIP
-contains only voice presets and may contain several of them:
+contains one or more voice presets.
 
 ```text
 my_pack/announcer/preset.toml
@@ -95,7 +95,7 @@ my_pack/announcer/voices/ron.ogg
 ```
 
 The folder pair defines the ID `my_pack:announcer`. The manifest supplies a
-display name:
+display name.
 
 ```toml
 name = "Announcer"

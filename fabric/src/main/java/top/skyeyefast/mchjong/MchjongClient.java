@@ -49,6 +49,10 @@ public final class MchjongClient implements ClientModInitializer {
         for (var item : top.skyeyefast.mchjong.client.MahjongItemRenderer.items())
             net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item, itemRenderer::renderByItem);
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.YakuSetsPayload.TYPE, (client, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.YakuSetsPayload.decode(buffer);
+            client.execute(() -> top.skyeyefast.mchjong.client.ClientYakuSets.receive(payload));
+        });
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanViewPayload.TYPE, (client, handler, buffer, sender) -> {
             var payload = top.skyeyefast.mchjong.network.TaiwanViewPayload.decode(buffer);
             client.execute(() -> top.skyeyefast.mchjong.client.ClientTaiwanNetworking.receive(payload));
