@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 
 /** Bounded Taiwan JSON boundaries. Gson and the private live game never cross the public API. */
 public final class TaiwanCodec {
-    public static final int MAX_RULES_CHARS = 65_536;
-    private static final int MAX_CHARS = 131_072;
+    public static final int MAX_RULES_CHARS = 262_144;
+    private static final int MAX_CHARS = 524_288;
     private static final int MAX_SESSION_CHARS = 8 * 1024 * 1024;
     private static final Gson JSON = new GsonBuilder().disableJdkUnsafe().serializeNulls().create();
 

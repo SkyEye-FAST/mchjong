@@ -12,6 +12,8 @@ import top.skyeyefast.mchjong.client.RiichiRulesScreen;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.YakuSet;
+import top.skyeyefast.mchjong.engine.YakuSelection;
+import top.skyeyefast.mchjong.network.YakuSelectionRequest;
 import top.skyeyefast.mchjong.network.RiichiRulesPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -36,7 +38,7 @@ final class CustomYakuSmoke {
         if (++ticks > 1000) throw new IllegalStateException("Custom yaku smoke timed out at " + stage);
         if (pending != null && pending.isCompletedExceptionally()) pending.join();
         var server = client.getSingleplayerServer();
-        var set = taiwan() ? table.clientTaiwanSettings().rules().yakuSet() : table.clientRiichiSettings().rules().yakuSet();
+        var set = taiwan() ? table.clientTaiwanSettings().rules().yakuSelection() : table.clientRiichiSettings().rules().yakuSelection();
         if (stage == 0) {
             pending = server.submit(() -> {
                 try {
@@ -57,14 +59,28 @@ final class CustomYakuSmoke {
             selected = ClientYakuSets.available(variant).stream().filter(s -> s.id().equals("smoke:custom")).findFirst().orElseThrow();
             openRules(client, table);
             AutomationControlsSmoke.checkBounds(client);
-            click(client, Component.translatable("rules.mchjong.yaku_set.select", ClientYakuSets.text(set.name())).getString());
+            var draft = set;
+            if (!taiwan()) {
+                click(client, toggle(Component.translatable("rules.mchjong.yaku_set.ancient"), false));
+                draft = draft.withSet(top.skyeyefast.mchjong.engine.BuiltinYakuSets.MAHJONG_SOUL_ANCIENT, true);
+                click(client, ClientYakuSets.selectionLabel(draft).getString());
+                clickAward(client, toggle(ClientYakuSets.text(top.skyeyefast.mchjong.engine.BuiltinYakuSets.MAHJONG_SOUL_ANCIENT.awards().getFirst().name()), true));
+                click(client, Component.translatable("gui.back").getString());
+                click(client, Component.translatable("settings.mchjong.toggle", Component.translatable("rules.mchjong.yaku_set.ancient"),
+                    Component.translatable("rules.mchjong.yaku_set.partial")).getString());
+            }
+            click(client, ClientYakuSets.selectionLabel(draft).getString());
             AutomationControlsSmoke.checkBounds(client);
-            click(client, ClientYakuSets.text(selected.name()).getString());
+            String nativeId = YakuSelection.nativeIds(variant).stream().sorted().findFirst().orElseThrow();
+            click(client, toggle(nativeName(nativeId), true));
+            clickAward(client, toggle(ClientYakuSets.text(selected.awards().getFirst().name()), false));
+            click(client, Component.translatable("gui.back").getString());
             require(taiwan() ? client.screen instanceof top.skyeyefast.mchjong.client.TaiwanRulesScreen : client.screen instanceof RiichiRulesScreen, "Yaku selection lost its parent draft");
-            require(set.isEmpty(), "Selecting a draft changed server rules before Apply");
+            require(set.isDefault(), "Selecting a draft changed server rules before Apply");
             apply(client);
             stage = 2;
-        } else if (stage == 2 && lobby(client) && set.equals(selected)) {
+        } else if (stage == 2 && lobby(client) && set.sets().contains(selected) && set.disabledNative().size() == 1) {
+            require(taiwan() || set.enabledCustom().size() == 15, "Ancient preset and data-pack award did not combine");
             pending = server.submit(() -> {
                 try { Files.writeString(definition, json(3)); }
                 catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
@@ -73,7 +89,7 @@ final class CustomYakuSmoke {
             stage = 3;
         } else if (stage == 3 && pending.isDone() && ClientYakuSets.available(variant).stream()
             .anyMatch(s -> s.id().equals("smoke:custom") && !s.equals(selected))) {
-            require(set.equals(selected), "Reload changed a table's frozen award definitions");
+            require(set.sets().contains(selected), "Reload changed a table's frozen award definitions");
             var id = client.player.getUUID(); var pos = table.getBlockPos();
             pending = server.submit(() -> {
                 var player = server.getPlayerList().getPlayer(id);
@@ -84,7 +100,7 @@ final class CustomYakuSmoke {
                     actual.configureTaiwanRules(player, new top.skyeyefast.mchjong.network.TaiwanRulesPayload(pos, session.tableId(), session.incarnation(), token, before));
                     require(session.roomSettings().rules().equals(before) && session.decision() == token, "Stale Taiwan award digest was accepted");
                     actual.configureTaiwanRules(player, new top.skyeyefast.mchjong.network.TaiwanRulesPayload(pos, session.tableId(), session.incarnation(), token,
-                        before.withYakuSet(YakuSet.empty(variant)), "smoke:forged", "0".repeat(64)));
+                        before.withYakuSelection(YakuSelection.defaults(variant)), forged()));
                     require(session.roomSettings().rules().equals(before) && session.decision() == token, "Unknown Taiwan award set was accepted");
                     return;
                 }
@@ -92,17 +108,18 @@ final class CustomYakuSmoke {
                 var before = session.rules(); long token = session.decision();
                 actual.configureRules(player, new RiichiRulesPayload(pos, session.tableId(), token, before));
                 require(session.rules().equals(before) && session.decision() == token, "Stale award digest was accepted");
-                actual.configureRules(player, new RiichiRulesPayload(pos, session.tableId(), token, before.preset(), before.settings(), "smoke:forged", "0".repeat(64)));
+                actual.configureRules(player, new RiichiRulesPayload(pos, session.tableId(), token, before.preset(), before.settings(), forged()));
                 require(session.rules().equals(before) && session.decision() == token, "Unknown award set was accepted");
             });
             stage = 4;
         } else if (stage == 4 && pending.isDone()) {
             openRules(client, table);
-            click(client, Component.translatable("rules.mchjong.yaku_set.select", ClientYakuSets.text(selected.name())).getString());
-            click(client, ClientYakuSets.text(YakuSet.empty(variant).name()).getString());
+            click(client, ClientYakuSets.selectionLabel(set).getString());
+            click(client, Component.translatable("rules.mchjong.yaku_set.defaults").getString());
+            click(client, Component.translatable("gui.back").getString());
             apply(client);
             stage = 5;
-        } else if (stage == 5 && lobby(client) && set.isEmpty()) {
+        } else if (stage == 5 && lobby(client) && set.isDefault()) {
             pending = server.submit(() -> server.reloadResources(originalPacks)).thenCompose(value -> value);
             stage = 6;
         } else if (stage == 6 && pending.isDone() && ClientYakuSets.available(variant).stream().noneMatch(s -> s.id().equals("smoke:custom"))) {
@@ -120,6 +137,25 @@ final class CustomYakuSmoke {
         AbstractWidget button = LobbySmoke.find(client, label);
         require(button.active, "Disabled custom yaku control: " + label);
         client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+    }
+    private static String toggle(Component name, boolean enabled) {
+        return Component.translatable("settings.mchjong.toggle", name, Component.translatable(enabled ? "rules.mchjong.yes" : "rules.mchjong.no")).getString();
+    }
+    private static Component nativeName(String id) {
+        return Component.translatable(id.startsWith("mchjong:riichi/") ? "yaku.mchjong." + id.substring("mchjong:riichi/".length())
+            : "taiwan.mchjong.pattern." + id.substring("mchjong:taiwan/".length()));
+    }
+    private static void clickAward(Minecraft client, String label) {
+        for (int page = 0; page < 100; page++) {
+            if (client.screen.children().stream().anyMatch(c -> c instanceof AbstractWidget w && w.getMessage().getString().equals(label))) {
+                click(client, label); return;
+            }
+            click(client, "›");
+        }
+        throw new IllegalStateException("Missing custom award: " + label);
+    }
+    private static YakuSelectionRequest forged() {
+        return new YakuSelectionRequest(java.util.Map.of("smoke:forged", new YakuSelectionRequest.Choice("0".repeat(64), 1)), java.util.Set.of());
     }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

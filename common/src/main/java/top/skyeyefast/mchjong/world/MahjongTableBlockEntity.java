@@ -827,8 +827,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public void configureRules(ServerPlayer player, top.skyeyefast.mchjong.network.RiichiRulesPayload payload) {
         var current = participantSession(player);
-        var set = top.skyeyefast.mchjong.config.YakuSets.find(payload.yakuSetId(), top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
-        var rules = set == null || !top.skyeyefast.mchjong.engine.YakuSetCodec.digest(set).equals(payload.yakuSetDigest()) ? null : payload.rules(set);
+        var selection = payload.selection().resolve(MahjongVariant.RIICHI, id -> top.skyeyefast.mchjong.config.YakuSets.find(id, MahjongVariant.RIICHI));
+        var rules = selection == null ? null : payload.rules(selection);
         if (current != null && current.tableId().equals(payload.tableId())
             && rules != null && equipment.canSupplyReds(rules.sanma(), rules.redFives())
             && current.configureRules(player.getUUID(), payload.decision(), rules)) {
@@ -868,10 +868,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var session = serverSession() instanceof TaiwanSession taiwan ? taiwan : null;
         if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
             || authorizedViewer(player) == null) return;
-        var set = top.skyeyefast.mchjong.config.YakuSets.find(payload.yakuSetId(), MahjongVariant.TAIWAN);
-        if (set != null && top.skyeyefast.mchjong.engine.YakuSetCodec.digest(set).equals(payload.yakuSetDigest())
+        var selection = payload.selection().resolve(MahjongVariant.TAIWAN, id -> top.skyeyefast.mchjong.config.YakuSets.find(id, MahjongVariant.TAIWAN));
+        if (selection != null
             && session.tableId().equals(payload.tableId()) && session.incarnation().equals(payload.incarnation())
-            && session.configureRules(player.getUUID(), payload.decision(), payload.rules(set).restore())) {
+            && session.configureRules(player.getUUID(), payload.decision(), payload.rules(selection).restore())) {
             serverHost();
             setChanged();
             sentRevision = -1;

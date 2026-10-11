@@ -15,7 +15,7 @@ class TaiwanCustomYakuTest {
         val r = TaiwanPreset.POCKET_COMMON.rules()
         return TaiwanRules(r.name, if (zero) r.values.mapValues { 0 } else r.values, r.exclusions, r.sources,
             r.flowers, r.flowerSets, r.pinfu, r.replacements, cap, r.reserve, r.payment,
-            YakuSet("house:taiwan", MahjongVariant.TAIWAN, text, awards.toList()))
+            YakuSelection.of(YakuSet("house:taiwan", MahjongVariant.TAIWAN, text, awards.toList())))
     }
     private fun physical(kinds: List<Int>): List<Int> {
         val counts = IntArray(34)
@@ -28,6 +28,26 @@ class TaiwanCustomYakuTest {
     private val ambiguous = physical(listOf(0,0,0,1,1,1,2,2,2,12,13,14,24,25,26,31,31))
     private fun score(hand: List<Int>, rules: TaiwanRules, self: Boolean = false) =
         TaiwanHandAnalyzer.score(hand.dropLast(1), emptyList(), 0, hand.last(), context(self), rules)!!
+
+    @Test fun nativeSwitchesApplyBeforeExclusionsAndDisableFlowerEvents() {
+        val base = TaiwanPreset.POCKET_COMMON.rules()
+        val selection = base.yakuSelection.withNative("mchjong:taiwan/concealed_self_draw", false)
+            .withNative("mchjong:taiwan/eight_flowers", false).withNative("mchjong:taiwan/seven_robs_one", false)
+        val selected = TaiwanGameState.Rules.of(base).withYakuSelection(selection).restore()
+        val result = score(ambiguous, selected, true)
+        assertFalse(result.awards.any { it.nativePattern() == TaiwanRules.Pattern.CONCEALED_SELF_DRAW })
+        assertTrue(result.awards.any { it.nativePattern() == TaiwanRules.Pattern.CONCEALED })
+        assertTrue(result.awards.any { it.nativePattern() == TaiwanRules.Pattern.SELF_DRAW })
+        assertNull(TaiwanHandAnalyzer.flowerWin(ambiguous.dropLast(1), emptyList(), 0, Tile.ABSENT,
+            context(true, FlowerTile.entries.toSet()), TaiwanHandAnalyzer.FlowerEvent.EIGHT_AFTER_INITIAL_REPLACEMENT, selected))
+        val game = TaiwanFixtures.fixture(mapOf(0 to listOf(30), 1 to TaiwanFixtures.wait.take(10) + (136..141), 2 to listOf(143)),
+            draws = listOf(142), tail = TaiwanFixtures.wait.drop(10) + listOf(32, 33), rules = selected)
+        val turn = game.decisions().single()
+        game.submit(0, turn.token, turn.actions.indexOfFirst { it.type == TaiwanAction.Type.DISCARD && it.tiles.any { t -> Tile.kind(t) == 30 } })
+        game.decisions().toList().forEach { d -> game.submit(d.seat, d.token, d.actions.indexOfFirst { it.type == TaiwanAction.Type.PASS }) }
+        assertNull(game.settlement)
+        assertEquals(selection, TaiwanCodec.restore(TaiwanCodec.save(game)).save().rules().yakuSelection())
+    }
 
     @Test fun awardsAreAppliedBeforeSelectingDecompositionAndCap() {
         val base = score(ambiguous, TaiwanPreset.POCKET_COMMON.rules())

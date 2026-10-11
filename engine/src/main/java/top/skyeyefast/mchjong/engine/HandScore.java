@@ -6,7 +6,7 @@ public record HandScore(int han, int fu, int yakuman, int ron, int tsumoDealer, 
                         List<Yaku> yaku, int dora) {
     public HandScore {
         yaku = List.copyOf(yaku);
-        if (yaku.size() > 64 || yaku.stream().map(Yaku::name).distinct().count() != yaku.size())
+        if (yaku.size() > YakuSelection.MAX_AWARDS || yaku.stream().map(Yaku::name).distinct().count() != yaku.size())
             throw new IllegalArgumentException("Invalid scored yaku list");
     }
 

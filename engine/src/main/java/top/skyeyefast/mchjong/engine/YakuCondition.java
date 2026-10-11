@@ -7,9 +7,9 @@ import java.util.Set;
 
 /** Bounded condition tree. Group predicates always apply to one interpretation, never merged decompositions. */
 public record YakuCondition(Type type, List<YakuCondition> children, List<String> values, int min, int max) {
-    public enum Type { ALL, ANY, NOT, SHAPE, CLOSED, FLAGS, CATEGORIES, TILES, GROUPS, PAIR, WAIT, REDS, FLOWERS, SAME_SEQUENCES, THREE_SUIT_SEQUENCES }
+    public enum Type { ALL, ANY, NOT, SHAPE, CLOSED, FLAGS, CATEGORIES, TILES, GROUPS, PAIR, WAIT, REDS, FLOWERS, SAME_SEQUENCES, THREE_SUIT_SEQUENCES, WINNING_TILE, OPEN_MELDS, CONSECUTIVE_TRIPLETS }
     private static final Set<String> COMMON_FLAGS = Set.of("self_draw", "discard", "robbing_kong", "last_draw", "last_discard", "kong_replacement", "heavenly_win", "earthly_win", "human_win");
-    private static final Set<String> RIICHI_FLAGS = Set.of("riichi", "double_riichi", "ippatsu");
+    private static final Set<String> RIICHI_FLAGS = Set.of("riichi", "double_riichi", "ippatsu", "riichi_discard", "after_kong_discard");
     private static final Set<String> TAIWAN_FLAGS = Set.of("ready", "heavenly_ready", "earthly_ready", "flower_replacement");
 
     public YakuCondition {
@@ -38,7 +38,7 @@ public record YakuCondition(Type type, List<YakuCondition> children, List<String
                 allowed(values, allowed, false);
             }
             case CATEGORIES -> allowed(values, Set.of("man", "pin", "sou", "wind", "dragon"), false);
-            case TILES, PAIR -> { if (values.isEmpty()) throw new IllegalArgumentException("Missing tile kinds"); values.forEach(Tile::parseKind); }
+            case TILES, PAIR, WINNING_TILE -> { if (values.isEmpty()) throw new IllegalArgumentException("Missing tile kinds"); values.forEach(Tile::parseKind); }
             case GROUPS -> {
                 if (values.size() != 3) throw new IllegalArgumentException("Group filters require type, concealment and kind");
                 allowed(List.of(values.get(0)), Set.of("any", "sequence", "triplet", "quad"), true);
@@ -46,14 +46,14 @@ public record YakuCondition(Type type, List<YakuCondition> children, List<String
                 if (!values.get(2).equals("*")) Tile.parseKind(values.get(2));
             }
             case WAIT -> allowed(values, Set.of("pair", "two_sided", "closed", "edge", "triplet", "special"), false);
-            case REDS, FLOWERS, SAME_SEQUENCES, THREE_SUIT_SEQUENCES -> {
+            case REDS, FLOWERS, SAME_SEQUENCES, THREE_SUIT_SEQUENCES, OPEN_MELDS, CONSECUTIVE_TRIPLETS -> {
                 if (!values.isEmpty() || type == Type.REDS && variant != MahjongVariant.RIICHI
                     || type == Type.FLOWERS && variant != MahjongVariant.TAIWAN)
                     throw new IllegalArgumentException("Unavailable condition for variant");
             }
             default -> throw new IllegalArgumentException("Unsupported condition");
         }
-        boolean count = switch (type) { case TILES, GROUPS, REDS, FLOWERS, SAME_SEQUENCES -> true; default -> false; };
+        boolean count = switch (type) { case TILES, GROUPS, REDS, FLOWERS, SAME_SEQUENCES, OPEN_MELDS -> true; default -> false; };
         if (!count && (min != 0 || max != 0)) throw new IllegalArgumentException("Non-count condition has bounds");
     }
 
@@ -78,6 +78,10 @@ public record YakuCondition(Type type, List<YakuCondition> children, List<String
             }));
             case TILES -> range(f.kinds().stream().filter(k -> values.stream().anyMatch(v -> Tile.parseKind(v) == k)).count());
             case PAIR -> f.pair() >= 0 && values.stream().anyMatch(v -> Tile.parseKind(v) == f.pair());
+            case WINNING_TILE -> values.stream().anyMatch(v -> Tile.parseKind(v) == f.winningKind());
+            case OPEN_MELDS -> range(f.openMelds());
+            case CONSECUTIVE_TRIPLETS -> java.util.stream.IntStream.range(0, 27).filter(k -> k % 9 <= 6).anyMatch(first ->
+                java.util.stream.IntStream.range(first, first + 3).allMatch(k -> f.groups().stream().anyMatch(g -> !g.type().equals("sequence") && g.kind() == k)));
             case WAIT -> values.contains(f.waitShape());
             case GROUPS -> range(f.groups().stream().filter(g -> (values.get(0).equals("any") || g.type().equals(values.get(0)))
                 && (values.get(1).equals("all") || g.concealed() == values.get(1).equals("concealed"))

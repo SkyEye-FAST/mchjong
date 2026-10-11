@@ -154,8 +154,13 @@ internal object LegalActions {
             if (player.firstTurn && game.uninterrupted) extra += if (seat == game.dealer) "Tenhou" else "Chihou"
         } else if (game.pending?.type() == ADDED_KAN) extra += "Chankan"
         else if (game.pending == null && game.wall.remaining() == 0) extra += "Houtei"
-        if (!tsumo && game.rules.renhouMangan() && seat != game.dealer && player.firstTurn && game.uninterrupted) {
+        if (!tsumo && seat != game.dealer && player.firstTurn && game.uninterrupted) {
             extra += "Renhou"
+        }
+        if (!tsumo && game.pending == null) {
+            val discarder = game.players[game.turn]
+            if (discarder.pendingRiichi) extra += "RiichiDiscard"
+            if (discarder.rinshan) extra += "AfterKongDiscard"
         }
         val dora = HandBonuses.count(
             player.hand, player.melds, player.norths, tile,

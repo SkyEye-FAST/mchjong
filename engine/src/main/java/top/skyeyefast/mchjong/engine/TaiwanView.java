@@ -48,9 +48,9 @@ public record TaiwanView(long revision, long decision, TaiwanGameState.Rules rul
                 throw new IllegalArgumentException("Duplicate public Taiwan award");
             for (var award : awards) {
                 var nativePattern = award.nativePattern();
-                var custom = rules.yakuSet().find(award.id());
+                var custom = rules.yakuSelection().find(award.id());
                 boolean valid = nativePattern != null
-                    ? award.tai() == rules.values().get(nativePattern) * award.units() && Objects.equals(award.source(), rules.sources().get(nativePattern))
+                    ? rules.yakuSelection().enabled(award.id()) && award.tai() == rules.values().get(nativePattern) * award.units() && Objects.equals(award.source(), rules.sources().get(nativePattern))
                     : custom != null && award.units() == 1 && award.tai() == custom.reward().closed() && award.source() == null;
                 if (!valid) throw new IllegalArgumentException("Invalid public Taiwan award");
             }

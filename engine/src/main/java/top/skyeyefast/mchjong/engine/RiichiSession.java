@@ -250,7 +250,7 @@ public final class RiichiSession extends TableSession {
                         TimeControl timeControl, PlayerHandVisibility playerHandVisibility,
                         boolean openHands, List<ReplayMatch> archiveQueue,
                         Map<UUID, Integer> pendingExperience, RiichiGame.State game) {
-        public static final int FORMAT = 5;
+        public static final int FORMAT = 6;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported Riichi session format");

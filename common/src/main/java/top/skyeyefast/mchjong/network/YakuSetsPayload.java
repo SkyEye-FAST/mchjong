@@ -11,12 +11,15 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Public definitions available for new table configurations. Active rules retain their own snapshots. */
 public record YakuSetsPayload(List<YakuSet> sets) implements CustomPacketPayload {
-    public static final int MAX_SETS = 32, MAX_TOTAL_CHARS = 262144;
+    public static final int MAX_SETS = top.skyeyefast.mchjong.engine.YakuSelection.MAX_SETS,
+        MAX_TOTAL_CHARS = top.skyeyefast.mchjong.engine.YakuSelection.MAX_DEFINITION_CHARS;
     public YakuSetsPayload {
         sets = List.copyOf(sets);
-        if (sets.size() > MAX_SETS || sets.stream().anyMatch(YakuSet::isEmpty)
+        if (sets.size() > MAX_SETS
             || sets.stream().map(YakuSet::id).distinct().count() != sets.size()
-            || sets.stream().mapToInt(s -> YakuSetCodec.encode(s).length()).sum() > MAX_TOTAL_CHARS)
+            || sets.stream().flatMap(s -> s.awards().stream()).map(YakuSet.Definition::id).distinct().count() != sets.stream().mapToInt(s -> s.awards().size()).sum()
+            || sets.stream().mapToInt(s -> YakuSetCodec.encode(s).length()).sum() > MAX_TOTAL_CHARS
+            || sets.stream().mapToInt(s -> YakuSetCodec.encode(s).getBytes(java.nio.charset.StandardCharsets.UTF_8).length).sum() > top.skyeyefast.mchjong.engine.YakuSelection.MAX_DEFINITION_BYTES)
             throw new IllegalArgumentException("Invalid custom award catalog");
     }
     public static final Type<YakuSetsPayload> TYPE = new Type<>(MahjongContent.id("yaku_sets"));

@@ -42,6 +42,6 @@ internal object TaiwanYakuFacts {
         }
         val owned = complete + melds.flatMap { it.tiles() }
         return YakuFacts("regular", melds.all { it.closed() }, owned.map(Tile::kind), groups, score.shape.pair,
-            wait, flags, owned.count(Tile::red), c.flowers.size)
+            wait, flags, owned.count(Tile::red), c.flowers.size, Tile.kind(winningTile), melds.count { !it.closed() })
     }
 }

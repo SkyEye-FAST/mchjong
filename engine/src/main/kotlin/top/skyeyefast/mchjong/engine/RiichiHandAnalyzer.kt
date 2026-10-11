@@ -155,7 +155,7 @@ object RiichiHandAnalyzer {
         val options = options(rules)
         val yakus = Yakus(options)
         val renhou = rules.renhouMangan() && !tsumo && selfWind != 0 && extra.contains("Renhou")
-        val extraYaku = extra.filter { it != "Renhou" && (it != "Ippatsu" || rules.ippatsu()) }.map(yakus::getYaku).toSet()
+        val extraYaku = extra.filter { it !in setOf("Renhou", "RiichiDiscard", "AfterKongDiscard") && (it != "Ippatsu" || rules.ippatsu()) }.map(yakus::getYaku).toSet()
         val agari = LibraryTile[Tile.notation(Tile.kind(winningTile))]
         val self = Wind.entries[selfWind]
         val round = Wind.entries[roundWind]
@@ -167,9 +167,12 @@ object RiichiHandAnalyzer {
         }.mapNotNull { pattern ->
             val result = MahjongUtilsInterop.score(pattern, dora, extraYaku, options)
             val closed = melds.all(Meld::closed)
-            val matched = if (rules.yakuSet().isEmpty()) emptyList() else rules.yakuSet().matching(RiichiYakuFacts.of(pattern, complete, melds, extra))
+            val selection = rules.yakuSelection()
+            val facts = if (selection.isDefault()) null else RiichiYakuFacts.of(pattern, complete, melds, extra)
+            val matched = if (facts == null) emptyList() else selection.matching(facts)
             val excluded = YakuSet.excluded(matched)
-            val native = result.yaku.filter { YakuCatalog.awardId(it.name) !in excluded }
+            val native = (if (facts == null) result.yaku else RiichiNativeAwards.find(pattern, facts, yakus, extraYaku, selection))
+                .filter { YakuCatalog.awardId(it.name) !in excluded }
                 .map { HandScore.Yaku(it.name, it.han - if (closed) 0 else it.furoLoss, it.isYakuman) }
             val custom = matched.filter { it.id() !in excluded }.map {
                 val yakuman = it.reward().type() == YakuSet.RewardType.YAKUMAN

@@ -14,7 +14,7 @@ private val ReplayMatch.redFives: RedFives get() = requireNotNull(riichi).redFiv
  */
 object TenhouReplay {
     @JvmStatic
-    fun supports(match: ReplayMatch): Boolean = match.variant == MahjongVariant.RIICHI && match.rules.yakuSet().isEmpty()
+    fun supports(match: ReplayMatch): Boolean = match.variant == MahjongVariant.RIICHI && match.rules.yakuSelection().isDefault()
 
     @JvmStatic
     fun export(match: ReplayMatch): Map<String, Any> {

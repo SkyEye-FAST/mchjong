@@ -9,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(20)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(21)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(VoiceChoicePayload.TYPE, VoiceChoicePayload.CODEC, (payload, context) -> {

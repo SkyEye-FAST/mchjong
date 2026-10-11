@@ -11,7 +11,7 @@ public record TaiwanGameState(int format, Rules rules, Opening opening, int roun
                               List<Player> players, int drawn, int turnDrawn, TaiwanWinContext.DrawOrigin origin,
                               Set<Integer> turnWaits, int calls, int draws, Offer offer, List<Reply> replies,
                               Outcome outcome, Result settlement) {
-    public static final int FORMAT = 2;
+    public static final int FORMAT = 3;
     public TaiwanGameState {
         if (format != FORMAT || roundWind < Tile.EAST || roundWind > Tile.NORTH || continuation < 0 || continuation > 1_000_000
             || revision < 1 || revision >= Long.MAX_VALUE - 1 || decision < 1 || decision >= Long.MAX_VALUE - 1
@@ -27,17 +27,17 @@ public record TaiwanGameState(int format, Rules rules, Opening opening, int roun
                         Map<TaiwanRules.Pattern, Set<TaiwanRules.Pattern>> exclusions,
                         Map<TaiwanRules.Pattern, TaiwanRules.Source> sources, TaiwanRules.Flowers flowers,
                         TaiwanRules.FlowerSets flowerSets, TaiwanRules.Pinfu pinfu, TaiwanRules.Replacements replacements,
-                        Integer taiLimit, TaiwanRules.Reserve reserve, TaiwanRules.Payment payment, YakuSet yakuSet) {
+                        Integer taiLimit, TaiwanRules.Reserve reserve, TaiwanRules.Payment payment, YakuSelection yakuSelection) {
         public Rules {
             values = Map.copyOf(values); sources = Map.copyOf(sources);
             exclusions = exclusions.entrySet().stream().collect(java.util.stream.Collectors.toUnmodifiableMap(Map.Entry::getKey, e -> java.util.Collections.unmodifiableSet(e.getValue().stream().sorted().collect(java.util.stream.Collectors.toCollection(() -> new java.util.LinkedHashSet<TaiwanRules.Pattern>())))));
             Objects.requireNonNull(flowers); Objects.requireNonNull(flowerSets); Objects.requireNonNull(pinfu);
             Objects.requireNonNull(replacements); Objects.requireNonNull(reserve); Objects.requireNonNull(payment);
-            new TaiwanRules(name,values,exclusions,sources,flowers,flowerSets,pinfu,replacements,taiLimit,reserve,payment,yakuSet);
+            new TaiwanRules(name,values,exclusions,sources,flowers,flowerSets,pinfu,replacements,taiLimit,reserve,payment,yakuSelection);
         }
-        public TaiwanRules restore() { return new TaiwanRules(name,values,exclusions,sources,flowers,flowerSets,pinfu,replacements,taiLimit,reserve,payment,yakuSet); }
-        public Rules withYakuSet(YakuSet set) { return new Rules(name,values,exclusions,sources,flowers,flowerSets,pinfu,replacements,taiLimit,reserve,payment,set); }
-        public static Rules of(TaiwanRules r) { return new Rules(r.getName(),r.getValues(),r.getExclusions(),r.getSources(),r.getFlowers(),r.getFlowerSets(),r.getPinfu(),r.getReplacements(),r.getTaiLimit(),r.getReserve(),r.getPayment(),r.getYakuSet()); }
+        public TaiwanRules restore() { return new TaiwanRules(name,values,exclusions,sources,flowers,flowerSets,pinfu,replacements,taiLimit,reserve,payment,yakuSelection); }
+        public Rules withYakuSelection(YakuSelection selection) { return new Rules(name,values,exclusions,sources,flowers,flowerSets,pinfu,replacements,taiLimit,reserve,payment,selection); }
+        public static Rules of(TaiwanRules r) { return new Rules(r.getName(),r.getValues(),r.getExclusions(),r.getSources(),r.getFlowers(),r.getFlowerSets(),r.getPinfu(),r.getReplacements(),r.getTaiLimit(),r.getReserve(),r.getPayment(),r.getYakuSelection()); }
     }
     public record Opening(int dealer, List<Integer> dice) {
         public Opening { dice = List.copyOf(dice); new TaiwanOpening(dealer,dice); }
@@ -85,7 +85,7 @@ public record TaiwanGameState(int format, Rules rules, Opening opening, int roun
         public Score {
             groups = List.copyOf(groups); awards = List.copyOf(awards);
             if (pair < 0 || pair > 33 || groups.size() > 5 || winningGroup < -1 || winningGroup >= groups.size()
-                || rawTai < 0 || rawTai > 1_000_000 || tai < 0 || tai > rawTai || awards.size() > 64
+                || rawTai < 0 || rawTai > 1_000_000 || tai < 0 || tai > rawTai || awards.size() > YakuSelection.MAX_AWARDS
                 || groups.stream().anyMatch(g -> g.type() == null || g.kind() < 0 || g.kind() > 33
                     || g.type() == TaiwanHandAnalyzer.GroupType.SEQUENCE && (g.kind() >= 27 || g.kind() % 9 > 6)))
                 throw new IllegalArgumentException("Invalid Taiwan score");

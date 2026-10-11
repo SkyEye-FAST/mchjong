@@ -21,7 +21,11 @@ public final class ClientYakuSets {
         return sets.stream().filter(s -> s.variant() == variant).toList();
     }
     public static Component text(YakuSet.Text text) { return Component.literal(text.get(Minecraft.getInstance().options.languageCode)); }
-    public static Component awardName(YakuSet set, String id, String translationKey) {
+    public static Component selectionLabel(top.skyeyefast.mchjong.engine.YakuSelection selection) {
+        return Component.translatable("rules.mchjong.yaku_set.select", top.skyeyefast.mchjong.engine.YakuSelection.nativeIds(selection.variant()).size()
+            - selection.disabledNative().size() + selection.enabledCustom().size());
+    }
+    public static Component awardName(top.skyeyefast.mchjong.engine.YakuSelection set, String id, String translationKey) {
         if (id != null && id.contains(":")) {
             var award = set.find(id);
             return award == null ? Component.literal(id) : text(award.name());

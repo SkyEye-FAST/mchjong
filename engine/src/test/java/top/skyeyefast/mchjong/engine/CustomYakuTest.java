@@ -13,8 +13,8 @@ class CustomYakuTest {
     private static YakuSet.Definition award(String id, YakuCondition condition, YakuSet.RewardType type, int closed, int open, String... excludes) {
         return new YakuSet.Definition(id, TEXT, TEXT, condition, new YakuSet.Reward(type, closed, open), List.of(excludes));
     }
-    private static YakuSet set(YakuSet.Definition... awards) {
-        return new YakuSet("house:rules", MahjongVariant.RIICHI, TEXT, List.of(awards));
+    private static YakuSelection set(YakuSet.Definition... awards) {
+        return YakuSelection.of(new YakuSet("house:rules", MahjongVariant.RIICHI, TEXT, List.of(awards)));
     }
     private static final YakuCondition REGULAR = leaf(YakuCondition.Type.SHAPE, 0, 0, "regular");
 
@@ -23,14 +23,14 @@ class CustomYakuTest {
         var melds = List.of(TestHands.meld(Meld.Type.SEQUENCE, "123m"));
         var base = RiichiPreset.TENHOU_4.config();
         assertNull(RiichiHandAnalyzer.score(hand, melds, hand.getLast(), false, 2, 0, 8, List.of(), base));
-        var rules = base.withYakuSet(set(award("house:regular", REGULAR, YakuSet.RewardType.HAN, 2, 1)));
+        var rules = base.withYakuSelection(set(award("house:regular", REGULAR, YakuSet.RewardType.HAN, 2, 1)));
         var score = RiichiHandAnalyzer.score(hand, melds, hand.getLast(), false, 2, 0, 8, List.of(), rules);
         assertNotNull(score);
         assertEquals(9, score.han());
         assertEquals(List.of(new HandScore.Yaku("house:regular", 1, false)), score.yaku());
         assertNull(RiichiHandAnalyzer.score(hand, melds, hand.getLast(), false, 2, 0, 8, List.of(), rules.with(RiichiRuleOption.MIN_HAN, 2)));
         assertNull(RiichiHandAnalyzer.score(hand, melds, hand.getLast(), false, 2, 0, 0, List.of(),
-            base.withYakuSet(set(award("house:closed", REGULAR, YakuSet.RewardType.HAN, 2, 0)))));
+            base.withYakuSelection(set(award("house:closed", REGULAR, YakuSet.RewardType.HAN, 2, 0)))));
     }
 
     @Test void customAwardsParticipateBeforeSelectingWinningInterpretation() {
@@ -40,7 +40,7 @@ class CustomYakuTest {
         assertTrue(ordinary.hasYaku("Sananko"));
         var sequences = leaf(YakuCondition.Type.GROUPS, 4, 4, "sequence", "all", "*");
         var score = RiichiHandAnalyzer.score(hand, List.of(), hand.getLast(), false, 1, 0, 0, List.of(),
-            base.withYakuSet(set(award("house:sequences", sequences, YakuSet.RewardType.HAN, 5, 5))));
+            base.withYakuSelection(set(award("house:sequences", sequences, YakuSet.RewardType.HAN, 5, 5))));
         assertTrue(score.hasYaku("house:sequences"));
         assertFalse(score.hasYaku("Sananko"));
         assertTrue(score.ron() > ordinary.ron());
@@ -51,7 +51,7 @@ class CustomYakuTest {
         var tiles = TestHands.tiles("231m");
         var meld = new Meld(Meld.Type.SEQUENCE, tiles, 0, tiles.getLast());
         var condition = leaf(YakuCondition.Type.GROUPS, 1, 1, "sequence", "exposed", "1m");
-        var rules = RiichiPreset.TENHOU_4.config().withYakuSet(set(award("house:sequence", condition, YakuSet.RewardType.HAN, 1, 1)));
+        var rules = RiichiPreset.TENHOU_4.config().withYakuSelection(set(award("house:sequence", condition, YakuSet.RewardType.HAN, 1, 1)));
         var score = RiichiHandAnalyzer.score(hand, List.of(meld), hand.getLast(), false, 2, 0, 0, List.of(), rules);
         assertNotNull(score);
         assertTrue(score.hasYaku("house:sequence"));
@@ -60,7 +60,7 @@ class CustomYakuTest {
     @Test void ronWinningTripletIsNotAConcealedTriplet() {
         var hand = TestHands.tiles("22m333p444s678m55p2m");
         var condition = leaf(YakuCondition.Type.GROUPS, 3, 3, "triplet", "concealed", "*");
-        var rules = RiichiPreset.TENHOU_4.config().withYakuSet(set(award("house:three_concealed", condition, YakuSet.RewardType.HAN, 3, 3)));
+        var rules = RiichiPreset.TENHOU_4.config().withYakuSelection(set(award("house:three_concealed", condition, YakuSet.RewardType.HAN, 3, 3)));
         var ron = RiichiHandAnalyzer.score(hand, List.of(), hand.getLast(), false, 1, 0, 0, List.of(), rules);
         assertFalse(ron.hasYaku("house:three_concealed"));
         var tsumo = RiichiHandAnalyzer.score(hand, List.of(), hand.getLast(), true, 1, 0, 0, List.of(), rules);
@@ -71,13 +71,13 @@ class CustomYakuTest {
         var hand = TestHands.tiles("123456m456p22s789s");
         var a = award("house:a", REGULAR, YakuSet.RewardType.HAN, 2, 1, "mchjong:riichi/pinhu");
         var b = award("house:b", REGULAR, YakuSet.RewardType.HAN, 3, 2, "house:a");
-        var rules = RiichiPreset.TENHOU_4.config().withYakuSet(set(a, b));
+        var rules = RiichiPreset.TENHOU_4.config().withYakuSelection(set(a, b));
         var score = RiichiHandAnalyzer.score(hand, List.of(), hand.getLast(), false, 1, 0, 0, List.of(), rules);
         assertEquals(List.of(new HandScore.Yaku("house:b", 3, false)), score.yaku());
         var y1 = award("house:yakuman", REGULAR, YakuSet.RewardType.YAKUMAN, 1, 1);
         var y2 = award("house:double", REGULAR, YakuSet.RewardType.YAKUMAN, 2, 2);
         for (int compound : List.of(0, 1)) {
-            var config = rules.withYakuSet(set(a, y1, y2)).with(RiichiRuleOption.COMPOUND_YAKUMAN, compound);
+            var config = rules.withYakuSelection(set(a, y1, y2)).with(RiichiRuleOption.COMPOUND_YAKUMAN, compound);
             var limit = RiichiHandAnalyzer.score(hand, List.of(), hand.getLast(), false, 1, 0, 9, List.of(), config);
             assertEquals(compound == 0 ? 2 : 3, limit.yakuman());
             assertEquals(limit.yakuman() * 32000, limit.ron());
@@ -112,9 +112,9 @@ class CustomYakuTest {
         var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         var host = UUID.randomUUID();
         lobby.join(host, "Host", 0);
-        assertTrue(lobby.configureRules(host, lobby.decision, lobby.rules.withYakuSet(parsed)));
+        assertTrue(lobby.configureRules(host, lobby.decision, lobby.rules.withYakuSelection(YakuSelection.of(parsed))));
         var restored = TableSessionCodec.restore(TableSessionCodec.save(lobby));
-        assertEquals(parsed, ((RiichiSession) restored).rules.yakuSet());
+        assertEquals(YakuSelection.of(parsed), ((RiichiSession) restored).rules.yakuSelection());
         assertFalse(new ExternalBot("test", "Test", 4, List.of(RiichiPreset.TENHOU_4)).supports(lobby.rules));
     }
 }

@@ -323,7 +323,7 @@ class TaiwanGame private constructor(
             p.flowers += checkNotNull(FlowerTile.of(tile))
             checkpoint()
             val robber = (0..3).firstOrNull { it != turn && players[it].flowers.size == 7 }
-            if (robber != null && rules.values.getValue(TaiwanRules.Pattern.SEVEN_ROBS_ONE) > 0) {
+            if (robber != null && rules.value(TaiwanRules.Pattern.SEVEN_ROBS_ONE) > 0) {
                 val special = checkNotNull(TaiwanHandAnalyzer.flowerWin(players[robber].hand, players[robber].melds, robber,
                     Tile.ABSENT, context(robber, TaiwanWinContext.Method.SELF_DRAW), TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER, rules))
                 finish(robber, turn, null, special, turn, TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER)
@@ -345,7 +345,7 @@ class TaiwanGame private constructor(
         val eight = p.flowers.size == 8
         if (!eight && (p.flowers.size != 7 || other == null)) return false
         val pattern = if (eight) TaiwanRules.Pattern.EIGHT_FLOWERS else TaiwanRules.Pattern.SEVEN_ROBS_ONE
-        if (rules.values.getValue(pattern) == 0) return false
+        if (rules.value(pattern) == 0) return false
         val initialSixteen = initial && s != opening.dealer
         val event = when {
             initialSixteen && eight -> TaiwanHandAnalyzer.FlowerEvent.EIGHT_AFTER_INITIAL_REPLACEMENT

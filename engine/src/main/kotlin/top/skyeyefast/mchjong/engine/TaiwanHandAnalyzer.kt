@@ -181,7 +181,7 @@ object TaiwanHandAnalyzer {
     private fun score(value: top.skyeyefast.taiwan.TaiwanScore, complete: List<Int>, melds: List<Meld>, winningTile: Int,
                       context: TaiwanWinContext, rules: TaiwanRules): Score {
         val facts = TaiwanYakuFacts.of(value, complete, melds, winningTile, context)
-        val matched = rules.yakuSet.matching(facts)
+        val matched = rules.yakuSelection.matching(facts)
         val excluded = YakuSet.excluded(matched)
         val awards = value.awards.map(::award).filter { it.id !in excluded } + matched.filter { it.id() !in excluded }.map {
             Award(it.id(), 1, it.reward().closed(), null)
@@ -198,7 +198,7 @@ object TaiwanHandAnalyzer {
     )
 
     private fun libraryRules(r: TaiwanRules) = TaiwanScoringProfile(r.name,
-        r.values.mapKeys { top.skyeyefast.taiwan.Pattern.valueOf(it.key.name) },
+        r.values.mapValues { r.value(it.key) }.mapKeys { top.skyeyefast.taiwan.Pattern.valueOf(it.key.name) },
         r.exclusions.mapKeys { top.skyeyefast.taiwan.Pattern.valueOf(it.key.name) }.mapValues { entry ->
             entry.value.map { top.skyeyefast.taiwan.Pattern.valueOf(it.name) }.toSet()
         },

@@ -17,7 +17,7 @@ public record YakuSet(String id, MahjongVariant variant, Text name, List<Definit
         Objects.requireNonNull(name);
         awards = List.copyOf(awards);
         if (awards.size() > MAX_AWARDS) throw new IllegalArgumentException("Too many custom awards");
-        if (awards.isEmpty() != id.equals("mchjong:none") || !awards.isEmpty() && id.startsWith("mchjong:"))
+        if (awards.isEmpty() || id.startsWith("mchjong:"))
             throw new IllegalArgumentException("Reserved or empty award set ID");
         var byId = new HashMap<String, Definition>();
         for (var award : awards) {
@@ -28,7 +28,10 @@ public record YakuSet(String id, MahjongVariant variant, Text name, List<Definit
             award.condition().validate(variant, 0, new int[1]);
         }
         for (var award : awards) for (var excluded : award.excludes()) {
-            if (excluded.equals(award.id()) || !byId.containsKey(excluded) && !nativeIds(variant).contains(excluded))
+            boolean nativeAllowed = nativeIds(variant).contains(excluded) || variant == MahjongVariant.RIICHI
+                && award.reward().type() == RewardType.YAKUMAN && YakuCatalog.nativeIds().contains(excluded)
+                && !Set.of(YakuCatalog.awardId("Nagashi"), YakuCatalog.awardId("Renhou")).contains(excluded);
+            if (excluded.equals(award.id()) || !byId.containsKey(excluded) && !nativeAllowed)
                 throw new IllegalArgumentException("Unknown or self-excluded award: " + excluded);
             if (award.reward().type() == RewardType.HAN && byId.containsKey(excluded)
                 && byId.get(excluded).reward().type() == RewardType.YAKUMAN)
@@ -37,12 +40,7 @@ public record YakuSet(String id, MahjongVariant variant, Text name, List<Definit
         for (var award : awards) visit(award.id(), byId, new HashSet<>(), new HashSet<>());
     }
 
-    public static YakuSet empty(MahjongVariant variant) {
-        return new YakuSet("mchjong:none", variant, new Text("None", "なし", "无", "無"), List.of());
-    }
-
     public Definition find(String awardId) { return awards.stream().filter(a -> a.id().equals(awardId)).findFirst().orElse(null); }
-    public boolean isEmpty() { return awards.isEmpty(); }
 
     /** Exclusions are simultaneous: suppressing a composite never resurrects its components. */
     public List<Definition> matching(YakuFacts facts) {
@@ -68,7 +66,7 @@ public record YakuSet(String id, MahjongVariant variant, Text name, List<Definit
             throw new IllegalArgumentException("Invalid award resource ID");
     }
 
-    /** Only ordinary native awards may be suppressed; natural yakuman and compulsory flowers retain their contracts. */
+    /** Ordinary custom awards can suppress these native awards; flower event switches belong to YakuSelection. */
     public static Set<String> nativeIds(MahjongVariant variant) {
         if (variant == MahjongVariant.RIICHI) return YakuCatalog.customExclusionIds();
         return java.util.Arrays.stream(TaiwanRules.Pattern.values())

@@ -40,8 +40,11 @@ internal object RiichiYakuFacts {
             "Tenhou" -> flags += "heavenly_win"
             "Chihou" -> flags += "earthly_win"
             "Renhou" -> flags += "human_win"
+            "RiichiDiscard" -> flags += "riichi_discard"
+            "AfterKongDiscard" -> flags += "after_kong_discard"
         }
         val physical = complete + melds.flatMap { it.tiles() }
-        return YakuFacts(shape, melds.all(Meld::closed), physical.map(Tile::kind), groups, pair, wait, flags, physical.count(Tile::red), 0)
+        return YakuFacts(shape, melds.all(Meld::closed), physical.map(Tile::kind), groups, pair, wait, flags, physical.count(Tile::red), 0,
+            Tile.parseKind(pattern.agari.toString()), melds.count { !it.closed() })
     }
 }

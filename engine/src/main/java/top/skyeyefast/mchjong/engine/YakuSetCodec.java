@@ -70,7 +70,7 @@ public final class YakuSetCodec {
         }
         fields(object, Set.of("type"), Set.of("values", "min", "max"));
         var type = YakuCondition.Type.valueOf(string(object.get("type")).toUpperCase(Locale.ROOT));
-        boolean count = switch (type) { case TILES, GROUPS, REDS, FLOWERS, SAME_SEQUENCES -> true; default -> false; };
+        boolean count = switch (type) { case TILES, GROUPS, REDS, FLOWERS, SAME_SEQUENCES, OPEN_MELDS -> true; default -> false; };
         if (count && (!object.has("min") || !object.has("max")))
             throw new IllegalArgumentException("Count conditions require min and max");
         return new YakuCondition(type, List.of(), object.has("values") ? strings(object.get("values")) : List.of(),

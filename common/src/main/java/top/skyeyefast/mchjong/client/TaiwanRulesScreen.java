@@ -69,14 +69,14 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
             var reserve = addRenderableWidget(new MahjongButton(left + 8, top + 110, 240, 20,
                 Component.translatable("taiwan.mchjong.reserve." + draft.reserve().name().toLowerCase(java.util.Locale.ROOT)), ignored -> {
                     draft = new TaiwanGameState.Rules(draft.name(), draft.values(), draft.exclusions(), draft.sources(), draft.flowers(), draft.flowerSets(), draft.pinfu(), draft.replacements(), draft.taiLimit(),
-                        draft.reserve() == TaiwanRules.Reserve.FIXED_SIXTEEN ? TaiwanRules.Reserve.SIXTEEN_PLUS_KONGS : TaiwanRules.Reserve.FIXED_SIXTEEN, draft.payment(), draft.yakuSet());
+                        draft.reserve() == TaiwanRules.Reserve.FIXED_SIXTEEN ? TaiwanRules.Reserve.SIXTEEN_PLUS_KONGS : TaiwanRules.Reserve.FIXED_SIXTEEN, draft.payment(), draft.yakuSelection());
                     rebuild();
                 }));
             reserve.active = editable() && table().clientTaiwanSettings().rulesEditable();
             addRenderableWidget(new MahjongButton(left + 8, top + 134, 264, 20,
-                Component.translatable("rules.mchjong.yaku_set.select", ClientYakuSets.text(draft.yakuSet().name())), ignored ->
-                    minecraft.setScreen(new YakuSetScreen(this, draft.yakuSet(), set -> { draft = draft.withYakuSet(set); rebuild(); },
-                        () -> editable() && table().clientTaiwanSettings().rulesEditable()))));
+                ClientYakuSets.selectionLabel(draft.yakuSelection()), ignored ->
+                    minecraft.setScreen(new YakuSelectionScreen(this, draft.yakuSelection(), set -> { draft = draft.withYakuSelection(set); rebuild(); },
+                        () -> editable() && table().clientTaiwanSettings().rulesEditable(), true))));
         } else {
             base = field(0, left + 8, top + 70, draft.payment().base());
             perTai = field(1, left + 144, top + 70, draft.payment().perTai());
@@ -108,7 +108,7 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
     private TaiwanRules.Payment readPayment() {
         try {
             var value = new TaiwanRules.Payment(Long.parseLong(base.getValue()), Long.parseLong(perTai.getValue()), Integer.parseInt(dealer.getValue()), Integer.parseInt(repeat.getValue()));
-            draft = new TaiwanGameState.Rules(draft.name(), draft.values(), draft.exclusions(), draft.sources(), draft.flowers(), draft.flowerSets(), draft.pinfu(), draft.replacements(), draft.taiLimit(), draft.reserve(), value, draft.yakuSet());
+            draft = new TaiwanGameState.Rules(draft.name(), draft.values(), draft.exclusions(), draft.sources(), draft.flowers(), draft.flowerSets(), draft.pinfu(), draft.replacements(), draft.taiLimit(), draft.reserve(), value, draft.yakuSelection());
             return value;
         } catch (IllegalArgumentException invalid) { return null; }
     }

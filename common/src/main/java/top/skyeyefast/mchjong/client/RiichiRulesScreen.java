@@ -136,11 +136,23 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
                 .bounds(layout.left(), layout.contentTop() + i * 22, layout.rail(), 20)
                 .tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
-        addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.yaku_set.select", ClientYakuSets.text(draft.yakuSet().name())), ignored ->
-            minecraft.setScreen(new YakuSetScreen(this, draft.yakuSet(), set -> {
-                draft = draft.withYakuSet(set); mode = Mode.CUSTOM; rejected = false;
-            }, () -> host() && pending == null && !stale() && table.worldPolicy() != null && table.worldPolicy().allowCustomRules())))
-            .bounds(left, layout.contentTop() + 48, span, 20).build());
+        boolean ancientToggle = draft.preset() == RiichiPreset.MAHJONG_SOUL_4;
+        addRenderableWidget(MahjongButton.create(ClientYakuSets.selectionLabel(draft.yakuSelection()), ignored ->
+            minecraft.setScreen(new YakuSelectionScreen(this, draft.yakuSelection(), set -> {
+                draft = draft.withYakuSelection(set); mode = Mode.CUSTOM; rejected = false;
+            }, () -> host() && pending == null && !stale() && table.worldPolicy() != null && table.worldPolicy().allowCustomRules(), !draft.sanma())))
+            .bounds(left, layout.contentTop() + 48, ancientToggle ? span / 2 - 2 : span, 20).build());
+        if (ancientToggle) {
+            var ancient = top.skyeyefast.mchjong.engine.BuiltinYakuSets.MAHJONG_SOUL_ANCIENT;
+            long enabledCount = ancient.awards().stream().filter(a -> draft.yakuSelection().enabled(a.id())).count();
+            boolean enabled = enabledCount == ancient.awards().size();
+            var toggle = addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.toggle",
+                Component.translatable("rules.mchjong.yaku_set.ancient"), Component.translatable(enabled ? "rules.mchjong.yes"
+                    : enabledCount > 0 ? "rules.mchjong.yaku_set.partial" : "rules.mchjong.no")), ignored -> {
+                draft = draft.withYakuSelection(draft.yakuSelection().withSet(ancient, !enabled)); mode = Mode.CUSTOM; rejected = false; init();
+            }).bounds(left + span / 2 + 2, layout.contentTop() + 48, span - span / 2 - 2, 20).build().selected(enabledCount > 0));
+            toggle.active = host() && pending == null && !stale() && table.worldPolicy() != null && table.worldPolicy().allowCustomRules();
+        }
         int rows = Math.max(1, (layout.paging() - layout.contentTop() - 72 - 14) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows);
         page = Math.clamp(page, 0, pages - 1);
