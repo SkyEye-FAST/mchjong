@@ -31,6 +31,7 @@ MCR, Sichuan mahjong and sixteen-tile Taiwanese mahjong gameplay.
 | [Supply data contracts](SUPPLIES.md) | Registry IDs, persistence and recipe identity |
 | [Verification and evidence](VERIFICATION.md) | Focused checks, acceptance records and screenshot review |
 | [Architecture](ARCHITECTURE.md) | Modules, ownership and shared contracts |
+| [Terminology](../TERMS.md) | Locale and ruleset terminology, scoring-name index and review steps |
 | [Interface style](UI_STYLE.md) | Widgets, layout, accessibility and visual acceptance |
 | [Compatibility and dependencies](COMPATIBILITY.md) | Loader profiles, optional mod distributions and dependency versions |
 | [Build download sources](BUILD_MIRRORS.md) | Repository and client asset downloads |

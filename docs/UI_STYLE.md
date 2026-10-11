@@ -1,5 +1,7 @@
 # MChjong interface style
 
+Use [TERMS.md](../TERMS.md) for terminology, localized phrasing and player perspective.
+
 This is the shared visual contract for all project-owned screens, HUD cards,
 inventory panels and controls. Read it before adding or changing client UI.
 

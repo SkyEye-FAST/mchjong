@@ -9,8 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Limit convenience hints to Riichi mahjong and remove the MCR, Sichuan mahjong and Taiwanese mahjong hint interfaces and calculations. Riichi hints show current waits and remaining copies only while tenpai.
 - Move the Patchouli handbook integration to the separate `feature/patchouli-handbook` development branch. Main retains standalone rule-option descriptions.
+- Limit convenience hints to Riichi mahjong and remove the MCR, Sichuan mahjong and Taiwanese mahjong hint interfaces and calculations. Riichi hints show current waits and remaining copies only while tenpai.
 - Center action announcements in muted text clear of the HUD, controls and private hand, keep current-discard cards on the right, and show immersive seat winds and status on player plaques. Use direct hand clicks for discards in all four variants and both views, retaining single-click and double-click settings and removing discard confirmation buttons.
 - Unify room rule entry points and draft submission, organize Riichi rules into six persistent categories, move player count and preset selection into the draft, group hand display settings, centralize preparation member controls, and align Sichuan mahjong, Taiwanese mahjong and MCR navigation with four-language controls and explanations.
 - Synchronize custom award selection, Mahjong Soul ancient yaku and checked-in client resources across all three Minecraft profiles, with Taiwanese mahjong library 0.2.0 and each profile's native loader adapters.
@@ -42,6 +42,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Fixed
 
 - Separate draw-time and call-time temporary furiten clearance, and prevent North replacements from qualifying the following discard for Kanburi.
+- Correct four-language mahjong terminology and scoring explanations. Distinguish revealed hands from melds and concealed kans, retain natural Chinese payment wording, and fit Japanese minimum-han choices at the smallest window size.
 - Align the Creeper tile-back mark with the vanilla face's uniform pixel grid.
 - Draw Bot portraits on integer pixel boundaries so both eyes stay the same size at small UI scales.
 - Merge equivalent Taiwanese mahjong ready-discard choices while retaining distinct tile faces and every physical ordinary discard.
