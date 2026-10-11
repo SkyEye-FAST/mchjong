@@ -55,7 +55,8 @@ Keep the compact table footprint; tutorials belong in guides, not tooltips.
 Update `en_us.json`, `ja_jp.json`, `zh_cn.json` and `zh_tw.json` together: identical
 keys and format specifiers, two-space indentation, LF and alphabetical key order.
 Use hierarchical dot-separated snake_case keys, `.description` and `.short`
-suffixes. Rule titles use standard Riichi terminology; mechanics go in descriptions.
+suffixes. Use the terminology of each ruleset in rule titles; mechanics go in descriptions.
+Follow [TERMS.md](TERMS.md) for terminology, language differences and review steps.
 Do not use middle dots (`·`) as generic UI separators. Use natural localized
 phrasing, appropriate punctuation or separate lines. Consult vanilla Minecraft's
 language files to align terminology, phrasing,
@@ -64,7 +65,8 @@ punctuation and spacing conventions for each locale.
 - `zh_cn`: Strictly no spaces between CJK and ASCII alphanumeric characters or
   format specifiers. Fullwidth punctuation (`：`, `（）`, `……`), curly double
   quotes `“”` (never corner quotes `「」` or straight `"`). Follow vanilla Simplified
-  Chinese terminology and second-person address `你`.
+  Chinese terminology. Use second-person address `你` when addressing the user directly;
+  rule explanations use player relationships or precise roles as defined in `TERMS.md`.
 - `zh_tw`: Strictly add spaces between CJK and ASCII alphanumeric characters or
   format specifiers. Fullwidth punctuation directly precedes format placeholders
   without space. Corner quotes `「」` and `『』` (never curly `“”` or straight `"`),

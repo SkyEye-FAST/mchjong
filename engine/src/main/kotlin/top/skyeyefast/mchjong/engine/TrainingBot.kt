@@ -301,7 +301,8 @@ internal class TrainingBot private constructor(
                 )
             }
         }
-        val blocked = initial.ronBlocked() && (initial.riichi() || !view.rules().callsClearFuriten())
+        val clearsFuriten = view.rules().callsClearFuriten() && action.type() in listOf(CHI, PON, OPEN_KAN)
+        val blocked = initial.ronBlocked() && (initial.riichi() || !clearsFuriten)
         return BotAnalysis.State(
             hand,
             melds,

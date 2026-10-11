@@ -307,8 +307,7 @@ human legal-action drivers supply the smoke inputs. Both presets' complete
 four-wind Bot matches have engine coverage. The smoke retrieves the completed
 Taiwanese mahjong match through the shared browser, opens playback, steps events, changes
 viewpoints, inspects an opening flower and settlement, and returns to the list.
-Taiwanese mahjong shares the room/world convenience-hint policy, with recipient-only analysis
-and scored discard/wait previews. Taiwanese mahjong uses built-in Bots. The 1.20.1
+Taiwanese mahjong uses built-in Bots. The 1.20.1
 and 26.1.2 profiles retain these game/save/view/replay contracts while adapting
 only their Minecraft, loader, rendering, networking and resource APIs. Library
 publication checks belong to its [independent repository](https://github.com/SkyEye-FAST/taiwan-mahjong).

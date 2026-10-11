@@ -77,7 +77,7 @@ legal actions, hints, replays and bots. `HandScore` retains immutable per-yaku
 names, open-hand-adjusted han and natural-yakuman markers from the selected
 interpretation. Individual natural-yakuman values precede the configured
 compound cap. The score's total and payments retain that cap. Receipts, recordings
-and replay exports read these values directly. Riichi session format 6 is the
+and replay exports read these values directly. Riichi session format 7 is the
 only accepted format.
 
 `RiichiRules.yakuSelection` and `TaiwanRules.yakuSelection` own immutable `YakuSelection`
@@ -233,8 +233,7 @@ Bots through one built-in option and automatically ready them. The session sched
 them after twelve active ticks with inactive Bot clocks and automatic nonfinal
 result confirmations. One human and three Bots can complete all four winds,
 including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwanese-mahjong-built-in-opponent).
-Taiwanese mahjong records native replays through the shared archive and browser and shares
-the room convenience-hint setting. External Bot integration remains unavailable.
+Taiwanese mahjong records native replays through the shared archive and browser. External Bot integration remains unavailable.
 
 ## MCR match orchestration
 
@@ -467,7 +466,7 @@ provides configured-match cumulative standings and the issued return-to-lobby co
 
 `MahjongVariant` selects Riichi, MCR, Sichuan mahjong or Taiwanese mahjong through explicit built-in dispatch. `TableSession` owns
 the table UUID, host, participants, seats, readiness, observed presence, variant,
-request incarnation, convenience-hint setting, exit controls and room lifecycle. `RoomSeating` owns the
+request incarnation, Riichi convenience-hint setting, exit controls and room lifecycle. `RoomSeating` owns the
 concealed wind lottery. `TableRoomView` projects this state and recipient-specific
 `RoomAction` choices for all four rules. `TableSession.actRoom` resolves only issued
 room-action indices against the table, incarnation and current room decision.
@@ -607,9 +606,9 @@ canvas, letterboxing and pointer conversion. The world renderer consumes
 rails, rivers, perspective solids and player plaques used by Riichi and Sichuan mahjong,
 with a private `TableHand` in the foreground. `TilePicking` intersects the MCR piece's
 actual `TileDimensions` envelope and orientation.
-Hand selection resolves only issued discard indices. Other declarations use
-native action buttons with localized names and tile previews. View changes retain
-selection and leave the world camera pose intact. Settlement carries the selected
+Hand clicks resolve only issued discard indices. Other declarations use
+native action buttons with localized names and tile previews. View changes leave
+the world camera pose intact. Settlement carries the selected
 view into the next hand.
 
 ## Networking and authority
@@ -627,7 +626,10 @@ logic reads the individual settings.
 decision. Only the room host can apply it before play. Clients retain a draft
 until server acknowledgement. Rule changes clear all readiness and recheck boxes.
 Preset metadata distinguishes supported table options from custom changes. The
-editor shows options, read-only details and custom settings separately. The view
+editor keeps one rule draft and its unfinished numeric input behind six persistent topic categories.
+Preset and award child pages update that draft through the retained parent chain.
+Preset-supported basic fields and custom details have separate editing permissions.
+Player count shares the preset draft and the explicit server-confirmed apply boundary. The view
 payload adds six public red-stock capability bits (three compositions for each
 player count), not box contents. The server independently authorizes every
 proposed red composition against stock.
@@ -849,33 +851,16 @@ skin, practice bots use a distinct shared-palette robot, and maid companions
 use the maid mod's default Reimu icon. Companion model names resolve on the client.
 Portrait rendering uses client skin data independently of engine snapshots.
 
-`TenpaiHints` caches structural waits per concealed hand, meld set and discard
-kind, separately from snapshot-based availability. `VisibleTiles` deduplicates
+`TenpaiHints` caches structural waits for the current thirteen-tile ready shape
+by concealed hand and meld set, separately from snapshot-based availability. `VisibleTiles` deduplicates
 physical IDs from the viewer's hand, rivers, melds, extracted norths, indicators
 and pending declarations. Training bots share this accounting. Opponents' concealed
 hands are ignored even when room hand visibility reveals them. `RiichiHints` renders
 this information when the room host enables convenience hints during preparation;
-`TableSession` persists that shared choice and `TableRoomView` synchronizes it and
-world-policy permission to every variant. `McrHints` and `SichuanHints` independently
-consume their recipient-safe views and existing analyzers. MCR waits carry scorer
-non-flower fan for ordinary discard/self-draw contexts and current public claim
-circumstances. Sichuan mahjong uses structural scores and `readyValue`, with its recipient's
-passed-win restriction. Public physical tile accounting excludes opponent hands
-and wall identities. `TableHintsButton` shares the native focus target and icon;
-`TaiwanHints` consumes only `TaiwanView`, using `TaiwanHandAnalyzer` and the view's
-complete `TaiwanRules` for sixteen-tile shanten, effective tiles, legal discard
-previews and per-wait capped ron/self-draw tai. It counts unique physical IDs from
-the owner's hand/melds/flowers, public rivers/exposed melds and current focus;
-covered opponent kongs, opponent hands and future wall identities are excluded.
-Exhausted structural waits remain visible at zero. Ordinary future-win contexts
-retain only confirmed flowers, winds and READY declarations. They never assume
-last tiles, replacements, robbery or opening wins. A current public reaction focus
-separately carries its known last-discard/robbing context. Passing keeps structural
-waits and marks the current win restriction. Spectators get no private analysis.
-`TableHints` formats the MCR, Sichuan mahjong and Taiwanese mahjong results above the existing projected private
-hand without introducing a common analysis interface.
-The Taiwanese mahjong seated and immersive adapters gate analysis on the synchronized room/world
-policy before calling the analyzer, sharing native focus, tile rows and pagination.
+`TableSession` persists the Riichi setting and `TableRoomView` synchronizes it and
+the world-policy permission. Other variants reject hint configuration, and a
+variant change clears the setting. `TableHintsButton` supplies the native focus
+target and icon for `RiichiHints`.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
 `BotValue` (legal scoring and payout scenarios), `BotYakuPotential` (gradual,
 copy-aware incomplete-hand routes), and `BotDefence` (public per-opponent
@@ -972,7 +957,7 @@ left by calls and account for the width of sideways riichi discards. Hiding rive
 is a local rendering preference. It also forces the remaining-wall count and
 current claimed-tile preview to remain visible, without changing game records.
 
-`TableSessionControlPayload` carries shared convenience-hint configuration, exit requests, votes and last-player
+`TableSessionControlPayload` carries Riichi convenience-hint configuration, exit requests, votes and last-player
 leave decisions directly to `TableSession`. `MatchAutomationPayload` carries auto win,
 no calls and auto drawn-tile discard for all three rules, bound to table UUID,
 incarnation and the current match decision. `TableSession` saves one private

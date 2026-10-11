@@ -10,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.TenpaiHints;
@@ -19,14 +18,13 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Dense HUDs and thirteen waits through pointer hover and native keyboard focus. */
 final class TenpaiHintsSmoke {
-    private record Sample(String language, int mode, boolean priorSelection) {}
+    private record Sample(String language, int mode) {}
     private static final Sample[] SAMPLES = {
-        new Sample("en_us", 0, false), new Sample("zh_cn", 1, false),
-        new Sample("en_us", 2, false), new Sample("zh_cn", 2, true)
+        new Sample("en_us", 0), new Sample("zh_cn", 1), new Sample("ja_jp", 1),
+        new Sample("en_us", 2), new Sample("zh_cn", 2)
     };
     private int sample = -1, ticks, width, height, scale;
     private boolean animations;
-    private TableSettings.DiscardMode discardMode;
     private String language;
     private CompletableFuture<Void> reload;
     private RiichiView original, fixture;
@@ -37,8 +35,8 @@ final class TenpaiHintsSmoke {
         if (sample < 0) {
             width = client.getWindow().getScreenWidth(); height = client.getWindow().getScreenHeight();
             scale = client.options.guiScale().get(); language = client.getLanguageManager().getSelected();
-            animations = settings.animations; discardMode = settings.discardMode;
-            settings.animations = false; settings.discardMode = TableSettings.DiscardMode.CONFIRM;
+            animations = settings.animations;
+            settings.animations = false;
             original = table.clientView();
             originalRoom = table.clientRoom();
             sample = 0;
@@ -48,12 +46,7 @@ final class TenpaiHintsSmoke {
         if (!reload.isDone() || client.getOverlay() != null) return false;
         reload.join();
         if (sample == SAMPLES.length) return ++ticks >= 10;
-        if (ticks == 0) {
-            if (SAMPLES[sample].mode() == 2) {
-                // Hover only: moving to the button must keep this discard without a selected tile.
-                InputSmoke.pointerHand(client, (RiichiTableScreen) client.screen, fixture, 125);
-            } else InputSmoke.pointer(client, 4, 4);
-        }
+        if (ticks == 0) InputSmoke.pointer(client, 4, 4);
         if (ticks == 3) {
             var button = hintButton(client);
             InputSmoke.pointerWidget(client, button);
@@ -63,7 +56,7 @@ final class TenpaiHintsSmoke {
             if (table.clientView() != fixture)
                 throw new IllegalStateException("Hint fixture was replaced before hover/focus verification");
             if (!button.visible || !button.active) {
-                int waits = new TenpaiHints().waits(fixture, SAMPLES[sample].mode() == 2 ? 125 : Tile.ABSENT).size();
+                int waits = new TenpaiHints().waits(fixture).size();
                 throw new IllegalStateException("Wait preview became unavailable on hover/focus: waits=" + waits
                     + " button=" + button.getX() + "," + button.getY() + " screen=" + client.screen.width + "x" + client.screen.height);
             }
@@ -79,7 +72,7 @@ final class TenpaiHintsSmoke {
                         && client.font.width(widget.getMessage()) * 2 > widget.getWidth() - 12)
                     throw new IllegalStateException("Immersive toolbar caption is clipped: " + widget.getMessage().getString());
             SmokeScreenshots.grab(output.toFile(), "58-tenpai-" + SAMPLES[sample].language()
-                + switch (SAMPLES[sample].mode()) { case 0 -> "-640x400-seated"; case 1 -> "-320x240-seated"; default -> "-480x300-immersive-preview"; }
+                + switch (SAMPLES[sample].mode()) { case 0 -> "-640x400-seated"; case 1 -> "-320x240-seated"; default -> "-480x300-immersive"; }
                 + (ticks == 10 ? "-hover.png" : "-keyboard.png"), client.getMainRenderTarget(), ignored -> {});
             if (ticks == 10) {
                 InputSmoke.pointer(client, 4, 4);
@@ -92,7 +85,7 @@ final class TenpaiHintsSmoke {
         if (++ticks <= 20) return false;
         if (++sample < SAMPLES.length) show(client, table);
         else {
-            settings.animations = animations; settings.discardMode = discardMode;
+            settings.animations = animations;
             client.getWindow().setWindowed(width, height); client.options.guiScale().set(scale); client.resizeDisplay();
             client.getLanguageManager().setSelected(language); reload = client.reloadResourcePacks(); ticks = 0;
             table.acceptView(new RiichiView(original.tableId(), original.revision() + 13, original.decision(),
@@ -108,13 +101,12 @@ final class TenpaiHintsSmoke {
     }
 
     private void show(Minecraft client, MahjongTableBlockEntity table) {
-        boolean preview = SAMPLES[sample].mode() == 2, small = SAMPLES[sample].mode() == 1;
-        client.getWindow().setWindowed(preview || small ? 960 : 1280, preview ? 600 : small ? 720 : 800);
+        boolean immersive = SAMPLES[sample].mode() == 2, small = SAMPLES[sample].mode() == 1;
+        client.getWindow().setWindowed(immersive || small ? 960 : 1280, immersive ? 600 : small ? 720 : 800);
         client.options.guiScale().set(small ? 3 : 2); client.resizeDisplay();
         var hand = new ArrayList<>(List.of(0, 32, 36, 68, 72, 104, 108, 112, 116, 120, 124, 128, 132));
-        if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());
-        seats.set(0, new RiichiView.Seat(false, "Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
+        seats.set(0, new RiichiView.Seat(false, "Player", true, false, false, 25000, hand, Tile.ABSENT,
             List.of(), List.of(), List.of(), false, false, false));
         for (int seat = 1; seat < seats.size(); seat++) {
             int owner = seat;
@@ -132,22 +124,20 @@ final class TenpaiHintsSmoke {
         // Advance the display snapshot so rendering updates while live lobby heartbeats stay stale.
         fixture = new RiichiView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
             original.rules(), RiichiView.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
-            original.wallBreak(), wall, null, seats, preview ? List.of(new RiichiAction(RiichiAction.Type.DISCARD, 125), new RiichiAction(RiichiAction.Type.DISCARD, 0)) : List.of(),
+            original.wallBreak(), wall, null, seats, List.of(),
             List.of(), "playing", List.of(), List.of(), List.of(), original.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, original.autoPlay(), true, 1, java.util.Map.of(), List.of(), 0, 0);
-        if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)
+        if (new TenpaiHints().waits(fixture).size() != 13)
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");
         var room = originalRoom;
         table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(), fixture.revision(),
             room.decision(), room.variant(), room.lifecycle(), room.host(), room.viewerSeat(), room.manual(), room.equipped(), room.paused(),
             room.seating(), room.availableWinds(), room.seats(), room.actions(), room.exitVote(), room.leaveDecision(), true, true, room.automation(), List.of()));
         table.acceptView(fixture); client.setScreen(new RiichiTableScreen(table.getBlockPos()));
-        if (preview) {
+        if (immersive) {
             InputSmoke.switchView(client.screen);
         }
         AutomationControlsSmoke.click(client, Component.translatable("ui.mchjong.automation_show").getString());
         client.screen.setFocused(null);
-        // Also cover a prior selection: the last hovered discard must win when entering the diamond.
-        if (SAMPLES[sample].priorSelection()) InputSmoke.clickHand((RiichiTableScreen) client.screen, fixture, 0);
         client.getLanguageManager().setSelected(SAMPLES[sample].language()); reload = client.reloadResourcePacks(); ticks = 0;
     }
 

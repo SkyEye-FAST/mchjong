@@ -1,5 +1,7 @@
 # MChjong interface style
 
+Use [TERMS.md](../TERMS.md) for terminology, localized phrasing and player perspective.
+
 This is the shared visual contract for all project-owned screens, HUD cards,
 inventory panels and controls. Read it before adding or changing client UI.
 
@@ -115,7 +117,7 @@ foreground hand, player plaques, center display and motion as Riichi and Sichuan
 MCR retains its native flat-kong display in the shared left public area.
 Compact edge cards show player names, winds and scores. The current turn is marked
 with the shared accent. Automatic flower replacement names the player currently replacing.
-Discards come from hand selection, while claims, kongs, wins and pass use localized
+Clicking a legal hand tile discards it, while claims, kongs, wins and pass use localized
 native buttons with tile previews. MCR uses the shared room time editor and turn
 clock, reserving a clock lane below the actions and above the private hand.
 
@@ -158,8 +160,9 @@ Keep necessary titles, body and navigation visually distinct. Lobby and settings
 screens use compact centered floating panels, leaving the world visible around
 them without a full-screen dim layer. Their height follows the actual option and
 navigation rows, with a 30-pixel title area and pagination at small sizes. Reserve
-a category column only when that page has categories. The Riichi preset overview
-and expanded preset list use the full body width. Use headings and status lines
+a category column whenever the page has categories. Rule editors keep their category
+rail visible from first entry through preset and award changes. Preset choices open
+a separate paginated child page. Use headings and status lines
 for information that helps players navigate or act. In the table view, compact HUD cards belong near
 the edges so the physical hand stays clear.
 Actions remain separate from informational labels. Settings use explicit category
@@ -203,16 +206,17 @@ tai awards and transfers while keeping opponent hands and covered kongs hidden.
 Taiwanese mahjong uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
 are shared. Its lobby exposes human and built-in Bot seats, presets,
-payment/reserve rules, clocks, shared Replay navigation and convenience hints.
+payment/reserve rules, clocks and shared Replay navigation.
 All variants share one lobby layout. A left sidebar selects the rule variant;
 its width and row height are independent of the number of variants. Overflow
 scrolls by whole rows using the wheel or a visible, draggable scrollbar. Hidden
 rows cannot receive pointer input, and a newly selected variant is brought into
 view. Variant selection never appears among that variant's settings. The right
-body has Players and bots and Match settings tabs, with invitation and replay
+body has Room Members and Match Settings tabs, with invitation and replay
 navigation on a separate row below. Keep the roster visible on arrival, with
-per-seat Bot and ownership controls. Match settings paginate player count,
-presets, detailed rules, visibility, timing and convenience hints. The footer
+per-seat Bot and ownership controls. Match Settings and Settings → Room share
+one Match Rules entry and the same hand display, timing and convenience controls.
+Player count and presets belong to the rule editor's draft. The footer
 spans the full panel so primary actions retain their space at small sizes.
 The header names the current preparation stage and the footer supplies one brief
 next-step instruction. Leave and host dissolution stay distinct in the toolbar.
@@ -232,7 +236,8 @@ The table settings hub has World, Room and Personal tabs. Administrators edit wo
 in the World tab through permission-checked server commands. Other players see
 read-only values with a short administrator-only explanation. Room controls
 are paginated separately from local presentation options; ownership transfer stays
-in the lobby roster and the shared participant page under Settings → Room.
+in the lobby roster. During play, Settings → Room provides Room Members with
+the same member labels and the active-match ownership action.
 Rule editors and personal preset pages share compact panels, option rows and
 aligned footers. Settings with multiple categories retain a populated left rail
 beneath one concise page title. The selected navigation item
@@ -266,55 +271,74 @@ keep the paused match or end it. Closing the panel keeps the paused match.
 The personal automatic seating option starts enabled and requests the assigned
 stool when allocation finishes. Turning it off keeps the coordinate-guided manual
 seating flow; ordinary presence updates never force a player back onto a stool.
-Room timing and invitations live in Settings → Room;
-the Ready control reflects server-confirmed presence at the assigned stool.
+Room timing lives in Settings → Room, while invitations remain in the lobby's room
+operations. The Ready control reflects server-confirmed presence at the assigned stool.
 Equipment failures use a short footer caption, concise hover list and a paginated
 help page accessible by native pointer or keyboard activation. The server chooses
 the applicable requirements. A recipient-only brass particle cue at the actual
 assigned stool lasts three seconds. It does not replace walking or stool interaction.
-The room Hand visibility control cycles through Visible only to self, Visible to
-riichi players, Visible to all players and Open hands; Shift cycles backward. Only
-the host can change it before play. Open hands lays tiles face up. The other
-modes retain standing hands and change access to faces. Tile fronts face their
+The room Hand Display page contains two independent fields. Hand Visibility selects
+Visible Only to Self, Visible to Riichi Players or Visible to All Players through
+an explicit choice page. Open Hands lays tiles face up and makes them public while
+retaining the visibility setting. Only the host can change these fields before play. Tile fronts face their
 owner. Hidden identities suppress only the printed artwork. The opaque white
 plate keeps its thickness and rear cap, including when viewed through a glass
 body or in a face-down wall. Nearby spectators use the world view
 without occupying participant seats.
 
-The rule screen separates preset options, read-only rule details and custom
-settings. The preset selector expands to show every preset for the current player
-count; unavailable choices are disabled and explain the red-tile shortage on hover.
-Preset-supported options retain the preset identity. Red compositions
-use three separate choices; unavailable choices remain visible, disabled and
-labelled with a shortage tooltip. Availability comes from synchronized server
-capabilities rather than access to box inventory. Every composition, including
-no-red play, requires a complete matching set with enough ordinary and red fives.
-All rule pages paginate at 320 x 240, with complete labels available on hover.
-Minimum yaku han uses explicit one/two/four choices and match length uses
-East-only/East–South choices. Bankruptcy stays visible in the preset overview
-and is editable in custom match flow. Its tooltip states the negative/zero boundary.
+The Riichi rule editor always shows six categories: Basic Settings, Points and
+Ranking, Win Scoring, Match Progress, Riichi and Calls, and Liability Payments.
+Basic Settings contains one mutually exclusive player-count field, the rule preset,
+open tanyao, red fives, minimum yaku han, match length and Restore Preset Defaults.
+Points and Ranking includes the applicable fixed or floating placement values.
+Win Scoring owns the yaku selector, including the full, partial and disabled Mahjong
+Soul ancient selection. Match Progress includes bankruptcy and its negative/zero
+boundary explanation. Each remaining field follows its engine-owned group and visibility.
 
-Room settings include default-off convenience hints for all four rules. A small diamond
+Choose Rule Preset is a separate child page. Selecting the current preset preserves
+the complete draft and unfinished input. A different Riichi preset uses `withPreset()`:
+it retains the target preset's supported basic options and restores fixed details
+and awards to that preset's defaults. Player-count changes use the same family when
+available, or ask for a target-count preset. Canceling that choice retains the original
+count and draft. Custom status derives from the complete rules and appears alongside
+the preset name. Category navigation remains available in read-only states.
+
+Apply Rules submits the complete draft and waits for an explicit server reply.
+Cancel discards unsent edits. While awaiting a reply, Back leaves the editor without
+claiming to withdraw the request. Rejections retain the draft. Stale or rejected
+feedback offers Reload, which replaces the draft with confirmed room rules.
+Category changes, pagination, resizing, help and award navigation preserve unfinished
+numeric text. Invalid relevant fields disable Apply across all pages.
+
+Preset-supported basic options remain editable when world policy disables custom
+rules; fixed details and awards respect their separate permission. Disabled controls
+distinguish host permission, preparation stage, forced presets and physical stock.
+Red compositions use three explicit choices and synchronized server capability bits.
+Every composition, including no-red play, requires a complete matching set.
+All pages paginate at 320 × 240, with full labels in hover text and independent help
+buttons. Minimum yaku han uses one/two/four choices and match length uses
+East-only/East–South choices.
+
+Sichuan mahjong uses Basic Settings, Kongs and Payments, and Draws and Settlement.
+Taiwanese mahjong uses Basic Settings and Scoring and Payments, with award selection
+on the scoring page, its existing wall reserve choices and four payment parameters.
+Their preset selectors, draft navigation and acknowledgement footers follow the same
+page structure while retaining their own world-policy permissions. MCR offers a fixed
+rule summary and the existing explanations.
+
+Riichi room settings include default-off convenience hints. A small diamond
 with an exclamation mark appears near the private hand when analysis is available.
 Hover or native keyboard focus opens structural waits and unseen-copy counts,
 including exhausted waits at zero. The native narration includes every wait and count.
-Hovering over or selecting a legal discard previews the resulting waits. Retain
-the last preview while the pointer travels to the diamond, and clear it on a new
-decision, cancellation or disabled hints. Counts combine red and ordinary fives
+Show hints only for the current thirteen-tile ready shape, counting each meld as three tiles.
+Clear them when the hand no longer has that shape or the room disables hints. Counts combine red and ordinary fives
 and never claim to reveal the actual wall. Center the popup on the actual private
 hand, directly above its projected top edge in seated play and `TableHand` in
 immersive play. Keep a small gap to the tiles instead of anchoring to the action
 rail. Draw the exclamation icon at the diamond's geometric center, independent
 of language and font glyph bearings. Wrap waits into compact rows when side
 controls or player cards restrict the space, preserving the hand anchor and
-native text size. MCR and Sichuan mahjong retain this native focus and popup style with
-previews of shanten numbers and effective tiles. MCR shows scorer-backed non-flower fan qualification,
-and Sichuan mahjong shows void tiles, structural capped values and its owner's passed-win
-restriction. Taiwanese mahjong adds previews of sixteen-tile shanten numbers and
-effective tiles, separate ron and self-draw tai, and the recipient's passing restriction.
-Dense MCR, Sichuan mahjong and Taiwanese mahjong tile rows paginate within the available height.
-Native activation of the diamond advances the page while narration retains all
-tile rows. Shared presentation does not alter either table's hand geometry.
+native text size.
 The room host can change this setting during preparation.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
@@ -367,13 +391,11 @@ furiten badge below it. Each plaque contains only portrait, name, wind and score
 turn, riichi and presence use small marks. The central
 device carries the round, remaining tiles, turn direction and graphical honba/riichi
 point sticks with counts. It must not spell out honba or deposits.
-MCR and Sichuan mahjong use a separate compact instrument panel: a short round caption
-above a larger remaining-tile count, with four owner-positioned seat badges.
-MCR badges show seat winds and the caption uses the actual prevailing wind.
-Sichuan mahjong badges show authorized void suits or the public won state; unpublished
-void choices remain blank. A brass edge marks the dealer and the active seat uses
-the shared selected surface. ROUND, REMAINING, TURN and the variant's WINDS or
-STATUS preferences remain independent. Native panels have no deposit counters.
+MCR, Sichuan mahjong and Taiwanese mahjong use a compact instrument panel with a
+short round caption above a larger remaining-tile count. The MCR caption uses the
+actual prevailing wind. Player plaques carry seat winds, authorized void suits and
+the public won state. ROUND, REMAINING and TURN control the instrument independently
+of the plaques' WINDS and STATUS preferences. Native panels have no deposit counters.
 Use the same resource-pack tile faces and server-issued actions as seated play.
 In replay diagrams, dim tsumogiri and mark tedashi. Live play keeps both at normal
 brightness and distinguishes their movement by animation. The sideways riichi discard
@@ -387,7 +409,10 @@ font size.
 The bottom-left control hint uses that same enlarged size. In both views, show
 the move allowance as large warm-white digits with a smaller `+reserve` in the accent color,
 right-aligned above the private hand. Reserve a separate clock lane below the
-action buttons; riichi prompts and animation cues grow upward above the buttons.
+action buttons. Center riichi prompts and animation cues horizontally in the upper
+part of the screen, using muted text and an area clear of player cards, controls,
+the clock, hint popups, the central device and the private hand. Keep the current
+discard card at the right edge, clear of these elements.
 Seated placement follows the animated tile-box projection, including melds and
 selection lift. Immersive placement uses the raised hand's top edge. Clock labels
 remain localized in hover details and narration, and the last five total seconds
@@ -397,7 +422,7 @@ when its projection leaves insufficient room above and sufficient room below.
 Size immersive toolbar buttons from their translated captions at that scale, including padding.
 Riichi and animation captions, exit-vote panels and controls, settlement navigation
 and player-information tooltips use the same 2x content scale. Reserve matching
-line spacing above the action rail; multiple animation cues grow upward.
+line spacing in the centered caption area for multiple animation cues.
 Wait previews use twice the seated size for their focus target, tile faces, counts
 and heading. Reserve the enlarged popup's height when avoiding player plaques and actions.
 Immersive play has exactly one 1280 × 800 virtual layout. Minecraft GUI scale, window
@@ -537,7 +562,7 @@ and Exit. Narrow seated overlays use short captions with the full names on hover
 normal and immersive toolbars size buttons from their translated captions.
 The top-bar view button switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
-retaining the drawn-tile gap and normal selection, discard and riichi controls.
+retaining the drawn-tile gap and direct discard and riichi controls.
 Tile width uses a stable fourteen-tile capacity (seventeen for Taiwanese mahjong). Short Riichi
 hands keep their left anchor; Chinese foreground hands stay centered and move
 right only when actual projected public tiles overlap their screen band.
@@ -546,7 +571,8 @@ changes in available controls never move the hand vertically.
 Action buttons stay above it. Switching views preserves world camera orientation;
 closing the overlay reveals the seated world. Third-person remains under Minecraft's
 control. Seat cards retain names, wind and scores in both presentations.
-Selection and game actions use pointer clicks and visible confirmation controls.
+Use the selected single-click or double-click mode to discard a legal hand tile.
+Other declarations use their native action controls.
 Native text editing, widget focus and Escape retain Minecraft's behavior.
 An active turn clock suppresses the footer help line, keeping attention on the
 decision controls and the separate clock lane above the hand.
@@ -571,7 +597,8 @@ is checked at 320 × 240; immersive controls always use the fixed 1280 × 800 vi
 canvas and are only uniformly scaled by the outer letterbox transform. These preferences belong to the server's
 seated player, reset at the start of each hand, and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
-text stay in the action-side gutter. Sorting starts enabled. The other options start
+text use separate areas. Countdown stays beside the actions; riichi and animation
+captions stay centered and clear of other interface elements. Sorting starts enabled. The other options start
 disabled. A qualifying win takes priority over automatic north extraction, discards and
 skipped calls. Without automatic wins, the win decision remains explicit. MCR uses
 eight non-flower fan. Sichuan mahjong uses its issued win and discard choices. Automatic
@@ -580,8 +607,8 @@ preference, and retains the normal robbery and replacement-draw flow.
 Turning sorting off keeps the hand's current order. Dragging a tile onto another
 tile changes its position. Dragging it upward at least 48 logical pixels in seated
 view or 96 pixels on the immersive canvas discards only when a discard is legal.
-Shorter drags retain the tile. The personal single-click, double-click and
-confirmation settings continue to govern click discards.
+Shorter drags retain the tile. Clicking without dragging uses the personal
+single-click or double-click discard setting.
 Riichi draws and ordinary discards advance after
 12 server ticks on both tables, retaining legal concealed-kan and north-extraction
 choices. Ordinary tables start with a 30-second move allowance and 120-second

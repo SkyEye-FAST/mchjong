@@ -29,6 +29,7 @@ final class SurvivalSmoke {
 
     static void verify(ServerPlayer player) {
         var level = player.serverLevel();
+        ColorRecipesSmoke.verify(player);
         for (var block : List.of(MahjongContent.TABLE, MahjongContent.AUTO_TABLE)) {
             var table = new MahjongTableBlockEntity(BlockPos.ZERO, block.defaultBlockState());
             table.setLevel(level);

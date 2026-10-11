@@ -31,9 +31,10 @@ final class SurvivalRecipes {
             String suffix = wood.equals("oak") ? "" : "_" + wood;
             shaped(output, "mahjong_table" + suffix, List.of("SSS", "S S", "F F"), key,
                 stack("mahjong_table", 1, Map.of("wood", wood)));
-            shaped(output, "mahjong_stool" + suffix, List.of("CC", "SS", "FF"),
-                Map.of("S", item(wood + "_slab"), "F", item(wood + "_fence"), "C", item("white_carpet")),
-                stack("mahjong_stool", 2, Map.of("wood", wood)));
+            for (String color : COLORS)
+                shaped(output, "mahjong_stool" + suffix + "_" + color, List.of("CC", "SS", "FF"),
+                    Map.of("S", item(wood + "_slab"), "F", item(wood + "_fence"), "C", item(color + "_carpet")),
+                    stack("mahjong_stool", 2, Map.of("wood", wood, "color", COLORS.indexOf(color))));
         }
         for (String color : COLORS)
             shaped(output, "table_cloth_" + color, List.of("CCC"), Map.of("C", item(color + "_carpet")),

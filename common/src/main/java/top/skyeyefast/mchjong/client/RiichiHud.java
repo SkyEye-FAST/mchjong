@@ -25,6 +25,10 @@ final class RiichiHud {
     private boolean furiten;
     void clear() { regions.clear(); }
     int bottom() { return regions.stream().mapToInt(region -> region.y() + region.height()).max().orElse(34); }
+    List<net.minecraft.client.gui.navigation.ScreenRectangle> bounds() {
+        return regions.stream().map(region -> new net.minecraft.client.gui.navigation.ScreenRectangle(
+            region.x(), region.y(), region.width(), region.height())).toList();
+    }
     boolean contains(double x, double y) { return regions.stream().anyMatch(region -> region.contains(x, y)); }
     int hintHalfWidth(int center, int bottom, int halfWidth, int height) {
         for (var region : regions) if (region.y() < bottom && region.y() + region.height() > bottom - height) {
@@ -114,7 +118,7 @@ final class RiichiHud {
             Component shortLine = Component.empty();
             Component hover = RiichiTableScreen.playerName(view, seat).copy();
             if (room != null && seat < room.seats().size() && room.seats().get(seat).participant().externalBotId() != null)
-                hover = TableParticipantsScreen.botName(room, view.externalBots(), seat);
+                hover = RoomMembers.botName(room, view.externalBots(), seat);
             String botError = botService == null || seat >= botService.seatErrors().size()
                 ? null : botService.seatErrors().get(seat);
             if (botError != null) {
@@ -140,7 +144,7 @@ final class RiichiHud {
             } else if (disconnected) {
                 if (board == null || !board.perspective())
                     shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.disconnected.short"));
-                hover = hover.copy().append("\n").append(TableParticipantsScreen.presence(presence));
+                hover = hover.copy().append("\n").append(RoomMembers.presence(presence));
             }
             if (settings.show(TableSettings.Information.STATUS)) {
                 if (seat == view.dealer()) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.dealer"));
@@ -231,19 +235,21 @@ final class RiichiHud {
             regions.add(0, new Region(start, tileY, x - start, Math.round(tileWidth * TileDimensions.LARGE.height() / TileDimensions.LARGE.width()),
                 Component.translatable("ui.mchjong.result_indicators")));
         }
+    }
+
+    void renderFocus(Font font, GuiGraphics graphics, RiichiView view, int width, int canvasHeight, boolean immersive,
+                     List<net.minecraft.client.gui.navigation.ScreenRectangle> occupied, TileFacePreset preset) {
+        var settings = TableSettings.get();
         if (view.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {
             Component focus = Component.translatable("ui.mchjong.focus");
-            int span = Math.min(width / 2 - 8, font.width(focus) + 27);
-            int x = width - 8 - span;
-            int y = bottom() + 4;
-            int scale = board != null && board.perspective() ? 2 : 1;
-            if (board != null) {
-                var focusArea = board.focus();
-                x = focusArea.x();
-                y = focusArea.y();
-                span = focusArea.width();
-            }
+            int scale = immersive ? 2 : 1;
             int height = 17 * scale;
+            occupied.addAll(bounds());
+            int preferred = immersive ? TableCanvas.card(1).bottom() + 4 * scale : bottom() + 4;
+            var bounds = TableStatusLayout.focus(width, canvasHeight, (font.width(focus) + 27) * scale,
+                height, 4 * scale, preferred, occupied);
+            if (bounds == null || bounds.width() < 22 * scale) return;
+            int x = bounds.left(), y = bounds.top(), span = bounds.width();
             MahjongUi.panel(graphics, x, y, span, height);
             if (span > 28 * scale) textScaled(font, graphics, focus, x + 4 * scale, y + 5 * scale,
                 span - 22 * scale, MahjongUi.ACCENT, scale);

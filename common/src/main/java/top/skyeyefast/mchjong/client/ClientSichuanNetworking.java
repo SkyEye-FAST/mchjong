@@ -51,11 +51,11 @@ public final class ClientSichuanNetworking {
             || rootScreen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos());
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
             && payload.room().lobby() && showing) { client.setScreen(null); return; }
+        if (!payload.open() && rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())) {
+            rulesScreen.receivedView(payload.controlReply());
+            return;
+        }
         if (view == null) {
-            if (!payload.open() && rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())) {
-                rulesScreen.receivedView(payload.controlReply());
-                return;
-            }
             if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.sichuanScreen() != null
                 && clock.sichuanScreen().tablePos().equals(payload.pos())) return;
             if (payload.open() || showing || rootScreen instanceof TaiwanLobbyScreen taiwan && taiwan.tablePos().equals(payload.pos()) || rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())

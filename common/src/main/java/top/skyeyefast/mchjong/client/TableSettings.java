@@ -22,7 +22,7 @@ public final class TableSettings {
 
         public String key() { return "settings.mchjong.info." + name().toLowerCase(Locale.ROOT); }
     }
-    public enum DiscardMode { SINGLE_CLICK, DOUBLE_CLICK, CONFIRM }
+    public enum DiscardMode { SINGLE_CLICK, DOUBLE_CLICK }
     public enum TileLabels { NAME, MPSZ }
     public enum GuideLines { ALWAYS, HOVER, OFF }
     public enum VoiceSource { SELECTED, OFF }

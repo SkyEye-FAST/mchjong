@@ -25,7 +25,7 @@ class SichuanGameTest {
         assertEquals(before.game().decision(), session.view(id(1)).game().decision());
         for (int tick = 0; tick < 12; tick++) session.tick();
         assertFalse(session.view(id(1)).game().submitted());
-        assertEquals(-1, session.view(id(1)).game().passedFan());
+        assertEquals(-1, session.game().save().players().get(1).passedFan());
         assertTrue(session.view(id(2)).game().submitted());
         assertNull(session.roomView(null).automation());
         assertEquals(MatchAutomation.DEFAULT, session.roomView(id(2)).automation());
@@ -51,7 +51,7 @@ class SichuanGameTest {
         enable(session, 0, MatchAutomation.Option.NO_CALLS);
         enable(session, 0, MatchAutomation.Option.DISCARD);
         for (int tick = 0; tick < 12; tick++) session.tick();
-        assertEquals(before.game().passedFan(), session.view(id(0)).game().passedFan());
+        assertEquals(-1, session.game().save().players().get(0).passedFan());
         assertTrue(session.game().save().players().get(0).river().isEmpty());
         enable(session, 0, MatchAutomation.Option.WIN);
         session.tick();
@@ -553,9 +553,7 @@ class SichuanGameTest {
     @Test void passedWinsBlockSameFanUntilDrawingAndSurviveRestore() {
         var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, "9p", "");
         choose(game, 0, DISCARD, Tile.parseKind("9p")); choose(game, 1, PASS, -1); passAll(game);
-        assertEquals(0, game.view(1).passedFan());
-        assertEquals(-1, game.view(0).passedFan());
-        assertEquals(-1, game.view(-1).passedFan());
+        assertEquals(0, game.save().players().get(1).passedFan());
         assertEquals(game.view(1), SichuanCodec.decodeView(SichuanCodec.encodeView(game.view(1))));
         game = SichuanCodec.restore(SichuanCodec.save(game));
         game = nextDraw(game, Tile.parseKind("9p"));
@@ -565,27 +563,6 @@ class SichuanGameTest {
         choose(game, 2, DRAW, -1); choose(game, 2, DISCARD, Tile.parseKind("9p"));
         assertTrue(game.actions(1).stream().noneMatch(action -> action.type() == WIN));
         assertEquals(0, game.save().players().get(1).passedFan());
-    }
-
-    @Test void hintsIgnoreOpponentsConcealedHandsAndFutureWallIdentities() {
-        var game = position(new int[]{2, 2, 2, 2}, false, WAIT + " 9s", "", "", "");
-        var state = game.save();
-        var players = new ArrayList<>(state.players());
-        var opponent = players.get(1);
-        var hand = new ArrayList<>(opponent.hand());
-        var slots = new ArrayList<>(state.wall().slots());
-        int slot = java.util.stream.IntStream.range(0, slots.size()).filter(index -> slots.get(index) >= 0).findFirst().orElseThrow();
-        int hidden = hand.set(0, slots.get(slot)); slots.set(slot, hidden);
-        players.set(1, new SichuanPlayerState(hand, opponent.melds(), opponent.river(), opponent.voidSuit(),
-            opponent.won(), opponent.drawn(), opponent.passedFan(), opponent.firstDiscard()));
-        var wall = state.wall();
-        var other = SichuanGame.restore(copy(state, players,
-            new SichuanWall.State(slots, wall.dealer(), wall.die1(), wall.die2(), wall.cursor(), wall.eastWestLongWall())));
-        int discard = state.players().get(0).hand().stream().filter(tile -> Tile.kind(tile) == Tile.parseKind("9s")).findFirst().orElseThrow();
-        var preview = new SichuanHints().preview(game.view(0), discard);
-        assertNotNull(preview);
-        assertEquals(preview, new SichuanHints().preview(other.view(0), discard));
-        assertNull(new SichuanHints().preview(other.view(-1), discard));
     }
 
     @Test void milSeparatesRootsAndKongsWhileTfmjCountsBothAsRoots() {

@@ -52,7 +52,13 @@ final class TableBoard {
             ((int) view.seats().get(seat).river().stream().filter(discard -> !discard.called()).count() + 5) / 6);
         if (perspective) {
             riverWidth = TableImmersiveTable.RIVER_WIDTH;
-            center = new Rect(568, 299, 144, 85);
+            double half = TableIndicator.HALF_WIDTH * 320;
+            var farLeft = TableProjection.project(-half, -half, 8.5);
+            var nearRight = TableProjection.project(half, half, 0);
+            var nearLeft = TableProjection.project(-half, half, 0);
+            center = new Rect((int) Math.floor(nearLeft.x()), (int) Math.floor(farLeft.y()),
+                (int) Math.ceil(nearRight.x()) - (int) Math.floor(nearLeft.x()),
+                (int) Math.ceil(nearRight.y()) - (int) Math.floor(farLeft.y()));
             return;
         }
         int centerHeight = bounds.height() >= 200 ? 64 : 54;
@@ -123,10 +129,8 @@ final class TableBoard {
         };
     }
 
-    Rect focus() {
-        if (perspective) return new Rect(220, 550, 180, 34);
-        Rect card = card(viewer);
-        return new Rect(card.x(), card.y() - 21, card.width(), 17);
+    net.minecraft.client.gui.navigation.ScreenRectangle centerBounds() {
+        return new net.minecraft.client.gui.navigation.ScreenRectangle(center.x(), center.y(), center.width(), center.height());
     }
 
     Point point(int tile) { return immersive == null ? tiles.get(tile) : immersive.point(tile); }
@@ -407,19 +411,6 @@ final class TableBoard {
         if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) {
             graphics.pose().pushPose(); graphics.pose().mulPoseMatrix(TableProjection.surface(0, 0, 14, 8.5)); graphics.pose().scale(2, 2, 1);
             MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.remaining.short", view.remaining()), -32, -5, 64, MahjongUi.TEXT, true);
-            graphics.pose().popPose();
-        }
-        boolean labels = settings.show(view.seats().get(0).variant() == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN
-            ? TableSettings.Information.STATUS : TableSettings.Information.WINDS);
-        for (int seat = 0; seat < view.players(); seat++) {
-            int side = side(seat, viewer, players);
-            boolean active = seat == view.turn() && settings.show(TableSettings.Information.TURN);
-            if (!labels && !active) continue;
-            graphics.pose().pushPose(); graphics.pose().mulPoseMatrix(TableProjection.surface(side, 0, 70, 8.5));
-            graphics.pose().scale(2, 2, 1);
-            graphics.fill(-22, -6, 22, 7, active ? MahjongUi.SELECTED : MahjongUi.INPUT);
-            if (labels && seat == view.dealer()) graphics.fill(-22, -6, -20, 7, MahjongUi.ACCENT);
-            if (labels) MahjongUi.text(graphics, font, indicator.seats().get(seat), -20, -4, 40, active ? MahjongUi.ACCENT : MahjongUi.MUTED, true);
             graphics.pose().popPose();
         }
     }

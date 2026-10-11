@@ -28,6 +28,7 @@ final class TableControlSmoke {
     private boolean remainingHidden;
     private CompletableFuture<Void> reseated;
     private int departedSeat;
+    private top.skyeyefast.mchjong.engine.TimeControl savedClock;
     private int originalWidth, originalHeight, originalScale;
     private top.skyeyefast.mchjong.world.WorldSettings.Policy originalWorldPolicy;
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
@@ -71,13 +72,20 @@ final class TableControlSmoke {
             });
             next(3);
         } else if (stage == 3 && client.screen instanceof RiichiTableScreen && room.viewerSeat() == 0 && ticks > 10) {
-            if (!configuration.rules().sanma()) click(client, "ui.mchjong.players.3");
+            if (!configuration.rules().sanma()) {
+                click(client, "rules.mchjong.title");
+                click(client, "ui.mchjong.players.3");
+                require(configuration.rules().players() == 4, "Player count submitted before Apply");
+                click(client, "rules.mchjong.apply");
+            }
             next(4);
         } else if (stage == 4 && configuration.rules().players() == 3) {
             require(configuration.rules().preset().players() == 3, "Four-player preset selected in the three-player lobby");
             capture(client, output, "25-three-player-lobby.png");
             AutomationControlsSmoke.checkOptions(client, 0);
+            click(client, "rules.mchjong.title");
             click(client, "ui.mchjong.players.4");
+            click(client, "rules.mchjong.apply");
             next(5);
         } else if (stage == 5 && configuration.rules().players() == 4 && selectPreset(client, configuration, RiichiPreset.JPML_A)) {
             require(configuration.rules().startingPoints() == 30000, "JPML A initial points");
@@ -93,6 +101,8 @@ final class TableControlSmoke {
             click(client, "rules.mchjong.title");
             next(12);
         } else if (stage == 12 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
+            RuleEditorSmoke.draft(client, table);
+            RuleEditorSmoke.layout(client, configuration.rules());
             require(!widget(client, RedFives.THREE.translationKey()).active && !widget(client, RedFives.FOUR.translationKey()).active,
                 "Unavailable red choices are enabled");
             require(client.screen.children().stream().noneMatch(EditBox.class::isInstance), "Preset options exposed fixed numeric editors");
@@ -140,14 +150,12 @@ final class TableControlSmoke {
             require(!configuration.rules().custom() && !configuration.rules().kuitan(), "Preset variants were classified as custom");
             require((table.clientRedOptions() & 1) != 0, "Surplus box cannot start play");
             click(client, "rules.mchjong.title");
-            click(client, "rules.mchjong.mode.details");
             click(client, "rules.mchjong.group.scoring");
             next(25);
         } else if (stage == 25 && ticks > 5) {
             require(client.screen.children().stream().noneMatch(EditBox.class::isInstance), "Rule details exposed numeric editors");
             AutomationControlsSmoke.checkBounds(client);
             capture(client, output, "25j-rule-details.png");
-            click(client, "rules.mchjong.mode.custom");
             click(client, "rules.mchjong.group.points");
             next(24);
         } else if (stage == 24 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
@@ -202,11 +210,51 @@ final class TableControlSmoke {
             click(client, "rules.mchjong.title");
             next(18);
         } else if (stage == 18 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
+            click(client, "rules.mchjong.group.points");
             field(client, "rules.mchjong.option.starting_points").setValue("40000");
             click(client, "gui.cancel");
             next(19);
         } else if (stage == 19 && client.screen instanceof RiichiTableScreen && ticks > 5) {
             require(configuration.rules().startingPoints() == 32100, "Cancel changed server rules");
+            reseated = customPolicy(client, false); next(40);
+        } else if (stage == 40 && reseated.isDone() && !table.clientWorldPolicy().allowCustomRules() && !configuration.rules().custom()) {
+            click(client, "rules.mchjong.title");
+            RuleEditorSmoke.categories(client);
+            require(widget(client, RedFives.THREE.translationKey()).active, "World custom restriction disabled preset red choices");
+            click(client, "rules.mchjong.group.points");
+            require(!field(client, "rules.mchjong.option.starting_points").active, "World custom restriction enabled fixed details");
+            click(client, "rules.mchjong.group.basic");
+            var name = Component.translatable("settings.mchjong.toggle", Component.translatable("rules.mchjong.option.kuitan"),
+                Component.translatable(configuration.rules().kuitan() ? "rules.mchjong.yes" : "rules.mchjong.no")).getString();
+            var toggle = LobbySmoke.find(client, name);
+            require(toggle.active, "World custom restriction disabled open tanyao"); toggle.onPress();
+            click(client, "rules.mchjong.apply"); next(41);
+        } else if (stage == 41 && client.screen instanceof RiichiTableScreen && ticks > 5) {
+            require(!configuration.rules().custom(), "Preset adjustment became custom under world policy");
+            reseated = customPolicy(client, true); next(42);
+        } else if (stage == 42 && reseated.isDone() && table.clientWorldPolicy().allowCustomRules()) {
+            savedClock = configuration.timeControl();
+            click(client, "rules.mchjong.title"); click(client, "rules.mchjong.group.points");
+            field(client, "rules.mchjong.option.starting_points").setValue("41000");
+            var id = client.player.getUUID(); var pos = table.getBlockPos();
+            reseated = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                var game = ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).participantSession(player);
+                game.configureClock(id, new top.skyeyefast.mchjong.engine.TimeControl(savedClock.reserveSeconds(), savedClock.moveSeconds() == 1 ? 2 : 1));
+            }); next(43);
+        } else if (stage == 43 && reseated.isDone() && !configuration.timeControl().equals(savedClock)) {
+            require(field(client, "rules.mchjong.option.starting_points").getValue().equals("41000"), "Room update erased the draft");
+            client.screen.tick();
+            require(!widget(client, "rules.mchjong.apply").active, "Stale room draft could be applied");
+            click(client, "rules.mchjong.reload");
+            require(field(client, "rules.mchjong.option.starting_points").getValue().equals(Integer.toString(configuration.rules().startingPoints())), "Reload did not replace the draft");
+            click(client, "gui.cancel");
+            var id = client.player.getUUID(); var pos = table.getBlockPos();
+            reseated = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).participantSession(player).configureClock(id, savedClock);
+            }); next(44);
+        } else if (stage == 44 && reseated.isDone() && configuration.timeControl().equals(savedClock)) {
             next(35);
         } else if (stage == 35 && customYaku.tick(client, table)) {
             click(client, "settings.mchjong.scopes");
@@ -298,6 +346,14 @@ final class TableControlSmoke {
         return false;
     }
 
+    private static CompletableFuture<Void> customPolicy(Minecraft client, boolean enabled) {
+        return client.getSingleplayerServer().submit(() -> {
+            try {
+                var server = client.getSingleplayerServer();
+                server.getCommands().getDispatcher().execute("mchjong world allowCustomRules " + enabled, server.createCommandSourceStack());
+            } catch (com.mojang.brigadier.exceptions.CommandSyntaxException failure) { throw new IllegalStateException(failure); }
+        });
+    }
     private void next(int value) { stage = value; ticks = 0; }
     private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.RiichiRoomSettings configuration, RiichiPreset target) {
         require(configuration.rules().preset() != RiichiPreset.M_LEAGUE, "Preset selector selected unavailable red fives");
@@ -305,26 +361,31 @@ final class TableControlSmoke {
         if (ticks < 10) return false;
         if (configuration.rules().preset() == target && client.screen instanceof RiichiTableScreen) return true;
         if (client.screen instanceof RiichiTableScreen && ticks % 10 == 0) {
-            String label = Component.translatable("rules.mchjong.preset",
-                Component.translatable(configuration.rules().preset().presetKey())).getString();
-            var button = LobbySmoke.find(client, label);
-            require(button.active, "Host preset selector is disabled");
-            client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
-        } else if (client.screen instanceof RiichiRulesScreen && ticks % 10 == 0) {
-            String choice = Component.translatable(target.presetKey()).getString();
-            if (client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .anyMatch(widget -> widget.getMessage().getString().equals(choice))) {
-                click(client, target.presetKey());
-                click(client, "rules.mchjong.apply");
-            }
+            click(client, "rules.mchjong.title");
+            openPreset(client);
+            click(client, target.presetKey());
+            click(client, "rules.mchjong.apply");
         }
         return false;
+    }
+    private static void openPreset(Minecraft client) {
+        var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(w -> w.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                && t.getKey().equals("rules.mchjong.preset")).findFirst().orElseThrow();
+        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
     }
     private static EditBox field(Minecraft client, String key) { return (EditBox) widget(client, key); }
     private static AbstractWidget widget(Minecraft client, String key) {
         String label = Component.translatable(key).getString();
-        return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-            .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+        for (int page = 0; page < 12; page++) {
+            var found = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(w -> w.visible && w.getMessage().getString().equals(label)).findFirst();
+            if (found.isPresent()) return found.get();
+            var next = LobbySmoke.find(client, Component.translatable("rules.mchjong.next").getString());
+            if (next == null || !next.active) break;
+            client.screen.mouseClicked(next.getX() + 5, next.getY() + 5, 0);
+        }
+        throw new IllegalStateException("Missing rule field: " + key);
     }
     private static void click(Minecraft client, String key) {
         String label = Component.translatable(key).getString();

@@ -35,11 +35,15 @@ final class HandVisibilitySmoke {
             var parent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(parent);
             client.setScreen(new TableOptionsScreen(parent, parent.tablePos()));
+            LobbySmoke.find(client, Component.translatable("settings.mchjong.hand_display").getString()).onPress();
             var label = Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
                 "settings.mchjong.hand_visibility." + configuration.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
             var button = LobbySmoke.find(client, label);
             require(button.active, "Host visibility control is disabled");
-            if (configuration.playerHandVisibility() != visibility) button.onPress();
+            if (configuration.playerHandVisibility() != visibility) {
+                button.onPress();
+                LobbySmoke.find(client, Component.translatable("settings.mchjong.hand_visibility." + visibility.name().toLowerCase(java.util.Locale.ROOT)).getString()).onPress();
+            }
             next(1);
         } else if (stage == 1 && configuration.playerHandVisibility() == visibility && ticks > 5) {
             next(2);
@@ -48,6 +52,7 @@ final class HandVisibilitySmoke {
             var parent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(parent);
             client.setScreen(new TableOptionsScreen(parent, parent.tablePos()));
+            LobbySmoke.find(client, Component.translatable("settings.mchjong.hand_display").getString()).onPress();
             next(3);
         } else if (stage == 3 && ticks > 10) {
             AutomationControlsSmoke.checkBounds(client);

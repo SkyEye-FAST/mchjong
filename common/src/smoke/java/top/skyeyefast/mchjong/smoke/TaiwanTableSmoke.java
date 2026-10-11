@@ -27,6 +27,9 @@ final class TaiwanTableSmoke {
     private int selectedTile;
     private UUID incarnation;
     private UUID replayId;
+    private VariantRuleLayoutSmoke ruleLayouts;
+    private final RoomMembersSmoke lobbyMembers = new RoomMembersSmoke(false);
+    private final RoomMembersSmoke matchMembers = new RoomMembersSmoke(true);
     private final CustomYakuSmoke customYaku = new CustomYakuSmoke(MahjongVariant.TAIWAN);
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
@@ -40,24 +43,29 @@ final class TaiwanTableSmoke {
             case 0 -> { task = server.submit(() -> target(client, pos).sit(main(client), 0)); stage++; }
             case 1 -> {
                 if (room == null || room.viewerSeat() < 0) break;
-                if (!room.convenienceHints()) {
-                    client.getConnection().send(PayloadPackets.serverbound(new TableSessionControlPayload(pos, room.tableId(),
-                        TableSessionControlPayload.Operation.CONVENIENCE_HINTS, room.decision(), true)));
-                    break;
-                }
                 if (choice == variants.size()) { stage = 3; break; }
+                ruleLayouts = choice < 3 ? new VariantRuleLayoutSmoke(variants.get(choice)) : null;
                 client.getConnection().send(PayloadPackets.serverbound(new TableVariantPayload(pos, room.tableId(), room.incarnation(), room.decision(), variants.get(choice))));
                 stage++;
             }
             case 2 -> {
                 if (room == null || room.variant() != variants.get(choice)) break;
+                if (ruleLayouts != null && !ruleLayouts.tick(client, output)) break;
                 check(switch (room.variant()) {
                     case RIICHI -> client.screen instanceof RiichiTableScreen;
                     case MCR -> client.screen instanceof McrLobbyScreen;
                     case SICHUAN -> client.screen instanceof SichuanLobbyScreen;
                     case TAIWAN -> client.screen instanceof TaiwanLobbyScreen;
                 }, "Variant switch did not route its lobby");
-                check(room.convenienceHints(), "Variant switch lost shared hints");
+                check(!room.convenienceHints(), "Variant switch retained Riichi hints");
+                if (room.variant() == MahjongVariant.MCR) {
+                    var lobby = client.screen;
+                    LobbySmoke.find(client, net.minecraft.network.chat.Component.translatable("rules.mchjong.title").getString()).onPress();
+                    AutomationControlsSmoke.checkBounds(client);
+                    RuleExplanationSmoke.check(client, net.minecraft.network.chat.Component.translatable("variant.mchjong.mcr"));
+                    client.screen.onClose();
+                    check(client.screen == lobby, "MCR rules lost their lobby parent");
+                }
                 choice++; stage = 1;
             }
             case 3 -> {
@@ -75,7 +83,7 @@ final class TaiwanTableSmoke {
             case 30 -> {
                 if (++captures < 12) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-rules.png", client.getMainRenderTarget(), ignored -> {});
-                RuleExplanationSmoke.check(client, net.minecraft.network.chat.Component.translatable("taiwan.mchjong.preset.pocket_common"));
+                RuleExplanationSmoke.check(client, net.minecraft.network.chat.Component.translatable("rules.mchjong.choose_preset"));
                 press(client, "taiwan.mchjong.payment_rules");
                 var payment = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
                     .map(net.minecraft.client.gui.components.EditBox.class::cast).findFirst().orElseThrow();
@@ -84,8 +92,8 @@ final class TaiwanTableSmoke {
                 payment = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
                     .map(net.minecraft.client.gui.components.EditBox.class::cast).findFirst().orElseThrow();
                 check(payment.getValue().isEmpty(), "Explanation lost incomplete payment input");
-                payment.setValue("1"); press(client, "taiwan.mchjong.presets");
-                press(client, "taiwan.mchjong.preset.southern_common"); press(client, "gui.done"); stage = 31;
+                payment.setValue("1"); press(client, "rules.mchjong.group.basic");
+                choosePreset(client, "taiwan.mchjong.preset.southern_common"); press(client, "rules.mchjong.apply"); stage = 31;
             }
             case 31 -> {
                 if (table.clientTaiwanSettings().rules().flowers() != TaiwanRules.Flowers.NONE) break;
@@ -122,8 +130,9 @@ final class TaiwanTableSmoke {
             }
             case 6 -> {
                 if (room == null || room.seats().stream().anyMatch(s -> s.participant().id() == null)) break;
+                if (!lobbyMembers.tick(client, table)) break;
                 client.setScreen(new TaiwanRulesScreen(client.screen, pos));
-                press(client, "taiwan.mchjong.preset.pocket_common"); press(client, "gui.done"); stage++;
+                choosePreset(client, "taiwan.mchjong.preset.pocket_common"); press(client, "rules.mchjong.apply"); stage++;
             }
             case 7 -> {
                 if (!(client.screen instanceof TaiwanLobbyScreen) || table.clientTaiwanSettings().rules().flowers() == TaiwanRules.Flowers.NONE) break;
@@ -154,7 +163,9 @@ final class TaiwanTableSmoke {
                 client.getConnection().send(PayloadPackets.serverbound(new TableRoomActionPayload(pos, room.tableId(), room.incarnation(), room.decision(), action))); stage++;
             }
             case 11 -> {
-                if (!(client.screen instanceof TaiwanTableScreen) || view == null) break;
+                if (view == null) break;
+                if (!matchMembers.tick(client, table)) break;
+                check(client.screen instanceof TaiwanTableScreen, "Member return lost the match");
                 check(view.game().wall().size() == 144 && room.seats().stream().allMatch(s -> s.presence() == PlayerPresence.SEATED), "Taiwan match missing mounted humans");
                 check(view.game().seats().stream().mapToInt(s -> s.flowers().size()).sum() > 0, "Initial Taiwan flowers were not replaced");
                 task = server.submit(() -> {
@@ -177,68 +188,25 @@ final class TaiwanTableSmoke {
                 if (++captures < 24) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-table.png", client.getMainRenderTarget(), ignored -> {});
                 client.getWindow().setWindowed(1280, 800); client.options.guiScale().set(2); client.resizeDisplay();
-                TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
+                TableSettings.get().discardMode = TableSettings.DiscardMode.SINGLE_CLICK;
                 selectedTile = view.game().actions().stream().filter(a -> a.type() == TaiwanAction.Type.DISCARD).findFirst().orElseThrow().tiles().get(0);
                 var piece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
                 var pointer = project(client, pos, piece.position());
-                check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Taiwan seated picking failed");
-                captures = 0; stage = 51;
-            }
-            case 51 -> {
-                var screen = (TaiwanTableScreen) client.screen;
-                if (++captures < 6) break;
-                var hint = hint(screen);
-                checkHint(hint, screen);
-                screen.setFocused(hint); captures = 0; stage = 52;
-            }
-            case 52 -> {
-                var screen = (TaiwanTableScreen) client.screen;
-                if (++captures < 6) break;
-                check(hint(screen).isFocused(), "Taiwan seated hints lost focus");
-                SmokeScreenshots.grab(output.toFile(), "taiwan-hints-seated.png", client.getMainRenderTarget(), ignored -> {});
+                InputSmoke.pointer(client, pointer.x, pointer.y);
                 InputSmoke.switchView(screen); captures = 0; stage = 13;
             }
             case 13 -> {
                 if (!(client.screen instanceof TaiwanTableScreen screen) || !screen.immersive()) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-immersive.png", client.getMainRenderTarget(), ignored -> {});
                 if (++captures < 12) break;
-                var hint = hint(screen);
-                checkHint(hint, screen);
-                screen.setFocused(hint);
-                if (captures < 18) break;
-                check(hint.isFocused(), "Taiwan immersive hints lost focus");
-                SmokeScreenshots.grab(output.toFile(), "taiwan-hints-immersive.png", client.getMainRenderTarget(), ignored -> {});
-                screen.setFocused(null);
-                var own = view.game().seats().get(view.game().recipient());
-                var tiles = new ArrayList<>(own.concealed());
-                if (own.drawn() >= 0 && tiles.remove(Integer.valueOf(own.drawn()))) tiles.add(own.drawn());
-                int w = Math.min(58, 1244 / Math.max(17, tiles.size())), gap = own.drawn() < 0 ? 0 : Math.max(18, w / 2);
-                int left = (1280 - tiles.size() * w - gap) / 2;
-                double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
-                double x = (screen.width - 1280 * scale) / 2 + (left + tiles.indexOf(selectedTile) * w + (selectedTile == own.drawn() ? gap : 0) + w / 2.0) * scale;
-                double y = (screen.height - 800 * scale) / 2 + (725 - Math.round(w * top.skyeyefast.mchjong.client.TileDimensions.SMALL.height() / top.skyeyefast.mchjong.client.TileDimensions.SMALL.width()) / 2.0) * scale;
-                check(screen.mouseClicked(x, y, 0), "Taiwan immersive picking failed");
-                InputSmoke.switchView(screen);
-                var selectedPiece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
-                check(screen.selected(selectedPiece), "Taiwan immersive selected wrong tile");
-                InputSmoke.switchView(screen);
-                task = server.submit(() -> setHintsPolicy(server, false)); stage = 53;
-            }
-            case 53 -> {
-                if (table.clientWorldPolicy().allowConvenienceHints() || room.convenienceHints()) break;
-                var screen = (TaiwanTableScreen) client.screen;
-                check(!hint(screen).visible && !hint(screen).active && !hint(screen).isFocused(), "World policy left Taiwan hints visible");
-                task = server.submit(() -> setHintsPolicy(server, true)); stage = 54;
-            }
-            case 54 -> {
-                if (!table.clientWorldPolicy().allowConvenienceHints()) break;
-                var screen = (TaiwanTableScreen) client.screen;
-                check(!room.convenienceHints() && !hint(screen).visible, "Disabled room hints reappeared after world policy restored");
-                screen.setFocused(null);
-                InputSmoke.click(screen, "taiwan.mchjong.action.discard"); sentDecision = view.game().decision(); stage = 14;
+                var pointer = TableHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
+                sentDecision = view.game().decision();
+                check(screen.mouseClicked(pointer.x, pointer.y, 0), "Taiwan immersive direct discard failed"); stage = 14;
             }
             case 14 -> {
                 if (view.game().decision() == sentDecision) break;
+                check(view.game().seats().get(view.game().recipient()).river().contains(selectedTile),
+                    "Taiwan direct click discarded the wrong physical tile");
                 task = server.submit(() -> {
                     var t = target(client, pos); var player = main(client); var before = t.taiwanView(player);
                     var saved = t.saveWithoutMetadata(); t.load(saved);
@@ -358,23 +326,7 @@ final class TaiwanTableSmoke {
         return false;
     }
 
-    private static MahjongButton hint(TaiwanTableScreen screen) {
-        return screen.children().stream().filter(child -> child instanceof MahjongButton
-            && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
-    }
-    private static void checkHint(MahjongButton hint, TaiwanTableScreen screen) {
-        check(hint.visible && hint.active, "Taiwan selected discard has no convenience preview");
-        check(hint.getMessage().getString().contains(net.minecraft.network.chat.Component.translatable(
-            "hints.mchjong.after_discard", "").getString()), "Taiwan hints lost discard preview narration");
-        int width = screen.immersive() ? TableCanvas.WIDTH : screen.width;
-        int height = screen.immersive() ? TableCanvas.HEIGHT : screen.height;
-        check(hint.getX() >= 0 && hint.getY() >= 0 && (hint.getX() + hint.getWidth()) <= width && (hint.getY() + hint.getHeight()) <= height,
-            "Taiwan hint icon exceeds its canvas");
-    }
-    private static void setHintsPolicy(net.minecraft.server.MinecraftServer server, boolean allowed) {
-        try { WorldSettings.of(server).set("allowConvenienceHints", allowed); }
-        catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
-    }
+
 
     private ServerPlayer main(Minecraft client) { return client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID()); }
     private MahjongTableBlockEntity target(Minecraft client, BlockPos pos) { return (MahjongTableBlockEntity) main(client).serverLevel().getBlockEntity(pos); }
@@ -486,6 +438,14 @@ final class TaiwanTableSmoke {
     }
     private static void send(Minecraft client, BlockPos pos, TaiwanSession.View view, int action) {
         client.getConnection().send(PayloadPackets.serverbound(new TaiwanActionPayload(pos, view.tableId(), view.incarnation(), view.game().decision(), action)));
+    }
+    private static void choosePreset(Minecraft client, String key) {
+        var preset = client.screen.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
+            .map(net.minecraft.client.gui.components.AbstractWidget.class::cast)
+            .filter(w -> w.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("rules.mchjong.preset"))
+            .findFirst().orElseThrow();
+        client.screen.mouseClicked(preset.getX() + 5, preset.getY() + 5, 0);
+        press(client, key);
     }
     private static void press(Minecraft client, String key) {
         var text = net.minecraft.network.chat.Component.translatable(key).getString();
