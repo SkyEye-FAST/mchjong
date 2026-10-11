@@ -14,9 +14,7 @@ public final class TileMesh {
     private static final float WIDTH = TileDimensions.LARGE.width();
     private static final float HEIGHT = TileDimensions.LARGE.height();
     private static final float DEPTH = TileDimensions.LARGE.depth();
-    public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
     public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
-    public static final ResourceLocation GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
     public static ResourceLocation atlas(top.skyeyefast.mchjong.item.TileFacePreset preset) {
         return TileFacePresets.definition(preset).atlas();
     }

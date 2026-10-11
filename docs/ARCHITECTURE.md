@@ -40,9 +40,11 @@ allows it.
   lifecycle adapter and metadata in its own `src/smoke`.
 * `common/src/ponderData`: shared native-NBT Ponder generator source, compiled
   independently by both loader projects.
-* `art`: deterministic extraction and packing of native face-preset images, client model
-  descriptors, plus a separate server-data generator. Source-image resampling
-  runs at build time; each supplied atlas includes its eight flower designs.
+* `art`: deterministic preparation of native face-preset images, client model
+  descriptors, plus a separate server-data generator. Client resources are checked
+  in under `art/generated/assets` and refreshed explicitly; loader builds package
+  those files. Each supplied preset includes independent textures for all ordinary,
+  red-five and flower designs; render textures are composed on resource reload.
 
 `compat/1.20.1` is a version-adaptation branch, synchronized from stable batches
 on `main`. It targets Fabric and Forge. Features and engine changes originate on

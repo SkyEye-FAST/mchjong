@@ -44,7 +44,6 @@ final class ResourcePackSmoke {
             selected = List.copyOf(client.getResourcePackRepository().getSelectedIds());
             Path pack = client.gameDirectory.toPath().resolve("resourcepacks/mchjong-smoke-custom");
             write(pack, "pack.mcmeta", "{\"pack\":{\"pack_format\":34,\"description\":\"MChjong resource smoke\"}}");
-            String definition = "{\"atlas\":\"mchjong:textures/tiles.png\",\"glyphs\":\"mchjong:textures/tile_glyphs.png\"}";
             Path images = output.resolve("preset-tiles");
             for (String key : top.skyeyefast.mchjong.config.PresetArchives.TILE_KEYS)
                 tileImage(images.resolve(key + ".png"), key);
@@ -74,7 +73,10 @@ final class ResourcePackSmoke {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
                 top.skyeyefast.mchjong.config.ServerPresets.send(player);
             });
-            write(pack, "assets/mchjong/tile_face_presets/kanto.json", definition);
+            var source = MahjongContent.id("textures/tile_faces/kansai/tiles/1m.png");
+            Path target = pack.resolve("assets/mchjong/textures/tile_faces/kanto/tiles/1m.png");
+            Files.createDirectories(target.getParent());
+            try (var stream = client.getResourceManager().open(source)) { Files.copy(stream, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING); }
             backPattern(pack.resolve("assets/mchjong/textures/tile/back.png"));
             pattern(pack.resolve("assets/mchjong/textures/furniture/cloth_pattern.png"), 256, 256);
             pattern(pack.resolve("assets/mchjong/textures/item/riichi_stick.png"), 384, 32);
@@ -115,7 +117,7 @@ final class ResourcePackSmoke {
                 .getTexture(TileMesh.glyphs(SERVER));
             require(worldFaces.getPixels() != null && (worldFaces.getPixels().getPixelRGBA(0, 0) >>> 24) == 255,
                 "Server face texture lost its opaque white backing");
-            require(TileMesh.atlas(TileFacePreset.KANTO).equals(TileMesh.ATLAS), "Built-in preset override was ignored");
+            require(firstFacesEqual(client), "Independent tile texture override was ignored");
             float maxY = 0;
             for (var quad : top.skyeyefast.mchjong.client.ModelRendering.quads(RiichiStickModel.baked())) {
                 int[] vertices = quad.getVertices();
@@ -318,7 +320,7 @@ final class ResourcePackSmoke {
                 "Unavailable faces did not use the default Kansai atlas");
             require(TileMesh.glyphs(CUSTOM).equals(TileMesh.glyphs(TileFacePreset.KANSAI)),
                 "Unavailable faces did not use the default Kansai engravings");
-            require(!TileMesh.atlas(TileFacePreset.KANTO).equals(TileMesh.ATLAS), "Removed pack left a stale override");
+            require(!firstFacesEqual(client), "Removed pack left a stale tile override");
             return true;
         }
         return false;
@@ -327,6 +329,15 @@ final class ResourcePackSmoke {
     private boolean ready(Minecraft client) {
         if (!pending.isDone() || client.getOverlay() != null || ticks < 20) return false;
         pending.join();
+        return true;
+    }
+    private static boolean firstFacesEqual(Minecraft client) {
+        var kansai = ((net.minecraft.client.renderer.texture.DynamicTexture) client.getTextureManager()
+            .getTexture(TileMesh.atlas(TileFacePreset.KANSAI))).getPixels();
+        var kanto = ((net.minecraft.client.renderer.texture.DynamicTexture) client.getTextureManager()
+            .getTexture(TileMesh.atlas(TileFacePreset.KANTO))).getPixels();
+        for (int y = 0; y < TileMesh.TILE_HEIGHT; y++) for (int x = 0; x < TileMesh.TILE_WIDTH; x++)
+            if (kansai.getPixelRGBA(x, y) != kanto.getPixelRGBA(x, y)) return false;
         return true;
     }
     private static net.minecraft.client.gui.components.Button button(Minecraft client, String key) {

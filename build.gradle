@@ -63,7 +63,7 @@ spotless {
         leadingTabsToSpaces(4)
     }
     format 'json', {
-        target 'common/src/main/resources/**/*.json'
+        target 'common/src/main/resources/**/*.json', 'art/generated/assets/**/*.json', 'art/generated/assets/**/*.mcmeta'
         trimTrailingWhitespace()
         endWithNewline()
         leadingTabsToSpaces(2)
@@ -74,6 +74,10 @@ spotless {
         trimTrailingWhitespace()
         endWithNewline()
     }
+}
+
+tasks.matching { it.name.startsWith('spotlessJson') }.configureEach {
+    mustRunAfter ':art:generateAssets'
 }
 
 tasks.register('buildAll') {

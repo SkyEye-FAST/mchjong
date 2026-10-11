@@ -1,11 +1,16 @@
 # Artwork and resource contract
 
-Both loaders use the same generated textures and models. Run
-`gradlew.bat :art:generateAssets`; the resources are published to
-`build/generated/assets`. Edit the generator, not the generated PNG or JSON files.
+All loaders use the same checked-in client resources under
+[`art/generated/assets`](../art/generated/assets). Browse the
+[`textures`](../art/generated/assets/assets/mchjong/textures) and
+[`models`](../art/generated/assets/assets/mchjong/models) directly without building.
+Edit the source generator, then run `gradlew.bat :art:generateAssets --warning-mode fail`
+to refresh these files and commit them together. Ordinary loader builds package
+the checked-in resources; `:art:check` verifies their file set and bytes against
+fresh generation without rewriting them.
 
 Server data is generated separately by `GenerateData` through
-`gradlew.bat :art:generateData` into `build/generated/data`. Both loaders include
+`gradlew.bat :art:generateData` into `build/generated/data`. All loaders include
 both directories. Recipes, tags and loot do not belong in `GenerateAssets`.
 Each output is synchronized independently with the current generator results.
 
@@ -13,11 +18,12 @@ Each output is synchronized independently with the current generator results.
 
 Each preset supplies 45 individual transparent PNG engravings under
 `presets/tile_faces/<preset>/tiles/`. These prepared tile images are the build
-inputs, while the generated atlases ship in the mod.
+resources. All loaders package these existing files directly; no duplicate face
+images are stored under `art/generated/assets`.
 The selector lists Kansai and Kanto first, followed by Sichuan, Hong Kong, Taiwan
 and Fujian; custom entries follow in persistent-ID order.
-`TileArtwork` maps their transparent engravings to runtime
-cells, including all three red fives, preserving proportions and antialiased
+`TileFaceImages` fits their transparent engravings at resource reload,
+including all three red fives, preserving proportions and antialiased
 edges. Built-in designs are ordinary mod resources selected in the mahjong
 box and require no runtime pack installation or network access.
 
@@ -25,12 +31,12 @@ Source metadata and [the artwork notice](../presets/tile_faces/NOTICE.md) ship
 under `META-INF/licenses/`. The supplied Kansai metadata identifies
 lietxia (M+ Fonts License). None of the presets are relicensed under the repository's code license.
 
-`assets/mchjong/textures/tiles.png` (Kansai) and each other preset's
-`<preset>/tiles.png` are 2048 by 4096 atlases, eight cells per row, each with
-a matching `tile_glyphs.png` transparent engraving atlas in the same directory.
-Cells 0-26 are 1-9 characters, circles and bamboo; 27-33 are East, South, West,
-North, white, green and red dragon. Cells 34-36 are the three red fives in suit
-order. Cells 37-44 are numbered 1q-8q. Kansai uses spring, summer, autumn,
+Each preset's existing PNGs ship under
+`assets/mchjong/textures/tile_faces/<preset>/tiles/`, named `1m`–`9m`,
+`1p`–`9p`, `1s`–`9s`, `1z`–`7z`, `0m`, `0p`, `0s`, or `1q`–`8q`.
+`tile_face_presets/<preset>.json` identifies the texture directory and whether
+the white dragon stays blank.
+Kansai uses spring, summer, autumn,
 winter, plum, orchid, bamboo and chrysanthemum; Kanto uses the four seasons
 followed by fortune, prosperity, longevity and nobility (福禄寿貴); Sichuan,
 Hong Kong, Taiwan and Fujian use
@@ -40,7 +46,10 @@ Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank for Japanese presets (Kansai and Kanto)
 and displays each regional design's framed engraving for Sichuan, Hong Kong,
 Taiwan and Fujian. Name tooltips follow the stored preset.
-World, held-item and GUI renderers all use the selected design's atlas pair.
+World, held-item and GUI renderers compose the selected design's independent
+textures into opaque GUI faces and white-backed world render caches on resource
+reload. Resource packs replace a single `tiles/<key>.png` to update both views,
+without rebuilding or editing an atlas.
 Custom face presets are ZIP archives in `config/mchjong/presets/faces/` on a client
 or `config/mchjong/server-presets/faces/` on a server. Inside a ZIP,
 `<namespace>/<name>/preset.toml` defines the persistent
@@ -76,18 +85,16 @@ The server validates the physical set,
 carrier, menu and dye transaction. Removing an archive keeps stored IDs intact and
 removes its selector entries; unavailable designs display Kansai faces until
 their resources are installed.
-The asset test compares every atlas cell directly against its generated design,
-including all 45 distinct faces, red fives, flowers, opacity and the declared order.
+The asset test checks all 45 distinct source faces, red fives, flowers and the
+declared order. Client checks verify packaging, composition and resource reloads.
 
-The bottom-right 32 by 32 pixels, beginning at (2016, 4064), are a solid white
-material swatch. Keep this swatch white when replacing the atlas: the renderer
-uses it for opaque face plates and table display colors, independently of the printed
-faces. Built-in GUI faces retain their independent linearly filtered atlas. Built-in
-world and item engravings use `TileFaceTexture`: it composites the engraving over
-the white face plate before generating mipmaps with Minecraft's mip generator.
-Configured presets are assembled from individual images with the same white
-backing and linear filtering. The native atlas's five mip levels retain exact
-cell and white-swatch boundaries. Face UVs stop at half-pixel insets. The client
+The render caches use a 2048 by 4096 layout with eight cells per row and an
+internally supplied white material swatch. Resource packs supply only the named
+tile images. GUI faces use linear filtering. World and item engravings use
+`TileFaceTexture`: it composites the engraving over the white face plate before
+generating mipmaps with Minecraft's mip generator. Configured presets use the
+same white backing, linear filtering and five mip levels. The render layout retains
+exact cell and white-swatch boundaries. Face UVs stop at half-pixel insets. The client
 smoke checks built-in mip dimensions and live world/GUI filters after resource reloads.
 The print occupies 240 × 320 pixels within each 256 × 384 cell, retaining source
 proportions and the physical tile envelope.
@@ -223,16 +230,16 @@ through `dice_6.png`, shared by a native cube item model and the central-roll
 tooltip. Warm ivory edge bands and shaded recesses give the pips depth; the single
 pip is larger. Opposite faces sum to seven; ones and fours use red pips.
 
-`assets/mchjong/textures/point_sticks.png` is a 384 by 192 atlas of six 32-pixel
-strips: blank ivory, ivory with eight gray dots (100), blue with one white dot
+`assets/mchjong/textures/point_stick/<points>.png` contains six independent
+384 by 32 textures: blank ivory (0), ivory with eight gray dots (100), blue with one white dot
 (1,000), yellow with five white dots (5,000), red with nine white dots
 (10,000), and black with the same nine white dots (−10,000). Round markings,
 a subtle recessed panel and molded edge highlights
-follow the colored physical-stick style. `PointStickArtwork` generates the atlas
+follow the colored physical-stick style. `PointStickArtwork` generates each texture
 deterministically. `FurnitureMesh.stick` uses it for both printed faces and the
 unmarked sides in inventory, held-item and table renders. Half-pixel UV insets
-and linear filtering keep the strips separate. Resource packs can replace the
-atlas, including body colors, without changing the existing denominations.
+and linear filtering retain the markings. Resource packs can replace each
+denomination's texture, including body colors.
 
 Riichi deposits use the native JSON model `assets/mchjong/models/item/riichi_stick.json`
 and `assets/mchjong/textures/item/riichi_stick.png` (384 × 32). The default texture
@@ -240,8 +247,9 @@ is exactly the 1,000-point strip: blue with one white dot. The model uses ordina
 Minecraft `elements`, face UVs, parents and texture references, so packs can
 replace its geometry and texture. Default bounds are `[2.4,0,7.52]` to
 `[13.6,0.4,8.48]` in model pixels; the table applies the lane scale and orientation.
-`assets/mchjong/textures/gui/stick_icons.png` contains fixed riichi and honba
-HUD icons copied from the default blue and ivory strips at build time. Changing
+`assets/mchjong/textures/gui/sprites/hud/riichi_stick.png` and `honba_stick.png`
+contain fixed HUD icons copied from the default blue and ivory strips. Minecraft's
+GUI atlas stitches these independent sprites at resource reload. Changing
 point-stick textures or selecting a stick preset does not alter those icons.
 
 Furniture uses fifteen original 16 by 16 pixel textures under
@@ -301,11 +309,11 @@ rails and cloth retain their material density. The 3 by 3 occupancy
 and colliders clipped to the frame remain in the world implementation. Bare panels
 and installed cloth finish at the same playing height.
 
-`assets/mchjong/textures/tile_glyphs.png` has the same cells and white material
-swatch as the GUI face atlas, but transparent backgrounds. All material-aware
-world and item faces use this glyph atlas. Glass additionally uses a sorted
-alpha-blended pass after opaque backs and table surfaces. A custom face pack
-should replace both atlases to cover GUI thumbnails and world/item rendering.
+The independent `tile_faces/<preset>/tiles/<key>.png` textures have transparent
+backgrounds. All material-aware world and item faces use these engravings. Glass
+additionally uses a sorted alpha-blended pass after opaque backs and table surfaces.
+A custom face resource pack replaces one `tiles/<key>.png` to cover GUI thumbnails
+and world/item rendering.
 Private tile faces are withheld by the server and never resolved by the hidden
 tile mesh. There is no per-tile world entity. `TileMesh.WIDTH`, `HEIGHT` and `DEPTH`
 define the physical envelope used by picking and table layout. Wall columns and
@@ -319,10 +327,11 @@ yaku names are lowercased only when constructing translation keys.
 
 ## Verification
 
-`gradlew.bat :art:check` verifies atlas coordinates and distinct faces, source
+`gradlew.bat :art:check` verifies independent textures and distinct faces, source
 order, red fives, the blank white dragon, texture resolution and filtering,
 transparent default patterns, material-backed defaults, resource-pack customization paths, language keys, original furniture
-materials, source integrity and byte-for-byte reproducible generation. Client-side
+materials, source integrity and byte-for-byte reproducible generation, including
+missing or extra files in the checked-in client resources. Client-side
 unit tests cover bevel winding, tapered legs, all wood/dye combinations, mesh bounds,
 printed face plates, material-colored blank fronts, picking and exact wall/river contact, including riichi discards.
 

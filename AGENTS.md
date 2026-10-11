@@ -13,7 +13,8 @@ Shared contracts are in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - `fabric`, `forge`, `neoforge`: loader registration and lifecycle adapters;
   gameplay and presentation belong in `common`.
 - `art`: deterministic asset and server-data generation, with separate outputs.
-  Edit source generators rather than generated textures, models or recipes.
+  Client resources are checked in under `art/generated/assets`. Edit source generators
+  and refresh the checked-in files with `:art:generateAssets`; server data stays in build output.
 - `common/src/smoke`: shared client/server checks; loader adapters live in
   `fabric/src/smoke` and `neoforge/src/smoke`. `forge/src/smoke` owns bootstrap checks.
 - `common/src/ponderData`: shared Minecraft-native build-time generation of Ponder

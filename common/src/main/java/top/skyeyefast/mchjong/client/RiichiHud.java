@@ -18,7 +18,6 @@ import top.skyeyefast.mchjong.world.BotServiceState;
 /** Edge-aligned, compact information. Detailed counts and status belong in hover text, not over the hand. */
 final class RiichiHud {
     private static final String[] WINDS = {"east", "south", "west", "north"};
-    private static final ResourceLocation STICK_ICONS = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/gui/stick_icons.png");
     private record Region(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
@@ -291,7 +290,8 @@ final class RiichiHud {
 
     static void stick(GuiGraphics graphics, int x, int y, boolean riichi, int scale) {
         int width = 14 * scale, height = 4 * scale;
-        graphics.blit(STICK_ICONS, x, y, width, height, 0, riichi ? 0 : 32, 384, 32, 384, 64);
+        graphics.blitSprite(ResourceLocation.fromNamespaceAndPath("mchjong", "hud/" + (riichi ? "riichi_stick" : "honba_stick")),
+            x, y, width, height);
     }
 
     private static void text(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color) {

@@ -2,8 +2,9 @@ package top.skyeyefast.mchjong.art;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParser;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +16,7 @@ import javax.imageio.ImageIO;
 
 /** Reproducible build-time textures and models; no game-time downloads or platform fonts. */
 public final class GenerateAssets {
+    private static final Gson JSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private final Path root;
 
     private GenerateAssets(Path root) { this.root = root; }
@@ -45,13 +47,14 @@ public final class GenerateAssets {
         }
         for (var texture : TileMaterialArtwork.textures().entrySet())
             png("tile_material/" + texture.getKey(), texture.getValue());
-        var pointSticks = PointStickArtwork.texture();
-        png("point_sticks", pointSticks);
-        png("item/riichi_stick", pointSticks.getSubimage(0, 64, 384, 32));
-        var hudSticks = new BufferedImage(384, 64, BufferedImage.TYPE_INT_ARGB);
-        hudSticks.setRGB(0, 0, 384, 32, pointSticks.getRGB(0, 64, 384, 32, null, 0, 384), 0, 384);
-        hudSticks.setRGB(0, 32, 384, 32, pointSticks.getRGB(0, 32, 384, 32, null, 0, 384), 0, 384);
-        png("gui/stick_icons", hudSticks);
+        for (int points : PointStickArtwork.POINTS) {
+            png("point_stick/" + points, PointStickArtwork.texture(points));
+            text("assets/mchjong/textures/point_stick/" + points + ".png.mcmeta",
+                "{\"texture\":{\"blur\":true,\"clamp\":true}}");
+        }
+        png("item/riichi_stick", PointStickArtwork.texture(1000));
+        png("gui/sprites/hud/riichi_stick", PointStickArtwork.texture(1000));
+        png("gui/sprites/hud/honba_stick", PointStickArtwork.texture(100));
         text("assets/mchjong/models/item/riichi_stick.json", """
             {"textures":{"stick":"mchjong:item/riichi_stick","particle":"mchjong:item/riichi_stick"},
              "elements":[{"from":[2.4,0,7.52],"to":[13.6,0.4,8.48],"shade":false,"faces":{
@@ -59,7 +62,6 @@ public final class GenerateAssets {
               "north":{"texture":"#stick","uv":[0,8,0,8]},"south":{"texture":"#stick","uv":[0,8,0,8]},
               "east":{"texture":"#stick","uv":[0,8,0,8]},"west":{"texture":"#stick","uv":[0,8,0,8]}}}]}
             """);
-        text("assets/mchjong/textures/point_sticks.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         models();
         dice();
         png("item/mahjong_manual", ManualArtwork.texture());
@@ -91,35 +93,10 @@ public final class GenerateAssets {
     }
 
     private void tiles(Path presets, String preset) throws IOException {
-        BufferedImage atlas = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        BufferedImage glyphs = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = atlas.createGraphics();
-        Graphics2D glyphGraphics = glyphs.createGraphics();
-        try {
-            TileArtwork artwork = new TileArtwork(presets, preset);
-            for (int face = 0; face < TileArtwork.FACE_COUNT; face++) {
-                BufferedImage image = artwork.face(face);
-                g.drawImage(image, face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
-                glyphGraphics.drawImage(artwork.glyph(face), face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
-            }
-            // Dedicated neutral swatch: body colors must not depend on a player's white-dragon art.
-            g.setColor(Color.WHITE);
-            g.fillRect(TileArtwork.ATLAS_WIDTH - 32, TileArtwork.ATLAS_HEIGHT - 32, 32, 32);
-            glyphGraphics.setColor(Color.WHITE);
-            glyphGraphics.fillRect(TileArtwork.ATLAS_WIDTH - 32, TileArtwork.ATLAS_HEIGHT - 32, 32, 32);
-            text("META-INF/licenses/" + preset + "-source.json", artwork.notice());
-        } finally {
-            g.dispose();
-            glyphGraphics.dispose();
-        }
-        String path = preset.equals("kansai") ? "" : preset + "/";
+        text("META-INF/licenses/" + preset + "-source.json", Files.readString(presets.resolve(preset + "/theme_metadata.json")));
         text("assets/mchjong/tile_face_presets/" + preset + ".json",
-            "{\"atlas\":\"mchjong:textures/" + path + "tiles.png\",\"glyphs\":\"mchjong:textures/" + path + "tile_glyphs.png\"}");
-        png(path + "tiles", atlas);
-        png(path + "tile_glyphs", glyphs);
-        String filtering = "{\"texture\":{\"blur\":true,\"clamp\":true}}";
-        text("assets/mchjong/textures/" + path + "tiles.png.mcmeta", filtering);
-        text("assets/mchjong/textures/" + path + "tile_glyphs.png.mcmeta", filtering);
+            "{\"tiles\":\"mchjong:tile_faces/" + preset + "/tiles\",\"blank_white_dragon\":"
+                + (preset.equals("kansai") || preset.equals("kanto")) + "}");
     }
 
     private void models() throws IOException {
@@ -246,6 +223,8 @@ public final class GenerateAssets {
     private void text(String relative, String text) throws IOException {
         Path path = root.resolve(relative);
         Files.createDirectories(path.getParent());
-        Files.writeString(path, text + "\n", StandardCharsets.UTF_8);
+        if (relative.endsWith(".json") || relative.endsWith(".mcmeta"))
+            text = JSON.toJson(JsonParser.parseString(text));
+        Files.writeString(path, text.stripTrailing() + "\n", StandardCharsets.UTF_8);
     }
 }

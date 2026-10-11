@@ -93,13 +93,18 @@ sourceSets.main {
     java.exclude 'top/skyeyefast/mchjong/compat/rei/**'
     java.exclude 'top/skyeyefast/mchjong/compat/maid/**'
     resources.srcDir '../common/src/main/resources'
-    resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
+    resources.srcDir rootProject.file('art/generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
 }
 
 processResources {
+    from(rootProject.file('presets/tile_faces')) {
+        include '*/tiles/*.png'
+        into 'assets/mchjong/textures/tile_faces'
+    }
     exclude 'data/mchjong/recipe/mahjong_manual.json'
-    dependsOn ':art:generateAssets', ':art:generateData'
+    dependsOn ':art:generateData'
+    mustRunAfter ':art:generateAssets'
     def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version, jei_version: jei_version]
     inputs.properties properties
     filesMatching('META-INF/mods.toml') { expand properties }
