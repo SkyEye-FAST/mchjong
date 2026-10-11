@@ -10,62 +10,38 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Allow individual default and custom award selection across Riichi and Taiwan sets, and bundle all 14 Mahjong Soul ancient yaku with a four-player preset toggle, frozen replay rules and contained-award exclusions.
-
 - Redesign lobby and settings hierarchy with a scrollable rule sidebar that accommodates additional variants, clearer primary actions and mouse-first controls; preserve the original felt-and-brass palette and accent scope, remove table and replay shortcuts and redundant checks, retain immersive table geometry and custom cloth, and render handbook examples directly from tile atlases with readable facing pages and inset margins.
-
 - Update the embedded mcr-mahjong library to 0.1.1 across all three Minecraft profiles.
-
 - Fit settings and lobby panels to their contents and reclaim empty preset navigation space.
-
 - Align immersive wind-panel labels with the table plane and keep round labels within their displays.
-
 - Correct English quantity forms and Traditional Chinese variable spacing.
-
 - Balance MCR and Sichuan Bot attacks against per-opponent public danger and native payments; let attainable Taiwan scoring routes outweigh limited efficiency differences while preserving live readiness and late-wall speed.
-
 - Link settlement awards and rule settings to brief localized explanations and existing hand examples, with precise optional handbook navigation and keyboard return controls.
-
 - Explain server-checked preparation shortages for the selected rules and briefly mark each human's assigned stool without changing seating controls.
-
 - Replace all four Mahjong Manual award indexes' text tile examples with facing-page images, using Kansai faces for Riichi, Hong Kong for MCR, and native Sichuan/Taiwan faces; fit each example on one line and preserve winning tiles, public tiles and group boundaries in all four languages.
-
 - Calibrate Riichi and Taiwan tiles to the shared 33 × 24 × 17.5 mm envelope while preserving large MCR/Sichuan tiles; tighten tilted walls by their actual lengths, combine flowers and melds in a wrapping left public area, and align physical spacing, picking and display proportions.
-
 - Publish the standalone Taiwan library as `top.skyeyefast:taiwan-mahjong:0.1.0` on Maven Central with JVM 17 ABI validation, Dokka/sources artifacts, Apache-2.0 metadata and Java/Kotlin consumer verification; use its formal dependency on all three Minecraft profiles with shadow relocation and remove the source submodule and composite build.
 - Synchronize complete Taiwan play, persistence, 136/144 stock, packets, fixed-slot rendering, one built-in Bot, Replay, hints and localization into 1.20.1 and 26.1.2, retaining their loader/Java profiles and focused build/client validation.
-
 - Offer one formal Taiwan built-in Bot option, matching MCR/Sichuan; remove ineffective difficulty choices and reject unsupported Taiwan Bot values in private saves.
 
 ### Added
 
 - Add server-data-pack Riichi and Taiwan award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwan library 0.2.0 candidate scoring on main, preserving separate flower payouts.
-
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan and Taiwan rule entrances, complete award indexes, tile illustrations, payment examples and preset differences; align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
-
 - Add recipient-safe Taiwan convenience hints with sixteen-tile shanten/effective and discard previews, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination; share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.
-
 - Add independent native Taiwan replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.
-
 - Add recipient-safe Taiwan built-in Bots with rule-driven discard/wait scoring, conservative call/kong decisions, shared room add/remove and fill controls, delayed paused/restored actions, inactive Bot clocks and automatic hand confirmations; verify complete one-human/three-Bot four-wind matches for both presets.
-
 - Register Taiwan as the fourth built-in variant with shared room/NBT lifecycle, recipient-safe Minecraft packets, independent 136/144 physical stock and fixed-slot scene, preset/payment/clock editors, playable seated/immersive actions, private settlement and complete four-wind matches; add focused Fabric end-to-end coverage.
-
 - Add fixed Taiwan wall slots, strict private persistence and recipient-safe projections, plus an independent four-human engine session with four-wind matches, repeat-dealer progression, cumulative scores, clocks and resumable hand acknowledgements.
-
 - Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld analysis, source-qualified tai profiles and the `TaiwanHandAnalyzer` boundary; audit all scoring patterns and provide an independent Taiwan hand with physical wall/dealing, flower replacement, legal calls, passing, kong robbery and balanced settlement. Document the selected match-rule sources and unresolved interpretations; generalize the shared 144-tile stock factory.
 
 ### Fixed
 
 - Draw Bot portraits on integer pixel boundaries so both eyes stay the same size at small UI scales.
-
 - Merge equivalent Taiwan ready-discard choices while retaining distinct tile faces and every physical ordinary discard.
-
 - Offer one north-extraction action at a time when a three-player Riichi hand contains multiple norths, preserving replacement draws and drawn-north restrictions after Riichi.
-
 - Fix Fabric and NeoForge IDE imports requiring an ungenerated Ponder source folder and duplicate Fabric gameplay fixture types; package generated resources from their task and compile shared fixtures once for tests and client smokes.
-
 - Remove unused Java imports and members across gameplay, tests and client smokes; dispatch automation smoke clicks through native screen input.
-
 - Restore 26.1.2 immersive tabletop rendering within the native GUI clip range and normalize 1.20.1 tile normals after axis scaling.
 
 ## [0.9.1] - 2026-10-03
@@ -79,13 +55,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Share the complete Riichi table, player cards, action layout, camera, settings, settlement and replay presentation with MCR and Sichuan, preserving native flowers, winds, void suits, fan and payment records; add their deal/draw/discard motion and native wind/void-suit center instruments, remove the settlement score background, and allow players and spectators to enter immersive view throughout preparation.
-
 - Include synchronized world policy in MCR and Sichuan room snapshots.
-
 - Unify Riichi, MCR and Sichuan lobbies with a separate variant sidebar, shared roster and preparation footer; use compact floating lobby/settings panels without left-edge control decorations or repeated headings, align rule editors and match toolbars, share World/Room/Personal settings, and use explicit personal choices with category-only resets.
-
 - Unify table presentation with aligned square controls and HUD cards, stable furniture UVs and head/item transforms, original Mahjong effects and a distinct points beat before Riichi grade announcements.
-
 - Give the Sichuan Bot gradual, public-copy-aware seven-pairs, all-pungs, full-flush and root/kong route evaluation for discards and calls, valuing compatible combinations through the shared scorer and current fan cap.
 - Give the MCR Bot gradual, public-copy-aware eight-fan route evaluation for discards and calls, preserving viable scoring structures instead of pursuing tile efficiency alone.
 - Run ledger-scored eight-hand Sichuan matches with dealer succession, explicit draw checks and persistent session hand advancement.
@@ -101,11 +73,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Avoid redundant MCR Bot route searches for pass-only replies and equivalent physical discards, and reject already out-of-range route candidates before allocating fits; bound Snapshot CI workers and retain test reports and build diagnostics on failure.
 - Use static hand labels in MCR/Sichuan replay selection and current frame wall counts, fit localized Sichuan void-suit badges while retaining full hover/narration names, and keep Riichi settlement operation hints readable at minimum window size.
-
 - Restore full-size Chinese tiles for MCR and Sichuan, calibrate their independent 12-degree automatic-table lift rails to real table proportions, return melds to the owner’s left and place later river rows in actually vacated wall space; verify conserved post-deal, midgame and late-game positions across both Sichuan wall assignments without dynamic tile scaling.
-
 - Render the automatic table’s center indicator housing and inactive seat panels before a match begins.
-
 - Restore the Immersive view caption, separate lobby portraits from status text, use locale-appropriate phrasing and punctuation, reduce the stool inventory icon, and render furniture in both maid head slots with its full item textures and components.
 - Separate MIL SBR 2025 from T/TFMJ 01—2024: use each preset's wall layout, refund the SBR shooting kong instead of transferring its income, distinguish Kong and Root fan names, and preserve secret bound first-discard choices through play, saves and replays.
 - Keep Riichi extracted norths in the same horizontal rail as hands and melds.
@@ -122,7 +91,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Record native Sichuan replays with physical openings, accepted decisions, complete settlement ledgers and cumulative scores, retain sealed hands through restart-safe matches, and browse event-by-event playback and final standings through the shared archive.
 - Add seated and immersive Sichuan tables, recipient-safe hand and void-suit displays, shared exit voting, detailed ledger results and explicit next-hand confirmations through the eight-hand match.
 - Add an independent Sichuan SBR 2025 hand engine, explicit rules, blood-battle payments and draw checks, private save/restore, and a shared three-variant lobby with Sichuan action controls.
-
 - Add Sichuan, Taiwan and Fujian tile faces with regional flowers and framed white dragons; list regional presets in Sichuan, Hong Kong, Taiwan and Fujian order.
 - Record native MCR replays with physical openings, authoritative decisions, penalties and settlement, and play them back on the MCR table through the shared archive.
 - Add a built-in MCR Bot through shared room controls, supporting one human and three Bots through a complete sixteen-hand match with private-view decisions and persistent server scheduling.
@@ -197,9 +165,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 
 - Automatic-table packet dealing animations in immersive view, preserving the selected view between hands.
-
 - Optional craftable Patchouli handbook in four languages, with a starter copy for each player, equipment recipes, playing guidance and an installation recommendation in chat.
-
 - Invite controls beside vacant seats in the lobby, opening the online player selector.
 - Pale oak tables, stools and tile material with matching crafting and stonecutting recipes for Minecraft 26.1.2.
 - Zip preset archives for custom tile faces, tile backs, riichi sticks and voice packages, synchronized from the server to connected clients.
@@ -236,7 +202,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Keep Ponder item controls above the table and tutorial text in the standard reading area so the furniture remains visible.
 - Anchor immersive melds at every player's right-hand cloth corner, with complete tile bounds inside the cloth and matching animation positions. Increase crowded hand-to-meld clearance in both immersive and seated views.
 - Keep the authorized Mahjong box menu open while choosing face and back presets, and retain its native close lifecycle.
-
 - Tile faces keep an opaque white plate with a rear surface visible through glass, including hidden hands and face-down walls. Glass shells render after opaque plates. Only visible identities show printed artwork, and standing faces retain their owner-facing orientation in both views. Immersive melds stay in one row at their original depth while standing hands move aside.
 - Voice event regression coverage checks both the declaring player and another seated player; box smoke checks use the preset button's translation key, and visibility smoke accepts the room's initial mode.
 - The built-in Mojang back pattern matches the vanilla banner emblem.
