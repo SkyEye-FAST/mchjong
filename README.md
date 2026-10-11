@@ -22,7 +22,6 @@ options, plus four-player MCR, Sichuan mahjong and Taiwanese mahjong on automati
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
 - Resource-pack tile designs and recorded voices
 - Optional Create production lines with efficient cutting, printing, dyeing and packing
-- Optional four-language Patchouli handbook with equipment, controls, complete Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong rules, award indexes and replay guidance
 
 ## Installation
 
@@ -59,7 +58,7 @@ Optional integrations are scoped to the loader named in each cell.
 | EMI supply recipes | Fabric, NeoForge | Fabric, Forge | — |
 | REI supply recipes | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
-| Patchouli handbook | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
+| Patchouli handbook | Not included | Fabric, Forge | Fabric, NeoForge |
 | Mod Menu personal settings | Fabric | Fabric | Fabric |
 | Create workshop | NeoForge | Fabric, Forge | — |
 | Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
@@ -99,7 +98,6 @@ preset in the lobby.
 
 Follow the [Playing guide](docs/PLAYING.md) for controls and table operation, and
 [Survival equipment and recipes](docs/SURVIVAL.md) for crafting and setup.
-With Patchouli installed, use the Mahjong Handbook item to read it in game.
 On a Ponder enabled build, hover over a table or supply item and hold the key
 shown in its tooltip to open an animated guide.
 

@@ -8,29 +8,6 @@ automatic tables. See
 
 ## Equipment and seating
 
-### In-game handbook
-
-Install the matching optional Patchouli build and use the Mahjong Handbook item
-to open it. The handbook includes equipment recipes, seating, controls, settlement,
-replays and customization in all four supported languages. Separate Riichi, MCR,
-Sichuan mahjong and Taiwanese mahjong chapters explain play from dealing to match end, with complete
-award indexes, illustrated hands, payment examples and preset differences. The
-[Rules guide](RULES.md) also collects these player rules.
-Click an award in a settlement to read its explanation and illustrated example.
-Click the winner tabs to switch hands. Rule settings offer a `?` beside each option.
-These explanations are available in-game. With Patchouli installed, the Handbook button
-opens the corresponding entry and page. Closing the book returns to the explanation,
-and Back or Escape returns to the original screen.
-Each player receives one on first joining a world with Patchouli installed on the
-server. Craft additional copies with a book, green dye and any mahjong tile, or
-take one from the MChjong creative tab.
-
-On supported loaders, a client without Patchouli shows a chat recommendation
-once per game session after entering a world, with a clickable download link.
-Set `recommendPatchouli = false` in
-`config/mchjong-client.toml` to disable the automatic reminder.
-See [Compatibility](COMPATIBILITY.md) for matching builds.
-
 ### Preparing the table
 
 Build an ordinary table from matching wooden slabs and fences. Cut material

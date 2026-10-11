@@ -708,23 +708,6 @@ maid's vehicle-follow preference, preserving the server-authorized seated pose.
 
 ## Optional integrations
 
-`compat/patchouli` provides the installation recommendation in chat. Supported
-loader client entry points check mod presence before offering the recommendation. Shared
-Patchouli resources define `mchjong:guide`, using the ordinary language files
-for chapter, entry and page text. The handbook reads client resources and has no
-gameplay authority. The presence-guarded server adapter gives each player a starter
-book once, recording recipient UUIDs in overworld saved data.
-`RuleHelp` indexes the shared handbook JSON and translation keys during resource
-reload. Award anchors identify exact entry/page destinations and native tile diagrams;
-rule options map to stable translation keys and collect their paginated descriptions.
-`TileDiagram` shares atlas rendering between explanations and Patchouli's
-`HandbookExample` custom template component. The book uses facing pages with
-fixed margins and wraps long examples without shrinking below readable tile sizes.
-The basic `TableHelpScreen` has no optional API dependency. `ManualLinks` registers
-book navigation after presence detection. Its parent is retained in the shared
-screen chain so view packets update the owning table/results/editor without replacing
-the explanation or book; leaving the table still closes the chain.
-
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's
 `matches` and `assemble` methods. Marking reagents and the table-upgrade pattern

@@ -211,7 +211,7 @@ public final class RiichiRulesScreen extends Screen implements TableChildScreen 
             : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
         var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())
             : Component.translatable(option.descriptionKey(), option.floatingPlayers(), option.placementRank());
-        addRenderableWidget(RuleHelp.setting(this, option, label, description, left + span - 20, y));
+        addRenderableWidget(RuleHelp.setting(this, label, description, left + span - 20, y));
         if (option == RiichiRuleOption.RED_FIVES) {
             int caption = Math.min(92, optionSpan / 4), choiceWidth = (optionSpan - caption - 8) / 3;
             labels.add(new Label(label, description, left, y + 6, caption - 4));

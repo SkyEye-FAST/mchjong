@@ -27,11 +27,6 @@ persistence and recipe identity are documented in [Supply data contracts](SUPPLI
 
 ## Crafting recipes
 
-With Patchouli installed, combine one book, one green dye and any mahjong tile
-in any arrangement to craft the [Mahjong Handbook](PLAYING.md#in-game-handbook).
-All three ingredients are consumed. Each player also receives one handbook on
-first joining the world with Patchouli installed on the server.
-
 The following recipe produces one ordinary table. All seven ingredients use the
 same wood family.
 

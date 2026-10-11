@@ -191,7 +191,7 @@ class AssetContractTest {
         assertArrayEquals(honba.getRGB(0, 0, 384, 32, null, 0, 384), hudHonba.getRGB(0, 0, 384, 32, null, 0, 384));
         var expectedTextures = new HashSet<>(Set.of("back.png",
                 "plain.png", "cloth_pattern.png", "riichi_stick.png", "honba_stick.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
-                "mahjong_manual.png", "mahjong_printing_plate.png", "incomplete_mahjong_box.png", "creeper.png", "mojang.png"));
+                "mahjong_printing_plate.png", "incomplete_mahjong_box.png", "creeper.png", "mojang.png"));
         for (int points : PointStickArtwork.POINTS) expectedTextures.add(points + ".png");
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));

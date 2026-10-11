@@ -14,9 +14,9 @@ final class RuleExplanationSmoke {
         var button = parent.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(name)).findFirst().orElseThrow();
         parent.setFocused(button); parent.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
-        ManualSmoke.require(client.screen instanceof TableHelpScreen, "Rule explanation failed: " + name);
+        if (!(client.screen instanceof TableHelpScreen)) throw new IllegalStateException("Rule explanation failed: " + name);
         AutomationControlsSmoke.checkBounds(client);
         client.screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
-        ManualSmoke.require(client.screen == parent, "Rule explanation lost its draft parent");
+        if (client.screen != parent) throw new IllegalStateException("Rule explanation lost its draft parent");
     }
 }

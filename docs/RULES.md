@@ -4,9 +4,8 @@
 
 Choose [Riichi](#riichi), [MCR](#mcr), [Sichuan mahjong](#sichuan-mahjong) or
 [Taiwanese mahjong](#taiwanese-mahjong) in the lobby before readying. Each uses its own tile stock,
-winning conditions and settlement. The in-game Mahjong Manual has the same four
-rule entrances, illustrated hands and linked award indexes. Room controls,
-permissions and convenience hints are covered in the [Playing guide](PLAYING.md).
+winning conditions and settlement. Room controls, permissions and Riichi convenience
+hints are covered in the [Playing guide](PLAYING.md).
 
 Examples use `m`, `p` and `s` for characters, circles and bamboo. `1z` through `7z`
 mean East, South, West, North, White, Green and Red. `q` denotes flowers.

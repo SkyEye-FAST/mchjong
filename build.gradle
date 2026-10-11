@@ -29,7 +29,7 @@ allprojects {
         }
         exclusiveContent {
             forRepository { maven { name = 'JEI'; url = 'https://maven.blamejared.com/' } }
-            filter { includeGroup 'mezz.jei'; includeGroup 'net.mezzdev.config'; includeGroup 'vazkii.patchouli' }
+            filter { includeGroup 'mezz.jei'; includeGroup 'net.mezzdev.config' }
         }
         exclusiveContent {
             forRepository { maven { name = 'EMI'; url = 'https://repo.sleeping.town/' } }

@@ -69,7 +69,6 @@ final class TaiwanTableSmoke {
                     var lobby = client.screen;
                     LobbySmoke.find(client, net.minecraft.network.chat.Component.translatable("rules.mchjong.title").getString()).onPress();
                     AutomationControlsSmoke.checkBounds(client);
-                    RuleExplanationSmoke.check(client, net.minecraft.network.chat.Component.translatable("variant.mchjong.mcr"));
                     client.screen.onClose();
                     check(client.screen == lobby, "MCR rules lost their lobby parent");
                 }
@@ -90,7 +89,6 @@ final class TaiwanTableSmoke {
             case 30 -> {
                 if (++captures < 12) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-rules.png", client.getMainRenderTarget(), ignored -> {});
-                RuleExplanationSmoke.check(client, net.minecraft.network.chat.Component.translatable("rules.mchjong.choose_preset"));
                 press(client, "taiwan.mchjong.payment_rules");
                 var payment = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
                     .map(net.minecraft.client.gui.components.EditBox.class::cast).findFirst().orElseThrow();

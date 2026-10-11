@@ -189,11 +189,9 @@ Small receipts reserve their body for the hand and yaku. The Point changes page
 provides the complete score table. Reserve both badge and text
 space before the readout begins. Preserve the hand layout and readout progress
 on a resize or snapshot refresh.
-Award rows provide short hover text, a quiet `?` cue and a clickable explanation.
 Winner tabs switch hands by mouse. Rule editors keep their draft while a separate `?` opens help.
-The shared compact help panel paginates text, reuses handbook diagrams and offers
-Back plus an optional Handbook button. Closing the book returns through the same
-parent chain, including when synchronized table state changes.
+The shared compact help panel paginates option descriptions. Back and Escape return
+to the editor, retaining its draft when synchronized table state changes.
 All four variants share the table, player-card, action-grid, camera, settings
 and settlement design. All four share replay presentation. Rule adapters supply native winds,
 flowers, void suits, yaku/fan and payment data. Receipts retain native win methods;

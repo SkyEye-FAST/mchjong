@@ -98,21 +98,6 @@ smoke checks built-in mip dimensions and live world/GUI filters after resource r
 The print occupies 240 × 320 pixels within each 256 × 384 cell, retaining source
 proportions and the physical tile envelope.
 
-## Handbook cover
-
-The Patchouli handbook uses `ManualArtwork` to generate its original teal and
-brass cover at `textures/item/mahjong_manual.png` and its generated-item model.
-Book pages and categories live under `assets/mchjong/patchouli_books/guide`;
-the book definition lives under `data/mchjong/patchouli_books/guide`. Page text
-uses the four shared language files. Each example page declares its tile notation
-and regional face preset. `TileDiagram` renders directly from the playing atlas;
-`HandbookExample` presents the description and tiles across facing Patchouli pages.
-The 100-pixel tile area leaves eight logical pixels at both page edges. Short
-examples occupy one row; full hands continue across the spread, preferring group
-boundaries. Long examples wrap at a minimum tile width of twelve logical pixels.
-Winning tiles, public tiles and meld/flower boundaries retain their markers.
-Ordinary text is paginated in resources at a readable size.
-
 ## Mahjong dye items
 
 `MahjongDyeArtwork` draws original 16 by 16 four-ink pouch textures at

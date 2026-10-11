@@ -112,7 +112,7 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
             var option = options.get(index - extras);
             var caption = Component.translatable(option.translationKey());
             var description = Component.translatable(option.descriptionKey());
-            addRenderableWidget(RuleHelp.setting(this, option, caption, description, left + span - 20, top));
+            addRenderableWidget(RuleHelp.setting(this, caption, description, left + span - 20, top));
             labels.add(new Label(caption, description, contentLeft, top, contentWidth));
             if (option.toggle()) {
                 boolean enabled = option.get(draft) != 0;

@@ -12,8 +12,6 @@ import net.minecraft.util.FormattedCharSequence;
 public class TableHelpScreen extends Screen implements TableChildScreen {
     private final Screen parent;
     private final Supplier<List<Component>> contents;
-    private final TileDiagram example;
-    private final Runnable manual;
     private List<Component> shown = List.of();
     private final List<FormattedCharSequence> lines = new ArrayList<>();
     private int page;
@@ -22,13 +20,9 @@ public class TableHelpScreen extends Screen implements TableChildScreen {
     private int top;
     private int span;
     private int panelHeight;
-    private int exampleHeight;
 
     public TableHelpScreen(Screen parent, Component title, Supplier<List<Component>> contents) {
-        this(parent, title, contents, null, null);
-    }
-    public TableHelpScreen(Screen parent, Component title, Supplier<List<Component>> contents, TileDiagram example, Runnable manual) {
-        super(title); this.parent = parent; this.contents = contents; this.example = example; this.manual = manual;
+        super(title); this.parent = parent; this.contents = contents;
     }
     @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
@@ -47,10 +41,9 @@ public class TableHelpScreen extends Screen implements TableChildScreen {
                 paragraph = font.split(text, span - 48);
             lines.addAll(paragraph); lines.add(FormattedCharSequence.EMPTY);
         }
-        exampleHeight = example == null ? 0 : 58;
-        panelHeight = Math.min(panelHeight, Math.max(100, lines.size() * 12 + 64 + exampleHeight));
+        panelHeight = Math.min(panelHeight, Math.max(100, lines.size() * 12 + 64));
         top = (height - panelHeight) / 2;
-        rows = Math.max(1, (panelHeight - 64 - exampleHeight) / 12);
+        rows = Math.max(1, (panelHeight - 64) / 12);
         int pages = Math.max(1, (lines.size() + rows - 1) / rows);
         page = Math.clamp(page, 0, pages - 1);
         if (pages > 1) {
@@ -59,11 +52,8 @@ public class TableHelpScreen extends Screen implements TableChildScreen {
             var next = addRenderableWidget(MahjongButton.create(Component.literal("›"), ignored -> { page++; init(); }).bounds(left + span - 36, top + panelHeight - 28, 24, 20).build());
             next.active = page + 1 < pages;
         }
-        int buttonWidth = manual == null ? 100 : Math.min(100, (span - 80) / 2);
-        int buttonLeft = left + (span - buttonWidth * (manual == null ? 1 : 2) - (manual == null ? 0 : 4)) / 2;
-        addRenderableWidget(MahjongButton.create(Component.translatable("gui.back"), ignored -> onClose()).bounds(buttonLeft, top + panelHeight - 28, buttonWidth, 20).build());
-        if (manual != null) addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.manual"), ignored -> manual.run())
-            .bounds(buttonLeft + buttonWidth + 4, top + panelHeight - 28, buttonWidth, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.translatable("gui.back"), ignored -> onClose())
+            .bounds(left + (span - 100) / 2, top + panelHeight - 28, 100, 20).build());
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -71,13 +61,6 @@ public class TableHelpScreen extends Screen implements TableChildScreen {
         MahjongUi.text(graphics, font, title, left + 12, top + 10, span - 24, MahjongUi.ACCENT, false);
         for (int row = 0; row < rows && page * rows + row < lines.size(); row++)
             graphics.drawString(font, lines.get(page * rows + row), left + 12, top + 30 + row * 12, MahjongUi.TEXT, false);
-        if (example != null) {
-            int y = top + panelHeight - 32 - exampleHeight;
-            MahjongUi.text(graphics, font, Component.translatable("rules.mchjong.example"), left + 12, y, span - 24, MahjongUi.MUTED, false);
-            int tileWidth = Math.min(22, (span - 24 - example.parts().size()) / example.parts().size());
-            int drawnWidth = example.width(0, example.parts().size(), tileWidth);
-            example.render(graphics, left + (span - drawnWidth) / 2, y + 22, tileWidth, 0, example.parts().size());
-        }
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
