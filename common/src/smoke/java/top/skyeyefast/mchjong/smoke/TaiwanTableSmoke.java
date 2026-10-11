@@ -45,11 +45,6 @@ final class TaiwanTableSmoke {
             case 0 -> { task = server.submit(() -> target(client, pos).sit(main(client), 0)); stage++; }
             case 1 -> {
                 if (room == null || room.viewerSeat() < 0) break;
-                if (!room.convenienceHints()) {
-                    client.getConnection().send(PayloadPackets.serverbound(new TableSessionControlPayload(pos, room.tableId(),
-                        TableSessionControlPayload.Operation.CONVENIENCE_HINTS, room.decision(), true)));
-                    break;
-                }
                 if (choice == variants.size()) { stage = 3; break; }
                 ruleLayouts = choice < 3 ? new VariantRuleLayoutSmoke(variants.get(choice)) : null;
                 client.getConnection().send(PayloadPackets.serverbound(new TableVariantPayload(pos, room.tableId(), room.incarnation(), room.decision(), variants.get(choice))));
@@ -64,7 +59,7 @@ final class TaiwanTableSmoke {
                     case SICHUAN -> client.screen instanceof SichuanLobbyScreen;
                     case TAIWAN -> client.screen instanceof TaiwanLobbyScreen;
                 }, "Variant switch did not route its lobby");
-                check(room.convenienceHints(), "Variant switch lost shared hints");
+                check(!room.convenienceHints(), "Variant switch retained Riichi hints");
                 if (room.variant() == MahjongVariant.MCR) {
                     var lobby = client.screen;
                     LobbySmoke.find(client, net.minecraft.network.chat.Component.translatable("rules.mchjong.title").getString()).onPress();
@@ -198,49 +193,13 @@ final class TaiwanTableSmoke {
                 var piece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
                 var pointer = project(client, pos, piece.position());
                 InputSmoke.pointer(client, pointer.x, pointer.y);
-                captures = 0; stage = 51;
-            }
-            case 51 -> {
-                var screen = (TaiwanTableScreen) client.screen;
-                if (++captures < 6) break;
-                var hint = hint(screen);
-                checkHint(hint, screen);
-                screen.setFocused(hint); captures = 0; stage = 52;
-            }
-            case 52 -> {
-                var screen = (TaiwanTableScreen) client.screen;
-                if (++captures < 6) break;
-                check(hint(screen).isFocused(), "Taiwan seated hints lost focus");
-                SmokeScreenshots.grab(output.toFile(), "taiwan-hints-seated.png", client.getMainRenderTarget(), ignored -> {});
                 InputSmoke.switchView(screen); captures = 0; stage = 13;
             }
             case 13 -> {
                 if (!(client.screen instanceof TaiwanTableScreen screen) || !screen.immersive()) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-immersive.png", client.getMainRenderTarget(), ignored -> {});
                 if (++captures < 12) break;
-                var hint = hint(screen);
-                checkHint(hint, screen);
-                screen.setFocused(hint);
-                if (captures < 18) break;
-                check(hint.isFocused(), "Taiwan immersive hints lost focus");
-                SmokeScreenshots.grab(output.toFile(), "taiwan-hints-immersive.png", client.getMainRenderTarget(), ignored -> {});
-                screen.setFocused(null);
                 var pointer = TableHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
-                InputSmoke.pointer(client, pointer.x, pointer.y);
-                task = server.submit(() -> setHintsPolicy(server, false)); stage = 53;
-            }
-            case 53 -> {
-                if (table.clientWorldPolicy().allowConvenienceHints() || room.convenienceHints()) break;
-                var screen = (TaiwanTableScreen) client.screen;
-                check(!hint(screen).visible && !hint(screen).active && !hint(screen).isFocused(), "World policy left Taiwan hints visible");
-                task = server.submit(() -> setHintsPolicy(server, true)); stage = 54;
-            }
-            case 54 -> {
-                if (!table.clientWorldPolicy().allowConvenienceHints()) break;
-                var screen = (TaiwanTableScreen) client.screen;
-                check(!room.convenienceHints() && !hint(screen).visible, "Disabled room hints reappeared after world policy restored");
-                screen.setFocused(null);
-                var pointer = top.skyeyefast.mchjong.client.TableHandSmoke.point(view.game(), selectedTile, screen.width, screen.height);
                 sentDecision = view.game().decision();
                 check(screen.mouseClicked(pointer.x, pointer.y, 0), "Taiwan immersive direct discard failed"); stage = 14;
             }
@@ -367,23 +326,7 @@ final class TaiwanTableSmoke {
         return false;
     }
 
-    private static MahjongButton hint(TaiwanTableScreen screen) {
-        return screen.children().stream().filter(child -> child instanceof MahjongButton
-            && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
-    }
-    private static void checkHint(MahjongButton hint, TaiwanTableScreen screen) {
-        check(hint.visible && hint.active, "Taiwan selected discard has no convenience preview");
-        check(hint.getMessage().getString().contains(net.minecraft.network.chat.Component.translatable(
-            "hints.mchjong.after_discard", "").getString()), "Taiwan hints lost discard preview narration");
-        int width = screen.immersive() ? TableCanvas.WIDTH : screen.width;
-        int height = screen.immersive() ? TableCanvas.HEIGHT : screen.height;
-        check(hint.getX() >= 0 && hint.getY() >= 0 && hint.getRight() <= width && hint.getBottom() <= height,
-            "Taiwan hint icon exceeds its canvas");
-    }
-    private static void setHintsPolicy(net.minecraft.server.MinecraftServer server, boolean allowed) {
-        try { WorldSettings.of(server).set("allowConvenienceHints", allowed); }
-        catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
-    }
+
 
     private ServerPlayer main(Minecraft client) { return client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID()); }
     private MahjongTableBlockEntity target(Minecraft client, BlockPos pos) { return (MahjongTableBlockEntity) main(client).serverLevel().getBlockEntity(pos); }

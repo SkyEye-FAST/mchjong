@@ -116,8 +116,7 @@ final class MatchAutomationControlsSmoke {
     private static void bounds(Minecraft client) {
         int width = immersive(client) ? 1280 : client.screen.width, height = immersive(client) ? 800 : client.screen.height;
         var widgets = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-            .filter(widget -> widget.visible
-                && !widget.getClass().getSimpleName().equals("TableHints")).toList();
+            .filter(widget -> widget.visible).toList();
         for (int index = 0; index < widgets.size(); index++) {
             var a = widgets.get(index);
             require(a.getX() >= 0 && a.getY() >= 0 && a.getRight() <= width && a.getBottom() <= height, "Automation exceeds canvas");

@@ -7,46 +7,30 @@ class TenpaiHints {
 
     private var hand: List<Int> = emptyList()
     private var melds: List<Meld> = emptyList()
-    private val byDiscard = HashMap<Int, Set<Int>>()
+    private var kinds: Set<Int> = emptySet()
     private var snapshot: RiichiView? = null
-    private var lastDiscard = Tile.ABSENT
     private var result: List<Wait> = emptyList()
 
-    fun waits(view: RiichiView, discard: Int): List<Wait> {
-        if (snapshot !== view || lastDiscard != discard) {
-            result = calculate(view, discard)
+    fun waits(view: RiichiView): List<Wait> {
+        if (snapshot !== view) {
+            result = calculate(view)
             snapshot = view
-            lastDiscard = discard
         }
         return result
     }
 
-    private fun calculate(view: RiichiView, discard: Int): List<Wait> {
+    private fun calculate(view: RiichiView): List<Wait> {
         if (
             view.viewerSeat() !in view.seats().indices || view.exitVote() != null ||
             view.phase() != RiichiView.Phase.TURN && view.phase() != RiichiView.Phase.REACTION && view.phase() != RiichiView.Phase.DRAW
         ) return emptyList()
         val self = view.seats()[view.viewerSeat()]
         val size = self.hand().size + self.melds().size * 3
-        if ((size != 13 && size != 14) || self.hand().any { it < 0 }) return emptyList()
-        var key = Tile.ABSENT
-        if (size == 14) {
-            if (
-                discard !in self.hand() || view.actions().none {
-                    (it.type() == RiichiAction.Type.DISCARD || it.type() == RiichiAction.Type.RIICHI) && discard in it.tiles()
-                }
-            ) return emptyList()
-            key = Tile.kind(discard)
-        }
+        if (size != 13 || self.hand().any { it < 0 }) return emptyList()
         if (hand != self.hand() || melds != self.melds()) {
             hand = self.hand()
             melds = self.melds()
-            byDiscard.clear()
-        }
-        val kinds = byDiscard.getOrPut(key) {
-            val concealed = hand.toMutableList()
-            if (key >= 0) concealed.remove(concealed.first { Tile.kind(it) == key })
-            RiichiHandAnalyzer.waits(concealed, melds)
+            kinds = RiichiHandAnalyzer.waits(hand, melds)
         }
         val known = VisibleTiles.counts(view)
         return java.util.List.copyOf(

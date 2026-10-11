@@ -51,7 +51,6 @@ final class McrAutoTableSmoke {
     private long leaveRevision;
     private int presentationStep;
     private boolean clockConfigured;
-    private boolean hintsConfigured;
     private final MatchAutomationControlsSmoke automation = new MatchAutomationControlsSmoke();
     private UUID replayId;
 
@@ -115,15 +114,6 @@ final class McrAutoTableSmoke {
                     break;
                 }
                 if (!new top.skyeyefast.mchjong.engine.TimeControl(30, 7).equals(clientTable.clientMcrTimeControl())) break;
-                if (!hintsConfigured) {
-                    LobbySmoke.settings(client);
-                    client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
-                        .filter(button -> button.getMessage().getString().startsWith(net.minecraft.network.chat.Component.translatable(
-                            "settings.mchjong.convenience_hints").getString())).findFirst().orElseThrow().onPress();
-                    hintsConfigured = true;
-                    break;
-                }
-                if (!lobby.convenienceHints()) break;
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-lobby.png", client.getMainRenderTarget(), message -> {});
                 int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 check(index >= 0, "MCR lobby cannot assign four seats");
@@ -261,16 +251,6 @@ final class McrAutoTableSmoke {
                     presentationStep++;
                     break;
                 }
-                var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
-                    && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
-                check(hint.visible && hint.active, "MCR hovered discard has no convenience preview");
-                if (presentationStep == 1) {
-                    screen.setFocused(hint); presentationStep++;
-                    break;
-                }
-                check(hint.isFocused() && hint.getMessage().getString().contains(net.minecraft.network.chat.Component.translatable(
-                    "hints.mchjong.after_discard", "").getString()), "MCR native hint focus or narration lost the discard preview");
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), message -> {});
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
                 firstDecision = view.game().decision();
                 top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.DOUBLE_CLICK;

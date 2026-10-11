@@ -184,17 +184,10 @@ for every field, rule bounds, host/stale authority, readiness reset, world-polic
 restrictions and lobby/match save restoration. Run
 `gradlew.bat :engine:test --tests "*SichuanRoomSettingsTest" --warning-mode fail --console=plain`.
 
-`ConvenienceHintsTest` owns the shared room hint setting, world-policy restriction,
-save/variant retention across all four variants, MCR structural versus eight-non-flower-fan waits, Sichuan mahjong
-void tiles and structural/capped ready values, and public-copy accounting. The
-MCR privacy fixture and `SichuanGameTest.hintsIgnoreOpponentsConcealedHandsAndFutureWallIdentities`
-change private hands and wall identities without changing hint results.
-`SichuanGameTest.passedWinsBlockSameFanUntilDrawingAndSurviveRestore` also checks
-recipient-only restriction projection. Run with `:engine:test --tests "*ConvenienceHintsTest"
---tests "*SichuanGameTest" --tests "*TenpaiHintsTest" --warning-mode fail --console=plain`.
-The MCR automatic-table and Sichuan mahjong client smokes enable hints through the shared
-room control, hover over a discard and focus the native hint widget. Opt-in captures
-are `mcr-auto-hints.png` and `sichuan-hints.png` in their respective evidence directories.
+`ConvenienceHintsTest` checks that only Riichi rooms accept the hint setting,
+variant changes clear it, and world policy disables it. `TableControlTest` covers
+host authorization and persistence. Run `:engine:test --tests "*ConvenienceHintsTest"
+--tests "*TableControlTest" --tests "*TenpaiHintsTest" --warning-mode fail --console=plain`.
 `ServerIntegrationTest.actualMinecraftCodecsRoundTripOnlyDeclaredPayloads` also
 checks Sichuan mahjong proposals and settings at both field bounds and rejects malformed
 numeric proposals through the native codec.
@@ -335,7 +328,7 @@ All three profiles declare `top.skyeyefast:taiwan-mahjong:0.2.0`.
 Verify the engine adapter and embedded artifact contract.
 
 ```text
-gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar --warning-mode fail --console=plain
+gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" :engine:shadowJar --warning-mode fail --console=plain
 ```
 
 The independent library owns five-meld decomposition, exact copy-aware distance,
@@ -349,14 +342,6 @@ exclusions, disabled native awards and flower triggers, discard-completed triple
 game/view/session/replay round trips. `YakuSetsTest` checks the server catalog and
 both variants' digest-bound award-mask proposals. The shared client smoke selects
 individual native/data-pack awards in both rule screens and rejects stale definitions.
-
-`TaiwanHintsTest` owns shanten numbers, effective tiles, legal discard previews, multiple
-waits with distinct ron/self-draw tai, Pocket/Southern and current-rule caps,
-concealment/honors/winds/known flowers, passing/READY, exhausted waits and physical
-river/meld/focus aliases. It excludes covered opponent kongs, private hands,
-future wall order and spectator analysis. Only current public reaction context
-can add situational tai. Run
-`gradlew.bat :engine:test --tests "*TaiwanHintsTest" --tests "*ConvenienceHintsTest" --warning-mode fail --console=plain`.
 
 `PatternRegressionTest` has a source-bearing positive witness for every pattern,
 plus exact exclusion sets, ron/self-draw concealment, competing decompositions
@@ -429,8 +414,7 @@ lobby action or authenticated server command. The active check also verifies tha
 transfer action. The rule checks preserve unfinished payment input across help
 navigation and retain rejected yaku drafts until an explicit reload or correction.
 It exercises initial flower replacement, native calls, recipient/spectator privacy,
-seated and immersive discard previews, direct hand-click discards, focused convenience hints and
-world-policy disabling, exit-vote pause, result/next-hand packets,
+seated and immersive direct hand-click discards, exit-vote pause, result/next-hand packets,
 NBT restore and a complete East/South/West/North match. It then adds,
 removes and fills Bot seats through native room handlers, restores their NBT
 roster and completes a Southern one-human/three-Bot match with automatic result
@@ -441,11 +425,7 @@ requested captures there. The profile also retrieves the completed native match
 from the shared replay browser, opens it, steps two events, changes viewpoints,
 inspects an initial flower, opens hand settlement and returns to the list.
 Use `-PsmokeScreenshots=taiwan-replay.png,taiwan-replay-settlement.png` for these
-affected playback states. Use
-`-PsmokeScreenshots=taiwan-hints-seated.png,taiwan-hints-immersive.png` for the
-native hints focus in both views. Variant switching retains the shared setting;
-disabling world policy removes the hint widget and restoring policy keeps the
-room choice disabled. The legal-action driver supplies test inputs.
+affected playback states. The legal-action driver supplies test inputs.
 Taiwanese mahjong uses built-in Bots.
 
 ### Taiwanese mahjong compatibility profiles
@@ -456,14 +436,14 @@ Minecraft 1.20.1, or JDK 25 for 26.1.2. Build that branch's two loader artifacts
 and run the following focused checks.
 
 ```text
-gradlew.bat :engine:test --tests "*TaiwanGameTest.openingUsesFourPacketsAndRoundBasedFlowers" --tests "*TaiwanBotTest.issuedWinsAlwaysTakePriorityInBothPresets" --tests "*TaiwanReplayTest.bothWallsOrdinaryPlayAndRecorderRestoreKeepExactPhysicalState" --tests "*TaiwanHintsTest.shantenEffectiveTilesAndLegalDiscardPreview" :fabric:test --tests "*TaiwanPresentationTest" --warning-mode fail --console=plain
+gradlew.bat :engine:test --tests "*TaiwanGameTest.openingUsesFourPacketsAndRoundBasedFlowers" --tests "*TaiwanBotTest.issuedWinsAlwaysTakePriorityInBothPresets" --tests "*TaiwanReplayTest.bothWallsOrdinaryPlayAndRecorderRestoreKeepExactPhysicalState" :fabric:test --tests "*TaiwanPresentationTest" --warning-mode fail --console=plain
 gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true --warning-mode fail --console=plain
 ```
 
 Build with `:fabric:build :forge:build -x test` on 1.20.1 or
 `:fabric:build :neoforge:build -x test` on 26.1.2. The focused tests above run
 separately. The real client fixture checks variant registration, both native
-stocks, a complete opening/match, Bot control/decisions, NBT, Replay/hints and
+stocks, a complete opening/match, Bot control/decisions, NBT, replay and
 seated/immersive packets. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`, `PASS.txt`
 and no `FAIL.txt` in that branch's `fabric/build/smoke/taiwan-evidence`.
 The 26.1.2 native server boundary also runs `:neoforge:test --tests

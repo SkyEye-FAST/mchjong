@@ -245,7 +245,7 @@ public final class RiichiTableScreen extends Screen {
             || !view.seats().get(view.viewerSeat()).hand().contains(handDragTile))) handDrag = null;
         if (decision.receive(view)) {
             selectedTile = lastClickedTile = hoveredTile = Tile.ABSENT;
-            hints.clearPreview();
+            hints.clear();
             choosingRiichi = false;
         }
     }
@@ -1008,7 +1008,7 @@ public final class RiichiTableScreen extends Screen {
 
     private void updateHints(RiichiView view) {
         if (room() == null || !room().convenienceHints() || dealing() || decision.pending() || results != null) {
-            hints.clearPreview();
+            hints.clear();
             return;
         }
         int layoutWidth = uiWidth(), layoutHeight = uiHeight();
@@ -1036,7 +1036,7 @@ public final class RiichiTableScreen extends Screen {
             else if (widget.getRight() < hintCenter) halfWidth = Math.min(halfWidth, hintCenter - widget.getRight() - 4);
         }
         int hintLeft = hintCenter - halfWidth, hintRight = hintCenter + halfWidth;
-        hints.update(view, hoveredTile, selectedTile, layoutWidth, board == null ? actionTop - 22 : layoutHeight - 16 * hintScale, hintLeft, hintRight,
+        hints.update(view, layoutWidth, board == null ? actionTop - 22 : layoutHeight - 16 * hintScale, hintLeft, hintRight,
             hintBottom, board == null ? information.bottom() + 4 : 38, hintScale);
     }
 
@@ -1297,7 +1297,7 @@ public final class RiichiTableScreen extends Screen {
 
     private void cancelSelection() {
         choosingRiichi = false;
-        hints.clearPreview();
+        hints.clear();
         selectedTile = lastClickedTile = Tile.ABSENT;
         rebuild();
         setFocused(null);

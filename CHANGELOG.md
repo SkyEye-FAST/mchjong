@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Limit convenience hints to Riichi mahjong and remove the MCR, Sichuan mahjong and Taiwanese mahjong hint interfaces and calculations. Riichi hints show current waits and remaining copies only while tenpai.
 - Move the Patchouli handbook integration to the separate `feature/patchouli-handbook` development branch. Main retains standalone rule-option descriptions.
 - Center action announcements in muted text clear of the HUD, controls and private hand, keep current-discard cards on the right, and show immersive seat winds and status on player plaques. Use direct hand clicks for discards in all four variants and both views, retaining single-click and double-click settings and removing discard confirmation buttons.
 - Unify room rule entry points and draft submission, organize Riichi rules into six persistent categories, move player count and preset selection into the draft, group hand display settings, centralize preparation member controls, and align Sichuan mahjong, Taiwanese mahjong and MCR navigation with four-language controls and explanations.
@@ -32,7 +33,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 
 - Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring, preserving separate flower payouts.
-- Add recipient-safe Taiwanese mahjong convenience hints with previews of sixteen-tile shanten numbers, effective tiles and legal discards, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination. Share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.
 - Add independent native Taiwanese mahjong replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.
 - Add recipient-safe Taiwanese mahjong built-in Bots with rule-driven discard/wait scoring, conservative call/kong decisions, shared room add/remove and fill controls, delayed paused/restored actions, inactive Bot clocks and automatic hand confirmations; verify complete one-human/three-Bot four-wind matches for both presets.
 - Register Taiwanese mahjong as the fourth built-in variant with shared room/NBT lifecycle, recipient-safe Minecraft packets, independent 136/144 physical stock and fixed-slot scene, preset/payment/clock editors, playable seated/immersive actions, private settlement and complete four-wind matches. Add focused Fabric end-to-end coverage.

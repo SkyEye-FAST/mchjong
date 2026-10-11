@@ -16,33 +16,32 @@ class TenpaiHintsTest {
         game.players[2].melds.add(TestHands.meld(Meld.Type.TRIPLET, "666s"));
         game.players[1].hand.add(Tile.id(23, 3, false));
         var view = game.view(OWNER);
-        var waits = hints.waits(view, Tile.ABSENT);
+        var waits = hints.waits(view);
         assertEquals(List.of(new TenpaiHints.Wait(23, 1), new TenpaiHints.Wait(26, 4)), waits);
-        assertSame(waits, hints.waits(view, Tile.ABSENT), "Rendering the same snapshot reuses the complete result");
+        assertSame(waits, hints.waits(view), "Rendering the same snapshot reuses the complete result");
         game.players[1].river.add(new RiichiDiscard(Tile.id(23, 3, false), false, false, false));
-        assertEquals(0, hints.waits(game.view(OWNER), Tile.ABSENT).getFirst().remaining());
+        assertEquals(0, hints.waits(game.view(OWNER)).getFirst().remaining());
         int drawn = Tile.id(Tile.WHITE, 0, false);
         game.players[0].hand.add(drawn);
         game.options.set(0, List.of(new RiichiAction(RiichiAction.Type.DISCARD, drawn)));
-        assertEquals(0, hints.waits(game.view(OWNER), drawn).getFirst().remaining());
-        assertTrue(hints.waits(game.view(OWNER), game.players[0].hand.getFirst()).isEmpty());
-        assertTrue(hints.waits(game.view(null), drawn).isEmpty());
+        assertTrue(hints.waits(game.view(OWNER)).isEmpty(), "A drawn hand must not offer hypothetical discards");
+        assertTrue(hints.waits(game.view(null)).isEmpty());
         game.phase = RiichiGame.Phase.HAND_END;
-        assertTrue(hints.waits(game.view(OWNER), drawn).isEmpty());
+        assertTrue(hints.waits(game.view(OWNER)).isEmpty());
     }
 
     @Test void specialAndOpenHandsUseStructuralWaitsWithoutImpossibleFifthCopies() {
         var hints = new TenpaiHints();
         var game = fixture("19m19p19s1234567z",
             RiichiPreset.MAHJONG_SOUL_3.config().with(RiichiRuleOption.MIN_HAN, 4), PlayerHandVisibility.SELF);
-        assertEquals(13, hints.waits(game.view(OWNER), Tile.ABSENT).size());
+        assertEquals(13, hints.waits(game.view(OWNER)).size());
         game.players[0].hand.clear();
         game.players[0].hand.addAll(TestHands.tiles("1122p3344s55667z"));
-        assertEquals(List.of(new TenpaiHints.Wait(Tile.RED, 3)), hints.waits(game.view(OWNER), Tile.ABSENT));
+        assertEquals(List.of(new TenpaiHints.Wait(Tile.RED, 3)), hints.waits(game.view(OWNER)));
         game.players[0].hand.clear();
         game.players[0].hand.addAll(TestHands.tiles("123456p1113s"));
         game.players[0].melds.add(TestHands.meld(Meld.Type.CONCEALED_QUAD, "2222s"));
-        assertEquals(List.of(new TenpaiHints.Wait(20, 3)), hints.waits(game.view(OWNER), Tile.ABSENT));
+        assertEquals(List.of(new TenpaiHints.Wait(20, 3)), hints.waits(game.view(OWNER)));
     }
 
     private static RiichiGame fixture(String hand, RiichiRules rules, PlayerHandVisibility visibility) {

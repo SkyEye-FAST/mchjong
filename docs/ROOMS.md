@@ -12,46 +12,16 @@ available through MChjong's mod-list Config button. Automatic
 play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
-The room host can enable **Convenience hints** during preparation: Settings → Room
-or the lobby Match settings tab for Riichi, MCR, Sichuan mahjong and Taiwanese mahjong. All four share
-the setting, including when changing variants. World `allowConvenienceHints`
-can disable it in both waiting and running rooms.
+The Riichi room host can enable **Convenience Hints** during preparation in
+Settings → Room or the lobby Match Settings tab. World `allowConvenienceHints`
+can disable it in waiting and running Riichi rooms. Changing the variant clears
+the room setting.
 
-Hover or focus the diamond beside your hand to inspect hints; hovering or selecting
-a legal discard previews the resulting hand. Activate the MCR, Sichuan mahjong and Taiwanese mahjong diamond
-to page through tile rows when the popup needs more space. Riichi shows its structural waits.
-MCR shows shanten, improving tiles and structural waits, with non-flower fan for
-ordinary discard wins/self-draws and an eight-fan qualification mark. A currently
-offered winning tile uses its public last-wall/robbing-kong circumstances. Future
-draw circumstances are not assumed. Flowers do not satisfy the minimum.
-
-Sichuan mahjong shows remaining void-suit tiles until the suit clears, then shanten and
-improving tiles. Ready hands show each wait's structural fan and capped value,
-and their maximum ready value under the room rules. These draw-check values
-exclude win circumstances and self-draw bonuses. A passed-win restriction is
-shown only to its owner. It restricts discard wins to higher capped fan until
-the engine clears it. Hints do not declare wins or submit actions.
-
-Taiwanese mahjong shows sixteen-tile shanten, effective tiles and every structural wait with
-public remaining counts. Each wait has separate ron and self-draw tai under the
-current room rules, including the preset's cap, concealment, honors, seat/round
-winds, already revealed flowers and READY. A drawn hand shows its pre-draw
-structure until you hover or select a legal discard. Passing (過水) retains the
-structural waits while marking that you currently cannot win. READY keeps its
-waits and tai. Spectators receive no private hints, and disabling hints stops
-client analysis and display.
-
-Future waits use confirmed structural information and omit last-tile, replacement,
-robbing-kong and opening-win bonuses, future flowers and unknown replacement sources.
-A currently offered public
-reaction tile separately shows its confirmed claim tai in parentheses. Public
-counting includes only your hand/melds/flowers, public rivers/exposed melds and the
-current focus. Covered opponent kongs contribute no hidden identities.
-
-Counts use your own hand and public tiles, deduplicate claimed tiles and include
-exhausted structural waits at zero. They count copies outside the player's visible
-information. A structurally ready hand can therefore have
-no publicly available copies. Sichuan mahjong readiness still follows its draw scorer.
+Hover or focus the diamond beside the private hand to inspect structural waits.
+Hints are available for a thirteen-tile ready shape, counting each meld as three tiles. Counts
+use the player's hand and public tiles, deduplicate claimed tiles and retain
+exhausted structural waits at zero. They describe copies outside the player's
+visible information, not the actual contents of the wall.
 
 ## MCR Bot rooms
 
@@ -160,8 +130,8 @@ with current server settings. Read-only viewers use the same categories.
 Sichuan mahjong groups its existing fields into Basic Settings, Kongs and Payments,
 and Draws and Settlement. Taiwanese mahjong separates Basic Settings from Scoring
 and Payments, where its award selector and four payment fields are available.
-MCR presents its fixed rules and explanations. Timing and convenience hints remain
-room settings for every variant.
+MCR presents its fixed rules and explanations. Timing remains a room setting for every variant.
+Convenience hints are a Riichi room setting.
 
 ## Hand visibility
 

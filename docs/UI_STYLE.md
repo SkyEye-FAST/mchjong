@@ -202,7 +202,7 @@ tai awards and transfers while keeping opponent hands and covered kongs hidden.
 Taiwanese mahjong uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
 are shared. Its lobby exposes human and built-in Bot seats, presets,
-payment/reserve rules, clocks, shared Replay navigation and convenience hints.
+payment/reserve rules, clocks and shared Replay navigation.
 All variants share one lobby layout. A left sidebar selects the rule variant;
 its width and row height are independent of the number of variants. Overflow
 scrolls by whole rows using the wheel or a visible, draggable scrollbar. Hidden
@@ -322,27 +322,19 @@ Their preset selectors, draft navigation and acknowledgement footers follow the 
 page structure while retaining their own world-policy permissions. MCR offers a fixed
 rule summary and the existing explanations.
 
-Room settings include default-off convenience hints for all four rules. A small diamond
+Riichi room settings include default-off convenience hints. A small diamond
 with an exclamation mark appears near the private hand when analysis is available.
 Hover or native keyboard focus opens structural waits and unseen-copy counts,
 including exhausted waits at zero. The native narration includes every wait and count.
-Hovering over or selecting a legal discard previews the resulting waits. Retain
-the last preview while the pointer travels to the diamond, and clear it on a new
-decision, cancellation or disabled hints. Counts combine red and ordinary fives
+Show hints only for the current thirteen-tile ready shape, counting each meld as three tiles.
+Clear them when the hand no longer has that shape or the room disables hints. Counts combine red and ordinary fives
 and never claim to reveal the actual wall. Center the popup on the actual private
 hand, directly above its projected top edge in seated play and `TableHand` in
 immersive play. Keep a small gap to the tiles instead of anchoring to the action
 rail. Draw the exclamation icon at the diamond's geometric center, independent
 of language and font glyph bearings. Wrap waits into compact rows when side
 controls or player cards restrict the space, preserving the hand anchor and
-native text size. MCR and Sichuan mahjong retain this native focus and popup style with
-previews of shanten numbers and effective tiles. MCR shows scorer-backed non-flower fan qualification,
-and Sichuan mahjong shows void tiles, structural capped values and its owner's passed-win
-restriction. Taiwanese mahjong adds previews of sixteen-tile shanten numbers and
-effective tiles, separate ron and self-draw tai, and the recipient's passing restriction.
-Dense MCR, Sichuan mahjong and Taiwanese mahjong tile rows paginate within the available height.
-Native activation of the diamond advances the page while narration retains all
-tile rows. Shared presentation does not alter either table's hand geometry.
+native text size.
 The room host can change this setting during preparation.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
