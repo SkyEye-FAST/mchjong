@@ -60,6 +60,7 @@ Do not use middle dots (`·`) as generic UI separators. Use natural localized
 phrasing, appropriate punctuation or separate lines. Consult vanilla Minecraft's
 language files to align terminology, phrasing,
 punctuation and spacing conventions for each locale:
+
 - `zh_cn`: Strictly no spaces between CJK and ASCII alphanumeric characters or
   format specifiers. Fullwidth punctuation (`：`, `（）`, `……`), curly double
   quotes `“”` (never corner quotes `「」` or straight `"`). Follow vanilla Simplified
