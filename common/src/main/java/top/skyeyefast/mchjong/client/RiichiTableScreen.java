@@ -611,12 +611,6 @@ public final class RiichiTableScreen extends Screen {
             new top.skyeyefast.mchjong.network.RiichiVisibilityPayload(pos, room.tableId(), room.decision(), visibility)));
     }
 
-    void configureRules(TableRoomView room, RiichiRules rules) {
-        if (minecraft.getConnection() == null || room == null || !room.lobby()) return;
-        minecraft.getConnection().send(PayloadPackets.serverbound(
-            new top.skyeyefast.mchjong.network.RiichiRulesPayload(pos, room.tableId(), room.decision(), rules)));
-    }
-
     void control(TableRoomView room, RiichiControlPayload.Operation operation, long token, boolean enabled) {
         if (minecraft.getConnection() == null) return;
         minecraft.getConnection().send(PayloadPackets.serverbound(new RiichiControlPayload(pos, room.tableId(), operation, token, enabled)));

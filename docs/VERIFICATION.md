@@ -101,7 +101,7 @@ Use the following flags with `:fabric:runSmokeClient` and `:neoforge:runSmokeCli
 
 | Flag | Existing fixture and evidence |
 | --- | --- |
-| `-PsmokeRoom=true` | Lobby, four-language layouts, countdowns, final standings, retained members, leave/dissolve packets, east-to-west reassignment and actual stool mounting; `room-evidence` |
+| `-PsmokeRoom=true` | Lobby, four-language rule categories and preset choices at 320×240 and 640×400, countdowns, final standings, retained members, leave/dissolve packets, east-to-west reassignment and actual stool mounting; `room-evidence` |
 | `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language award explanations and standings with uma, resizing and result navigation; `settlement-evidence` |
 | `-PsmokeInterface=true` | Box transactions, carrier synchronization, personal mod settings and preset navigation, explicit input choices, category-only reset, keyboard/disabled states, immersive controls; `interface-evidence` |
 | `-PsmokeSeating=true` | Mounts, private deals, camera clearance, mouse camera adjustment/reset, dragging, immersive selection, closed-screen camera and third-person stool; `seating-evidence` |
@@ -115,6 +115,16 @@ checks the client without Mod Menu. Forge's client bootstrap and NeoForge's
 interface smoke verify their native config-screen factories.
 
 ## Test ownership and acceptance
+
+`RuleEditorSmoke` runs inside the shared table-control smoke. It checks all six
+Riichi rule categories, visible field coverage, pagination, incomplete numeric
+input, help and yaku return paths, preset cancellation and reselection, and
+uncommitted player-count changes. `TableControlSmoke` checks server-confirmed
+application, stale-draft reload and legal preset adjustments when world policy
+disables custom rules. `RoomFlowSmoke` repeats category and widget-bound checks
+in all four languages at 320×240 and 640×400. Request
+`rules-<locale>-<width>x<height>.png` and `rule-presets-<locale>-320x240.png`
+with the room profile to inspect those layouts.
 
 `CustomYakuTest` covers strict definitions, exclusion cycles, minimum-han
 qualification, per-interpretation selection, ron triplet concealment, yakuman
@@ -439,6 +449,16 @@ gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true "-PsmokeScreenshots=taiwan
 The focused Fabric profile uses one real client and three mounted human test
 identities. It switches Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong lobbies, edits both presets through
 registered packets, checks 136/144 case admission and seats four participants.
+`VariantRuleLayoutSmoke` reloads all four languages and checks the MCR, Sichuan
+mahjong and Taiwanese mahjong rule pages at 320×240 and 640×400, including every
+category page and preset cancellation. Request
+`<variant>-rules-<locale>-<width>x<height>.png` with `mcr`, `sichuan` or `taiwan`
+for the corresponding basic rule-page captures.
+`RoomMembersSmoke` transfers ownership through the lobby roster and the active
+Room Members page, then restores the fixture host through the corresponding
+lobby action or authenticated server command. The active check also verifies that the room supplies no lobby
+transfer action. The rule checks preserve unfinished payment input across help
+navigation and retain rejected yaku drafts until an explicit reload or correction.
 It exercises initial flower replacement, native calls, recipient/spectator privacy,
 seated and immersive discard selection, focused convenience-hint previews and
 world-policy disabling, exit-vote pause, result/next-hand packets,

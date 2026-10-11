@@ -99,7 +99,7 @@ final class SichuanTableSmoke {
                 originalSettings = new top.skyeyefast.mchjong.network.SichuanViewPayload(pos, "", room, table.clientSichuanDeck(),
                     table.clientSichuanCloth(), false, false, false, table.clientSichuanSettings(), table.clientWorldPolicy());
                 LobbySmoke.settings(client);
-                var label = Component.translatable("sichuan.mchjong.rules.title").getString();
+                var label = Component.translatable("rules.mchjong.title").getString();
                 client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                     .filter(button -> button.getMessage().getString().startsWith(label)).findFirst().orElseThrow().onPress();
                 stage = 22;
@@ -127,8 +127,9 @@ final class SichuanTableSmoke {
             }
             case 23 -> {
                 if (table.clientSichuanSettings().rules().fanCap() != 4) break;
-                require(table.clientSichuanSettings().custom() && client.screen instanceof top.skyeyefast.mchjong.client.SichuanRulesScreen,
-                    "Rules acknowledgement lost the editor or Custom state");
+                require(table.clientSichuanSettings().custom() && client.screen instanceof SichuanLobbyScreen,
+                    "Rules acknowledgement did not return to the lobby");
+                LobbySmoke.find(client, Component.translatable("rules.mchjong.title").getString()).onPress();
                 top.skyeyefast.mchjong.client.ClientSichuanNetworking.receive(originalSettings);
                 require(table.clientSichuanSettings().rules().fanCap() == 4, "Old snapshot rolled back confirmed rules");
                 SmokeScreenshots.grab(output.toFile(), "sichuan-rules.png", client.getMainRenderTarget(), ignored -> {});
@@ -578,6 +579,8 @@ final class SichuanTableSmoke {
         button.onPress();
     }
     private static void selectPreset(Minecraft client, String key) {
+        if (client.screen instanceof SichuanLobbyScreen) LobbySmoke.find(client, Component.translatable("rules.mchjong.title").getString()).onPress();
+        press(client, "sichuan.mchjong.rules.group.basic");
         var editor = client.screen;
         String prefix = Component.translatable("rules.mchjong.preset", "").getString();
         client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)

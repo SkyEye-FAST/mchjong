@@ -22,7 +22,7 @@ import top.skyeyefast.mchjong.network.SichuanRulesPayload;
 
 public final class SichuanRulesScreen extends Screen implements TableChildScreen {
     private final Screen parent;
-    private final SichuanLobbyScreen table;
+    private final BlockPos pos;
     private TableRoomView baseline;
     private SichuanRoomSettings baselineSettings;
     private SichuanRules draft, pending;
@@ -31,29 +31,36 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
     private final List<Label> labels = new ArrayList<>();
     private SichuanRuleOption.Group group = SichuanRuleOption.Group.BASIC;
     private int page, pages, pendingTicks;
-    private Button apply, reload;
+    private Button apply, reload, cancel;
+    private SichuanPreset selectedPreset;
     private boolean rejected;
     private SettingsLayout layout;
 
     private record Label(Component text, Component description, int x, int y, int width) {}
 
-    public SichuanRulesScreen(Screen parent, TableRoomView room, SichuanRoomSettings settings) {
+    public SichuanRulesScreen(Screen parent, BlockPos pos, TableRoomView room, SichuanRoomSettings settings) {
         super(Component.translatable("sichuan.mchjong.rules.title"));
         this.parent = parent;
-        this.table = (SichuanLobbyScreen) TableChildScreen.root(parent); baseline = room; baselineSettings = settings; draft = settings.rules();
+        this.pos = pos.immutable(); baseline = room; baselineSettings = settings; draft = settings.rules(); selectedPreset = SichuanPreset.match(draft);
     }
-    public BlockPos tablePos() { return table.tablePos(); }
+    public BlockPos tablePos() { return pos; }
+    private top.skyeyefast.mchjong.world.MahjongTableBlockEntity table() {
+        var client = net.minecraft.client.Minecraft.getInstance();
+        return client.level != null && client.level.getBlockEntity(pos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table ? table : null;
+    }
+    private TableRoomView room() { return table() == null ? null : table().clientTableRoom(); }
+    private SichuanRoomSettings settings() { return table() == null ? null : table().clientSichuanSettings(); }
     @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
     private boolean host() {
-        var room = table.room();
+        var room = room();
         return room != null && room.tableId().equals(baseline.tableId()) && room.lobby() && room.exitVote() == null
             && room.viewerSeat() >= 0 && room.viewerSeat() == room.host();
     }
     private boolean stale() {
-        var room = table.room();
+        var room = room();
         return room == null || !room.tableId().equals(baseline.tableId()) || !room.incarnation().equals(baseline.incarnation())
             || room.decision() != baseline.decision();
     }
@@ -65,9 +72,9 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
         return false;
     }
     private void loadConfirmed() {
-        var room = table.room(); var settings = table.roomSettings();
+        var room = room(); var settings = settings();
         if (room == null || settings == null || !room.tableId().equals(baseline.tableId())) return;
-        baseline = room; baselineSettings = settings; draft = settings.rules(); numbers.clear(); rejected = false;
+        baseline = room; baselineSettings = settings; draft = settings.rules(); selectedPreset = SichuanPreset.match(draft); numbers.clear(); rejected = false;
     }
 
     @Override protected void init() {
@@ -75,26 +82,34 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
         var options = Arrays.stream(SichuanRuleOption.values()).filter(option -> option.group() == group).toList();
         layout = SettingsLayout.of(width, height, SichuanRuleOption.Group.values().length * 22, 24 + options.size() * 24 + 14);
         int span = layout.bodyWidth(), left = layout.bodyLeft();
-        var matched = SichuanPreset.match(draft);
-        var presets = SichuanPreset.values();
-        var label = Component.translatable("rules.mchjong.preset", Component.translatable(matched == null
-            ? "sichuan.mchjong.rules.custom" : matched.translationKey()));
-        var preset = addRenderableWidget(MahjongButton.create(label, ignored -> minecraft.setScreen(new TableChoiceScreen(this,
-            Component.translatable("rules.mchjong.mode.preset"), Arrays.stream(presets).map(value -> (Component) Component.translatable(value.translationKey())).toList(),
-            matched == null ? -1 : matched.ordinal(), index -> { draft = presets[index].config(); numbers.clear(); rejected = false; })))
-            .bounds(left, layout.contentTop(), span, 20).tooltip(Tooltip.create(label)).build());
-        editors.add(preset);
         int contentLeft = left, contentWidth = span - 24;
         for (var category : SichuanRuleOption.Group.values()) {
             var text = Component.translatable(category.translationKey());
             addRenderableWidget(MahjongButton.create(text, ignored -> { group = category; page = 0; init(); })
                 .bounds(layout.left(), layout.contentTop() + category.ordinal() * 22, layout.rail(), 20).tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
-        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 24 - 14) / 24);
-        pages = Math.max(1, (options.size() + rows - 1) / rows); page = Math.clamp(page, 0, pages - 1);
-        for (int offset = 0; offset < rows && page * rows + offset < options.size(); offset++) {
-            var option = options.get(page * rows + offset);
-            int top = layout.contentTop() + 24 + offset * 24;
+        int extras = group == SichuanRuleOption.Group.BASIC ? 2 : 0;
+        int rows = Math.max(1, (layout.paging() - layout.contentTop() - 14) / 24);
+        pages = Math.max(1, (options.size() + extras + rows - 1) / rows); page = Math.clamp(page, 0, pages - 1);
+        for (int offset = 0; offset < rows && page * rows + offset < options.size() + extras; offset++) {
+            int index = page * rows + offset;
+            int top = layout.contentTop() + offset * 24;
+            if (index < extras) {
+                var matched = SichuanPreset.match(draft);
+                var label = Component.translatable("rules.mchjong.preset", Component.translatable(matched == null ? "sichuan.mchjong.rules.custom" : matched.translationKey()));
+                var button = addRenderableWidget(MahjongButton.create(index == 0 ? label : Component.translatable("rules.mchjong.restore_defaults"), ignored -> {
+                    if (index == 0) minecraft.setScreen(new TableChoiceScreen(this, Component.translatable("rules.mchjong.choose_preset"),
+                        Arrays.stream(SichuanPreset.values()).map(value -> (Component) Component.translatable(value.translationKey())).toList(),
+                        selectedPreset == null ? -1 : selectedPreset.ordinal(), value -> {
+                            var next = SichuanPreset.values()[value];
+                            if (next != selectedPreset) { selectedPreset = next; draft = next.config(); numbers.clear(); rejected = false; }
+                        }, value -> editReason()));
+                    else if (selectedPreset != null) { draft = selectedPreset.config(); numbers.clear(); rejected = false; init(); }
+                }).bounds(left, top, span, 20).build());
+                if (index == 1) { if (selectedPreset != null) editors.add(button); else button.active = false; }
+                continue;
+            }
+            var option = options.get(index - extras);
             var caption = Component.translatable(option.translationKey());
             var description = Component.translatable(option.descriptionKey());
             addRenderableWidget(RuleHelp.setting(this, option, caption, description, left + span - 20, top));
@@ -126,21 +141,29 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
         var next = addRenderableWidget(MahjongButton.create(Component.literal("›"), ignored -> { page++; init(); })
             .bounds(left + span - 30, layout.paging(), 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.next"))).build());
         next.active = page + 1 < pages;
-        int buttonWidth = (span - 8) / 3;
-        reload = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.reload"), ignored -> {
-            loadConfirmed(); init();
-        }).bounds(left, layout.footer(), buttonWidth, 20).build());
+        int buttonWidth = (layout.span() - 4) / 2;
+        reload = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.reload"), ignored -> { loadConfirmed(); init(); })
+            .bounds(left + 34, layout.paging(), span - 68, 20).build());
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.apply"), ignored -> submit())
-            .bounds(left + buttonWidth + 4, layout.footer(), buttonWidth, 20).build().primary());
-        addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
-            .bounds(left + 2 * (buttonWidth + 4), layout.footer(), buttonWidth, 20).build());
+            .bounds(layout.left(), layout.footer(), buttonWidth, 20).build().primary());
+        cancel = addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
+            .bounds(layout.left() + buttonWidth + 4, layout.footer(), buttonWidth, 20).build());
         updateControls();
     }
+    private Component editReason() {
+        if (minecraft.getConnection() == null) return Component.translatable("rules.mchjong.disconnected");
+        if (pending != null) return Component.translatable("rules.mchjong.pending");
+        if (stale()) return Component.translatable("rules.mchjong.stale");
+        if (!room().lobby() || room().exitVote() != null) return Component.translatable("rules.mchjong.phase_locked");
+        if (!host()) return Component.translatable("rules.mchjong.host_only");
+        return settings() == null || !settings().rulesEditable() ? Component.translatable("sichuan.mchjong.rules.locked") : null;
+    }
     private void updateControls() {
-        boolean editable = host() && !stale() && pending == null && table.roomSettings() != null && table.roomSettings().rulesEditable();
-        editors.forEach(widget -> widget.active = editable);
-        if (apply != null) apply.active = editable && !invalid() && !draft.equals(baselineSettings.rules());
-        if (reload != null) reload.active = pending == null;
+        var reason = editReason();
+        editors.forEach(widget -> { widget.active = reason == null; if (widget instanceof MahjongEditBox field) field.setEditable(reason == null); if (reason != null) widget.setTooltip(Tooltip.create(reason)); });
+        if (apply != null) apply.active = reason == null && !invalid() && !draft.equals(baselineSettings.rules());
+        if (reload != null) { reload.active = pending == null; reload.visible = stale() || rejected; }
+        if (cancel != null) cancel.setMessage(Component.translatable(rejected || editReason() != null ? "gui.back" : "gui.cancel"));
     }
     private void submit() {
         updateControls();
@@ -151,19 +174,17 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
         updateControls();
     }
     public void receivedView(boolean reply) {
-        var settings = table.roomSettings();
+        var settings = settings();
         if (pending != null && reply) {
             boolean accepted = settings != null && settings.rules().equals(pending) && !staleIdentity();
             pending = null;
-            if (accepted) { loadConfirmed(); init(); }
+            if (accepted) { onClose(); return; }
             else rejected = true;
-        } else if (pending == null && draft.equals(baselineSettings.rules()) && numbers.isEmpty()) {
-            loadConfirmed(); init();
         }
         updateControls();
     }
     private boolean staleIdentity() {
-        var room = table.room();
+        var room = room();
         return room == null || !room.tableId().equals(baseline.tableId()) || !room.incarnation().equals(baseline.incarnation());
     }
     @Override public void tick() {
@@ -180,13 +201,20 @@ public final class SichuanRulesScreen extends Screen implements TableChildScreen
             if (mouseX >= label.x() && mouseX < label.x() + label.width() - 64 && mouseY >= label.y() && mouseY < label.y() + 20)
                 setTooltipForNextRenderPass(label.text().copy().append(Component.literal(String.valueOf((char)10))).append(label.description()));
         }
-        graphics.drawCenteredString(font, (page + 1) + " / " + pages, left + span / 2, layout.paging() + 6, MahjongUi.MUTED);
-        String notice = pending != null ? "rules.mchjong.pending" : rejected ? "rules.mchjong.rejected"
-            : !host() ? "rules.mchjong.read_only" : table.roomSettings() == null || !table.roomSettings().rulesEditable() ? "sichuan.mchjong.rules.locked"
-            : stale() ? "rules.mchjong.stale" : invalid() ? "rules.mchjong.invalid" : null;
-        if (notice != null) MahjongUi.text(graphics, font, Component.translatable(notice), left, layout.paging() - 14, span,
+        if (!reload.visible) graphics.drawCenteredString(font, (page + 1) + " / " + pages, left + span / 2, layout.paging() + 6, MahjongUi.MUTED);
+        Component notice = rejected ? Component.translatable("rules.mchjong.rejected") : editReason();
+        if (notice == null && invalid()) notice = Component.translatable("rules.mchjong.invalid");
+        if (notice != null) MahjongUi.text(graphics, font, notice, left, layout.paging() - 14, span,
             rejected || stale() || invalid() ? MahjongUi.NEGATIVE : MahjongUi.MUTED, false);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
-    @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
+    @Override public void onClose() {
+        if (minecraft.level == null || room() == null) { minecraft.setScreen(null); return; }
+        var root = TableChildScreen.root(parent);
+        if (!room().lobby() && root instanceof SichuanLobbyScreen) {
+            var view = table().clientSichuanView();
+            minecraft.setScreen(view != null && view.game().result() != null ? new SichuanResultsScreen(pos, false) : new SichuanTableScreen(pos));
+        } else if (room().lobby() && !(root instanceof SichuanLobbyScreen)) minecraft.setScreen(new SichuanLobbyScreen(pos));
+        else minecraft.setScreen(parent);
+    }
 }

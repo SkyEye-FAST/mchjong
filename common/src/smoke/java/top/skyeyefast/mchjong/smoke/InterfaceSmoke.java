@@ -239,7 +239,10 @@ final class InterfaceSmoke {
         } else if (settingsStage == 17 && settingsTicks > 10) {
             checkBounds(client);
             capture(client, output, "35-rules-320x240.png");
-            client.setScreen(new top.skyeyefast.mchjong.client.RiichiRulesScreen(settingsParent, table.clientRoom(), table.clientRiichiSettings(), true));
+            var preset = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(w -> w.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("rules.mchjong.preset"))
+                .findFirst().orElseThrow();
+            client.screen.mouseClicked(preset.getX() + 5, preset.getY() + 5, 0);
             settingsStage = 18; settingsTicks = 0;
         } else if (settingsStage == 18 && settingsTicks > 10) {
             checkBounds(client);

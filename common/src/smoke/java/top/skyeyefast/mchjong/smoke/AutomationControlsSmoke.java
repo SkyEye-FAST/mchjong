@@ -134,7 +134,9 @@ final class AutomationControlsSmoke {
         } else if (stage == 9 && reseated.isDone() && table.clientRoom().viewerSeat() == 0 && ticks > 5) {
             reseated.join();
             checkOptions(client, 0);
+            LobbySmoke.find(client, Component.translatable("rules.mchjong.title").getString()).onPress();
             LobbySmoke.find(client, Component.translatable("ui.mchjong.players.3").getString()).onPress();
+            LobbySmoke.find(client, Component.translatable("rules.mchjong.apply").getString()).onPress();
             next(10);
         } else if (stage == 10 && table.clientRiichiSettings().rules().sanma()
             && preparation.tick(client, table, output, "53-sanma-controls")) {

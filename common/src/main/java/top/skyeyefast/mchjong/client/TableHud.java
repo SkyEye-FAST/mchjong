@@ -77,7 +77,7 @@ final class TableHud {
                     .append("\n").append(statuses.get(seat));
                 if (settings.show(TableSettings.Information.RANKS)) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.rank", 1 + state.seats().stream().filter(other -> other.points() > p.points()).count()));
                 if (settings.show(TableSettings.Information.COUNTS)) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.counts", p.hand().size(), p.river().size(), p.norths().size()));
-                hover = hover.copy().append("\n").append(TableParticipantsScreen.presence(member.presence()));
+                hover = hover.copy().append("\n").append(RoomMembers.presence(member.presence()));
                 g.renderTooltip(font, hover, mouseX, mouseY);
             }
         }

@@ -631,7 +631,10 @@ logic reads the individual settings.
 decision. Only the room host can apply it before play. Clients retain a draft
 until server acknowledgement. Rule changes clear all readiness and recheck boxes.
 Preset metadata distinguishes supported table options from custom changes. The
-editor shows options, read-only details and custom settings separately. The view
+editor keeps one rule draft and its unfinished numeric input behind six persistent topic categories.
+Preset and award child pages update that draft through the retained parent chain.
+Preset-supported basic fields and custom details have separate editing permissions.
+Player count shares the preset draft and the explicit server-confirmed apply boundary. The view
 payload adds six public red-stock capability bits (three compositions for each
 player count), not box contents. The server independently authorizes every
 proposed red composition against stock.

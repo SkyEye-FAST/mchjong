@@ -40,11 +40,11 @@ public final class ClientTaiwanNetworking {
             || rootScreen instanceof TaiwanResultsScreen results && results.tablePos().equals(payload.pos());
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
             && payload.room().lobby() && showing) { client.setScreen(null); return; }
+        if (!payload.open() && rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())) {
+            rulesScreen.receivedView(payload.controlReply());
+            return;
+        }
         if (view == null) {
-            if (!payload.open() && rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())) {
-                rulesScreen.receivedView(payload.controlReply());
-                return;
-            }
             if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.taiwanLobby() != null
                 && clock.taiwanLobby().tablePos().equals(payload.pos())) return;
             if (payload.open() || showing || rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())

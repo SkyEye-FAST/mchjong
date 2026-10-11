@@ -115,7 +115,7 @@ final class RiichiHud {
             Component shortLine = Component.empty();
             Component hover = RiichiTableScreen.playerName(view, seat).copy();
             if (room != null && seat < room.seats().size() && room.seats().get(seat).participant().externalBotId() != null)
-                hover = TableParticipantsScreen.botName(room, view.externalBots(), seat);
+                hover = RoomMembers.botName(room, view.externalBots(), seat);
             String botError = botService == null || seat >= botService.seatErrors().size()
                 ? null : botService.seatErrors().get(seat);
             if (botError != null) {
@@ -141,7 +141,7 @@ final class RiichiHud {
             } else if (disconnected) {
                 if (board == null || !board.perspective())
                     shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.disconnected.short"));
-                hover = hover.copy().append("\n").append(TableParticipantsScreen.presence(presence));
+                hover = hover.copy().append("\n").append(RoomMembers.presence(presence));
             }
             if (settings.show(TableSettings.Information.STATUS)) {
                 if (seat == view.dealer()) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.dealer"));

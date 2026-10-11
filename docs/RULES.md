@@ -100,19 +100,28 @@ Tsumo charges the two present opponents their usual four-player shares. The abse
 
 ### Preset options and custom rules
 
-The lobby's Mahjong Soul, Tenhou, M.League, JPML A and WRC choices are presets.
-Open **Table rules** for three sections: **Preset options**, **Rule details** and
-**Custom rules**. Mahjong Soul and Tenhou allow open tanyao, no/three/four red
-fives, a one/two/four-yaku-han minimum and East-only or East–South matches within
-the named preset. The defaults are one han and East–South. Changing those options retains the preset label;
-changing other settings marks the rules as custom. Switching presets retains
-supported table options and loads the remaining defaults. Rule details show all
-current draft values, including enabled and disabled features, without editing.
-Six paginated categories cover points/ranks, placement, scoring, match flow,
-riichi/calls and responsibility payments. Apply commits the
-draft. Cancel leaves the table unchanged. Reload discards the draft and reads the
-current server settings. Only the seated host may apply rules in the lobby, and
-all players must ready again after a change. Stale decisions are rejected.
+Open **Match Rules** from the lobby's Match Settings or Settings → Room. Riichi
+rules use six fixed categories: Basic Settings, Points and Ranking, Win Scoring,
+Match Progress, Riichi and Calls, and Liability Payments. Every player can inspect
+the same categories. The host edits a local draft before play and submits it with
+**Apply Rules**. A server acknowledgement confirms the change and clears readiness.
+Rejected applications retain the draft. **Cancel** abandons unsent edits, while
+**Reload** in changed-room feedback replaces the draft with current server rules.
+
+Basic Settings contains player count, **Choose Rule Preset** and the supported
+basic options. Mahjong Soul and Tenhou permit open tanyao, no/three/four red fives,
+a one/two/four-yaku-han minimum and East-only or East–South matches within the named
+preset, including when world policy disables custom rules. Their defaults are one
+han and East–South. Other rule changes and award selection require custom-rule
+permission. Custom status is derived from the complete draft.
+
+A different Riichi preset retains its supported basic options and restores fixed
+details and awards to its defaults. Reselecting the current preset preserves all
+edits; **Restore Preset Defaults** is a separate action. Changing player count uses
+the same preset family when it supports that count, otherwise it opens the available
+presets for the target count. Canceling the choice retains the original draft.
+Count changes require gathering and sufficient free seats and stock. Help, award
+selection, category changes, pagination and resizing retain unfinished input.
 
 Point fields use raw points in increments of 100. A placement bonus of 15000 means
 +15.0 in the final standings. Starting points, return points and extension target
@@ -141,8 +150,7 @@ extension adds at most one further wind (South or West). Dealer repeats retain
 priority over another player's reaching the target. Starting points, return
 points and placement bonuses do not change with match length.
 
-**End on bankruptcy** is editable in **Custom rules → Match flow**, and appears
-in the preset overview. Mahjong Soul and Tenhou enable it. M.League, JPML A and
+**End on bankruptcy** is editable in **Match Progress** with custom-rule permission. Mahjong Soul and Tenhou enable it. M.League, JPML A and
 WRC disable it. The check is strictly below zero, after hand settlement: zero
 points remain playable and negative scores remain recorded. Changing this switch
 away from its preset default marks the rules as custom.

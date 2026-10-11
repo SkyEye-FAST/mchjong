@@ -158,8 +158,9 @@ Keep necessary titles, body and navigation visually distinct. Lobby and settings
 screens use compact centered floating panels, leaving the world visible around
 them without a full-screen dim layer. Their height follows the actual option and
 navigation rows, with a 30-pixel title area and pagination at small sizes. Reserve
-a category column only when that page has categories. The Riichi preset overview
-and expanded preset list use the full body width. Use headings and status lines
+a category column whenever the page has categories. Rule editors keep their category
+rail visible from first entry through preset and award changes. Preset choices open
+a separate paginated child page. Use headings and status lines
 for information that helps players navigate or act. In the table view, compact HUD cards belong near
 the edges so the physical hand stays clear.
 Actions remain separate from informational labels. Settings use explicit category
@@ -209,10 +210,11 @@ its width and row height are independent of the number of variants. Overflow
 scrolls by whole rows using the wheel or a visible, draggable scrollbar. Hidden
 rows cannot receive pointer input, and a newly selected variant is brought into
 view. Variant selection never appears among that variant's settings. The right
-body has Players and bots and Match settings tabs, with invitation and replay
+body has Room Members and Match Settings tabs, with invitation and replay
 navigation on a separate row below. Keep the roster visible on arrival, with
-per-seat Bot and ownership controls. Match settings paginate player count,
-presets, detailed rules, visibility, timing and convenience hints. The footer
+per-seat Bot and ownership controls. Match Settings and Settings → Room share
+one Match Rules entry and the same hand display, timing and convenience controls.
+Player count and presets belong to the rule editor's draft. The footer
 spans the full panel so primary actions retain their space at small sizes.
 The header names the current preparation stage and the footer supplies one brief
 next-step instruction. Leave and host dissolution stay distinct in the toolbar.
@@ -232,7 +234,8 @@ The table settings hub has World, Room and Personal tabs. Administrators edit wo
 in the World tab through permission-checked server commands. Other players see
 read-only values with a short administrator-only explanation. Room controls
 are paginated separately from local presentation options; ownership transfer stays
-in the lobby roster and the shared participant page under Settings → Room.
+in the lobby roster. During play, Settings → Room provides Room Members with
+the same member labels and the active-match ownership action.
 Rule editors and personal preset pages share compact panels, option rows and
 aligned footers. Settings with multiple categories retain a populated left rail
 beneath one concise page title. The selected navigation item
@@ -266,33 +269,60 @@ keep the paused match or end it. Closing the panel keeps the paused match.
 The personal automatic seating option starts enabled and requests the assigned
 stool when allocation finishes. Turning it off keeps the coordinate-guided manual
 seating flow; ordinary presence updates never force a player back onto a stool.
-Room timing and invitations live in Settings → Room;
-the Ready control reflects server-confirmed presence at the assigned stool.
+Room timing lives in Settings → Room, while invitations remain in the lobby's room
+operations. The Ready control reflects server-confirmed presence at the assigned stool.
 Equipment failures use a short footer caption, concise hover list and a paginated
 help page accessible by native pointer or keyboard activation. The server chooses
 the applicable requirements. A recipient-only brass particle cue at the actual
 assigned stool lasts three seconds. It does not replace walking or stool interaction.
-The room Hand visibility control cycles through Visible only to self, Visible to
-riichi players, Visible to all players and Open hands; Shift cycles backward. Only
-the host can change it before play. Open hands lays tiles face up. The other
-modes retain standing hands and change access to faces. Tile fronts face their
+The room Hand Display page contains two independent fields. Hand Visibility selects
+Visible Only to Self, Visible to Riichi Players or Visible to All Players through
+an explicit choice page. Open Hands lays tiles face up and makes them public while
+retaining the visibility setting. Only the host can change these fields before play. Tile fronts face their
 owner. Hidden identities suppress only the printed artwork. The opaque white
 plate keeps its thickness and rear cap, including when viewed through a glass
 body or in a face-down wall. Nearby spectators use the world view
 without occupying participant seats.
 
-The rule screen separates preset options, read-only rule details and custom
-settings. The preset selector expands to show every preset for the current player
-count; unavailable choices are disabled and explain the red-tile shortage on hover.
-Preset-supported options retain the preset identity. Red compositions
-use three separate choices; unavailable choices remain visible, disabled and
-labelled with a shortage tooltip. Availability comes from synchronized server
-capabilities rather than access to box inventory. Every composition, including
-no-red play, requires a complete matching set with enough ordinary and red fives.
-All rule pages paginate at 320 x 240, with complete labels available on hover.
-Minimum yaku han uses explicit one/two/four choices and match length uses
-East-only/East–South choices. Bankruptcy stays visible in the preset overview
-and is editable in custom match flow. Its tooltip states the negative/zero boundary.
+The Riichi rule editor always shows six categories: Basic Settings, Points and
+Ranking, Win Scoring, Match Progress, Riichi and Calls, and Liability Payments.
+Basic Settings contains one mutually exclusive player-count field, the rule preset,
+open tanyao, red fives, minimum yaku han, match length and Restore Preset Defaults.
+Points and Ranking includes the applicable fixed or floating placement values.
+Win Scoring owns the yaku selector, including the full, partial and disabled Mahjong
+Soul ancient selection. Match Progress includes bankruptcy and its negative/zero
+boundary explanation. Each remaining field follows its engine-owned group and visibility.
+
+Choose Rule Preset is a separate child page. Selecting the current preset preserves
+the complete draft and unfinished input. A different Riichi preset uses `withPreset()`:
+it retains the target preset's supported basic options and restores fixed details
+and awards to that preset's defaults. Player-count changes use the same family when
+available, or ask for a target-count preset. Canceling that choice retains the original
+count and draft. Custom status derives from the complete rules and appears alongside
+the preset name. Category navigation remains available in read-only states.
+
+Apply Rules submits the complete draft and waits for an explicit server reply.
+Cancel discards unsent edits. While awaiting a reply, Back leaves the editor without
+claiming to withdraw the request. Rejections retain the draft. Stale or rejected
+feedback offers Reload, which replaces the draft with confirmed room rules.
+Category changes, pagination, resizing, help and award navigation preserve unfinished
+numeric text. Invalid relevant fields disable Apply across all pages.
+
+Preset-supported basic options remain editable when world policy disables custom
+rules; fixed details and awards respect their separate permission. Disabled controls
+distinguish host permission, preparation stage, forced presets and physical stock.
+Red compositions use three explicit choices and synchronized server capability bits.
+Every composition, including no-red play, requires a complete matching set.
+All pages paginate at 320 × 240, with full labels in hover text and independent help
+buttons. Minimum yaku han uses one/two/four choices and match length uses
+East-only/East–South choices.
+
+Sichuan mahjong uses Basic Settings, Kongs and Payments, and Draws and Settlement.
+Taiwanese mahjong uses Basic Settings and Scoring and Payments, with award selection
+on the scoring page, its existing wall reserve choices and four payment parameters.
+Their preset selectors, draft navigation and acknowledgement footers follow the same
+page structure while retaining their own world-policy permissions. MCR offers a fixed
+rule summary and the existing explanations.
 
 Room settings include default-off convenience hints for all four rules. A small diamond
 with an exclamation mark appears near the private hand when analysis is available.
