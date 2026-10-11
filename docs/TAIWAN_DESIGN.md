@@ -206,16 +206,18 @@ Restore validates the entire dealer/wind/continuation chain
 and scores before returning a session, creates a fresh incarnation, and requires
 live presence to be observed again. `TaiwanCodec` separates private game/session
 saves from recipient view documents, rejects malformed data without replacement
-games, bounds game/view documents to 131,072 characters, rules to 65,536 characters and session saves to 8 MiB,
+games, bounds game/view documents to 524,288 characters, rules to 262,144 characters and session saves to 8 MiB,
 and limits nesting to 32 levels. All fields, including nullable fields, are required;
 duplicates, unknown keys, invalid enum/map keys and incorrectly typed or out-of-range
 integers/booleans are rejected.
 
-Rules retain the complete selected [custom award set](RULES.md#custom-riichi-and-taiwan-awards).
+Rules retain complete selected [custom award sets and individual switches](RULES.md#custom-riichi-and-taiwan-awards).
 Each candidate is extended before maximum selection and the tai cap. Stored awards
 carry a namespaced ID, actual tai and units; native awards retain their source,
 while custom awards use the frozen set's four-language text. Flower victory remains
 a separate component and only a simultaneous ordinary hand receives custom awards.
+Disabled native awards have zero effective value before library exclusions; Eight
+Flowers and Seven Robbing One switches also gate their automatic game events.
 
 `TaiwanView` is a separate immutable model. A recipient sees their complete hand,
 draw identity, legal actions, passing restriction and own submitted-response flag.

@@ -246,12 +246,36 @@ rechecks both stored boxes before Ready or Practice is offered.
 
 ### Custom Riichi and Taiwan awards
 
-Server data packs can add house awards to Riichi and Taiwan tables. In **Table rules**, open
-**Custom Yaku**, inspect a set with **?**, select it and apply the rule draft.
-Only the lobby host can apply it, and the world must permit custom rules. Changing
-the set clears readiness. Choosing a preset resets the set to **None**.
-External Bot services cannot play with these awards. Built-in Bots and wait hints
+Riichi and Taiwan tables allow individual switches for every default award and
+every custom award in the server catalog. In **Table rules**, open **Yaku Selection**,
+toggle the desired rows, return and apply the rule draft. Awards from multiple sets
+can be combined. **Restore Defaults** enables all default awards and disables all
+custom awards; **Clear All** disables both. Existing preset options still govern
+availability, such as open Tanyao and Nagashi Mangan.
+Only the lobby host can apply changes, and the world must permit custom rules.
+Changes clear readiness. Choosing a preset restores its default award selection.
+External Bot services require the default award selection. Built-in Bots and wait hints
 use the table's scoring rules; Bots do not plan arbitrary custom patterns.
+
+The **Mahjong Soul Ancient Yaku** switch in the four-player Mahjong Soul preset
+enables or disables all 14 bundled ancient awards. Individual awards can also be
+changed in Yaku Selection. **Partial** means some ancient awards are enabled;
+clicking the switch then enables the whole bundle. The bundle is unavailable in three-player rules.
+Its [JSON definition](../engine/src/main/resources/yaku_sets/mahjong_soul_ancient.json)
+is a complete data-pack authoring example, with ID `mahjongsoul:ancient`:
+
+| Awards | Closed / open |
+| --- | --- |
+| 燕返、杠振、十二落抬 | 1 / 1 han |
+| 五门齐、三连刻 | 2 / 2 han |
+| 一色三同顺 | 3 / 2 han |
+| 一筒摸月、九筒捞鱼 | 5 / 5 han |
+| 人和、大数邻、大车轮、大竹林、石上三年 | 1 yakuman / unavailable |
+| 大七星 | 2 yakuman / unavailable |
+
+These bundled rules do not double-count a contained award: 一色三同顺 excludes
+Iipeikou, 一筒摸月 excludes Haitei, 九筒捞鱼 excludes Houtei, and 大七星 excludes
+Tsuuiisou. Disabling the ancient award permits its default component to score again.
 
 Put a definition at `data/<namespace>/mchjong/yaku_sets/<name>.json` in a server
 data pack and run `/reload`. The selectable ID is `<namespace>:<name>`; nested
@@ -285,11 +309,11 @@ both values cannot be zero. Concealed kans retain closed status.
 
 For Taiwan, set `"variant": "taiwan"` and use `"award": {"type": "tai", "value": 3}`.
 Tai awards range from 1 to 1,000 and use the same value for closed and open hands;
-use a `closed` condition to restrict an award. A table selects one set for its own
+use a `closed` condition to restrict an award. A table selects awards for its own
 variant. Taiwan supports regular five-meld hands only. Custom tai is added before
 the table's tai cap, then uses its ordinary base/per-tai payment settings.
-Eight Flowers and Seven Robbing One keep their automatic triggers and separate
-payment components. Custom awards apply only to an accompanying ordinary
+When enabled, Eight Flowers and Seven Robbing One use automatic triggers and separate
+payment components. Their individual switches disable those triggers. Custom awards apply only to an accompanying ordinary
 replacement-tile win, never to the flower victory alone.
 
 Conditions read one winning interpretation, including the winning tile and fixed
@@ -307,7 +331,7 @@ Leaves use `type`, optional `values`, and explicit inclusive `min`/`max` for cou
 | --- | --- |
 | `shape` | `regular`; Riichi also permits `seven_pairs`, `thirteen_orphans` |
 | `closed` | Exactly one string: `true` or `false` |
-| `flags` | All listed circumstances must hold: `self_draw`, `discard`, `robbing_kong`, `last_draw`, `last_discard`, `kong_replacement`, `heavenly_win`, `earthly_win`, `human_win`; Riichi adds `riichi`, `double_riichi`, `ippatsu`; Taiwan adds `ready`, `heavenly_ready`, `earthly_ready`, `flower_replacement` |
+| `flags` | All listed circumstances must hold: `self_draw`, `discard`, `robbing_kong`, `last_draw`, `last_discard`, `kong_replacement`, `heavenly_win`, `earthly_win`, `human_win`; Riichi adds `riichi`, `double_riichi`, `ippatsu`, `riichi_discard`, `after_kong_discard`; Taiwan adds `ready`, `heavenly_ready`, `earthly_ready`, `flower_replacement` |
 | `categories` | Each listed category is present: `man`, `pin`, `sou`, `wind`, `dragon` |
 | `tiles` | Count owned copies of the listed ordinary kinds, such as `["1m", "9m"]`; quads count four, extracted Norths are excluded |
 | `groups` | Count matching groups; exactly three values select type (`any`, `sequence`, `triplet`, `quad`), concealment (`all`, `concealed`, `exposed`) and first kind (`1m` etc. or `*`) |
@@ -317,27 +341,36 @@ Leaves use `type`, optional `values`, and explicit inclusive `min`/`max` for cou
 | `flowers` | Taiwan only: count owned flowers; no `values` |
 | `same_sequences` | Largest number of identical sequences in this interpretation; zero when none; no `values` |
 | `three_suit_sequences` | A sequence of the same starting rank occurs in all three suits; no `values` or bounds |
+| `winning_tile` | Winning ordinary kind matches any listed kind |
+| `open_melds` | Count declared open melds; concealed kans and a ron-completed triplet do not count; no `values` |
+| `consecutive_triplets` | Three consecutive triplets or quads in one suit; no `values` or bounds |
 
 A ron-completed triplet is exposed for group counting. Pair and group conditions
 do not reinterpret a special hand as a regular one. Conditions allow four levels
 (root plus three child levels), 64 nodes per award and 16 children per logical
 node. Each document and its normalized snapshot must fit 32,768 characters;
-the catalog permits 32 sets and 262,144 normalized characters in total. Invalid
+the catalog, including the bundled example, permits 32 sets, 131,072 normalized
+characters and 196,608 UTF-8 bytes in total. Award IDs must be unique across the catalog. Invalid
 definitions fail the reload; unknown fields and duplicate JSON keys are errors.
 
 `excludes` lists other custom IDs in the same set or ordinary native Riichi IDs,
 such as `mchjong:riichi/iipeikou` or `mchjong:riichi/pinhu`. The native suffix is its
-`yaku.mchjong.*` translation suffix. Natural native yakuman, Nagashi and Renhou
-cannot be excluded. Exclusions cannot contain cycles or unknown IDs, and ordinary
+`yaku.mchjong.*` translation suffix. A custom natural yakuman may also exclude
+native yakuman. Nagashi and native Renhou cannot be excluded by a custom definition.
+Exclusions cannot contain cycles or unknown IDs, and ordinary
 awards cannot suppress custom yakuman. They apply simultaneously: if A excludes B
-and B excludes C, matching A and B removes both B and C.
+and B excludes C, matching enabled A and B removes both B and C. Disabled custom
+awards never contribute exclusions. Native switches apply before choosing between
+ordinary awards and yakuman, so disabling a yakuman leaves qualifying ordinary
+interpretations available. Structural winning shapes and fu remain unchanged.
 Taiwan native IDs use `mchjong:taiwan/` followed by the lowercase pattern enum name,
 such as `mchjong:taiwan/concealed` or `mchjong:taiwan/pinfu`. Eight Flowers and
-Seven Robbing One cannot be excluded.
+Seven Robbing One cannot be excluded by another award; use their individual switches.
 
 Reload changes the selectable catalog. Existing tables, saves and native replays
-retain the entire selected definition, including text. A definition changed while
-a rule screen is open must be selected again before applying. Custom Riichi matches
+retain the selected sets' complete definitions, localized text and individual switches.
+After a definition changes, remove its selected awards and select the current
+catalog entries before applying. Riichi matches with any changed award selection
 use [native replay export](REPLAYS.md), since Tenhou's format cannot represent these
 awards. MCR and Sichuan do not support custom award sets.
 

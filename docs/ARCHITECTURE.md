@@ -77,20 +77,26 @@ legal actions, hints, replays and bots. `HandScore` retains immutable per-yaku
 names, open-hand-adjusted han and natural-yakuman markers from the selected
 interpretation. Individual natural-yakuman values precede the configured
 compound cap; the score's total and payments retain that cap. Receipts, recordings
-and replay exports read these values directly. Riichi session format 5 is the
+and replay exports read these values directly. Riichi session format 6 is the
 only accepted format.
 
-`RiichiRules.yakuSet` and `TaiwanRules.yakuSet` own complete immutable `YakuSet` snapshots. `YakuCondition`
+`RiichiRules.yakuSelection` and `TaiwanRules.yakuSelection` own immutable `YakuSelection`
+snapshots containing full `YakuSet` definitions, enabled custom IDs and disabled native IDs. `YakuCondition`
 is a bounded declarative tree over `YakuFacts`; each variant's facts adapter constructs facts
 for each native winning decomposition and tile placement. Custom awards and
 simultaneous exclusions are evaluated before selecting the best payment.
 The engine performs no resource lookup while scoring or replaying. Native fu,
-structural shapes and game lifecycle remain separate from custom awards.
+structural shapes and game lifecycle remain separate from custom awards. Native
+switches apply before native exclusions and yakuman precedence. Taiwan flower
+switches also gate their corresponding automatic events. `BuiltinYakuSets` reads
+the bundled Mahjong Soul ancient example through the ordinary authoring codec.
 
 Common `YakuSets` loads server data packs through each loader's reload listener.
 It atomically replaces a bounded public catalog and synchronizes it once per
-player connection and successful reload. Rule proposals carry an ID and SHA-256
-definition digest; the server resolves the current catalog before ordinary host,
+player connection and successful reload. Rule proposals carry disabled native IDs
+and, for each custom set, its ID, SHA-256 definition digest and a 16-bit award mask.
+The digest binds each mask to the reviewed definition order; the server supplies
+all definitions and rejects unknown bits before ordinary host,
 decision, world-policy and stock checks. A reload never mutates a table's frozen
 snapshot. See [Rules](RULES.md#custom-riichi-and-taiwan-awards) for the authoring syntax.
 
@@ -174,7 +180,7 @@ slot order from the cut; tail replacement reverses that order. The no-flower
 seventeen-stack overflow and numbered-side traversal are frozen project preset
 rules. Exact indexing and source limits belong to [Taiwan design](TAIWAN_DESIGN.md#opening-and-wall-representation).
 
-`TaiwanGameState` accepts only format 2; `TaiwanSession.State` accepts only format 3. Game restore
+`TaiwanGameState` accepts only format 3; `TaiwanSession.State` accepts only format 4. Game restore
 checks physical conservation, player structure/provenance, cursor occupancy,
 replacement/chronology counts, passing/ready state, pending offers and terminal
 score/payment consistency. Actions are rederived; saved response choices must
@@ -184,8 +190,8 @@ hidden, declared claim tiles are public, and only the recipient gets their actio
 passing restriction and response status. Completion publishes awards and payments
 without hand/decomposition exposure. Wall slots never disclose future identities.
 `TaiwanCodec` enforces complete typed fields, duplicate/unknown-field rejection,
-32 nesting levels, a 131,072-character game/view bound, a 65,536-character rules bound and an 8 MiB session bound.
-Rules freeze the complete custom award set. Taiwan receipts retain namespaced IDs,
+32 nesting levels, a 524,288-character game/view bound, a 262,144-character rules bound and an 8 MiB session bound.
+Rules freeze all selected custom sets and individual switches. Taiwan receipts retain namespaced IDs,
 actual tai and native source citations; custom awards have no fabricated citation.
 Candidate scoring precedes the tai cap and preserves separate flower/hand payments.
 

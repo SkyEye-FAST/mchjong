@@ -118,14 +118,18 @@ interface smoke verify their native config-screen factories.
 
 `CustomYakuTest` covers strict definitions, exclusion cycles, minimum-han
 qualification, per-interpretation selection, ron triplet concealment, yakuman
-payments and rule persistence. `YakuSetsTest` covers real data-pack resource
+payments and rule persistence. `YakuSelectionTest` covers all 14 bundled ancient
+awards, open-hand values, contained-award exclusions, disabled native yakuman,
+game-certified event flags, multiple sets and frozen individual switches.
+`YakuSetsTest` covers real data-pack resource
 discovery, atomic failed reloads, frozen snapshots, digests and Minecraft packet
 codecs. `CustomYakuSmoke`, inside the shared table-control smoke, installs and
-reloads an actual server data pack, selects and applies a set through the UI,
+reloads an actual server data pack, switches individual default/custom awards and
+combines them with the Mahjong Soul ancient preset through the UI,
 checks synchronized snapshots and rejects stale/unknown selections before cleanup.
 
 ```text
-gradlew.bat :engine:test --tests "*CustomYakuTest" :neoforge:test --tests "*YakuSetsTest" --warning-mode fail --console=plain
+gradlew.bat :engine:test --tests "*Yaku*Test" :neoforge:test --tests "*YakuSetsTest" --warning-mode fail --console=plain
 ```
 
 `McrWallTest` owns the 144-tile domain, independent flower identities, repeated
@@ -362,10 +366,10 @@ named flower mapping, public-copy deduplication and the library-free engine API.
 `buildAll` includes the engine's adapter and runtime tests.
 
 `TaiwanCustomYakuTest` owns candidate selection before custom tai/caps, simultaneous
-exclusions, discard-completed triplets, separate flower components and frozen
+exclusions, disabled native awards and flower triggers, discard-completed triplets, separate flower components and frozen
 game/view/session/replay round trips. `YakuSetsTest` checks the server catalog and
-both variants' ID/digest proposals; the shared client smoke selects and clears a
-real data-pack set in both rule screens and rejects stale definitions.
+both variants' digest-bound award-mask proposals; the shared client smoke selects
+individual native/data-pack awards in both rule screens and rejects stale definitions.
 
 `TaiwanHintsTest` owns shanten/effective tiles, legal discard previews, multiple
 waits with distinct ron/self-draw tai, Pocket/Southern and current-rule caps,

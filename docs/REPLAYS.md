@@ -74,10 +74,10 @@ The chat shows the full path or the screen reports a failure. Re-exporting the
 same match replaces that match's local export. No file is opened automatically
 and nothing is uploaded to an external service. MCR and Sichuan use **Export replay
 JSON**, writing their native sealed match record to the same local directory.
-Taiwan uses the same native export. Riichi matches with a custom award set also
+Taiwan uses the same native export. Riichi matches with any changed award selection also
 use **Export replay JSON**. Both variants' native records retain full award definitions,
-localized names and scored values; they do not depend on the server's current
-data packs. Tenhou export rejects custom sets, even if no custom award was earned.
+localized names, individual switches and scored values; they do not depend on the server's current
+data packs. Tenhou export requires default award selection, even when no custom award was earned.
 
 ## Privacy and persistence
 
