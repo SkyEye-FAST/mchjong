@@ -41,6 +41,8 @@ hands stay hidden. Switching viewpoint applies that player's visibility anew.
 Gold river borders distinguish hand discards from tsumogiri; sideways tiles mark
 riichi discards. Settlement uses a dedicated panel with the recorded point changes,
 winning tile, yaku, dora/ura indicators and final standings when the match ended.
+Riichi yaku rows retain their scored han and natural-yakuman status in the hand
+score; playback and export do not look up their values in the current yaku catalog.
 The wall view groups the original stacks by seat, dims tiles already used at the
 current replay position, distinguishes the dead wall and indicators, and marks the
 next live draw. Decision frames show the server-issued legal choices and highlight
@@ -72,7 +74,10 @@ The chat shows the full path or the screen reports a failure. Re-exporting the
 same match replaces that match's local export. No file is opened automatically
 and nothing is uploaded to an external service. MCR and Sichuan use **Export replay
 JSON**, writing their native sealed match record to the same local directory.
-Taiwan uses the same native export.
+Taiwan uses the same native export. Riichi matches with a custom award set also
+use **Export replay JSON**. Both variants' native records retain full award definitions,
+localized names and scored values; they do not depend on the server's current
+data packs. Tenhou export rejects custom sets, even if no custom award was earned.
 
 ## Privacy and persistence
 

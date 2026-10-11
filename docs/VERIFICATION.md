@@ -116,6 +116,18 @@ interface smoke verify their native config-screen factories.
 
 ## Test ownership and acceptance
 
+`CustomYakuTest` covers strict definitions, exclusion cycles, minimum-han
+qualification, per-interpretation selection, ron triplet concealment, yakuman
+payments and rule persistence. `YakuSetsTest` covers real data-pack resource
+discovery, atomic failed reloads, frozen snapshots, digests and Minecraft packet
+codecs. `CustomYakuSmoke`, inside the shared table-control smoke, installs and
+reloads an actual server data pack, selects and applies a set through the UI,
+checks synchronized snapshots and rejects stale/unknown selections before cleanup.
+
+```text
+gradlew.bat :engine:test --tests "*CustomYakuTest" :neoforge:test --tests "*YakuSetsTest" --warning-mode fail --console=plain
+```
+
 `McrWallTest` owns the 144-tile domain, independent flower identities, repeated
 tail replacements, exhaustion and conservation across player-owned zones.
 `McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
@@ -263,7 +275,11 @@ arbitration, wrong-win continuation/stop-win, kong transaction boundaries,
 server-derived winning facts and the complete sixteen-hand lifecycle.
 `McrHandAnalyzerTest` owns the explicit tile/meld/context conversions, basic
 library calls, flower exclusion and fan-result projection. `ScoringBridgeTest`
-owns the existing Riichi scoring adapter. Run these engine boundaries with:
+owns the existing Riichi scoring adapter, including stored open-hand reductions
+and natural-yakuman values. `HandScoreTest` owns immutable scored entries, unknown
+award-name preservation and rejection of malformed or obsolete name-only data.
+`RiichiAudioEventsTest` checks that receipts consume stored values without a yaku
+registry lookup. Run these engine boundaries with:
 
 ```text
 gradlew.bat :engine:test --tests "*Mcr*Test" --tests "*WallInvariantTest" --tests "*ScoringBridgeTest" --tests "*GameLifecycleTest" :engine:shadowJar --configure-on-demand --warning-mode fail --console=plain
@@ -332,8 +348,8 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 
 ## Taiwan hand library
 
-All three Minecraft profiles declare the Maven Central release
-`top.skyeyefast:taiwan-mahjong:0.1.0`. Verify the engine adapter and embedded artifact contract:
+The main profile declares `top.skyeyefast:taiwan-mahjong:0.2.0`; the two port
+profiles retain 0.1.0. Verify the engine adapter and embedded artifact contract:
 
 ```text
 gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar --warning-mode fail --console=plain
@@ -344,6 +360,12 @@ effective tiles, discard availability, source-qualified scoring/exclusions and
 flower victories. `TaiwanHandAnalyzerTest` owns physical identity/provenance,
 named flower mapping, public-copy deduplication and the library-free engine API.
 `buildAll` includes the engine's adapter and runtime tests.
+
+`TaiwanCustomYakuTest` owns candidate selection before custom tai/caps, simultaneous
+exclusions, discard-completed triplets, separate flower components and frozen
+game/view/session/replay round trips. `YakuSetsTest` checks the server catalog and
+both variants' ID/digest proposals; the shared client smoke selects and clears a
+real data-pack set in both rule screens and rejects stale definitions.
 
 `TaiwanHintsTest` owns shanten/effective tiles, legal discard previews, multiple
 waits with distinct ron/self-draw tai, Pocket/Southern and current-rule caps,

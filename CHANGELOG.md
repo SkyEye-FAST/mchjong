@@ -36,6 +36,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add server-data-pack Riichi and Taiwan award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwan library 0.2.0 candidate scoring on main, preserving separate flower payouts.
+
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan and Taiwan rule entrances, complete award indexes, tile illustrations, payment examples and preset differences; align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
 
 - Add recipient-safe Taiwan convenience hints with sixteen-tile shanten/effective and discard previews, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination; share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.

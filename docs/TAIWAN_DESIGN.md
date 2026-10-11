@@ -186,7 +186,7 @@ survive saves. The final result is terminal and does not accept next-hand reques
 
 ## Persistence and privacy
 
-`TaiwanGameState` format **1** is the only accepted private game format. It saves
+`TaiwanGameState` format **2** is the only accepted private game format. It saves
 the complete rules/opening, round/continuation, phase/turn, fixed wall slots and
 front/tail/kong counts, physical player zones, ready/passing state, discard/call/
 draw chronology, drawn tile and origin, pre-turn wait/reset provenance, pending
@@ -199,17 +199,23 @@ are rejected. Terminal scores and payments are recomputed and compared with the
 saved result. Decision/revision authority refreshes on restore; session hand
 boundaries also advance decision tokens.
 
-`TaiwanSession.State` format **2** saves the common room, rules,
+`TaiwanSession.State` format **3** saves the common room, rules,
 stock, future seed, completed proofs, current game, clock reserves, decision age
 and confirmations, current replay/recorder and unacknowledged archive queue.
 Restore validates the entire dealer/wind/continuation chain
 and scores before returning a session, creates a fresh incarnation, and requires
 live presence to be observed again. `TaiwanCodec` separates private game/session
 saves from recipient view documents, rejects malformed data without replacement
-games, bounds game/view documents to 65,536 characters and session saves to 8 MiB,
-and limits nesting to sixteen. All fields, including nullable fields, are required;
+games, bounds game/view documents to 131,072 characters, rules to 65,536 characters and session saves to 8 MiB,
+and limits nesting to 32 levels. All fields, including nullable fields, are required;
 duplicates, unknown keys, invalid enum/map keys and incorrectly typed or out-of-range
 integers/booleans are rejected.
+
+Rules retain the complete selected [custom award set](RULES.md#custom-riichi-and-taiwan-awards).
+Each candidate is extended before maximum selection and the tai cap. Stored awards
+carry a namespaced ID, actual tai and units; native awards retain their source,
+while custom awards use the frozen set's four-language text. Flower victory remains
+a separate component and only a simultaneous ordinary hand receives custom awards.
 
 `TaiwanView` is a separate immutable model. A recipient sees their complete hand,
 draw identity, legal actions, passing restriction and own submitted-response flag.

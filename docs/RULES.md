@@ -244,6 +244,103 @@ The first compatible complete box supplies the table. Changing the rule preset
 rechecks both stored boxes before Ready or Practice is offered.
 
 
+### Custom Riichi and Taiwan awards
+
+Server data packs can add house awards to Riichi and Taiwan tables. In **Table rules**, open
+**Custom Yaku**, inspect a set with **?**, select it and apply the rule draft.
+Only the lobby host can apply it, and the world must permit custom rules. Changing
+the set clears readiness. Choosing a preset resets the set to **None**.
+External Bot services cannot play with these awards. Built-in Bots and wait hints
+use the table's scoring rules; Bots do not plan arbitrary custom patterns.
+
+Put a definition at `data/<namespace>/mchjong/yaku_sets/<name>.json` in a server
+data pack and run `/reload`. The selectable ID is `<namespace>:<name>`; nested
+paths are allowed. For example, `data/house/mchjong/yaku_sets/five_gates.json`:
+
+```json
+{
+  "variant": "riichi",
+  "name": {"en_us": "Five Gates", "ja_jp": "五門斉", "zh_cn": "五门齐", "zh_tw": "五門齊"},
+  "awards": [{
+    "id": "house:five_gates",
+    "name": {"en_us": "Five Gates", "ja_jp": "五門斉", "zh_cn": "五门齐", "zh_tw": "五門齊"},
+    "description": {
+      "en_us": "Include all three suits, a wind and a dragon.",
+      "ja_jp": "萬子、筒子、索子、風牌、三元牌をすべて含む。",
+      "zh_cn": "包含万、筒、索、风牌和三元牌。",
+      "zh_tw": "包含萬、筒、索、風牌和三元牌。"
+    },
+    "when": {"type": "categories", "values": ["man", "pin", "sou", "wind", "dragon"]},
+    "award": {"type": "han", "closed": 3, "open": 2},
+    "excludes": []
+  }]
+}
+```
+
+Every name and description requires all four languages. IDs must be namespaced,
+lowercase resource IDs; `mchjong:` is reserved. A set contains 1–16 distinct awards.
+An award grants `han` (0–13) or natural `yakuman` units (0–2), with separate
+`closed` and `open` values. Zero disables that award for the corresponding hand;
+both values cannot be zero. Concealed kans retain closed status.
+
+For Taiwan, set `"variant": "taiwan"` and use `"award": {"type": "tai", "value": 3}`.
+Tai awards range from 1 to 1,000 and use the same value for closed and open hands;
+use a `closed` condition to restrict an award. A table selects one set for its own
+variant. Taiwan supports regular five-meld hands only. Custom tai is added before
+the table's tai cap, then uses its ordinary base/per-tai payment settings.
+Eight Flowers and Seven Robbing One keep their automatic triggers and separate
+payment components. Custom awards apply only to an accompanying ordinary
+replacement-tile win, never to the flower victory alone.
+
+Conditions read one winning interpretation, including the winning tile and fixed
+melds. They never read opponents' concealed tiles or the wall. Custom awards do
+not add winning shapes, change fu, change furiten or create automatic victories.
+The scorer evaluates all interpretations and selects the largest actual payment.
+Ordinary custom han count toward the minimum; dora still cannot satisfy it.
+Natural yakuman replace ordinary awards and bonuses and follow the table's
+compound-yakuman setting. Each definition explicitly sets its own yakuman units.
+
+Combine conditions with `{"all": [...]}`, `{"any": [...]}` or `{"not": {...}}`.
+Leaves use `type`, optional `values`, and explicit inclusive `min`/`max` for counts:
+
+| Type | Values and meaning |
+| --- | --- |
+| `shape` | `regular`; Riichi also permits `seven_pairs`, `thirteen_orphans` |
+| `closed` | Exactly one string: `true` or `false` |
+| `flags` | All listed circumstances must hold: `self_draw`, `discard`, `robbing_kong`, `last_draw`, `last_discard`, `kong_replacement`, `heavenly_win`, `earthly_win`, `human_win`; Riichi adds `riichi`, `double_riichi`, `ippatsu`; Taiwan adds `ready`, `heavenly_ready`, `earthly_ready`, `flower_replacement` |
+| `categories` | Each listed category is present: `man`, `pin`, `sou`, `wind`, `dragon` |
+| `tiles` | Count owned copies of the listed ordinary kinds, such as `["1m", "9m"]`; quads count four, extracted Norths are excluded |
+| `groups` | Count matching groups; exactly three values select type (`any`, `sequence`, `triplet`, `quad`), concealment (`all`, `concealed`, `exposed`) and first kind (`1m` etc. or `*`) |
+| `pair` | Regular interpretation's pair matches any listed ordinary kind |
+| `wait` | Match any listed placement: `pair`, `two_sided`, `closed`, `edge`, `triplet`, `special`; the last is for Seven Pairs/Thirteen Orphans |
+| `reds` | Riichi only: count owned red fives; no `values` |
+| `flowers` | Taiwan only: count owned flowers; no `values` |
+| `same_sequences` | Largest number of identical sequences in this interpretation; zero when none; no `values` |
+| `three_suit_sequences` | A sequence of the same starting rank occurs in all three suits; no `values` or bounds |
+
+A ron-completed triplet is exposed for group counting. Pair and group conditions
+do not reinterpret a special hand as a regular one. Conditions allow four levels
+(root plus three child levels), 64 nodes per award and 16 children per logical
+node. Each document and its normalized snapshot must fit 32,768 characters;
+the catalog permits 32 sets and 262,144 normalized characters in total. Invalid
+definitions fail the reload; unknown fields and duplicate JSON keys are errors.
+
+`excludes` lists other custom IDs in the same set or ordinary native Riichi IDs,
+such as `mchjong:riichi/iipeikou` or `mchjong:riichi/pinhu`. The native suffix is its
+`yaku.mchjong.*` translation suffix. Natural native yakuman, Nagashi and Renhou
+cannot be excluded. Exclusions cannot contain cycles or unknown IDs, and ordinary
+awards cannot suppress custom yakuman. They apply simultaneously: if A excludes B
+and B excludes C, matching A and B removes both B and C.
+Taiwan native IDs use `mchjong:taiwan/` followed by the lowercase pattern enum name,
+such as `mchjong:taiwan/concealed` or `mchjong:taiwan/pinfu`. Eight Flowers and
+Seven Robbing One cannot be excluded.
+
+Reload changes the selectable catalog. Existing tables, saves and native replays
+retain the entire selected definition, including text. A definition changed while
+a rule screen is open must be selected again before applying. Custom Riichi matches
+use [native replay export](REPLAYS.md), since Tenhou's format cannot represent these
+awards. MCR and Sichuan do not support custom award sets.
+
 ### Yaku
 
 | Award | Value | Conditions and combinations | Example |

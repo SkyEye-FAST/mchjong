@@ -73,7 +73,28 @@ The latter keeps the original triplet and fourth tile pending until robbery
 responses finish. MCR save and session records accept only their current format.
 
 `RiichiHandAnalyzer` owns the Riichi scoring and shape adapter used by `RiichiGame`,
-legal actions, hints, replays and bots. `McrHandAnalyzer` is the sole production
+legal actions, hints, replays and bots. `HandScore` retains immutable per-yaku
+names, open-hand-adjusted han and natural-yakuman markers from the selected
+interpretation. Individual natural-yakuman values precede the configured
+compound cap; the score's total and payments retain that cap. Receipts, recordings
+and replay exports read these values directly. Riichi session format 5 is the
+only accepted format.
+
+`RiichiRules.yakuSet` and `TaiwanRules.yakuSet` own complete immutable `YakuSet` snapshots. `YakuCondition`
+is a bounded declarative tree over `YakuFacts`; each variant's facts adapter constructs facts
+for each native winning decomposition and tile placement. Custom awards and
+simultaneous exclusions are evaluated before selecting the best payment.
+The engine performs no resource lookup while scoring or replaying. Native fu,
+structural shapes and game lifecycle remain separate from custom awards.
+
+Common `YakuSets` loads server data packs through each loader's reload listener.
+It atomically replaces a bounded public catalog and synchronizes it once per
+player connection and successful reload. Rule proposals carry an ID and SHA-256
+definition digest; the server resolves the current catalog before ordinary host,
+decision, world-policy and stock checks. A reload never mutates a table's frozen
+snapshot. See [Rules](RULES.md#custom-riichi-and-taiwan-awards) for the authoring syntax.
+
+`McrHandAnalyzer` is the sole production
 boundary to mcr-mahjong. Its public methods accept engine tile IDs, `Meld` values
 and JDK collections, and return ordinary kind sets or `McrHandScore` records.
 Explicit named mappings translate all 34 kinds, meld shapes, called chow positions,
@@ -153,7 +174,7 @@ slot order from the cut; tail replacement reverses that order. The no-flower
 seventeen-stack overflow and numbered-side traversal are frozen project preset
 rules. Exact indexing and source limits belong to [Taiwan design](TAIWAN_DESIGN.md#opening-and-wall-representation).
 
-`TaiwanGameState` accepts only format 1; `TaiwanSession.State` accepts only format 2. Game restore
+`TaiwanGameState` accepts only format 2; `TaiwanSession.State` accepts only format 3. Game restore
 checks physical conservation, player structure/provenance, cursor occupancy,
 replacement/chronology counts, passing/ready state, pending offers and terminal
 score/payment consistency. Actions are rederived; saved response choices must
@@ -163,7 +184,10 @@ hidden, declared claim tiles are public, and only the recipient gets their actio
 passing restriction and response status. Completion publishes awards and payments
 without hand/decomposition exposure. Wall slots never disclose future identities.
 `TaiwanCodec` enforces complete typed fields, duplicate/unknown-field rejection,
-sixteen nesting levels, a 65,536-character game/view bound and an 8 MiB session bound.
+32 nesting levels, a 131,072-character game/view bound, a 65,536-character rules bound and an 8 MiB session bound.
+Rules freeze the complete custom award set. Taiwan receipts retain namespaced IDs,
+actual tai and native source citations; custom awards have no fabricated citation.
+Candidate scoring precedes the tai cap and preserves separate flower/hand payments.
 
 `TaiwanSession` owns one four-wind match, completing sixteen dealer positions
 while allowing dealer wins/exhaustion to repeat even the last position. Cumulative
@@ -893,7 +917,7 @@ optional uma-based Minecraft experience changes for human players in its private
 save and pays connected players once from the server thread.
 
 `ScoreAnnouncements` supplies the same ordered rows to the receipt and narration,
-using the scoring library's per-yaku han and public winning tiles for the four
+using the stored per-yaku han and public winning tiles for the four
 bonus counts. Seat snapshots retain the server's double-riichi declaration for
 action recordings. `ResultReadout` retains one timeline per observed hand across widget rebuilds.
 It reveals each scored yaku and counted-dora row with its recording, then the

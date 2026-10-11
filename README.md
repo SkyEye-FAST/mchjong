@@ -46,8 +46,8 @@ Current build profiles support these Minecraft versions and loaders:
 
 Taiwan is playable on all three profiles, with Pocket/Southern 144/136-tile
 stocks, complete four-wind matches, one built-in Bot option, native replays and
-convenience hints. All profiles embed the Maven Central release
-`top.skyeyefast:taiwan-mahjong:0.1.0`. See
+convenience hints. The main profile declares `top.skyeyefast:taiwan-mahjong:0.2.0`
+for custom Riichi/Taiwan award sets; the port profiles retain 0.1.0. See
 [Taiwan verification](docs/VERIFICATION.md#taiwan-hand-library) for the focused
 artifact, build and client checks.
 
