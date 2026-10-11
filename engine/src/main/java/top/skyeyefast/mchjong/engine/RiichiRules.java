@@ -100,6 +100,7 @@ public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> se
     public boolean robNorthWithoutKokushi() { return enabled(ROB_NORTH_WITHOUT_KOKUSHI); }
     public boolean delayedOpenKanDora() { return enabled(DELAYED_OPEN_KAN_DORA); }
     public int replacementCapacity() { return get(REPLACEMENT_CAPACITY); }
+    public boolean drawsClearFuriten() { return enabled(DRAWS_CLEAR_FURITEN); }
     public boolean callsClearFuriten() { return enabled(CALLS_CLEAR_FURITEN); }
     public boolean yakulessFuriten() { return enabled(YAKULESS_FURITEN); }
     public boolean suukantsuPao() { return enabled(SUUKANTSU_PAO); }

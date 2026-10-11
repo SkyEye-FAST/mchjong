@@ -320,8 +320,9 @@ averages concealed-indicator scenarios over the remaining unseen tiles, without
 replacement and after removing the winning tile. Each scenario retains the
 scored yaku and fu and applies the configured point-table limits. Ura never
 changes legal-yaku eligibility; ippatsu is not assumed. Any discarded structural wait
-blocks the entire ron set; tsumo remains separate. Temporary furiten clears
-after a real draw's discard, while calls follow `callsClearFuriten`. Already
+blocks the entire ron set; tsumo remains separate. Temporary furiten clears on the player's draw when `drawsClearFuriten` is enabled,
+and otherwise after that draw's discard. The player's Chi, Pon and open Kan follow
+`callsClearFuriten`. Other players' actions do not clear it. Already
 declared permanent furiten remains blocked. Double riichi retains its two han;
 ordinary continuation discards end eligibility for a first-turn declaration.
 Riichi's forfeited deposit is priced using the same payout-utility scale as the

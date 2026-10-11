@@ -11,13 +11,14 @@ class ReactionRulesTest {
     private static final class Fixture {
         final RiichiGame game;
         final Set<Integer> owned = new HashSet<>();
-        Fixture(RiichiPreset rules) {
+        Fixture(RiichiPreset preset) { this(preset.config()); }
+        Fixture(RiichiRules rules) {
             var session = new RiichiSession(UUID.randomUUID(), rules, 5566);
             for (int seat = 0; seat < rules.players(); seat++)
                 session.join(new UUID(40, seat), "Player " + seat, seat);
             session.startMatch();
             game = session.game();
-            game.wall = new Wall(rules.config(), 7788, game.dealer);
+            game.wall = new Wall(rules, 7788, game.dealer);
             for (int s = 0; s < rules.players(); s++) {
                 RiichiPlayerState p = game.players[s];
                 p.resetHand();
@@ -94,6 +95,113 @@ class ReactionRulesTest {
                 }
                 if (!passed) break;
             }
+        }
+    }
+
+    @ParameterizedTest @EnumSource(RiichiPreset.class)
+    void drawAndCallClearanceHaveIndependentPresetDefaults(RiichiPreset preset) {
+        assertEquals(preset.mahjongSoul() || preset == RiichiPreset.WRC, preset.config().drawsClearFuriten());
+        assertEquals(preset == RiichiPreset.WRC, preset.config().callsClearFuriten());
+        for (boolean draws : List.of(false, true)) for (boolean calls : List.of(false, true)) {
+            var rules = preset.config().with(RiichiRuleOption.DRAWS_CLEAR_FURITEN, draws ? 1 : 0)
+                .with(RiichiRuleOption.CALLS_CLEAR_FURITEN, calls ? 1 : 0);
+            Fixture f = new Fixture(rules);
+            int discarded = f.take("1p").getFirst();
+            f.game.players[0].hand.add(discarded);
+            f.start(0, discarded);
+            var player = f.game.players[1];
+            player.temporaryFuriten = true;
+            player.riichiFuriten = true;
+            f.game.drawNow(1, false, false);
+            assertEquals(!draws, player.temporaryFuriten);
+            assertTrue(player.riichiFuriten);
+            f.act(1, RiichiAction.Type.DISCARD, player.drawn);
+            assertFalse(player.temporaryFuriten);
+            assertTrue(player.riichiFuriten);
+        }
+    }
+
+    @Test void onlyTheCallerCanClearTemporaryFuritenOnAPon() {
+        for (boolean draws : List.of(false, true)) for (boolean calls : List.of(false, true)) {
+            Fixture f = new Fixture(RiichiPreset.TENHOU_4.config()
+                .with(RiichiRuleOption.DRAWS_CLEAR_FURITEN, draws ? 1 : 0)
+                .with(RiichiRuleOption.CALLS_CLEAR_FURITEN, calls ? 1 : 0));
+            f.hand(3, "123456m789p55z11s");
+            int discarded = f.take("5z").getFirst();
+            f.game.players[0].hand.add(discarded);
+            f.start(0, discarded);
+            f.game.players[2].temporaryFuriten = true;
+            f.act(0, RiichiAction.Type.DISCARD, discarded);
+            f.act(3, RiichiAction.Type.PON);
+            f.passOthers();
+            assertEquals(!calls, f.game.players[3].temporaryFuriten);
+            assertTrue(f.game.players[2].temporaryFuriten);
+            f.act(3, RiichiAction.Type.DISCARD);
+            assertEquals(!calls, f.game.players[3].temporaryFuriten);
+        }
+    }
+
+    @Test void chiAndOpenKanRespectIndependentCallAndDrawClearance() {
+        for (var type : List.of(RiichiAction.Type.CHI, RiichiAction.Type.OPEN_KAN))
+            for (boolean draws : List.of(false, true)) for (boolean calls : List.of(false, true)) {
+                Fixture f = new Fixture(RiichiPreset.TENHOU_4.config()
+                    .with(RiichiRuleOption.DRAWS_CLEAR_FURITEN, draws ? 1 : 0)
+                    .with(RiichiRuleOption.CALLS_CLEAR_FURITEN, calls ? 1 : 0));
+                boolean kan = type == RiichiAction.Type.OPEN_KAN;
+                f.hand(1, kan ? "555z123p789s11s23p" : "12m123p789s1155z");
+                int tile = f.take(kan ? "5z" : "3m").getFirst();
+                f.game.players[0].hand.add(tile);
+                f.start(0, tile);
+                f.game.players[1].temporaryFuriten = true;
+                f.game.players[2].temporaryFuriten = true;
+                f.act(0, RiichiAction.Type.DISCARD, tile);
+                f.act(1, type);
+                f.passOthers();
+                assertEquals(!(calls || kan && draws), f.game.players[1].temporaryFuriten);
+                assertTrue(f.game.players[2].temporaryFuriten);
+                f.act(1, RiichiAction.Type.DISCARD);
+                assertEquals(!kan && !calls, f.game.players[1].temporaryFuriten);
+            }
+    }
+
+    @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})
+    void northAndKanReplacementWinsKeepRinshanButOnlyKanMarksTheDiscard(RiichiPreset preset) {
+        for (boolean kan : List.of(false, true)) {
+            var ancient = BuiltinYakuSets.MAHJONG_SOUL_ANCIENT;
+            var kanburi = new YakuSet("test:kanburi", MahjongVariant.RIICHI, ancient.name(),
+                List.of(ancient.find("mahjongsoul:kanburi")));
+            Fixture f = new Fixture(preset.config().withYakuSelection(YakuSelection.of(kanburi)));
+            f.hand(1, "123456p789s555z2s");
+            f.hand(0, kan ? "1111z123456p789s2s" : "111z123456p789s2s4z");
+            int declaration = f.game.players[0].hand.stream()
+                .filter(t -> Tile.kind(t) == (kan ? Tile.EAST : Tile.NORTH)).findFirst().orElseThrow();
+            f.start(0, declaration);
+            int slot = f.game.wall.nextReplacementSlot();
+            int winningSlot = -1;
+            for (int i = f.game.wall.cursor; i < f.game.wall.tiles.size(); i++)
+                if (Tile.kind(f.game.wall.tiles.get(i)) == Tile.kind(TestHands.tiles("2s").getFirst())) {
+                    winningSlot = i; break;
+                }
+            assertTrue(winningSlot >= 0);
+            Collections.swap(f.game.wall.tiles, slot, winningSlot);
+            f.act(0, kan ? RiichiAction.Type.CLOSED_KAN : RiichiAction.Type.NUKI, declaration);
+            f.passOthers();
+            var score = LegalActions.score(f.game, 0, f.game.players[0].drawn, true);
+            assertNotNull(score);
+            assertEquals(0, score.yakuman());
+            assertTrue(score.hasYaku("Rinshan"));
+            assertTrue(score.han() >= 2);
+            assertEquals(kan, f.game.players[0].afterKan);
+            var saved = f.game.players[0].save();
+            assertEquals(kan, RiichiPlayerState.restore(saved, f.game.players[0].member).afterKan);
+            f.act(0, RiichiAction.Type.DISCARD, f.game.players[0].drawn);
+            assertEquals(kan, f.game.players[0].afterKan);
+            f.act(1, RiichiAction.Type.RON);
+            f.passOthers();
+            var ron = f.game.view(null).wins().getFirst().score();
+            assertEquals(0, ron.yakuman());
+            assertEquals(kan, ron.hasYaku("mahjongsoul:kanburi"));
+            assertTrue(ron.hasYaku("Haku"));
         }
     }
 

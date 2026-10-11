@@ -80,7 +80,7 @@ legal actions, hints, replays and bots. `HandScore` retains immutable per-yaku
 names, open-hand-adjusted han and natural-yakuman markers from the selected
 interpretation. Individual natural-yakuman values precede the configured
 compound cap. The score's total and payments retain that cap. Receipts, recordings
-and replay exports read these values directly. Riichi session format 6 is the
+and replay exports read these values directly. Riichi session format 7 is the
 only accepted format.
 
 `RiichiRules.yakuSelection` and `TaiwanRules.yakuSelection` own immutable `YakuSelection`

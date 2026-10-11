@@ -63,7 +63,30 @@ You can still win by tsumo while in furiten. The red furiten badge on screen alw
 
 Online riichi needs 1,000 points and at least four live tiles (three in sanma). M.League and JPML A need one live tile. WRC allows zero. Competition presets do not require 1,000 points already in hand.
 
-Temporary furiten clears on your next draw. Riichi kans must keep your waits; see Preset Differences for further restrictions.
+Temporary furiten clearance depends on two independent options. **Own Draw Clears
+Temporary Furiten** clears it on the affected player's next draw when enabled, or
+on that player's discard following a draw when disabled. **Own Calls Clear
+Temporary Furiten** additionally clears it on that player's chi, pon or open kan.
+Another player's call never clears it. Neither option clears discard furiten or
+post-riichi furiten. A discard after chi or pon is not a draw-and-discard turn.
+
+| Preset | Own draw | Own chi, pon or open kan |
+| --- | --- | --- |
+| Mahjong Soul, four or three players | Clears temporary furiten | Does not clear it |
+| Tenhou, four or three players | Clears on the following discard | Does not clear it |
+| M.League | Clears on the following discard | Does not clear it |
+| JPML A | Clears on the following discard | Does not clear it |
+| WRC | Clears temporary furiten | Clears temporary furiten |
+
+The [Mahjong Soul FAQ](https://mahjongsoul.com/faq) specifies the next own draw.
+The [Tenhou manual](https://tenhou.net/man/) specifies discard-time clearance and
+excludes reverse-order calls. [M.League rules](https://m-league.jp/about/),
+chapter 5, section 5, require completion of the player's draw-and-discard turn.
+[WRC 2025 rules](https://www.worldriichi.org/wrc-rules), section 8.11.2, allow the
+player's next draw or call. The [JPML published rules](https://www.ma-jan.or.jp/activity/game_rule.html)
+prohibit same-turn win selection but do not specify the action that ends it.
+The JPML A preset retains draw-and-discard clearance on that unresolved timing point.
+Riichi kans must keep the winning tile types; see Preset Differences for further restrictions.
 
 ### Fu, points and dora
 
@@ -93,7 +116,14 @@ Sanma uses 108 tiles by removing `2m`–`8m`, and its legal calls are Pon and Ka
 
 Keep North as an ordinary tile or extract it for a replacement and one bonus han. Extraction keeps the hand closed but supplies no yaku. 1m and 9m indicate each other as dora.
 
-North extraction interrupts ippatsu and can be won by an eligible opponent. Its replacement alone is not Rinshan; extractions share replacement capacity with kans.
+North extraction interrupts ippatsu and can be won by an eligible opponent.
+In the Mahjong Soul and Tenhou three-player presets, winning on its replacement
+counts as Rinshan Kaihou. Extractions share replacement capacity with kans.
+The [Tenhou manual](https://tenhou.net/man/) describes the replacement after an
+added kan or North extraction as a rinshan draw. North extraction does not declare
+a kan, so its following discard does not qualify for Kanburi. Ron on the extracted
+North does not award Chankan. The engine tracks replacement-draw eligibility and
+kan provenance separately, including across saved games.
 
 Tsumo charges the two present opponents their usual four-player shares. The absent player's share remains unpaid. For a nondealer mangan, the dealer pays 4,000 points and the other opponent pays 2,000 points. The noten payment pool is 2,000 points.
 
@@ -398,7 +428,7 @@ awards. MCR and Sichuan mahjong do not support custom award sets.
 | White dragon | 1 han | A White dragon pung/kan; open allowed. Little Three Dragons also adds its two dragon yaku. | `555z` |
 | Green dragon | 1 han | A Green dragon pung/kan; open allowed. Little Three Dragons also adds its two dragon yaku. | `666z` |
 | Red dragon | 1 han | A Red dragon pung/kan; open allowed. Little Three Dragons also adds its two dragon yaku. | `777z` |
-| Rinshan kaihou | 1 han | Self-draw a kan replacement; open allowed. North replacement alone is not Rinshan. | `23s + 1s` |
+| Rinshan kaihou | 1 han | Self-draw a kan replacement; open allowed. North replacements also qualify in the Mahjong Soul and Tenhou three-player presets. | `23s + 1s` |
 | Chankan | 1 han | Ron on another player’s added-kan tile; open allowed. Kokushi has a separate concealed-kan exception. | `23s + 1s` |
 | Haitei raoyue | 1 han | Self-draw the last ordinary live-wall tile; open allowed. A replacement is not Haitei. | `23s + 1s` |
 | Houtei raoyui | 1 han | Ron on the discard after the last ordinary draw; open allowed. | `23s + 1s` |

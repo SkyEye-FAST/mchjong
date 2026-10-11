@@ -160,7 +160,7 @@ internal object LegalActions {
         if (!tsumo && game.pending == null) {
             val discarder = game.players[game.turn]
             if (discarder.pendingRiichi) extra += "RiichiDiscard"
-            if (discarder.rinshan) extra += "AfterKongDiscard"
+            if (discarder.afterKan) extra += "AfterKongDiscard"
         }
         val dora = HandBonuses.count(
             player.hand, player.melds, player.norths, tile,

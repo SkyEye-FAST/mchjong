@@ -41,6 +41,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Separate draw-time and call-time temporary furiten clearance, and prevent North replacements from qualifying the following discard for Kanburi.
 - Align the Creeper tile-back mark with the vanilla face's uniform pixel grid.
 - Draw Bot portraits on integer pixel boundaries so both eyes stay the same size at small UI scales.
 - Merge equivalent Taiwanese mahjong ready-discard choices while retaining distinct tile faces and every physical ordinary discard.
