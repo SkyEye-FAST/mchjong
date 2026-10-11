@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.client;
 
-import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;

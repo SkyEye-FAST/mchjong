@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.client;
 
-import top.skyeyefast.mchjong.platform.ResourceIds;
 import top.skyeyefast.mchjong.text.CountedText;
 
 import java.util.ArrayList;

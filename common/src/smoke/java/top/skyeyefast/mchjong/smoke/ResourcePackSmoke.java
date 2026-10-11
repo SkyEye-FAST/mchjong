@@ -44,7 +44,6 @@ final class ResourcePackSmoke {
             selected = List.copyOf(client.getResourcePackRepository().getSelectedIds());
             Path pack = client.gameDirectory.toPath().resolve("resourcepacks/mchjong-smoke-custom");
             write(pack, "pack.mcmeta", "{\"pack\":{\"pack_format\":15,\"description\":\"MChjong resource smoke\"}}");
-            String definition = "{\"atlas\":\"mchjong:textures/tiles.png\",\"glyphs\":\"mchjong:textures/tile_glyphs.png\"}";
             Path images = output.resolve("preset-tiles");
             for (String key : top.skyeyefast.mchjong.config.PresetArchives.TILE_KEYS)
                 tileImage(images.resolve(key + ".png"), key);
