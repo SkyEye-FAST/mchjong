@@ -352,8 +352,8 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 
 ## Taiwanese mahjong hand library
 
-The main profile declares `top.skyeyefast:taiwan-mahjong:0.2.0`. The two port
-profiles retain 0.1.0. Verify the engine adapter and embedded artifact contract.
+All three profiles declare `top.skyeyefast:taiwan-mahjong:0.2.0`.
+Verify the engine adapter and embedded artifact contract.
 
 ```text
 gradlew.bat :engine:test --tests "*TaiwanHandAnalyzerTest" --tests "*TaiwanGameTest" --tests "*TaiwanBotTest" --tests "*TaiwanReplayTest" --tests "*TaiwanHintsTest" :engine:shadowJar --warning-mode fail --console=plain

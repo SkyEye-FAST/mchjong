@@ -26,14 +26,13 @@ Branch synchronization and release artifact selection are documented in
 
 ## Embedded engine dependencies
 
-The main engine declares Maven Central coordinates `top.skyeyefast:mcr-mahjong:0.1.1`,
+All three engine profiles declare Maven Central coordinates `top.skyeyefast:mcr-mahjong:0.1.1`,
 `top.skyeyefast:taiwan-mahjong:0.2.0` and
 `io.github.ssttkkl:mahjong-utils-jvm:0.7.7`. The exact pins live in
 `gradle.properties`. The engine Shadow JAR relocates the Taiwanese mahjong and MCR libraries
 under `top.skyeyefast.mchjong.internal.taiwan` and
 `top.skyeyefast.mchjong.internal.mcr`, together with its private Kotlin runtime.
 Each profile's loaders consume the same self-contained `embeddedEngine` artifact.
-The 1.20.1 and 26.1.2 port profiles retain version 0.1.0 of the Taiwanese mahjong library.
 The analysis contracts are described in
 [Architecture](ARCHITECTURE.md#hand-analysis-boundaries).
 

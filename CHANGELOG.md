@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Synchronize custom award selection, Mahjong Soul ancient yaku and checked-in client resources across all three Minecraft profiles, with Taiwanese mahjong library 0.2.0 and each profile's native loader adapters.
 - Centralize tile-face images, runtime definitions and attribution in `presets/tile_faces`, then package them directly.
 - Store formatted client resources in the repository for direct browsing, reuse the existing independent tile-face images, split point sticks and HUD icons into individual textures, package them in all loaders and verify generated files against their source generators.
 - Allow individual default and custom award selection across Riichi and Taiwanese mahjong sets, and bundle all 14 Mahjong Soul ancient yaku with a four-player preset toggle, frozen replay rules and contained-award exclusions.
@@ -28,7 +29,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring on main, preserving separate flower payouts.
+- Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring, preserving separate flower payouts.
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan mahjong and Taiwanese mahjong rule entrances, complete award indexes, tile illustrations, payment examples and preset differences. Align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
 - Add recipient-safe Taiwanese mahjong convenience hints with previews of sixteen-tile shanten numbers, effective tiles and legal discards, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination. Share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.
 - Add independent native Taiwanese mahjong replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.

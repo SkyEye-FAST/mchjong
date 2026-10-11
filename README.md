@@ -46,8 +46,8 @@ Current build profiles support these Minecraft versions and loaders.
 
 Taiwanese mahjong is playable on all three profiles, with Pocket/Southern 144/136-tile
 stocks, complete four-wind matches, one built-in Bot option, native replays and
-convenience hints. The main profile declares `top.skyeyefast:taiwan-mahjong:0.2.0`
-for custom Riichi/Taiwanese mahjong award sets. The port profiles retain 0.1.0. See
+convenience hints. All three profiles declare `top.skyeyefast:taiwan-mahjong:0.2.0`
+for custom Riichi and Taiwanese mahjong award sets. See
 [Taiwanese mahjong verification](docs/VERIFICATION.md#taiwanese-mahjong-hand-library) for the focused
 artifact, build and client checks.
 
