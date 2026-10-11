@@ -3,57 +3,56 @@
 All loaders use the same checked-in client resources under
 [`art/generated/assets`](../art/generated/assets). Browse the
 [`textures`](../art/generated/assets/assets/mchjong/textures) and
-[`models`](../art/generated/assets/assets/mchjong/models) directly without building.
+[`models`](../art/generated/assets/assets/mchjong/models) directly in the repository.
 Edit the source generator, then run `gradlew.bat :art:generateAssets --warning-mode fail`
 to refresh these files and commit them together. Ordinary loader builds package
 the checked-in resources; `:art:check` verifies their file set and bytes against
-fresh generation without rewriting them.
+fresh generation in a separate verification directory.
 
 Server data is generated separately by `GenerateData` through
 `gradlew.bat :art:generateData` into `build/generated/data`. All loaders include
-both directories. Recipes, tags and loot do not belong in `GenerateAssets`.
+both directories. `GenerateData` owns recipes, tags and loot.
 Each output is synchronized independently with the current generator results.
 
 ## Tile faces
 
 Each preset supplies 45 individual transparent PNG engravings under
 `presets/tile_faces/<preset>/tiles/`. These prepared tile images are the build
-resources. All loaders package these existing files directly; no duplicate face
-images are stored under `art/generated/assets`.
-The selector lists Kansai and Kanto first, followed by Sichuan, Hong Kong, Taiwan
-and Fujian; custom entries follow in persistent-ID order.
+resources. Each preset's `theme_metadata.json` is its runtime definition and
+source metadata. Images, metadata and [the artwork notice](../presets/tile_faces/NOTICE.md)
+are centralized here and packaged directly by all loaders.
+The selector lists the Kansai and Kanto face presets first, followed by the Sichuan,
+Hong Kong, Taiwan and Fujian face presets. Custom entries follow in persistent-ID order.
 `TileFaceImages` fits their transparent engravings at resource reload,
 including all three red fives, preserving proportions and antialiased
-edges. Built-in designs are ordinary mod resources selected in the mahjong
-box and require no runtime pack installation or network access.
+edges. Built-in designs are bundled mod resources available in the mahjong box.
 
-Source metadata and [the artwork notice](../presets/tile_faces/NOTICE.md) ship
-under `META-INF/licenses/`. The supplied Kansai metadata identifies
-lietxia (M+ Fonts License). None of the presets are relicensed under the repository's code license.
+The metadata ships as `assets/mchjong/tile_face_presets/<preset>.json`. The
+artwork notice ships as `META-INF/licenses/tile-face-presets-NOTICE.md`.
+Third-party attributions and licenses are recorded in that notice.
 
 Each preset's existing PNGs ship under
 `assets/mchjong/textures/tile_faces/<preset>/tiles/`, named `1m`–`9m`,
 `1p`–`9p`, `1s`–`9s`, `1z`–`7z`, `0m`, `0p`, `0s`, or `1q`–`8q`.
 `tile_face_presets/<preset>.json` identifies the texture directory and whether
 the white dragon stays blank.
-Kansai uses spring, summer, autumn,
-winter, plum, orchid, bamboo and chrysanthemum; Kanto uses the four seasons
-followed by fortune, prosperity, longevity and nobility (福禄寿貴); Sichuan,
-Hong Kong, Taiwan and Fujian use
+The Kansai face preset uses spring, summer, autumn,
+winter, plum, orchid, bamboo and chrysanthemum. The Kanto face preset uses the four seasons
+followed by fortune, prosperity, longevity and nobility (福禄寿貴). Sichuan,
+Hong Kong, Taiwan and Fujian face presets use
 the four seasons followed by plum, orchid, chrysanthemum and bamboo (梅蘭菊竹).
 All faces preserve the supplied artwork and proportions.
 Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank for Japanese presets (Kansai and Kanto)
 and displays each regional design's framed engraving for Sichuan, Hong Kong,
-Taiwan and Fujian. Name tooltips follow the stored preset.
+Taiwan and Fujian face presets. Name tooltips follow the stored preset.
 World, held-item and GUI renderers compose the selected design's independent
 textures into opaque GUI faces and white-backed world render caches on resource
-reload. Resource packs replace a single `tiles/<key>.png` to update both views,
-without rebuilding or editing an atlas.
+reload. Resource packs replace a single `tiles/<key>.png` to update both views.
 Custom face presets are ZIP archives in `config/mchjong/presets/faces/` on a client
 or `config/mchjong/server-presets/faces/` on a server. Inside a ZIP,
 `<namespace>/<name>/preset.toml` defines the persistent
-preset ID `<namespace>:<name>`. The manifest can supply a display name:
+preset ID `<namespace>:<name>`. The manifest can supply a display name.
 
 ```toml
 name = "Ink"
@@ -63,14 +62,14 @@ Place 45 transparent PNGs under
 `<namespace>/<name>/tiles/`. Their filenames are
 `1m`–`9m`, `1p`–`9p`, `1s`–`9s`, `1z`–`7z`, `0m`, `0p`, `0s`, and `1q`–`8q`,
 each followed by `.png`. They are fitted to the same face area as the supplied
-individual source images. The white dragon image is included; its printed face
+individual source images. The white dragon image is included. Its printed face
 remains blank. The client assembles the images into render textures at load time.
 A ZIP can contain several `<namespace>/<name>/` directories.
 Each ZIP belongs to its category directory and contains only face presets.
 Local and server preset directories are checked once per second. Adding, replacing
 or removing a ZIP reloads that collection after its file metadata stays stable
 across two checks. Open selectors refresh automatically. Their Server and Local
-tabs separate the effective sources; the Server tab marks built-in entries.
+tabs separate the effective sources. The Server tab marks built-in entries.
 Each preset tooltip shows its
 display name and persistent ID. A server preset takes precedence over a local
 preset with the same ID.
@@ -80,7 +79,7 @@ appearance. To offer face presets to every player, place ZIP archives in the ser
 `config/mchjong/server-presets/faces/` directory. The mod sends the
 configured images to connecting players and every online player after a change, adding them to their mahjong box
 selectors. ZIPs in a client's `config/mchjong/presets/faces/` directory add presets to
-that client's selector; other players without those images see default Kansai faces.
+that client's selector. Other players without those images see default Kansai faces.
 The server validates the physical set,
 carrier, menu and dye transaction. Removing an archive keeps stored IDs intact and
 removes its selector entries; unavailable designs display Kansai faces until
@@ -112,14 +111,14 @@ The 100-pixel tile area leaves eight logical pixels at both page edges. Short
 examples occupy one row; full hands continue across the spread, preferring group
 boundaries. Long examples wrap at a minimum tile width of twelve logical pixels.
 Winning tiles, public tiles and meld/flower boundaries retain their markers.
-Ordinary text is paginated in resources, without Patchouli's text shrinking.
+Ordinary text is paginated in resources at a readable size.
 
 ## Mahjong dye items
 
 `MahjongDyeArtwork` draws original 16 by 16 four-ink pouch textures at
 `assets/mchjong/textures/item/mahjong_dye.png`, `creative_mahjong_dye.png`, `red_dora_dye.png` and `undo_dye.png`.
 Gathered folds, a lit cloth edge, a tied cord and a sewn label keep the small silhouettes readable.
-The reusable variant has a purple pouch and brass seal; red dora dye uses a red pouch and ink. All use vanilla
+The reusable variant has a purple pouch and brass seal. Red dora dye uses a red pouch and ink. All use vanilla
 generated-item models and can be replaced independently by resource packs.
 
 ## Tile backs and customization
@@ -142,8 +141,8 @@ Dyed opaque shells use the solid white
 The body uses original neutral relief textures under `textures/tile_material/`:
 `wood.png`, `bone.png`, `quartz.png`, `calcite.png`, `glass.png`, and `amethyst.png`.
 `TileMaterialArtwork` generates original 16 by 16, limited-palette grain, pores,
-chalk veins, stepped glass reflections and crystal facets
-without borrowing game textures; the material component supplies their tint.
+chalk veins, stepped glass reflections and crystal facets.
+The material component supplies their tint.
 Oak, spruce, birch, jungle, acacia, dark oak, mangrove, cherry, bamboo, crimson
 and warped tiles share the wood relief with individual material colors. Cutting
 each wood's planks yields its matching blank tiles. Blank fronts use the same
@@ -152,8 +151,8 @@ World, item and immersive body surfaces use nearest-neighbor sampling to retain
 the pixel clusters independently of the smoothly filtered printed faces.
 The body and the beveled printed and dyed shells meet edge-to-edge without
 internal caps or overlapping side polygons. Their combined surface is closed.
-First-person supplies sit beside the native outstretched hand rather than shifting
-the grip toward the screen center. Tiles are turned to expose their thickness. Their tops
+First-person supplies sit beside the native outstretched hand.
+Tiles are turned to expose their thickness. Their tops
 lean outward like a held sword while the printed faces turn inward toward the
 player. Point sticks follow the same free-end and printed-surface relationship,
 retaining their slender length, width and thickness. Both meshes leave clearance above the hotbar and
@@ -184,10 +183,10 @@ Back presets are ZIP archives in `config/mchjong/presets/backs/` on a client or
 Several back presets can share one ZIP, which contains only back presets.
 The mahjong box's back selector applies
 the chosen preset to its stored tiles independently of dye. Server presets are
-sent to joining players and refreshed for online players; an unavailable ID uses the transparent default pattern.
+sent to joining players and refreshed for online players. An unavailable ID uses the transparent default pattern.
 The built-in back choices are Creeper and Mojang banner marks in a single ink
-color. Their artwork is generated with the mod and is available to every player
-without a preset ZIP. The Creeper mark follows the vanilla face's 8 by 8 pixel
+color. Their artwork is bundled with the mod and available to every player.
+The Creeper mark follows the vanilla face's 8 by 8 pixel
 grid, with uniformly scaled square pixels.
 On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
@@ -199,7 +198,7 @@ client or `config/mchjong/server-presets/sticks/` on a server. Each preset has
 `<namespace>/<name>/preset.toml` and a 384 by 32 transparent
 `<namespace>/<name>/stick.png`. A ZIP can contain several stick presets and no
 other preset category. The manifest defines a display name and cuboid dimensions
-in sixteenths of a block:
+in sixteenths of a block.
 
 ```toml
 name = "Lacquer"
@@ -211,7 +210,7 @@ height = 0.5
 Length must be 8–16, width 0.25–2 and height 0.125–1. Length must be at least
 five times both width and height, keeping the model a long bar. Select a stick
 in MChjong's mod-list Config → Personal presets. The choice is stored in the client's
-TOML settings. Server presets chosen by a player are shown to everyone; a
+TOML settings. Server presets chosen by a player are shown to everyone. A
 client-only choice appears as the default stick to other players. Unavailable
 artwork also uses the default stick.
 The built-in Bamboo, Lightning Rod and End Rod choices use Minecraft's block
@@ -220,14 +219,13 @@ shown to every player when selected.
 
 Concealed tiles and physical rear faces combine the material or dyed shell with
 the independent back pattern. Glass keeps its translucent material below that pattern.
-Front and back geometry is batched by material rather than switching render
-buffers for each tile.
+Front and back geometry shares render buffers batched by material.
 
 ## Table and other resources
 
 Dice use six deterministic 32-pixel textures at `textures/item/dice_1.png`
 through `dice_6.png`, shared by a native cube item model and the central-roll
-tooltip. Warm ivory edge bands and shaded recesses give the pips depth; the single
+tooltip. Warm ivory edge bands and shaded recesses give the pips depth. The single
 pip is larger. Opposite faces sum to seven; ones and fours use red pips.
 
 `assets/mchjong/textures/point_stick/<points>.png` contains six independent
@@ -246,11 +244,11 @@ and `assets/mchjong/textures/item/riichi_stick.png` (384 × 32). The default tex
 is exactly the 1,000-point strip: blue with one white dot. The model uses ordinary
 Minecraft `elements`, face UVs, parents and texture references, so packs can
 replace its geometry and texture. Default bounds are `[2.4,0,7.52]` to
-`[13.6,0.4,8.48]` in model pixels; the table applies the lane scale and orientation.
+`[13.6,0.4,8.48]` in model pixels. The table applies the lane scale and orientation.
 `assets/mchjong/textures/gui/sprites/hud/riichi_stick.png` and `honba_stick.png`
 contain fixed HUD icons copied from the default blue and ivory strips. Minecraft's
-GUI atlas stitches these independent sprites at resource reload. Changing
-point-stick textures or selecting a stick preset does not alter those icons.
+GUI atlas stitches these independent sprites at resource reload.
+These HUD icons use their own resource-pack paths.
 
 Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
@@ -267,10 +265,10 @@ single pattern across the table's whole cloth, its folded item and the immersive
 table. Pattern colors are independent of the dyed fabric beneath; transparent
 pixels preserve the fabric. On world and item cloth, `ClothTexture` composites
 the pattern, dyed weave and border into one opaque texture on resource reload.
-There is one top surface, with no depth-offset pattern polygons. The source
+The cloth has one composited top surface. The source
 pattern remains separate from the repeating `felt.png` used by stool upholstery.
 The block atlas explicitly stitches the wooden particle sprite through
-`assets/minecraft/atlases/blocks.json`; it does not duplicate the runtime textures.
+`assets/minecraft/atlases/blocks.json`.
 The table and stool block models contain opaque cuboids inside their visible meshes.
 These cuboids cast terrain shadows with shader packs while the block entity renderers
 draw the furniture materials and moving tiles.
@@ -280,7 +278,7 @@ Tile inventory icons show a three-dimensional angled view with front lighting.
 bevels and a continuous mitered table rim, with outward normals and consistent
 pixel density of sixteen texels per world block. Coplanar polygons share local-space
 texture coordinates, keeping the grain continuous across subdivided caps.
-Base faces use explicit XY, ZY or XZ coordinates; diagonal walls use fixed
+Base faces use explicit XY, ZY or XZ coordinates. Diagonal walls use fixed
 tangents and bevel slopes keep the adjoining cap projection. Texture direction
 does not change when a box changes aspect ratio.
 Large material clusters, square fasteners, cushion tufts and ventilation slots
@@ -293,18 +291,18 @@ TLM's public layer callbacks to pass both head equipment and the head display sl
 through native HEAD item rendering. A targeted optional mixin excludes furniture
 from TLM's shadow-only block-model path while retaining its skull and other item
 rendering. Both furniture slots preserve wood and dye components, follow the model's
-head locator and share the item transform, without character-specific offsets.
+head locator and share the item transform.
 The stool's GUI icon remains smaller than either table in both projected dimensions. Ordinary tables have framed
-playing surfaces, beveled rails, tapered legs and stretchers; automatic tables
+playing surfaces, beveled rails, tapered legs and stretchers. Automatic tables
 have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
 have tapered wooden legs, stretchers, padded fabric and four tufts, with a
 10/16-block seat height. Their mesh, collision and seat anchor share
-`TableGeometry.STOOL_HEIGHT`; the seated camera remains anchored to the table,
+`TableGeometry.STOOL_HEIGHT`. The seated camera remains anchored to the table,
 while immersive play uses the independent GUI layout.
 The dark wooden case has a fitted
 lid, corner hardware, paired clasps, hinges, a handle and a small tile inlay.
-Folded cloth uses the same woven material as the table. None of this adds block
-IDs. `TableGeometry` defines the 2.875-block frame and 2.625-block playing surface;
+Folded cloth uses the same woven material as the table.
+`TableGeometry` defines the 2.875-block frame and 2.625-block playing surface;
 rails and cloth retain their material density. The 3 by 3 occupancy
 and colliders clipped to the frame remain in the world implementation. Bare panels
 and installed cloth finish at the same playing height.
@@ -314,8 +312,8 @@ backgrounds. All material-aware world and item faces use these engravings. Glass
 additionally uses a sorted alpha-blended pass after opaque backs and table surfaces.
 A custom face resource pack replaces one `tiles/<key>.png` to cover GUI thumbnails
 and world/item rendering.
-Private tile faces are withheld by the server and never resolved by the hidden
-tile mesh. There is no per-tile world entity. `TileMesh.WIDTH`, `HEIGHT` and `DEPTH`
+The server redacts private tile identities, and the hidden tile mesh renders covers.
+Tiles share the table renderer. `TileMesh.WIDTH`, `HEIGHT` and `DEPTH`
 define the physical envelope used by picking and table layout. Wall columns and
 layers touch edge-to-edge; river steps equal the tile width and length, with the
 extra width of a sideways riichi tile accounted for. Called discards still leave

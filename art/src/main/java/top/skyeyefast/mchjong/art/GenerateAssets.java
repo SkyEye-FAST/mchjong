@@ -22,13 +22,11 @@ public final class GenerateAssets {
     private GenerateAssets(Path root) { this.root = root; }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 2) throw new IllegalArgumentException("Expected resource directory and native preset directory");
-        new GenerateAssets(Path.of(args[0])).generate(Path.of(args[1]));
+        if (args.length != 1) throw new IllegalArgumentException("Expected resource directory");
+        new GenerateAssets(Path.of(args[0])).generate();
     }
 
-    private void generate(Path artwork) throws IOException {
-        for (String preset : TileArtwork.PRESETS) tiles(artwork, preset);
-        text("META-INF/licenses/tile-face-presets-NOTICE.md", Files.readString(artwork.resolve("NOTICE.md")));
+    private void generate() throws IOException {
         png("tile/back", TileArtwork.back());
         for (String name : List.of("creeper", "mojang")) {
             png("preset/back/" + name, BuiltinPresetArtwork.back(name));
@@ -90,13 +88,6 @@ public final class GenerateAssets {
               "north":{"texture":"#2","uv":[0,0,16,16]},"south":{"texture":"#5","uv":[0,0,16,16]},
               "east":{"texture":"#3","uv":[0,0,16,16]},"west":{"texture":"#4","uv":[0,0,16,16]}}}]}
             """);
-    }
-
-    private void tiles(Path presets, String preset) throws IOException {
-        text("META-INF/licenses/" + preset + "-source.json", Files.readString(presets.resolve(preset + "/theme_metadata.json")));
-        text("assets/mchjong/tile_face_presets/" + preset + ".json",
-            "{\"tiles\":\"mchjong:tile_faces/" + preset + "/tiles\",\"blank_white_dragon\":"
-                + (preset.equals("kansai") || preset.equals("kanto")) + "}");
     }
 
     private void models() throws IOException {

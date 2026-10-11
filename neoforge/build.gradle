@@ -134,10 +134,7 @@ tasks.register('generatePonder', JavaExec) {
 }
 
 processResources {
-    from(rootProject.file('presets/tile_faces')) {
-        include '*/tiles/*.png'
-        into 'assets/mchjong/textures/tile_faces'
-    }
+    with rootProject.tileFaceResources
     from tasks.named('generatePonder')
     dependsOn ':art:generateData', ':art:generateCreateData', 'generatePonder'
     mustRunAfter ':art:generateAssets'

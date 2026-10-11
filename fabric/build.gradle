@@ -103,10 +103,7 @@ tasks.register('generatePonder', JavaExec) {
 }
 
 processResources {
-    from(rootProject.file('presets/tile_faces')) {
-        include '*/tiles/*.png'
-        into 'assets/mchjong/textures/tile_faces'
-    }
+    with rootProject.tileFaceResources
     from tasks.named('generatePonder')
     dependsOn ':art:generateData', 'generatePonder'
     mustRunAfter ':art:generateAssets'
@@ -135,10 +132,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.named('sourcesJar') {
-    from(rootProject.file('presets/tile_faces')) {
-        include '*/tiles/*.png'
-        into 'assets/mchjong/textures/tile_faces'
-    }
+    with rootProject.tileFaceResources
     dependsOn ':art:generateData'
     mustRunAfter ':art:generateAssets'
     from tasks.named('generatePonder')

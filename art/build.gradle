@@ -27,16 +27,15 @@ tasks.register('renderAssets', JavaExec) {
         if (outputDir.exists() && !outputDir.deleteDir()) {
             throw new GradleException("Could not clean ${outputDir}")
         }
-        args renderedAssets.get().asFile.absolutePath, presetDirectory.absolutePath
+        args renderedAssets.get().asFile.absolutePath
     }
     outputs.dir renderedAssets
     inputs.files sourceSets.main.allSource
-    inputs.files presetSources
     systemProperty 'java.io.tmpdir', renderTemp.get().asFile.absolutePath
     systemProperty 'java.awt.headless', 'true'
 }
 
-// Sync removes retired resources instead of leaving stale atlas cells in the jars.
+// Sync removes retired files from the checked-in resources.
 tasks.register('generateAssets', Sync) {
     dependsOn 'renderAssets'
     from renderedAssets

@@ -103,8 +103,8 @@ class AssetContractTest {
         Set<String> designs = new HashSet<>();
         for (String preset : TileArtwork.PRESETS) {
             Path directory = artwork.resolve(preset + "/tiles");
-            var definition = JsonParser.parseString(Files.readString(resources.resolve("assets/mchjong/tile_face_presets/" + preset + ".json"))).getAsJsonObject();
-            assertEquals(Set.of("tiles", "blank_white_dragon"), definition.keySet());
+            var definition = JsonParser.parseString(Files.readString(artwork.resolve(preset + "/theme_metadata.json"))).getAsJsonObject();
+            assertEquals(preset, definition.get("id").getAsString());
             assertEquals("mchjong:tile_faces/" + preset + "/tiles", definition.get("tiles").getAsString());
             assertEquals(preset.equals("kansai") || preset.equals("kanto"), definition.get("blank_white_dragon").getAsBoolean());
             Set<String> hashes = new HashSet<>();
@@ -125,6 +125,10 @@ class AssetContractTest {
         }
         assertEquals(TileArtwork.PRESETS.size(), designs.size(), "The presets must not render the same ordinary faces");
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile_faces")), "Tile source images must not be stored twice");
+        assertFalse(Files.exists(resources.resolve("assets/mchjong/tile_face_presets")), "Preset definitions must not be stored twice");
+        assertFalse(Files.exists(resources.resolve("META-INF/licenses/tile-face-presets-NOTICE.md")), "Preset notice must not be stored twice");
+        for (String preset : TileArtwork.PRESETS)
+            assertFalse(Files.exists(resources.resolve("META-INF/licenses/" + preset + "-source.json")), "Preset metadata must not be stored twice");
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/edge.png")));
     }
 
@@ -197,18 +201,8 @@ class AssetContractTest {
                     .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())
                     .collect(java.util.stream.Collectors.toSet()), "Only textures referenced at runtime should ship");
         }
-        assertTrue(Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("kanto"));
-        assertFalse(
-                Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("unauthorized"));
-        for (String preset : List.of("sichuan", "taiwan", "fujian")) {
-            String notice = Files.readString(resources.resolve("META-INF/licenses/" + preset + "-source.json"));
-            assertTrue(notice.contains(preset));
-            assertFalse(notice.contains("unauthorized"));
-            JsonObject metadata = JsonParser.parseString(notice).getAsJsonObject();
-            assertFalse(metadata.has("details"), preset + " should not retain details");
-        }
-        assertTrue(Files.readString(resources.resolve("META-INF/licenses/kansai-source.json")).contains("lietxia"));
-        assertTrue(Files.readString(resources.resolve("META-INF/licenses/hong_kong-source.json")).contains("samoheen"));
+        assertTrue(Files.readString(artwork.resolve("kansai/theme_metadata.json")).contains("lietxia"));
+        assertTrue(Files.readString(artwork.resolve("hong_kong/theme_metadata.json")).contains("samoheen"));
     }
 
     @Test
@@ -298,7 +292,7 @@ class AssetContractTest {
     void checkedInResourcesMatchGeneration(@TempDir Path generated) throws Exception {
         Path assets = generated.resolve("assets");
         Path server = generated.resolve("data");
-        GenerateAssets.main(new String[] { assets.toString(), artwork.toString() });
+        GenerateAssets.main(new String[] { assets.toString() });
         assertFalse(Files.exists(assets.resolve("data")), "Artwork must not generate server data");
         GenerateData.main(new String[] { server.toString() });
         assertSameFiles(resources, assets);
