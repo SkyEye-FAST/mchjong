@@ -27,7 +27,6 @@ public final class TaiwanTableScreen extends Screen {
     private TableHand hand;
     private TableBoard board;
     private TableTurnClock turnClock;
-    private final TableHints hints = new TableHints();
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
     private int actionTop, actionHeight;
     public TaiwanTableScreen(BlockPos pos) { this(pos, false); }
@@ -63,7 +62,6 @@ public final class TaiwanTableScreen extends Screen {
     @Override protected void init() { rebuild(); }
 
     private void rebuild() {
-        boolean hintFocused = getFocused() == hints;
         clearWidgets();
         turnClock = null;
         decisionControls.clear();
@@ -74,7 +72,6 @@ public final class TaiwanTableScreen extends Screen {
         shownRevision = view.revision();
         if (decision != game.decision()) {
             decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT;
-            hints.clearPreview();
         }
         hand = null;
         board = immersive() ? new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true) : null;
@@ -85,7 +82,6 @@ public final class TaiwanTableScreen extends Screen {
             hand = new TableHand(tiles, player.drawn(), player.melds(), player.flowers().size(), game.recipient(), TableCanvas.WIDTH, TableCanvas.HEIGHT - 60, 58, true, top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN);
         }
         if (room.exitVote() != null) {
-            hints.clearPreview();
             TableExitControls.voteButtons(pos, room, uiWidth(), uiHeight(), contentScale()).forEach(this::addRenderableWidget);
             return;
         }
@@ -93,7 +89,6 @@ public final class TaiwanTableScreen extends Screen {
         TableToolbar.build(this, pos, room, uiWidth(), immersive(), this::toggleView)
             .forEach(this::addRenderableWidget);
         var choices = new ArrayList<Integer>();
-        if (discardAction(selected) >= 0) choices.add(discardAction(selected));
         for (int i = 0; i < game.actions().size(); i++)
             if (game.actions().get(i).type() != TaiwanAction.Type.DISCARD) choices.add(i);
         var grid = TableActionLayout.of(choices.size(), uiWidth(), uiHeight(), hand == null ? -1 : hand.top(),
@@ -106,9 +101,6 @@ public final class TaiwanTableScreen extends Screen {
             button.active = !pending && !view.paused(); addRenderableWidget(button);
             decisionControls.add(button);
         }
-        addRenderableWidget(hints);
-        updateHints();
-        if (hintFocused && hints.visible) setFocused(hints);
     }
     private void send(TaiwanSession.View snapshot, int index) {
         var current = view();
@@ -132,13 +124,15 @@ public final class TaiwanTableScreen extends Screen {
     }
     private void choose(int tile) {
         if (pending) return;
-        selected = tile; long now = Util.getMillis(); var mode = TableSettings.get().discardMode;
-        if (!MahjongUi.shiftDown() && (mode == TableSettings.DiscardMode.SINGLE_CLICK
-            || mode == TableSettings.DiscardMode.DOUBLE_CLICK && lastClicked == tile && now - lastClickAt <= 450)) {
-            int index = discardAction(tile);
-            if (index >= 0) { send(view(), index); return; }
+        int index = discardAction(tile);
+        if (index < 0) return;
+        long now = Util.getMillis();
+        if (TableSettings.get().discardMode == TableSettings.DiscardMode.SINGLE_CLICK
+            || lastClicked == tile && now - lastClickAt <= 450) send(view(), index);
+        else {
+            selected = lastClicked = tile; lastClickAt = now;
+            rebuild(); setFocused(null);
         }
-        lastClicked = tile; lastClickAt = now; rebuild(); setFocused(null);
     }
     private Component tileLabel(int tile) {
         return table().clientTaiwanDeck().tile(tile).label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ,
@@ -196,9 +190,8 @@ public final class TaiwanTableScreen extends Screen {
                     table().clientTaiwanCloth(), animation, now, tile -> TileMesh.artwork(deck.tile(tile)));
             }
             hovered = transform.contains(mouseX, mouseY) ? pick(mx, my) : Tile.ABSENT;
-            updateHints();
             int s = contentScale();
-            g.pose().pushMatrix(); g.pose().translate(0, 0); g.pose().scale(s, s);
+            g.pose().pushMatrix(); g.pose().translate(0, 0); g.pose().scale(s);
             int w = uiWidth() / s;
             if (view.paused()) g.centeredText(font, Component.translatable("taiwan.mchjong.paused"), w / 2,
                 immersive() ? 183 : 43, MahjongUi.NEGATIVE);
@@ -229,7 +222,6 @@ public final class TaiwanTableScreen extends Screen {
                 g.pose().popMatrix();
             }
             if (hovered >= 0 && table().clientTableRoom().exitVote() == null) g.setTooltipForNextFrame(font, tileLabel(hovered), mx, my);
-            hints.renderPopup(g, font, table().clientTaiwanDeck().preset());
             g.pose().popMatrix();
         } finally { transform.end(g); }
     }
@@ -241,7 +233,8 @@ public final class TaiwanTableScreen extends Screen {
                     .append("  ").append(Component.translatable("taiwan.mchjong.flowers", player.flowers().size()))
                     .append(player.ready() == top.skyeyefast.mchjong.engine.TaiwanWinContext.Ready.NONE ? Component.empty() : Component.literal("\n").append(Component.translatable("taiwan.mchjong.ready")));
             }).toList(),
-            uiWidth(), immersive(), deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
+            uiWidth(), uiHeight(), immersive(), TableHud.exclusions(this, privateHandBounds(), null, board),
+            deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
     }
     private int clockBottom() {
         if (hand != null) return hand.top() - 12;
@@ -262,29 +255,6 @@ public final class TaiwanTableScreen extends Screen {
         if (!Double.isFinite(top) || top >= height || bottom <= 0 || top < 196 && bottom + 90 <= height - 24)
             return height - 24;
         return Math.max(190, Math.min(height - 24, (int) top - 6));
-    }
-    private void updateHints() {
-        var room = table().clientTableRoom();
-        if (!room.convenienceHints() || !room.allowConvenienceHints() || pending || room.exitVote() != null
-            || view().paused() || view().game().recipient() < 0) {
-            hints.clearPreview();
-            return;
-        }
-        int scale = contentScale();
-        var bounds = privateHandBounds();
-        if (bounds == null) { hints.clearPreview(); return; }
-        int center = hand == null ? bounds.left() + bounds.width() / 2 : hand.centerX();
-        int bottom = bounds.top() - 4 * scale;
-        int half = Math.min(center - 8, uiWidth() - 8 - center);
-        for (var widget : decisionControls) if (widget.visible && widget.getY() < bottom
-            && widget.getBottom() > bottom - 100 * scale) {
-            if (widget.getX() > center) half = Math.min(half, widget.getX() - center - 4);
-            else if (widget.getRight() < center) half = Math.min(half, center - widget.getRight() - 4);
-        }
-        int focus = hovered;
-        hints.update(view().game(), focus, selected, font, center, bottom, Math.max(0, half), 38, scale);
-        hints.setX(uiWidth() - 30 * scale);
-        hints.setY(uiHeight() - 16 * scale);
     }
 
     private net.minecraft.client.gui.navigation.ScreenRectangle privateHandBounds() {
@@ -315,7 +285,7 @@ public final class TaiwanTableScreen extends Screen {
     private void toggleView() { presentation.toggle(); rebuild(); }
     public void resetView() { presentation.reset(); }
     @Override public void tick() { presentation.tick(); }
-    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; hints.clearPreview(); rebuild(); }
+    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; rebuild(); }
     @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
         double x = event.x(), y = event.y(); int button = event.button();
         if (!canvas().contains(x, y)) return false;
@@ -364,7 +334,7 @@ public final class TaiwanTableScreen extends Screen {
         @Override protected void extractContents(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             renderSurface(g);
             int s = contentScale(), icons = TableSettings.get().actionTiles ? action.tiles().size() * 10 : 0;
-            g.pose().pushMatrix(); g.pose().translate(getX() + 4, getY() + 4 * s); g.pose().scale(s, s);
+            g.pose().pushMatrix(); g.pose().translate(getX() + 4, getY() + 4 * s); g.pose().scale(s);
             int textWidth = width / s - icons - 8;
             MahjongUi.text(g, font, getMessage(), 0, 5, textWidth, captionColor(), false);
             var deck = table().clientTaiwanDeck();

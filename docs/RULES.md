@@ -64,7 +64,30 @@ You can still win by tsumo while in furiten. The red furiten badge on screen alw
 
 Online riichi needs 1,000 points and at least four live tiles (three in sanma). M.League and JPML A need one live tile. WRC allows zero. Competition presets do not require 1,000 points already in hand.
 
-Temporary furiten clears on your next draw. Riichi kans must keep your waits; see Preset Differences for further restrictions.
+Temporary furiten clearance depends on two independent options. **Own Draw Clears
+Temporary Furiten** clears it on the affected player's next draw when enabled, or
+on that player's discard following a draw when disabled. **Own Calls Clear
+Temporary Furiten** additionally clears it on that player's chi, pon or open kan.
+Another player's call never clears it. Neither option clears discard furiten or
+post-riichi furiten. A discard after chi or pon is not a draw-and-discard turn.
+
+| Preset | Own draw | Own chi, pon or open kan |
+| --- | --- | --- |
+| Mahjong Soul, four or three players | Clears temporary furiten | Does not clear it |
+| Tenhou, four or three players | Clears on the following discard | Does not clear it |
+| M.League | Clears on the following discard | Does not clear it |
+| JPML A | Clears on the following discard | Does not clear it |
+| WRC | Clears temporary furiten | Clears temporary furiten |
+
+The [Mahjong Soul FAQ](https://mahjongsoul.com/faq) specifies the next own draw.
+The [Tenhou manual](https://tenhou.net/man/) specifies discard-time clearance and
+excludes reverse-order calls. [M.League rules](https://m-league.jp/about/),
+chapter 5, section 5, require completion of the player's draw-and-discard turn.
+[WRC 2025 rules](https://www.worldriichi.org/wrc-rules), section 8.11.2, allow the
+player's next draw or call. The [JPML published rules](https://www.ma-jan.or.jp/activity/game_rule.html)
+prohibit same-turn win selection but do not specify the action that ends it.
+The JPML A preset retains draw-and-discard clearance on that unresolved timing point.
+Riichi kans must keep the winning tile types; see Preset Differences for further restrictions.
 
 ### Fu, points and dora
 
@@ -94,25 +117,41 @@ Sanma uses 108 tiles by removing `2m`–`8m`, and its legal calls are Pon and Ka
 
 Keep North as an ordinary tile or extract it for a replacement and one bonus han. Extraction keeps the hand closed but supplies no yaku. 1m and 9m indicate each other as dora.
 
-North extraction interrupts ippatsu and can be won by an eligible opponent. Its replacement alone is not Rinshan; extractions share replacement capacity with kans.
+North extraction interrupts ippatsu and can be won by an eligible opponent.
+In the Mahjong Soul and Tenhou three-player presets, winning on its replacement
+counts as Rinshan Kaihou. Extractions share replacement capacity with kans.
+The [Tenhou manual](https://tenhou.net/man/) describes the replacement after an
+added kan or North extraction as a rinshan draw. North extraction does not declare
+a kan, so its following discard does not qualify for Kanburi. Ron on the extracted
+North does not award Chankan. The engine tracks replacement-draw eligibility and
+kan provenance separately, including across saved games.
 
 Tsumo charges the two present opponents their usual four-player shares. The absent player's share remains unpaid. For a nondealer mangan, the dealer pays 4,000 points and the other opponent pays 2,000 points. The noten payment pool is 2,000 points.
 
 ### Preset options and custom rules
 
-The lobby's Mahjong Soul, Tenhou, M.League, JPML A and WRC choices are presets.
-Open **Table rules** for three sections: **Preset options**, **Rule details** and
-**Custom rules**. Mahjong Soul and Tenhou allow open tanyao, no/three/four red
-fives, a one/two/four-yaku-han minimum and East-only or East–South matches within
-the named preset. The defaults are one han and East–South. Changing those options retains the preset label;
-changing other settings marks the rules as custom. Switching presets retains
-supported table options and loads the remaining defaults. Rule details show all
-current draft values, including enabled and disabled features, without editing.
-Six paginated categories cover points/ranks, placement, scoring, match flow,
-riichi/calls and responsibility payments. Apply commits the
-draft. Cancel leaves the table unchanged. Reload discards the draft and reads the
-current server settings. Only the seated host may apply rules in the lobby, and
-all players must ready again after a change. Stale decisions are rejected.
+Open **Match Rules** from the lobby's Match Settings or Settings → Room. Riichi
+rules use six fixed categories: Basic Settings, Points and Ranking, Win Scoring,
+Match Progress, Riichi and Calls, and Liability Payments. Every player can inspect
+the same categories. The host edits a local draft before play and submits it with
+**Apply Rules**. A server acknowledgement confirms the change and clears readiness.
+Rejected applications retain the draft. **Cancel** abandons unsent edits, while
+**Reload** in changed-room feedback replaces the draft with current server rules.
+
+Basic Settings contains player count, **Choose Rule Preset** and the supported
+basic options. Mahjong Soul and Tenhou permit open tanyao, no/three/four red fives,
+a one/two/four-yaku-han minimum and East-only or East–South matches within the named
+preset, including when world policy disables custom rules. Their defaults are one
+han and East–South. Other rule changes and award selection require custom-rule
+permission. Custom status is derived from the complete draft.
+
+A different Riichi preset retains its supported basic options and restores fixed
+details and awards to its defaults. Reselecting the current preset preserves all
+edits; **Restore Preset Defaults** is a separate action. Changing player count uses
+the same preset family when it supports that count, otherwise it opens the available
+presets for the target count. Canceling the choice retains the original draft.
+Count changes require gathering and sufficient free seats and stock. Help, award
+selection, category changes, pagination and resizing retain unfinished input.
 
 Point fields use raw points in increments of 100. A placement bonus of 15000 means
 +15.0 in the final standings. Starting points, return points and extension target
@@ -141,8 +180,7 @@ extension adds at most one further wind (South or West). Dealer repeats retain
 priority over another player's reaching the target. Starting points, return
 points and placement bonuses do not change with match length.
 
-**End on bankruptcy** is editable in **Custom rules → Match flow**, and appears
-in the preset overview. Mahjong Soul and Tenhou enable it. M.League, JPML A and
+**End on bankruptcy** is editable in **Match Progress** with custom-rule permission. Mahjong Soul and Tenhou enable it. M.League, JPML A and
 WRC disable it. The check is strictly below zero, after hand settlement: zero
 points remain playable and negative scores remain recorded. Changing this switch
 away from its preset default marks the rules as custom.
@@ -391,7 +429,7 @@ awards. MCR and Sichuan mahjong do not support custom award sets.
 | White dragon | 1 han | A White dragon pung/kan; open allowed. Little Three Dragons also adds its two dragon yaku. | `555z` |
 | Green dragon | 1 han | A Green dragon pung/kan; open allowed. Little Three Dragons also adds its two dragon yaku. | `666z` |
 | Red dragon | 1 han | A Red dragon pung/kan; open allowed. Little Three Dragons also adds its two dragon yaku. | `777z` |
-| Rinshan kaihou | 1 han | Self-draw a kan replacement; open allowed. North replacement alone is not Rinshan. | `23s + 1s` |
+| Rinshan kaihou | 1 han | Self-draw a kan replacement; open allowed. North replacements also qualify in the Mahjong Soul and Tenhou three-player presets. | `23s + 1s` |
 | Chankan | 1 han | Ron on another player’s added-kan tile; open allowed. Kokushi has a separate concealed-kan exception. | `23s + 1s` |
 | Haitei raoyue | 1 han | Self-draw the last ordinary live-wall tile; open allowed. A replacement is not Haitei. | `23s + 1s` |
 | Houtei raoyui | 1 han | Ron on the discard after the last ordinary draw; open allowed. | `23s + 1s` |
@@ -454,7 +492,7 @@ Keep drawing, discarding, and calling. The restriction clears next hand. A Win b
 
 On self-draw, each opponent pays eight plus the total hand score. On a discard, the discarder pays that amount and the other two pay eight each.
 
-For an eight-point hand with two flowers, self-draw collects eighteen points from each opponent, for fifty-four points in total. A discard win collects eighteen points from the discarder and eight points from each other opponent, for thirty-four points in total. Payments use fan points directly.
+For an eight-point hand with two flowers, self-draw collects eighteen points from each opponent, for fifty-four points in total. A discard win collects eighteen points from the discarder and eight points from each other opponent, for thirty-four points in total. Payments use the scoring total in points directly.
 
 Start at zero and play sixteen hands across East, South, West, and North. The dealer moves after every hand, even a dealer win or draw. Exhaustion has no ready payment; earlier wrong-win penalties remain.
 
@@ -474,7 +512,7 @@ Add compatible fans, but do not rescore parts included in a larger fan or rearra
 
 Mixed Triple Chow does not also give Mixed Double Chows; Pure Straight does not add its Short Straight or terminal-chow pair. Choose the best scoring interpretation, not their sum.
 
-Index numbers are fan values. Ordinary patterns allow open groups unless stated closed. Examples may show only the relevant groups. Complete the hand and meet the stated circumstances.
+Index numbers are pattern values in points. Ordinary patterns allow open groups unless stated closed. Examples may show only the relevant groups. Complete the hand and meet the stated circumstances.
 
 Examples use `m`, `p` and `s` for characters, circles and bamboo. Honors `1z`–`7z` represent East, South, West, North, White, Green and Red, and `q` denotes flowers. Three Kongs and Four Kongs may add awards for their concealed portions, subject to the kong-award exclusions. Two Concealed Kongs adds eight points, and the mixed concealed/exposed two-kong combination adds six points.
 
@@ -482,93 +520,93 @@ Examples use `m`, `p` and `s` for characters, circles and bamboo. Honors `1z`–
 
 | Award | Value | Conditions and combinations | Example |
 | --- | --- | --- | --- |
-| Big Four Winds | 88 fan | Four wind pungs or kongs. Do not add Three Winds, individual wind awards, terminal/honor pungs, or All Pungs. | `111z 222z 333z 444z 55m` |
-| Big Three Dragons | 88 fan | Pungs or kongs of all three dragons; no Two Dragon Pungs or individual Dragon Pung. | `555z 666z 777z 123m 22p` |
-| All Green | 88 fan | Use only 2, 3, 4, 6, 8 bamboo and Green. Full or Half Flush may also count. | `234s 234s 666s 888s 66z` |
-| Nine Gates | 88 fan | Closed 1112345678999 in one suit, winning any tile of it. No Full Flush or Concealed Hand; self-draw adds Fully Concealed Hand. | `1112345678999m + 5m` |
-| Four Kongs | 88 fan | Four kongs and a pair; no Single Wait. Concealed portions can add concealed-kong or concealed-pung awards. | `1111m 3333p 5555s 7777z 22m` |
-| Seven Shifted Pairs | 88 fan | Closed seven consecutive pairs in one suit. No Seven Pairs, Full Flush, Concealed Hand, or Single Wait; self-draw adds Fully Concealed Hand. | `11223344556677m` |
-| Thirteen Orphans | 88 fan | Closed: all thirteen terminal/honor kinds and a duplicate of one. Self-draw adds Fully Concealed Hand. | `19m 19p 19s 1234567z + 1m` |
-| All Terminals | 64 fan | Only ones and nines. No All Pungs, Outside Hand, terminal pungs, or No Honors. Independent Double Pungs may add. | `111m 999m 111p 999s 99p` |
-| Little Four Winds | 64 fan | Three wind pungs/kongs and a pair of the fourth. No Three Winds or constituent honor-pung points. | `111z 222z 333z 44z 123m` |
-| Little Three Dragons | 64 fan | Two dragon pungs/kongs and a pair of the third. No Two Dragon Pungs or Dragon Pung. | `555z 666z 77z 123m 456p` |
-| All Honors | 64 fan | Only honors. No All Pungs, Outside Hand, terminal/honor pungs, or One Voided Suit. | `111z 222z 555z 666z 77z` |
-| Four Concealed Pungs | 64 fan | Four concealed pungs/kongs. A pung completed by discard is exposed. No All Pungs or Concealed Hand; self-draw adds Fully Concealed Hand. | `111m 333p 555s 777z 22m` |
-| Pure Terminal Chows | 64 fan | Two 123s, two 789s, and a pair of fives in one suit. No Full Flush, All Chows, Pure Double Chow, terminal-chow pairs, or No Honors. | `123m 123m 789m 789m 55m` |
-| Quadruple Chow | 48 fan | Four identical chows in one suit. Do not split into Triple Chow, Double Chows, or Tile Hogs. | `123m 123m 123m 123m 55p` |
-| Four Pure Shifted Pungs | 48 fan | Four consecutive pungs in one suit. No Three Shifted Pungs or All Pungs. | `222m 333m 444m 555m 66p` |
-| Four Pure Shifted Chows | 32 fan | Four chows of one suit shifted consistently by one or two. Do not rescore their three-chow subsets. | `123m 345m 567m 789m 55p` |
-| Three Kongs | 32 fan | Three kongs. Add 2 for one concealed kong, 8 for two, or concealed-pung awards for three concealed kongs. | `1111m 3333p 5555s 123p 77z` |
-| All Terminals And Honors | 32 fan | Only terminals and honors. No All Pungs, Outside Hand, or terminal/honor-pung points. | `111m 999p 111z 555z 99s` |
-| Seven Pairs | 24 fan | Closed seven pairs; four identical tiles can be two pairs and score Tile Hog. No Concealed Hand or Single Wait; self-draw adds Fully Concealed Hand. | `11m 33m 55p 77p 22s 44s 66z` |
-| Greater Honors And Knitted Tiles | 24 fan | All seven honors plus seven distinct tiles from a three-suit 147/258/369 pattern. Closed; no Lesser Knitted Honors, All Types, or Concealed Hand. | `147m 258p 3s 1234567z` |
-| All Even Pungs | 24 fan | Pungs/kongs and pair of even numbered tiles only. No All Pungs, All Simples, or No Honors. | `222m 444p 666s 888m 22p` |
-| Full Flush | 24 fan | One numbered suit only; no honors. Do not add One Voided Suit or No Honors. | `123m 345m 678m 999m 22m` |
-| Pure Triple Chow | 24 fan | Three identical chows in one suit. Do not also count their Shifted Pungs or Double Chow interpretations. | `123m 123m 123m` |
-| Pure Shifted Pungs | 24 fan | Three consecutive pungs in one suit. Do not also count a Triple Chow interpretation of those tiles. | `333m 444m 555m` |
-| Upper Tiles | 24 fan | Only sevens, eights, and nines; no Upper Four or No Honors. | `789m 789p 789s 777m 99p` |
-| Middle Tiles | 24 fan | Only fours, fives, and sixes; no All Simples or No Honors. | `456m 456p 456s 444m 66p` |
-| Lower Tiles | 24 fan | Only ones, twos, and threes; no Lower Four or No Honors. | `123m 123p 123s 111m 33p` |
+| Big Four Winds | 88 points | Four wind pungs or kongs. Do not add Three Winds, individual wind awards, terminal/honor pungs, or All Pungs. | `111z 222z 333z 444z 55m` |
+| Big Three Dragons | 88 points | Pungs or kongs of all three dragons; no Two Dragon Pungs or individual Dragon Pung. | `555z 666z 777z 123m 22p` |
+| All Green | 88 points | Use only 2, 3, 4, 6, 8 bamboo and Green. Full or Half Flush may also count. | `234s 234s 666s 888s 66z` |
+| Nine Gates | 88 points | Closed 1112345678999 in one suit, winning any tile of it. No Full Flush or Concealed Hand; self-draw adds Fully Concealed Hand. | `1112345678999m + 5m` |
+| Four Kongs | 88 points | Four kongs and a pair; no Single Wait. Concealed portions can add concealed-kong or concealed-pung awards. | `1111m 3333p 5555s 7777z 22m` |
+| Seven Shifted Pairs | 88 points | Closed seven consecutive pairs in one suit. No Seven Pairs, Full Flush, Concealed Hand, or Single Wait; self-draw adds Fully Concealed Hand. | `11223344556677m` |
+| Thirteen Orphans | 88 points | Closed: all thirteen terminal/honor kinds and a duplicate of one. Self-draw adds Fully Concealed Hand. | `19m 19p 19s 1234567z + 1m` |
+| All Terminals | 64 points | Only ones and nines. No All Pungs, Outside Hand, terminal pungs, or No Honors. Independent Double Pungs may add. | `111m 999m 111p 999s 99p` |
+| Little Four Winds | 64 points | Three wind pungs/kongs and a pair of the fourth. No Three Winds or constituent honor-pung points. | `111z 222z 333z 44z 123m` |
+| Little Three Dragons | 64 points | Two dragon pungs/kongs and a pair of the third. No Two Dragon Pungs or Dragon Pung. | `555z 666z 77z 123m 456p` |
+| All Honors | 64 points | Only honors. No All Pungs, Outside Hand, terminal/honor pungs, or One Voided Suit. | `111z 222z 555z 666z 77z` |
+| Four Concealed Pungs | 64 points | Four concealed pungs/kongs. A pung completed by discard is exposed. No All Pungs or Concealed Hand; self-draw adds Fully Concealed Hand. | `111m 333p 555s 777z 22m` |
+| Pure Terminal Chows | 64 points | Two 123s, two 789s, and a pair of fives in one suit. No Full Flush, All Chows, Pure Double Chow, terminal-chow pairs, or No Honors. | `123m 123m 789m 789m 55m` |
+| Quadruple Chow | 48 points | Four identical chows in one suit. Do not split into Triple Chow, Double Chows, or Tile Hogs. | `123m 123m 123m 123m 55p` |
+| Four Pure Shifted Pungs | 48 points | Four consecutive pungs in one suit. No Three Shifted Pungs or All Pungs. | `222m 333m 444m 555m 66p` |
+| Four Pure Shifted Chows | 32 points | Four chows of one suit shifted consistently by one or two. Do not rescore their three-chow subsets. | `123m 345m 567m 789m 55p` |
+| Three Kongs | 32 points | Three kongs. Add 2 for one concealed kong, 8 for two, or concealed-pung awards for three concealed kongs. | `1111m 3333p 5555s 123p 77z` |
+| All Terminals And Honors | 32 points | Only terminals and honors. No All Pungs, Outside Hand, or terminal/honor-pung points. | `111m 999p 111z 555z 99s` |
+| Seven Pairs | 24 points | Closed seven pairs; four identical tiles can be two pairs and score Tile Hog. No Concealed Hand or Single Wait; self-draw adds Fully Concealed Hand. | `11m 33m 55p 77p 22s 44s 66z` |
+| Greater Honors And Knitted Tiles | 24 points | All seven honors plus seven distinct tiles from a three-suit 147/258/369 pattern. Closed; no Lesser Knitted Honors, All Types, or Concealed Hand. | `147m 258p 3s 1234567z` |
+| All Even Pungs | 24 points | Pungs/kongs and pair of even numbered tiles only. No All Pungs, All Simples, or No Honors. | `222m 444p 666s 888m 22p` |
+| Full Flush | 24 points | One numbered suit only; no honors. Do not add One Voided Suit or No Honors. | `123m 345m 678m 999m 22m` |
+| Pure Triple Chow | 24 points | Three identical chows in one suit. Do not also count their Shifted Pungs or Double Chow interpretations. | `123m 123m 123m` |
+| Pure Shifted Pungs | 24 points | Three consecutive pungs in one suit. Do not also count a Triple Chow interpretation of those tiles. | `333m 444m 555m` |
+| Upper Tiles | 24 points | Only sevens, eights, and nines; no Upper Four or No Honors. | `789m 789p 789s 777m 99p` |
+| Middle Tiles | 24 points | Only fours, fives, and sixes; no All Simples or No Honors. | `456m 456p 456s 444m 66p` |
+| Lower Tiles | 24 points | Only ones, twos, and threes; no Lower Four or No Honors. | `123m 123p 123s 111m 33p` |
 
 | Award | Value | Conditions and combinations | Example |
 | --- | --- | --- | --- |
-| Pure Straight | 16 fan | 123, 456, and 789 in one suit. Do not rescore their Short Straight or Two Terminal Chows subsets. | `123m 456m 789m` |
-| Three-Suited Terminal Chows | 16 fan | 123 and 789 in each of two suits, with fives of the third as pair. No All Chows, Mixed Double Chow, terminal-chow pairs, or No Honors. | `123m 789m 123p 789p 55s` |
-| Pure Shifted Chows | 16 fan | Three chows in one suit shifted consistently by one or two. | `123m 234m 345m` |
-| All Fives | 16 fan | Every group and the pair contains a five. No All Simples or No Honors. | `345m 456m 567p 555s 55p` |
-| Triple Pung | 16 fan | Pungs/kongs of one rank in all three suits. Do not split into Double Pungs. | `333m 333p 333s` |
-| Three Concealed Pungs | 16 fan | Three concealed pungs/kongs. A discard-completed pung is exposed; no Two Concealed Pungs. | `222m 555p 888s` |
-| Lesser Honors And Knitted Tiles | 12 fan | Closed fourteen distinct tiles from three-suit 147/258/369 and honors. If all nine suited tiles are present, add Knitted Straight; self-draw adds Fully Concealed Hand. | `147m 258p 369s 12345z` |
-| Knitted Straight | 12 fan | Nine tiles: 147, 258, 369 in different suits, plus a group and pair. Only the extra group may be open. Do not split the knitted body for other fans. | `147m 258p 369s 111z 55z` |
-| Upper Four | 12 fan | Only six through nine; no No Honors. If only seven through nine, score Upper Tiles instead. | `678m 789p 666s 888p 99m` |
-| Lower Four | 12 fan | Only one through four; no No Honors. If only one through three, score Lower Tiles instead. | `123m 234p 111s 333p 44m` |
-| Big Three Winds | 12 fan | Three wind pungs/kongs. No constituent honor-pung points; matching round and seat winds may add. | `111z 222z 333z` |
-| Mixed Straight | 8 fan | 123, 456, and 789 in three different suits. | `123m 456p 789s` |
-| Reversible Tiles | 8 fan | Only reversible faces: 1234589 circles, 245689 bamboo, and White. No One Voided Suit. | `123p 456s 888p 999s 55z` |
-| Mixed Triple Chow | 8 fan | One identical-rank chow in each suit. Do not split into Mixed Double Chows. | `123m 123p 123s` |
-| Mixed Shifted Pungs | 8 fan | Three pungs in different suits with consecutive ranks. | `333m 444p 555s` |
-| Chicken Hand | 8 fan | No other non-flower fan. Example: open, ordinary ron on 6p, with no last-copy bonus. Flowers still add. | `123m 456p 678s 222s 44z` |
-| Last Tile Draw | 8 fan | Self-draw the last wall tile. Do not add Self Drawn. | `23m + 1m` |
-| Last Tile Claim | 8 fan | Win the discard after the last draw. This differs from Last Tile, the final copy of a kind. | `23m + 1m` |
-| Out With Replacement Tile | 8 fan | Win a kong replacement by self-draw; no Self Drawn. Flower replacement alone does not qualify. | `23m + 1m` |
-| Robbing The Kong | 8 fan | Win another player’s added-kong tile. Do not add Last Tile. | `23m + 1m` |
-| All Pungs | 6 fan | Four pungs/kongs and a pair; open allowed. Higher containing patterns may exclude it. | `111m 333p 555s 777z 22m` |
-| Half Flush | 6 fan | One numbered suit plus honors; no One Voided Suit. | `123m 456m 789m 555z 22m` |
-| Mixed Shifted Chows | 6 fan | Three chows in different suits, shifted by one. | `123m 234p 345s` |
-| All Types | 6 fan | Include all three suits, a wind, and a dragon. | `123m 456p 789s 111z 55z` |
-| Melded Hand | 6 fan | All four groups exposed, then win the pair on a discard. No Single Wait. | `123m 456p 789s 111z / 5z + 5z` |
-| Two Concealed Kongs | 8 fan | Two concealed kongs score eight, not six. Do not add their individual kongs or Two Concealed Pungs. | `1111m 5555p` |
-| Two Dragon Pungs | 6 fan | Two dragon pungs/kongs; no individual Dragon Pung awards. | `555z 666z` |
+| Pure Straight | 16 points | 123, 456, and 789 in one suit. Do not rescore their Short Straight or Two Terminal Chows subsets. | `123m 456m 789m` |
+| Three-Suited Terminal Chows | 16 points | 123 and 789 in each of two suits, with fives of the third as pair. No All Chows, Mixed Double Chow, terminal-chow pairs, or No Honors. | `123m 789m 123p 789p 55s` |
+| Pure Shifted Chows | 16 points | Three chows in one suit shifted consistently by one or two. | `123m 234m 345m` |
+| All Fives | 16 points | Every group and the pair contains a five. No All Simples or No Honors. | `345m 456m 567p 555s 55p` |
+| Triple Pung | 16 points | Pungs/kongs of one rank in all three suits. Do not split into Double Pungs. | `333m 333p 333s` |
+| Three Concealed Pungs | 16 points | Three concealed pungs/kongs. A discard-completed pung is exposed; no Two Concealed Pungs. | `222m 555p 888s` |
+| Lesser Honors And Knitted Tiles | 12 points | Closed fourteen distinct tiles from three-suit 147/258/369 and honors. If all nine suited tiles are present, add Knitted Straight; self-draw adds Fully Concealed Hand. | `147m 258p 369s 12345z` |
+| Knitted Straight | 12 points | Nine tiles: 147, 258, 369 in different suits, plus a group and pair. Only the extra group may be open. Do not split the knitted body for other fans. | `147m 258p 369s 111z 55z` |
+| Upper Four | 12 points | Only six through nine; no No Honors. If only seven through nine, score Upper Tiles instead. | `678m 789p 666s 888p 99m` |
+| Lower Four | 12 points | Only one through four; no No Honors. If only one through three, score Lower Tiles instead. | `123m 234p 111s 333p 44m` |
+| Big Three Winds | 12 points | Three wind pungs/kongs. No constituent honor-pung points; matching round and seat winds may add. | `111z 222z 333z` |
+| Mixed Straight | 8 points | 123, 456, and 789 in three different suits. | `123m 456p 789s` |
+| Reversible Tiles | 8 points | Only reversible faces: 1234589 circles, 245689 bamboo, and White. No One Voided Suit. | `123p 456s 888p 999s 55z` |
+| Mixed Triple Chow | 8 points | One identical-rank chow in each suit. Do not split into Mixed Double Chows. | `123m 123p 123s` |
+| Mixed Shifted Pungs | 8 points | Three pungs in different suits with consecutive ranks. | `333m 444p 555s` |
+| Chicken Hand | 8 points | No other non-flower fan. Example: open, ordinary ron on 6p, with no last-copy bonus. Flowers still add. | `123m 456p 678s 222s 44z` |
+| Last Tile Draw | 8 points | Self-draw the last wall tile. Do not add Self Drawn. | `23m + 1m` |
+| Last Tile Claim | 8 points | Win the discard after the last draw. This differs from Last Tile, the final copy of a kind. | `23m + 1m` |
+| Out With Replacement Tile | 8 points | Win a kong replacement by self-draw; no Self Drawn. Flower replacement alone does not qualify. | `23m + 1m` |
+| Robbing The Kong | 8 points | Win another player’s added-kong tile. Do not add Last Tile. | `23m + 1m` |
+| All Pungs | 6 points | Four pungs/kongs and a pair; open allowed. Higher containing patterns may exclude it. | `111m 333p 555s 777z 22m` |
+| Half Flush | 6 points | One numbered suit plus honors; no One Voided Suit. | `123m 456m 789m 555z 22m` |
+| Mixed Shifted Chows | 6 points | Three chows in different suits, shifted by one. | `123m 234p 345s` |
+| All Types | 6 points | Include all three suits, a wind, and a dragon. | `123m 456p 789s 111z 55z` |
+| Melded Hand | 6 points | All four groups exposed, then win the pair on a discard. No Single Wait. | `123m 456p 789s 111z / 5z + 5z` |
+| Two Concealed Kongs | 8 points | Two concealed kongs score eight, not six. Do not add their individual kongs or Two Concealed Pungs. | `1111m 5555p` |
+| Two Dragon Pungs | 6 points | Two dragon pungs/kongs; no individual Dragon Pung awards. | `555z 666z` |
 
 | Award | Value | Conditions and combinations | Example |
 | --- | --- | --- | --- |
-| Outside Hand | 4 fan | Every group and the pair contains a terminal or honor; open allowed. | `123m 789p 111s 555z 11z` |
-| Fully Concealed Hand | 4 fan | Self-draw without exposed calls. Concealed kongs allowed. No Concealed Hand or Self Drawn. | `123m 456p 789s 222m 55p` |
-| Two Melded Kongs | 4 fan | Two exposed kongs score four. One exposed plus one concealed is the six-point case of this fan. Neither adds individual kong points. | `1111m 5555p` |
-| Last Tile | 4 fan | Win the fourth copy when three were already public. Opponent concealed tiles and the hidden wall do not count. | `23m + 1m; 1m 1m 1m` |
-| Dragon Pung | 2 fan | A dragon pung/kong; excluded when covered by Two Dragons or Big/Little Three Dragons. | `777z` |
-| Prevalent Wind | 2 fan | A round-wind pung/kong. Seat Wind may also count. Do not add an honor-pung point. | `111z` |
-| Seat Wind | 2 fan | A seat-wind pung/kong. Combines with Round Wind when both match. | `222z` |
-| Concealed Hand | 2 fan | Win on a discard without exposed calls. Concealed kongs allowed. Self-draw instead scores Fully Concealed Hand. | `123m 456p 789s 222m 55p` |
-| All Chows | 2 fan | Four chows and a suited pair; open allowed. No No Honors. Unlike Riichi Pinfu, a two-sided wait is not required. | `123m 456p 789s 234m 55p` |
-| Tile Hog | 2 fan | All four copies of one kind used without declaring a kong; once per kind. | `111m 123m` |
-| Double Pung | 2 fan | Same-rank pungs/kongs in two suits; not a subset already used by Triple Pung. | `333m 333p` |
-| Two Concealed Pungs | 2 fan | Two concealed pungs/kongs. A discard-completed pung is not concealed. | `222m 555p` |
-| Concealed Kong | 2 fan | Declare four owned copies as a concealed kong; not also a Melded Kong. | `1111m` |
-| All Simples | 2 fan | Only suited twos through eights; open allowed. No No Honors. | `234m 456p 678s 222m 55p` |
-| Pure Double Chow | 1 fan | Two identical chows in one suit. Do not rescore a subset of a higher chow combination. | `123m 123m` |
-| Mixed Double Chow | 1 fan | Same-rank chows in two suits; no repeated subset of a higher combination. | `123m 123p` |
-| Short Straight | 1 fan | Two chows forming six consecutive ranks of one suit. | `123m 456m` |
-| Two Terminal Chows | 1 fan | 123 and 789 in the same suit. | `123m 789m` |
-| Pung Of Terminals Or Honors | 1 fan | A terminal or non-value wind pung/kong. Dragons score Dragon Pung instead. Do not double count. | `111m` |
-| Melded Kong | 1 fan | A discard or added kong. Do not rescore individual kongs already counted in multi-kong fans. | `1111m` |
-| One Voided Suit | 1 fan | One numbered suit is absent. Flushes and other containing fans may exclude it. | `123m 456m 789p 111z 55p` |
-| No Honors | 1 fan | No honors; excluded when already covered by All Chows, All Simples, Full Flush, and similar fans. | `123m 456p 789s 222m 55p` |
-| Edge Wait | 1 fan | Only waiting on 3 of 123 or 7 of 789. No other winning kind. Choose only one wait fan. | `12m + 3m` |
-| Closed Wait | 1 fan | Only waiting on the middle tile of a chow; not combined with other wait fans. | `13m + 2m` |
-| Single Wait | 1 fan | Only waiting to complete the pair. Melded Hand, Four Kongs, Seven Pairs, and similar forms exclude it. | `5p + 5p` |
-| Self-Drawn | 1 fan | Draw your winning tile. Fully Concealed Hand, Last Tile Draw, or Replacement Win excludes this point. | `23m + 1m` |
-| Flower Tiles | 1 fan | One point per revealed flower, added only after meeting the eight non-flower minimum. | `1q 2q` |
+| Outside Hand | 4 points | Every group and the pair contains a terminal or honor; open allowed. | `123m 789p 111s 555z 11z` |
+| Fully Concealed Hand | 4 points | Self-draw without exposed calls. Concealed kongs allowed. No Concealed Hand or Self Drawn. | `123m 456p 789s 222m 55p` |
+| Two Melded Kongs | 4 points | Two exposed kongs score four. One exposed plus one concealed is the six-point case of this fan. Neither adds individual kong points. | `1111m 5555p` |
+| Last Tile | 4 points | Win the fourth copy when three were already public. Opponent concealed tiles and the hidden wall do not count. | `23m + 1m; 1m 1m 1m` |
+| Dragon Pung | 2 points | A dragon pung/kong; excluded when covered by Two Dragons or Big/Little Three Dragons. | `777z` |
+| Prevalent Wind | 2 points | A round-wind pung/kong. Seat Wind may also count. Do not add an honor-pung point. | `111z` |
+| Seat Wind | 2 points | A seat-wind pung/kong. Combines with Round Wind when both match. | `222z` |
+| Concealed Hand | 2 points | Win on a discard without exposed calls. Concealed kongs allowed. Self-draw instead scores Fully Concealed Hand. | `123m 456p 789s 222m 55p` |
+| All Chows | 2 points | Four chows and a suited pair; open allowed. No No Honors. Unlike Riichi Pinfu, a two-sided wait is not required. | `123m 456p 789s 234m 55p` |
+| Tile Hog | 2 points | All four copies of one kind used without declaring a kong; once per kind. | `111m 123m` |
+| Double Pung | 2 points | Same-rank pungs/kongs in two suits; not a subset already used by Triple Pung. | `333m 333p` |
+| Two Concealed Pungs | 2 points | Two concealed pungs/kongs. A discard-completed pung is not concealed. | `222m 555p` |
+| Concealed Kong | 2 points | Declare four owned copies as a concealed kong; not also a Melded Kong. | `1111m` |
+| All Simples | 2 points | Only suited twos through eights; open allowed. No No Honors. | `234m 456p 678s 222m 55p` |
+| Pure Double Chow | 1 point | Two identical chows in one suit. Do not rescore a subset of a higher chow combination. | `123m 123m` |
+| Mixed Double Chow | 1 point | Same-rank chows in two suits; no repeated subset of a higher combination. | `123m 123p` |
+| Short Straight | 1 point | Two chows forming six consecutive ranks of one suit. | `123m 456m` |
+| Two Terminal Chows | 1 point | 123 and 789 in the same suit. | `123m 789m` |
+| Pung Of Terminals Or Honors | 1 point | A terminal or non-value wind pung/kong. Dragons score Dragon Pung instead. Do not double count. | `111m` |
+| Melded Kong | 1 point | A discard or added kong. Do not rescore individual kongs already counted in multi-kong fans. | `1111m` |
+| One Voided Suit | 1 point | One numbered suit is absent. Flushes and other containing fans may exclude it. | `123m 456m 789p 111z 55p` |
+| No Honors | 1 point | No honors; excluded when already covered by All Chows, All Simples, Full Flush, and similar fans. | `123m 456p 789s 222m 55p` |
+| Edge Wait | 1 point | Only waiting on 3 of 123 or 7 of 789. No other winning kind. Choose only one wait fan. | `12m + 3m` |
+| Closed Wait | 1 point | Only waiting on the middle tile of a chow; not combined with other wait fans. | `13m + 2m` |
+| Single Wait | 1 point | Only waiting to complete the pair. Melded Hand, Four Kongs, Seven Pairs, and similar forms exclude it. | `5p + 5p` |
+| Self-Drawn | 1 point | Draw your winning tile. Fully Concealed Hand, Last Tile Draw, or Replacement Win excludes this point. | `23m + 1m` |
+| Flower Tiles | 1 point | One point per revealed flower, added only after meeting the eight non-flower minimum. | `1q 2q` |
 
 ## Sichuan mahjong
 

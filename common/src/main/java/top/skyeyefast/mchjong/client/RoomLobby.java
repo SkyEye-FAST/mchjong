@@ -29,6 +29,7 @@ final class RoomLobby {
     private long revision = -1;
     private boolean pending;
     private Layout layout;
+    private RoomVariantList variantList;
 
     record Option(Component label, Component value, Boolean checked, boolean enabled, Runnable action) {
         Component message() {
@@ -67,12 +68,17 @@ final class RoomLobby {
 
     void receivedView() { pending = false; }
 
+    boolean scrollVariants(double x, double y, double horizontal, double vertical) {
+        return variantList != null && variantList.mouseScrolled(x, y, horizontal, vertical);
+    }
+
     private MahjongTableBlockEntity table() {
         var client = Minecraft.getInstance();
         return client.level != null && client.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table ? table : null;
     }
 
     List<AbstractWidget> build(TableRoomView room, int width, int height) {
+        variantList = null;
         layout = Layout.of(width, height, tab == 0 ? room.seats().size() : options(parent, pos, room).size(), tab == 0);
         if (revision != room.revision()) { revision = room.revision(); pending = false; }
         var buttons = new ArrayList<AbstractWidget>();
@@ -99,12 +105,13 @@ final class RoomLobby {
             button.active &= !pending;
             variants.add(button);
         }
-        var variantList = new RoomVariantList(layout.left(), top + 32, layout.sidebarWidth(), layout.status() - top - 38,
+        variantList = new RoomVariantList(layout.left(), top + 32, layout.sidebarWidth(), layout.status() - top - 38,
             variants, variantScroll, value -> variantScroll = value);
         if (selectedVariant != room.variant()) variantList.reveal(room.variant().ordinal());
         selectedVariant = room.variant();
-        buttons.add(variantList);
+        // Minecraft 26.1.2 sends clicks to the first hovered child, so buttons precede the scrollbar area.
         buttons.addAll(variants);
+        buttons.add(variantList);
         int linkWidth = (span - 4) / 2;
         var replays = RoomLobbyControls.button(Component.translatable("replay.mchjong.title"), body + span - linkWidth, top + 56, linkWidth,
             () -> ClientReplays.list(0, "", false)).navigation().shortCaption(Component.translatable("replay.mchjong.title.short"));
@@ -239,7 +246,7 @@ final class RoomLobby {
 
     private Component botName(TableRoomView room, int seat) {
         var settings = table().clientRiichiSettings();
-        return TableParticipantsScreen.botName(room, settings == null ? List.of() : settings.externalBots(), seat);
+        return RoomMembers.botName(room, settings == null ? List.of() : settings.externalBots(), seat);
     }
 
     static boolean host(TableRoomView room) { return room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null; }
@@ -251,47 +258,33 @@ final class RoomLobby {
         var root = TableChildScreen.root(parent);
         if (root instanceof RiichiTableScreen riichi) {
             var settings = riichi.roomSettings();
-            for (int count : new int[]{4, 3}) {
-                var preset = settings.rules().preset().tenhou() ? count == 4 ? top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4 : top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_3
-                    : count == 4 ? top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4 : top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_3;
-                var rules = settings.rules().withPreset(preset);
-                options.add(new Option(Component.translatable("ui.mchjong.players." + count), Component.empty(), settings.rules().players() == count,
-                    host(room) && room.lobby() && room.seating() == RoomSeating.Stage.GATHERING && count != settings.rules().players() && riichi.canSupplyReds(rules.sanma(), rules.redFives())
-                        && (count == 4 || room.seats().size() < 4 || room.seats().get(3).participant().id() == null), () -> riichi.configureRules(room, rules)));
-            }
-            options.add(new Option(Component.translatable("rules.mchjong.preset", Component.translatable(settings.rules().preset().presetKey())), Component.literal("›"), null, true,
-                () -> client.setScreen(new RiichiRulesScreen(parent, room, settings, true))));
-            options.add(new Option(Component.translatable("rules.mchjong.title"), Component.literal("›"), null, true,
+            options.add(new Option(Component.translatable("rules.mchjong.title"),
+                Component.translatable("rules.mchjong.summary", Component.translatable(settings.rules().preset().presetKey()),
+                    settings.rules().players(), Component.translatable("rules.mchjong.option.match_length." + settings.rules().matchLength())), null, true,
                 () -> client.setScreen(new RiichiRulesScreen(parent, room, settings))));
-            var visibility = settings.playerHandVisibility();
-            options.add(new Option(Component.translatable("settings.mchjong.hand_visibility.label"), Component.translatable("settings.mchjong.hand_visibility." + visibility.name().toLowerCase(java.util.Locale.ROOT)), null,
-                host(room) && room.lobby(), () -> {
-                    var values = top.skyeyefast.mchjong.engine.PlayerHandVisibility.values();
-                    riichi.configureVisibility(values[Math.floorMod(visibility.ordinal() + (MahjongUi.shiftDown() ? -1 : 1), values.length)]);
-                }));
-            options.add(new Option(Component.translatable("settings.mchjong.open_hands"), Component.empty(), settings.openHands(), host(room) && room.lobby(),
-                () -> riichi.control(room, top.skyeyefast.mchjong.network.RiichiControlPayload.Operation.OPEN_HANDS, room.decision(), !settings.openHands())));
-        } else if (root instanceof SichuanLobbyScreen sichuan) {
-            var settings = sichuan.roomSettings();
-            options.add(new Option(Component.translatable("sichuan.mchjong.rules.title").append(": ").append(Component.translatable(settings.presetKey())), Component.literal("›"), null, true,
-                () -> client.setScreen(new SichuanRulesScreen(parent, room, settings))));
+            options.add(new Option(Component.translatable("settings.mchjong.hand_display"), Component.literal("›"), null, true,
+                () -> client.setScreen(new TableHandDisplayScreen(parent, riichi))));
+        } else if (room.variant() == MahjongVariant.SICHUAN) {
+            var settings = table.clientSichuanSettings();
+            options.add(new Option(Component.translatable("rules.mchjong.title"), Component.translatable(settings.presetKey()), null, true,
+                () -> client.setScreen(new SichuanRulesScreen(parent, pos, room, settings))));
         }
-        if (root instanceof TaiwanLobbyScreen) {
+        if (room.variant() == MahjongVariant.TAIWAN) {
             var settings = table.clientTaiwanSettings();
-            options.add(new Option(Component.translatable("taiwan.mchjong.rules.title").append(": ").append(Component.translatable(settings.presetKey())), Component.literal("›"), null, true,
+            options.add(new Option(Component.translatable("rules.mchjong.title"), Component.translatable(settings.presetKey()), null, true,
                 () -> client.setScreen(new TaiwanRulesScreen(parent, pos))));
         }
-        options.add(new Option(Component.translatable("room.mchjong.participants"), Component.literal("›"), null, true,
+        if (room.variant() == MahjongVariant.MCR) options.add(new Option(Component.translatable("rules.mchjong.title"), Component.literal("›"), null, true,
+            () -> client.setScreen(new McrRulesScreen(parent))));
+        if (!room.lobby()) options.add(new Option(Component.translatable("room.mchjong.participants"), Component.literal("›"), null, true,
             () -> client.setScreen(new TableParticipantsScreen(parent, pos))));
         var time = room.variant() == MahjongVariant.RIICHI ? table.clientRiichiSettings().timeControl()
             : room.variant() == MahjongVariant.MCR ? table.clientMcrTimeControl()
             : room.variant() == MahjongVariant.TAIWAN ? table.clientTaiwanSettings().timeControl() : table.clientSichuanSettings().timeControl();
         options.add(new Option(Component.translatable("ui.mchjong.clock_settings"), Component.translatable("lobby.mchjong.clock_summary", time.moveSeconds(), time.reserveSeconds()), null, host(room) && room.lobby(),
             () -> client.setScreen(new TableClockScreen(parent, time))));
-        options.add(new Option(Component.translatable("settings.mchjong.convenience_hints"), Component.empty(), room.convenienceHints(), host(room) && room.lobby() && room.allowConvenienceHints(),
+        if (room.variant() == MahjongVariant.RIICHI) options.add(new Option(Component.translatable("settings.mchjong.convenience_hints"), Component.empty(), room.convenienceHints(), host(room) && room.lobby() && room.allowConvenienceHints(),
             () -> TableExitControls.send(pos, room, TableSessionControlPayload.Operation.CONVENIENCE_HINTS, room.decision(), !room.convenienceHints())));
-        options.add(new Option(Component.translatable("ui.mchjong.invite"), Component.literal("›"), null, room.viewerSeat() >= 0 && room.lobby() && table.clientWorldPolicy().invitationsEnabled(),
-            () -> client.setScreen(new TableInviteScreen(parent, pos))));
         return options;
     }
 
@@ -314,18 +307,16 @@ final class RoomLobby {
                 int textWidth = l.bodyWidth() - (control ? 88 : 8);
                 graphics.fill(l.bodyLeft(), y, l.bodyLeft() + l.bodyWidth(), y + pitch - 2, seat == room.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.INPUT);
                 int portrait = PlayerPortrait.draw(graphics, player, l.bodyLeft() + 5, y + 3, 10);
-                var name = player.id() == null ? Component.translatable("room.mchjong.empty") : Component.literal(player.name());
-                int color = seat == room.viewerSeat() ? MahjongUi.ACCENT : state.presence() == PlayerPresence.DISCONNECTED ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
+                var name = RoomMembers.name(room, seat);
+                int color = seat == room.viewerSeat() ? MahjongUi.ACCENT : player.id() != null && state.presence() == PlayerPresence.DISCONNECTED ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
                 MahjongUi.text(graphics, font, name, l.bodyLeft() + 4 + portrait, y + 2, textWidth - portrait, color, false);
-                var status = (player.id() == null ? Component.empty() : player.ready() ? Component.translatable("ui.mchjong.ready")
-                    : player.bot() ? botName(room, seat) : TableParticipantsScreen.presence(state.presence())).copy();
-                if (state.wind() >= 0) status = Component.translatable("room.mchjong.member", TableParticipantsScreen.wind(state.wind()), status);
-                if (seat == room.host()) status = Component.translatable("ui.mchjong.annotation", status, Component.translatable("room.mchjong.host.short"));
+                var settings = table().clientRiichiSettings();
+                var status = RoomMembers.status(room, settings == null ? List.of() : settings.externalBots(), seat);
                 MahjongUi.text(graphics, font, status, l.bodyLeft() + 5, y + Math.min(17, pitch - 11), textWidth, player.ready() ? MahjongUi.POSITIVE : MahjongUi.MUTED, false);
                 var hover = name.copy().append("\n").append(status);
-                if (state.wind() >= 0) {
+                if (player.id() != null && state.wind() >= 0) {
                     var position = top.skyeyefast.mchjong.world.TableGeometry.stool(pos, state.wind());
-                    hover.append("\n").append(Component.translatable("room.mchjong.position", TableParticipantsScreen.wind(state.wind()), position.getX(), position.getY(), position.getZ()));
+                    hover.append("\n").append(Component.translatable("room.mchjong.position", RoomMembers.wind(state.wind()), position.getX(), position.getY(), position.getZ()));
                 }
                 var service = table() == null ? null : table().clientBotService();
                 String error = service == null || seat >= service.seatErrors().size() ? null : service.seatErrors().get(seat);

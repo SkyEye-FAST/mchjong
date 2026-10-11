@@ -9,6 +9,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Limit convenience hints to Riichi mahjong and remove the MCR, Sichuan mahjong and Taiwanese mahjong hint interfaces and calculations. Riichi hints show current waits and remaining copies only while tenpai.
+- Center action announcements in muted text clear of the HUD, controls and private hand, keep current-discard cards on the right, and show immersive seat winds and status on player plaques. Use direct hand clicks for discards in all four variants and both views, retaining single-click and double-click settings and removing discard confirmation buttons.
+- Unify room rule entry points and draft submission, organize Riichi rules into six persistent categories, move player count and preset selection into the draft, group hand display settings, centralize preparation member controls, and align Sichuan mahjong, Taiwanese mahjong and MCR navigation with four-language controls and explanations.
 - Synchronize custom award selection, Mahjong Soul ancient yaku and checked-in client resources across all three Minecraft profiles, with Taiwanese mahjong library 0.2.0 and each profile's native loader adapters.
 - Centralize tile-face images, runtime definitions and attribution in `presets/tile_faces`, then package them directly.
 - Store formatted client resources in the repository for direct browsing, reuse the existing independent tile-face images, split point sticks and HUD icons into individual textures, package them in all loaders and verify generated files against their source generators.
@@ -31,7 +34,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring, preserving separate flower payouts.
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan mahjong and Taiwanese mahjong rule entrances, complete award indexes, tile illustrations, payment examples and preset differences. Align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
-- Add recipient-safe Taiwanese mahjong convenience hints with previews of sixteen-tile shanten numbers, effective tiles and legal discards, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination. Share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.
 - Add independent native Taiwanese mahjong replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.
 - Add recipient-safe Taiwanese mahjong built-in Bots with rule-driven discard/wait scoring, conservative call/kong decisions, shared room add/remove and fill controls, delayed paused/restored actions, inactive Bot clocks and automatic hand confirmations; verify complete one-human/three-Bot four-wind matches for both presets.
 - Register Taiwanese mahjong as the fourth built-in variant with shared room/NBT lifecycle, recipient-safe Minecraft packets, independent 136/144 physical stock and fixed-slot scene, preset/payment/clock editors, playable seated/immersive actions, private settlement and complete four-wind matches. Add focused Fabric end-to-end coverage.
@@ -40,7 +42,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Route Minecraft 26.1.2 rule-sidebar clicks to the native buttons and retain wheel scrolling across the sidebar.
 - Center and scale table and stool items in Minecraft 26.1.2 shelf displays.
+- Craft stools from every wood family with any of the 16 matching carpet colors. Stools and cloths support all 16 dye colors while preserving their other components.
+- Separate draw-time and call-time temporary furiten clearance, and prevent North replacements from qualifying the following discard for Kanburi.
+- Correct four-language mahjong terminology and scoring explanations. Distinguish revealed hands from melds and concealed kans, retain natural Chinese payment wording, and fit Japanese minimum-han choices at the smallest window size.
 - Align the Creeper tile-back mark with the vanilla face's uniform pixel grid.
 - Draw Bot portraits on integer pixel boundaries so both eyes stay the same size at small UI scales.
 - Merge equivalent Taiwanese mahjong ready-discard choices while retaining distinct tile faces and every physical ordinary discard.

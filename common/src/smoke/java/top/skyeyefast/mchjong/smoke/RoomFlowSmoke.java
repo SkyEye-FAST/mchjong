@@ -63,18 +63,36 @@ final class RoomFlowSmoke {
                 require(!(client.screen instanceof RiichiTableScreen), "Room shortcut failed: " + key);
                 AutomationControlsSmoke.checkBounds(client);
                 if (client.screen instanceof top.skyeyefast.mchjong.client.RiichiRulesScreen) {
+                    RuleEditorSmoke.layout(client, configuration.rules());
                     RuleExplanationSmoke.check(client, Component.translatable(top.skyeyefast.mchjong.engine.RiichiRuleOption.KUITAN.translationKey()));
                 }
                 client.screen.onClose();
                 require(client.screen instanceof RiichiTableScreen, "Room shortcut lost its parent: " + key);
             }
+            click(client, "rules.mchjong.title"); next(50);
+        } else if (stage == 50 && ticks > 10) {
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, "rules-" + LANGUAGES[locale] + "-320x240.png");
+            RuleEditorSmoke.presets(client); next(51);
+        } else if (stage == 51 && ticks > 10) {
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, "rule-presets-" + LANGUAGES[locale] + "-320x240.png");
+            client.screen.onClose(); resize(client, false); next(52);
+        } else if (stage == 52 && ticks > 10) {
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, "rules-" + LANGUAGES[locale] + "-640x400.png");
+            client.screen.onClose(); resize(client, true);
             if (++locale < LANGUAGES.length) next(0);
             else {
+                click(client, "settings.mchjong.hand_display");
                 click(client, "settings.mchjong.hand_visibility", Component.translatable("settings.mchjong.hand_visibility.self"));
+                click(client, "settings.mchjong.hand_visibility.riichi");
                 next(4);
             }
         } else if (stage == 4 && configuration.playerHandVisibility() == PlayerHandVisibility.RIICHI) {
+            client.screen.onClose();
             originalPreset = configuration.rules().preset();
+            click(client, "rules.mchjong.title");
             clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).getString());
             var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RiichiPreset.values())
                 .filter(preset -> preset.players() == originalPreset.players() && preset != originalPreset).findFirst().orElseThrow();
@@ -82,12 +100,16 @@ final class RoomFlowSmoke {
             click(client, "rules.mchjong.apply");
             next(5);
         } else if (stage == 5 && configuration.rules().preset() != originalPreset && client.screen instanceof RiichiTableScreen) {
+            click(client, "rules.mchjong.title");
             click(client, "ui.mchjong.players.3");
+            click(client, "rules.mchjong.apply");
             next(6);
         } else if (stage == 6 && configuration.rules().players() == 3) {
             check(client);
             capture(client, output, "lobby-three-small.png");
+            click(client, "rules.mchjong.title");
             click(client, "ui.mchjong.players.4");
+            click(client, "rules.mchjong.apply");
             next(7);
         } else if (stage == 7 && configuration.rules().players() == 4) {
             var id = client.player.getUUID();
@@ -146,7 +168,7 @@ final class RoomFlowSmoke {
             work = settlement(client, table, true);
             capturedHand = false;
             next(12);
-        } else if (stage == 12 && view != null && view.phase() == RiichiView.Phase.MATCH_END) {
+        } else if (stage == 12 && view != null && view.phase() == RiichiView.Phase.MATCH_END && ticks > 2) {
             int remaining = table.clientView().settlementTicks();
             require(buttonOrNull(client, "room.mchjong.dissolve") == null && buttonOrNull(client, "ui.mchjong.exit") == null,
                 "Settlement exposes room termination");
@@ -217,6 +239,8 @@ final class RoomFlowSmoke {
                     require(client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat
                         && seat.seat() == room.viewerSeat() && seat.tablePos().equals(table.getBlockPos()),
                         "Assigned-seat preparation did not mount the matching stool");
+                    var dissolve = buttonOrNull(client, "room.mchjong.dissolve");
+                    if (dissolve == null || !dissolve.active) return false;
                     reassignment.restoreSettings();
                     capture(client, output, "room-reassigned-seated.png");
                     click(client, "room.mchjong.dissolve");

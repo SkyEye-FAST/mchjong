@@ -31,8 +31,9 @@ final class CustomYakuSmoke {
     private void openRules(Minecraft client, MahjongTableBlockEntity table) {
         if (taiwan()) client.setScreen(new top.skyeyefast.mchjong.client.TaiwanRulesScreen(client.screen, table.getBlockPos()));
         else click(client, Component.translatable("rules.mchjong.title").getString());
+        click(client, Component.translatable(taiwan() ? "taiwan.mchjong.payment_rules" : "rules.mchjong.group.scoring").getString());
     }
-    private void apply(Minecraft client) { click(client, Component.translatable(taiwan() ? "gui.done" : "rules.mchjong.apply").getString()); }
+    private void apply(Minecraft client) { click(client, Component.translatable("rules.mchjong.apply").getString()); }
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table) {
         if (++ticks > 1000) throw new IllegalStateException("Custom yaku smoke timed out at " + stage);
@@ -62,16 +63,14 @@ final class CustomYakuSmoke {
             openRules(client, table);
             AutomationControlsSmoke.checkBounds(client);
             var draft = set;
+            click(client, ClientYakuSets.selectionLabel(draft).getString());
             if (!taiwan()) {
                 click(client, toggle(Component.translatable("rules.mchjong.yaku_set.ancient"), false));
                 draft = draft.withSet(top.skyeyefast.mchjong.engine.BuiltinYakuSets.MAHJONG_SOUL_ANCIENT, true);
-                click(client, ClientYakuSets.selectionLabel(draft).getString());
                 clickAward(client, toggle(ClientYakuSets.text(top.skyeyefast.mchjong.engine.BuiltinYakuSets.MAHJONG_SOUL_ANCIENT.awards().getFirst().name()), true));
-                click(client, Component.translatable("gui.back").getString());
                 click(client, Component.translatable("settings.mchjong.toggle", Component.translatable("rules.mchjong.yaku_set.ancient"),
                     Component.translatable("rules.mchjong.yaku_set.partial")).getString());
             }
-            click(client, ClientYakuSets.selectionLabel(draft).getString());
             AutomationControlsSmoke.checkBounds(client);
             String nativeId = YakuSelection.nativeIds(variant).stream().sorted().findFirst().orElseThrow();
             click(client, toggle(nativeName(nativeId), true));
@@ -117,10 +116,19 @@ final class CustomYakuSmoke {
         } else if (stage == 4 && pending.isDone()) {
             openRules(client, table);
             click(client, ClientYakuSets.selectionLabel(set).getString());
+            String nativeId = YakuSelection.nativeIds(variant).stream().sorted().findFirst().orElseThrow();
+            click(client, toggle(nativeName(nativeId), false));
+            click(client, Component.translatable("gui.back").getString());
+            apply(client); stage = 7;
+        } else if (stage == 7 && client.screen.children().stream().anyMatch(c -> c instanceof AbstractWidget w && w.visible
+            && w.getMessage().getString().equals(Component.translatable("rules.mchjong.reload").getString()))) {
+            require(set.disabledNative().size() == 1, "Rejected application changed server awards");
+            String nativeId = YakuSelection.nativeIds(variant).stream().sorted().findFirst().orElseThrow();
+            var retained = set.withNative(nativeId, true);
+            click(client, ClientYakuSets.selectionLabel(retained).getString());
             click(client, Component.translatable("rules.mchjong.yaku_set.defaults").getString());
             click(client, Component.translatable("gui.back").getString());
-            apply(client);
-            stage = 5;
+            apply(client); stage = 5;
         } else if (stage == 5 && lobby(client) && set.isDefault()) {
             pending = server.submit(() -> server.reloadResources(originalPacks)).thenCompose(value -> value);
             stage = 6;

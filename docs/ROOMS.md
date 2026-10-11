@@ -1,7 +1,7 @@
 # Rooms, permissions and settings
 
 Riichi, MCR, Sichuan mahjong and Taiwanese mahjong use the same lobby. Select the variant from the left
-sidebar, then use Players and bots to manage the roster or Match settings to
+sidebar, then use Room Members to manage the roster or Match settings to
 configure the selected variant. Variant selection is available to the host during
 gathering on automatic tables without Bots. Fill empty seats and seat preparation
 have separate footer buttons. Leave room and the host's Close room control stay
@@ -12,46 +12,16 @@ available through MChjong's mod-list Config button. Automatic
 play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
-The room host can enable **Convenience hints** during preparation: Settings → Room
-or the lobby Match settings tab for Riichi, MCR, Sichuan mahjong and Taiwanese mahjong. All four share
-the setting, including when changing variants. World `allowConvenienceHints`
-can disable it in both waiting and running rooms.
+The Riichi room host can enable **Convenience Hints** during preparation in
+Settings → Room or the lobby Match Settings tab. World `allowConvenienceHints`
+can disable it in waiting and running Riichi rooms. Changing the variant clears
+the room setting.
 
-Hover or focus the diamond beside your hand to inspect hints; hovering or selecting
-a legal discard previews the resulting hand. Activate the MCR, Sichuan mahjong and Taiwanese mahjong diamond
-to page through tile rows when the popup needs more space. Riichi shows its structural waits.
-MCR shows shanten, improving tiles and structural waits, with non-flower fan for
-ordinary discard wins/self-draws and an eight-fan qualification mark. A currently
-offered winning tile uses its public last-wall/robbing-kong circumstances. Future
-draw circumstances are not assumed. Flowers do not satisfy the minimum.
-
-Sichuan mahjong shows remaining void-suit tiles until the suit clears, then shanten and
-improving tiles. Ready hands show each wait's structural fan and capped value,
-and their maximum ready value under the room rules. These draw-check values
-exclude win circumstances and self-draw bonuses. A passed-win restriction is
-shown only to its owner. It restricts discard wins to higher capped fan until
-the engine clears it. Hints do not declare wins or submit actions.
-
-Taiwanese mahjong shows sixteen-tile shanten, effective tiles and every structural wait with
-public remaining counts. Each wait has separate ron and self-draw tai under the
-current room rules, including the preset's cap, concealment, honors, seat/round
-winds, already revealed flowers and READY. A drawn hand shows its pre-draw
-structure until you hover or select a legal discard. Passing (過水) retains the
-structural waits while marking that you currently cannot win. READY keeps its
-waits and tai. Spectators receive no private hints, and disabling hints stops
-client analysis and display.
-
-Future waits use confirmed structural information and omit last-tile, replacement,
-robbing-kong and opening-win bonuses, future flowers and unknown replacement sources.
-A currently offered public
-reaction tile separately shows its confirmed claim tai in parentheses. Public
-counting includes only your hand/melds/flowers, public rivers/exposed melds and the
-current focus. Covered opponent kongs contribute no hidden identities.
-
-Counts use your own hand and public tiles, deduplicate claimed tiles and include
-exhausted structural waits at zero. They count copies outside the player's visible
-information. A structurally ready hand can therefore have
-no publicly available copies. Sichuan mahjong readiness still follows its draw scorer.
+Hover or focus the diamond beside the private hand to inspect structural waits.
+Hints are available for a thirteen-tile ready shape, counting each meld as three tiles. Counts
+use the player's hand and public tiles, deduplicate claimed tiles and retain
+exhausted structural waits at zero. They describe copies outside the player's
+visible information, not the actual contents of the wall.
 
 ## MCR Bot rooms
 
@@ -136,9 +106,37 @@ matters when experience rewards are enabled. `allowCustomRules` restricts rooms 
 named presets, while `forcedPreset` can require one preset without copying its
 individual mahjong options into world settings.
 
+## Match rules and drafts
+
+The lobby's Match Settings and Settings → Room share one **Match Rules** entry.
+Riichi's Basic Settings holds player count, rule preset, open tanyao, red fives,
+minimum yaku han and match length. Five further categories organize points and
+ranking, win scoring, match progress, riichi and calls, and liability payments.
+Win Scoring opens award selection, including Mahjong Soul ancient yaku.
+
+Player count, presets and details modify one local draft. Switching count keeps
+the preset family where supported; otherwise choose one of the target count's
+presets. Canceling that choice retains the original count and draft. Reselecting
+the current preset retains edits, while Restore Preset Defaults explicitly resets
+them. See [Rules](RULES.md#preset-options-and-custom-rules) for preset transforms
+and editing permissions.
+
+Apply Rules waits for server confirmation. Cancel abandons unsent changes. Back
+from a preset, award or help page returns to the editor with its draft and unfinished
+numeric input intact. Back during an outstanding application cannot withdraw the
+request. Rejection retains the draft; Reload in changed-room feedback replaces it
+with current server settings. Read-only viewers use the same categories.
+
+Sichuan mahjong groups its existing fields into Basic Settings, Kongs and Payments,
+and Draws and Settlement. Taiwanese mahjong separates Basic Settings from Scoring
+and Payments, where its award selector and four payment fields are available.
+MCR presents its fixed rules and explanations. Timing remains a room setting for every variant.
+Convenience hints are a Riichi room setting.
+
 ## Hand visibility
 
-Riichi hosts choose Hand visibility in the lobby Match settings tab or Settings → Room before play. The choice is
+Riichi hosts open Hand Display from the lobby Match Settings tab or Settings → Room
+before play. Hand Visibility and Open Hands are independent fields. The choice is
 saved with that table, and changing it clears readiness.
 
 - **Visible only to self:** each seated player sees their own hand. This is the default.
@@ -149,7 +147,7 @@ saved with that table, and changing it clears readiness.
 
 **Open hands** is separate from information permission. When enabled by the host,
 the physical hands are laid face up, so their faces are naturally public in world
-rendering.
+rendering. The saved Hand Visibility choice is retained when hands are opened.
 
 Hands revealed at settlement remain public. Spectators can stand beside the table
 and inspect its world rendering, or interact with an active table to open its
@@ -168,8 +166,9 @@ Its four seats support humans and built-in Bots, including one human with three 
 
 The first human to sit down becomes the host. Ownership follows the player,
 independently of their seat number. The host controls rules and time allowances
-before play. Players and bots lists other human participants as ownership-transfer
-targets; `/mchjong host <player>` performs the same transfer. The successor must
+before play. Room Members lists other human participants as ownership-transfer
+targets. During play, Settings → Room → Room Members retains the transfer action
+through `/mchjong host <player>`. The command also works directly. The successor must
 be participating at that table. Explicitly leaving a waiting room transfers ownership to
 a remaining human. Standing up to move to an assigned stool retains room membership.
 
@@ -234,7 +233,7 @@ heuristic policy. Their inputs remain recipient-safe under every room visibility
 
 ## Invitations
 
-Use Invite player at the bottom of the lobby sidebar or Settings → Room to choose an online player. You can also use `/mchjong invite <player>`, with an online
+Use Invite Player in the lobby's room operations row to choose an online player. You can also use `/mchjong invite <player>`, with an online
 player's name or UUID. Invitations are recipient-bound,
 expire after 60 seconds, and are checked again when accepted. A player may send
 one invitation every five seconds.

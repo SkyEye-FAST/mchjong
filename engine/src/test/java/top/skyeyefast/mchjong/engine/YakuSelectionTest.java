@@ -116,9 +116,9 @@ class YakuSelectionTest {
         assertTrue(LegalActions.score(game, winner, winning, false).hasYaku("mahjongsoul:tsubame_gaeshi"));
         discarder.pendingRiichi = false;
         assertNull(LegalActions.score(game, winner, winning, false));
-        discarder.rinshan = true;
+        discarder.afterKan = true;
         assertTrue(LegalActions.score(game, winner, winning, false).hasYaku("mahjongsoul:kanburi"));
-        discarder.rinshan = false;
+        discarder.afterKan = false;
         player.firstTurn = true; game.uninterrupted = true;
         assertTrue(LegalActions.score(game, winner, winning, false).hasYaku("mahjongsoul:renhou"));
         game.uninterrupted = false;

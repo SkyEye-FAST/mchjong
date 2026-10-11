@@ -37,7 +37,7 @@
     {
       "id": "mahjongsoul:kanburi",
       "name": {
-        "en_us": "After a Kan",
+        "en_us": "Kanburi",
         "ja_jp": "槓振り",
         "zh_cn": "杠振",
         "zh_tw": "槓振"
@@ -149,7 +149,7 @@
       },
       "description": {
         "en_us": "Use three identical sequences. Open hands lose one Han.",
-        "ja_jp": "同じ順子を三組含む。食い下がり一翻。",
+        "ja_jp": "同じ順子を三組含む。食い下がり一飜。",
         "zh_cn": "有三组完全相同的顺子，副露减1番。",
         "zh_tw": "有三組完全相同的順子，副露減 1 番。"
       },

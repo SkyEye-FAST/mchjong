@@ -27,6 +27,7 @@ final class YakuSelectionScreen extends Screen implements TableChildScreen {
     private final List<MahjongButton> choices = new ArrayList<>();
     private SettingsLayout layout;
     private int page, pages, rows;
+    private MahjongButton ancientToggle, reset, clear;
 
     YakuSelectionScreen(Screen parent, YakuSelection selected, Consumer<YakuSelection> choose, BooleanSupplier editable, boolean ancientAllowed) {
         super(Component.translatable("rules.mchjong.yaku_set.title"));
@@ -51,18 +52,31 @@ final class YakuSelectionScreen extends Screen implements TableChildScreen {
         shown = List.copyOf(entries);
         layout = SettingsLayout.of(width, height, 0, shown.size() * 24 + 24);
         int half = (layout.span() - 4) / 2;
-        var reset = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.yaku_set.defaults"), ignored -> {
+        reset = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.yaku_set.defaults"), ignored -> {
             if (editable.getAsBoolean()) update(YakuSelection.defaults(selected.variant()));
         }).bounds(layout.left(), layout.contentTop(), half, 20).build()); reset.active = editable.getAsBoolean();
-        var clear = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.yaku_set.clear"), ignored -> {
+        clear = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.yaku_set.clear"), ignored -> {
             if (editable.getAsBoolean()) update(new YakuSelection(selected.variant(), List.of(), YakuSelection.nativeIds(selected.variant()), java.util.Set.of()));
         }).bounds(layout.left() + half + 4, layout.contentTop(), half, 20).build()); clear.active = editable.getAsBoolean();
-        rows = Math.max(1, (layout.paging() - layout.contentTop() - 24) / 24);
+        ancientToggle = null;
+        boolean ancient = ancientAllowed && selected.variant() == MahjongVariant.RIICHI;
+        if (ancient) {
+            var set = BuiltinYakuSets.MAHJONG_SOUL_ANCIENT;
+            long count = set.awards().stream().filter(a -> selected.enabled(a.id())).count();
+            boolean all = count == set.awards().size();
+            var label = Component.translatable("settings.mchjong.toggle", Component.translatable("rules.mchjong.yaku_set.ancient"),
+                Component.translatable(all ? "rules.mchjong.yes" : count > 0 ? "rules.mchjong.yaku_set.partial" : "rules.mchjong.no"));
+            ancientToggle = addRenderableWidget(MahjongButton.create(label, ignored -> {
+                if (editable.getAsBoolean()) update(selected.withSet(set, !all));
+            }).bounds(layout.left(), layout.contentTop() + 24, layout.span(), 20).build().selected(count > 0));
+        }
+        int header = ancient ? 48 : 24;
+        rows = Math.max(1, (layout.paging() - layout.contentTop() - header) / 24);
         pages = Math.max(1, (shown.size() + rows - 1) / rows); page = Math.clamp(page, 0, pages - 1);
         for (int i = 0; i < rows && page * rows + i < shown.size(); i++) {
             var entry = shown.get(page * rows + i);
             boolean on = selected.enabled(entry.id());
-            int y = layout.contentTop() + 24 + i * 24;
+            int y = layout.contentTop() + header + i * 24;
             var label = Component.translatable("settings.mchjong.toggle", entry.name(), Component.translatable(on ? "rules.mchjong.yes" : "rules.mchjong.no"));
             var button = addRenderableWidget(MahjongButton.create(label, ignored -> {
                 if (editable.getAsBoolean() && available(entry)) update(entry.set() == null
@@ -87,6 +101,8 @@ final class YakuSelectionScreen extends Screen implements TableChildScreen {
         return entry.set() == null || selected.enabled(entry.id()) || ClientYakuSets.available(selected.variant()).contains(entry.set());
     }
     private void updateChoices() {
+        reset.active = clear.active = editable.getAsBoolean();
+        if (ancientToggle != null) ancientToggle.active = editable.getAsBoolean();
         for (int i = 0; i < choices.size(); i++) choices.get(i).active = editable.getAsBoolean() && available(shown.get(page * rows + i));
     }
     private static List<Component> details(YakuSet.Definition award) {

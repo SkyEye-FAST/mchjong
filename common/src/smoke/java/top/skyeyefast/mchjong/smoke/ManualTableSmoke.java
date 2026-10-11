@@ -245,17 +245,12 @@ final class ManualTableSmoke {
             }
             case 24 -> {
                 if (ticks < 5) return false;
-                TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
+                TableSettings.get().discardMode = TableSettings.DiscardMode.SINGLE_CLICK;
                 var piece = top.skyeyefast.mchjong.client.RiichiTableScene.build(view).stream()
                     .filter(value -> value.area() == top.skyeyefast.mchjong.client.RiichiTableScene.Area.HAND && value.seat() == view.viewerSeat())
                     .findFirst().orElseThrow();
                 var pointer = project(client, piece.position());
                 client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(pointer.x, pointer.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
-                next(9);
-            }
-            case 9 -> {
-                if (ticks < 10) return false;
-                click(client, "action.mchjong.discard");
                 next(10);
             }
             case 10 -> {

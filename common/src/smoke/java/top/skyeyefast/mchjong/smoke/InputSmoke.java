@@ -95,21 +95,25 @@ final class InputSmoke {
         require(!selected(screen, fixture, 8), "Riichi selection accepted an illegal discard");
         screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
         require(client.screen == screen && !button(screen, "ui.mchjong.cancel_riichi"), "Esc closed the table instead of cancelling riichi");
-        TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
+        var discardMode = TableSettings.get().discardMode;
+        TableSettings.get().discardMode = TableSettings.DiscardMode.DOUBLE_CLICK;
         clickHand(screen, fixture, 13);
-        require(selected(screen, fixture, 13), "Mouse did not select the drawn tile");
+        require(selected(screen, fixture, 13), "First click in double-click mode did not select the drawn tile");
+        require(!button(screen, "action.mchjong.discard"), "Double-click mode exposed a discard confirmation button");
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
+        TableSettings.get().discardMode = discardMode;
+        click(screen, "action.mchjong.riichi");
         var cancelPoint = screenPoint(screen, new HandPoint(top.skyeyefast.mchjong.client.TableCanvas.WIDTH / 2.0,
             top.skyeyefast.mchjong.client.TableCanvas.HEIGHT - 19));
         screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(cancelPoint.x(), cancelPoint.y(), new net.minecraft.client.input.MouseButtonInfo(1, 0)), false);
         screen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(cancelPoint.x(), cancelPoint.y(), new net.minecraft.client.input.MouseButtonInfo(1, 0)));
-        require(!selected(screen, fixture, 13), "Right-click failed to cancel the selected tile");
+        require(!button(screen, "ui.mchjong.cancel_riichi"), "Right-click failed to cancel riichi");
         click(screen, "action.mchjong.riichi");
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi could not be reopened after cancellation");
         switchView(screen);
         require(!screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Switching view lost riichi selection mode");
         switchView(screen);
         require(screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Returning to immersive lost riichi selection mode");
-        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
         screen.resetView();
     }
 
@@ -133,6 +137,7 @@ final class InputSmoke {
     }
 
     static void clickWidget(net.minecraft.client.gui.screens.Screen screen, AbstractWidget widget) {
+        require(widget.visible && widget.active, "Cannot click hidden or disabled widget: " + widget.getMessage().getString());
         double x = widget.getX() + widget.getWidth() / 2.0, y = widget.getY() + widget.getHeight() / 2.0;
         boolean immersive = screen instanceof RiichiTableScreen table && table.immersive()
             || screen instanceof top.skyeyefast.mchjong.client.McrTableScreen mcr && mcr.immersive()

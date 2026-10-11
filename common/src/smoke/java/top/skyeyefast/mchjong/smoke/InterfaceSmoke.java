@@ -239,7 +239,10 @@ final class InterfaceSmoke {
         } else if (settingsStage == 17 && settingsTicks > 10) {
             checkBounds(client);
             capture(client, output, "35-rules-320x240.png");
-            client.setScreen(new top.skyeyefast.mchjong.client.RiichiRulesScreen(settingsParent, table.clientRoom(), table.clientRiichiSettings(), true));
+            var preset = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(w -> w.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t && t.getKey().equals("rules.mchjong.preset"))
+                .findFirst().orElseThrow();
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(preset.getX() + 5, preset.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             settingsStage = 18; settingsTicks = 0;
         } else if (settingsStage == 18 && settingsTicks > 10) {
             checkBounds(client);
@@ -272,11 +275,11 @@ final class InterfaceSmoke {
         settings.effectsVolume = .37;
         if (round) settings.toggle(top.skyeyefast.mchjong.client.TableSettings.Information.ROUND);
         LobbySmoke.find(client, Component.translatable("settings.mchjong.discard").getString()).onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
-        require(client.screen != screen, "Discard mode did not open explicit choices");
+        require(client.screen != screen, "Discard input did not open explicit choices");
         checkBounds(client);
-        click(client, "settings.mchjong.discard.confirm");
-        require(client.screen == screen && settings.discardMode == top.skyeyefast.mchjong.client.TableSettings.DiscardMode.CONFIRM,
-            "Discard choice did not return or apply");
+        click(client, "settings.mchjong.discard.double_click");
+        require(client.screen == screen && settings.discardMode == top.skyeyefast.mchjong.client.TableSettings.DiscardMode.DOUBLE_CLICK,
+            "Discard input choice did not return or apply");
         click(client, "settings.mchjong.reset_category");
         require(settings.discardMode == top.skyeyefast.mchjong.client.TableSettings.DiscardMode.SINGLE_CLICK
             && settings.effectsVolume == .37 && !settings.show(top.skyeyefast.mchjong.client.TableSettings.Information.ROUND),

@@ -29,7 +29,6 @@ public final class McrTableScreen extends Screen {
     private TableTurnClock turnClock;
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
     private int actionTop, actionHeight;
-    private final TableHints hints = new TableHints();
     private final TableAutomation automation = new TableAutomation(this, this::automationOptions, this::rebuild);
 
     private List<TableAutomation.Toggle> automationOptions() {
@@ -75,7 +74,6 @@ public final class McrTableScreen extends Screen {
 
     private void rebuild() {
         int automationFocus = automation.focusedIndex(getFocused());
-        boolean hintFocused = getFocused() == hints;
         clearWidgets();
         turnClock = null;
         decisionControls.clear();
@@ -86,7 +84,6 @@ public final class McrTableScreen extends Screen {
         shownRevision = view.revision();
         if (decision != game.decision()) {
             decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT;
-            hints.clearPreview();
         }
         hand = null;
         board = immersive() ? new TableBoard(TableBoardState.live(game), 20, 1260, 68, 620, 800, true) : null;
@@ -106,7 +103,6 @@ public final class McrTableScreen extends Screen {
         automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         var choices = new ArrayList<Integer>();
-        if (discardAction(selected) >= 0) choices.add(discardAction(selected));
         for (int i = 0; i < game.actions().size(); i++)
             if (game.actions().get(i).type() != McrAction.Type.DISCARD
                 && game.actions().get(i).type() != McrAction.Type.DRAW
@@ -121,8 +117,6 @@ public final class McrTableScreen extends Screen {
             button.active = !pending && !view.paused(); addRenderableWidget(button);
             decisionControls.add(button);
         }
-        addRenderableWidget(hints);
-        if (hintFocused && hints.visible) setFocused(hints);
     }
     private void send(McrSession.View snapshot, int index) {
         var current = view();
@@ -146,13 +140,15 @@ public final class McrTableScreen extends Screen {
     }
     private void choose(int tile) {
         if (pending) return;
-        selected = tile; long now = Util.getMillis(); var mode = TableSettings.get().discardMode;
-        if (!MahjongUi.shiftDown() && (mode == TableSettings.DiscardMode.SINGLE_CLICK
-            || mode == TableSettings.DiscardMode.DOUBLE_CLICK && lastClicked == tile && now - lastClickAt <= 450)) {
-            int index = discardAction(tile);
-            if (index >= 0) { send(view(), index); return; }
+        int index = discardAction(tile);
+        if (index < 0) return;
+        long now = Util.getMillis();
+        if (TableSettings.get().discardMode == TableSettings.DiscardMode.SINGLE_CLICK
+            || lastClicked == tile && now - lastClickAt <= 450) send(view(), index);
+        else {
+            selected = lastClicked = tile; lastClickAt = now;
+            rebuild(); setFocused(null);
         }
-        lastClicked = tile; lastClickAt = now; rebuild(); setFocused(null);
     }
     private Component tileLabel(int tile) {
         return table().clientMcrDeck().tile(tile).label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ,
@@ -211,7 +207,7 @@ public final class McrTableScreen extends Screen {
             }
             hovered = transform.contains(mouseX, mouseY) ? pick(mx, my) : Tile.ABSENT;
             int s = contentScale();
-            g.pose().pushMatrix(); g.pose().translate(0, 0); g.pose().scale(s, s);
+            g.pose().pushMatrix(); g.pose().translate(0, 0); g.pose().scale(s);
             int w = uiWidth() / s;
             if (view.paused()) g.centeredText(font, Component.translatable("mcr.mchjong.paused"), w / 2,
                 immersive() ? 183 : 43, MahjongUi.NEGATIVE);
@@ -234,11 +230,9 @@ public final class McrTableScreen extends Screen {
                 TableAnimation.of(table()).render(g, board, hand, TableCanvas.HEIGHT - 60, Util.getMillis(),
                     deck.preset(), deck.material(), deck.back(), deck.backPreset(), tile -> TileMesh.artwork(deck.tile(tile)));
             }
-            updateHints();
             g.pose().pushMatrix(); g.pose().translate(0, 0);
             TableExitControls.renderVote(g, font, table().clientTableRoom(), uiWidth(), uiHeight(), s);
             super.extractRenderState(g, mx, my, partialTick);
-            hints.renderPopup(g, font, table().clientMcrDeck().preset());
             if (table().clientTableRoom().exitVote() == null && (turnClock == null || !turnClock.visible)
                 && TableSettings.get().show(TableSettings.Information.HELP)) {
                 var help = Component.translatable("ui.mchjong.help." + TableSettings.get().discardMode.name().toLowerCase(java.util.Locale.ROOT));
@@ -258,7 +252,8 @@ public final class McrTableScreen extends Screen {
                 return Component.translatable("wind.mchjong." + new String[]{"east", "south", "west", "north"}[Math.floorMod(seat - view.game().dealer(), 4)])
                     .append("  ").append(Component.translatable(player.winForbidden() ? "mcr.mchjong.win_forbidden" : "mcr.mchjong.flowers", player.flowers().size()));
             }).toList(),
-            uiWidth(), immersive(), deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
+            uiWidth(), uiHeight(), immersive(), TableHud.exclusions(this, privateHandBounds(), null, board),
+            deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
     }
     private int clockBottom() {
         if (hand != null) return hand.top() - 12;
@@ -279,29 +274,6 @@ public final class McrTableScreen extends Screen {
         if (!Double.isFinite(top) || top >= height || bottom <= 0 || top < 196 && bottom + 90 <= height - 24)
             return height - 24;
         return Math.max(190, Math.min(height - 24, (int) top - 6));
-    }
-    private void updateHints() {
-        var room = table().clientTableRoom();
-        if (!room.convenienceHints() || pending || room.exitVote() != null || view().paused()) {
-            hints.clearPreview();
-            return;
-        }
-        int scale = contentScale();
-        var bounds = privateHandBounds();
-        if (bounds == null) { hints.clearPreview(); return; }
-        int center = hand == null ? bounds.left() + bounds.width() / 2 : hand.centerX();
-        int bottom = bounds.top() - 4 * scale;
-        int half = Math.min(center - 8, uiWidth() - 8 - center);
-        for (var widget : decisionControls) if (widget.visible && widget.getY() < bottom
-            && widget.getBottom() > bottom - 100 * scale) {
-            if (widget.getX() > center) half = Math.min(half, widget.getX() - center - 4);
-            else if (widget.getRight() < center) half = Math.min(half, center - widget.getRight() - 4);
-        }
-        int focus = hovered;
-        hints.update(view().game(), focus, selected, font, center, bottom, Math.max(0, half),
-            38, scale);
-        hints.setX(uiWidth() - 30 * scale);
-        hints.setY(uiHeight() - 16 * scale);
     }
 
     private net.minecraft.client.gui.navigation.ScreenRectangle privateHandBounds() {
@@ -332,7 +304,7 @@ public final class McrTableScreen extends Screen {
     private void toggleView() { presentation.toggle(); rebuild(); }
     public void resetView() { presentation.reset(); }
     @Override public void tick() { presentation.tick(); }
-    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; hints.clearPreview(); rebuild(); }
+    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; rebuild(); }
     @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
         double x = event.x(), y = event.y(); int button = event.button();
         if (!canvas().contains(x, y)) return false;
@@ -381,7 +353,7 @@ public final class McrTableScreen extends Screen {
         @Override protected void extractContents(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
             renderSurface(g);
             int s = contentScale(), icons = TableSettings.get().actionTiles ? action.tiles().size() * 10 : 0;
-            g.pose().pushMatrix(); g.pose().translate(getX() + 4, getY() + 4 * s); g.pose().scale(s, s);
+            g.pose().pushMatrix(); g.pose().translate(getX() + 4, getY() + 4 * s); g.pose().scale(s);
             int textWidth = width / s - icons - 8;
             MahjongUi.text(g, font, getMessage(), 0, 5, textWidth, captionColor(), false);
             var deck = table().clientMcrDeck();

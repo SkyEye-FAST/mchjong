@@ -25,6 +25,9 @@ public final class McrLobbyScreen extends Screen {
         return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table ? table : null;
     }
     @Override public boolean isPauseScreen() { return false; }
+    @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+        return lobby.scrollVariants(x, y, horizontal, vertical) || super.mouseScrolled(x, y, horizontal, vertical);
+    }
     @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
     @Override protected void init() { rebuild(); }
     public void receivedView() { lobby.receivedView(); rebuild(); }

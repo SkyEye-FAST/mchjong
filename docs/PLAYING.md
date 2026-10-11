@@ -64,9 +64,9 @@ play. The table runs a fixed sixteen-hand match.
 
 The seated view shows physical walls, six-column rivers, left-corner melds,
 flowers, winds, scores and remaining tiles. Click the view button to switch
-to the immersive table. Select and discard hand tiles with your personal
-single-click, double-click or confirmation preference. Click Discard to confirm
-selection. Right-drag adjusts the seated view, the wheel changes distance, and
+to the immersive table. Discard hand tiles using your single-click or double-click
+preference. Right-drag adjusts the
+seated view, the wheel changes distance, and
 Personal Settings offers a view reset.
 
 Use the Chow, Pung, Melded Kong, Added Kong, Concealed Kong, Win and Pass buttons
@@ -113,9 +113,9 @@ Choose the preset in Taiwanese rules, set move/reserve time in Time control,
 assign seats and have each player sit at their assigned stool and press Ready.
 
 The dealer starts with seventeen tiles, and each nondealer starts with sixteen tiles. Draws and
-flower replacements are automatic. Select a physical tile to discard; Chow,
-Pong, Kong, Ready, Win and Pass buttons appear when legal. The same mouse selection,
-confirmation and view buttons apply. Ready
+flower replacements are automatic. Click a physical tile to discard it using your
+single-click or double-click preference. Chow, Pong, Kong, Ready, Win and Pass
+buttons appear when legal. Ready
 includes the declared discard and locks subsequent discards to the drawn tile.
 Flowers, rivers and exposed melds remain public. Opponent concealed hands and
 covered kongs remain hidden, including after settlement.
@@ -125,8 +125,8 @@ Confirm the next hand or wait ten active seconds. Dealer wins and draws repeat;
 a nondealer win advances the dealer. Complete all four dealer positions in each
 of East, South, West and North to end the match. Exit votes and absence pause the
 room, and saved tables resume with their current decisions and scores.
-Shared room controls provide built-in Bots, native replays and convenience hints;
-see [Rooms](ROOMS.md) and [Replays](REPLAYS.md) for access and operation.
+Shared room controls provide built-in Bots and native replays.
+See [Rooms](ROOMS.md) and [Replays](REPLAYS.md) for access and operation.
 See [Taiwanese mahjong rules](RULES.md#taiwanese-mahjong) for preset and payment settings.
 
 ## Point-stick payments
@@ -170,18 +170,19 @@ archive. An unfinished hand is not scored.
 
 ## Controls and views
 
-Click tiles directly on the physical table. Personal settings offer single-click,
-double-click, or select-and-confirm discards. Shift-click selects without
-discarding. In Riichi, turning off **Sort hand** keeps the current
+Click a hand tile to discard it on the physical or immersive table.
+Personal Settings offers single-click and double-click discards.
+In Riichi, turning off **Sort hand** keeps the current
 tile order. Drag a tile onto another tile to move it within your hand. Drag it
 up by at least 48 GUI pixels to discard it. In immersive view, the threshold
 is 96 pixels on the fixed virtual canvas. A shorter drag keeps the tile in
-your hand. Single-click and double-click remain discard choices.
-Click Discard to confirm the selected tile, Riichi to choose a riichi discard,
-or Pass to skip a response. Riichi highlights only legal discard candidates and
-requires confirmation. Right-click or Esc cancels a selection before closing the
+your hand. Clicks without dragging use your discard preference.
+Click Riichi, then click a highlighted legal tile to declare riichi.
+Click Pass to skip a response. Right-click or Esc cancels a declaration before closing the
 overlay. Right-drag looks freely around the seated table. The wheel moves closer
 or farther away. Shift-right-drag pans across the table; Shift-wheel adjusts height.
+Action announcements use muted text centered horizontally above the table and avoid
+the HUD, controls and hand. The current-discard card stays on the right.
 Reset the seated view in Personal Settings. Distance and height sliders preserve
 the current look direction.
 Use the top-bar view button to switch between the seated and immersive

@@ -46,50 +46,21 @@ public final class TableParticipantsScreen extends Screen implements TableChildS
         for (int seat = 0; seat < room.seats().size(); seat++) {
             var state = room.seats().get(seat);
             var player = state.participant();
-            Component label;
-            Component hint;
-            Runnable action;
-            boolean enabled;
-            if (seat == room.host() || player.id() != null && !player.bot() && state.presence() == PlayerPresence.SEATED) {
-                label = Component.translatable(seat == room.host() ? "room.mchjong.host.short" : "room.mchjong.transfer");
-                hint = Component.translatable("room.mchjong.transfer_host", player.name());
-                int index = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
-                enabled = host && seat != room.host() && (!room.lobby() || index >= 0);
-                action = () -> {
-                    if (room.lobby()) RoomLobbyControls.send(pos, room, index);
-                    else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
-                };
-            } else {
-                label = player.bot() ? botName(room, externalBots(), seat)
-                    : Component.translatable(player.id() != null ? presenceKey(state.presence()) : "room.mchjong.empty");
-                hint = label;
-                enabled = false;
-                action = () -> {};
-            }
-            var button = MahjongButton.create(label, ignored -> action.run())
-                .bounds(left + span - 100, top + 38 + seat * pitch, 100, 22).tooltip(Tooltip.create(hint)).build();
-            button.active = enabled;
+            if (player.id() == null || player.bot() || seat == room.host() || !host) continue;
+            int index = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
+            var button = MahjongButton.create(Component.translatable("room.mchjong.transfer"), ignored -> {
+                if (room.lobby()) RoomLobbyControls.send(pos, room, index);
+                else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
+            }).bounds(left + span - 100, top + 38 + seat * pitch, 100, 20)
+                .tooltip(Tooltip.create(Component.translatable("room.mchjong.transfer_host", player.name()))).build();
+            button.active = room.lobby() ? index >= 0 : state.presence() != PlayerPresence.DISCONNECTED
+                && room.seats().get(room.viewerSeat()).presence() == PlayerPresence.SEATED;
+            if (!room.lobby() && room.seats().get(room.viewerSeat()).presence() != PlayerPresence.SEATED)
+                button.setTooltip(Tooltip.create(Component.translatable("message.mchjong.seat_required")));
             addRenderableWidget(button);
         }
-        int leave = RoomLobbyControls.find(room, RoomAction.Type.LEAVE_ROOM, List.of());
-        if (leave >= 0) addRenderableWidget(MahjongButton.create(Component.translatable("action.mchjong.leave_room"), ignored -> RoomLobbyControls.send(pos, room, leave))
-            .bounds(left, top + panelHeight - 50, span, 20).build());
-        addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
+        addRenderableWidget(MahjongButton.create(Component.translatable("gui.back"), ignored -> onClose())
             .bounds(left, top + panelHeight - 26, span, 20).build().primary());
-    }
-
-    static Component botName(TableRoomView room, List<top.skyeyefast.mchjong.engine.ExternalBot> externalBots, int seat) {
-        var state = room.seats().get(seat);
-        if (state.participant().externalBotId() != null) return externalBots.stream()
-            .filter(bot -> bot.id().equals(state.participant().externalBotId()))
-            .findFirst().<Component>map(bot -> Component.literal(bot.name()))
-            .orElse(Component.literal(state.participant().externalBotId()));
-        return Component.translatable(state.participant().difficulty().translationKey());
-    }
-
-    static Component wind(int wind) {
-        return Component.translatable(wind < 0 ? "room.mchjong.wind_unknown"
-            : "wind.mchjong." + new String[]{"east", "south", "west", "north"}[wind]);
     }
 
     @Override public void tick() {
@@ -106,30 +77,17 @@ public final class TableParticipantsScreen extends Screen implements TableChildS
             for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat);
                 var player = state.participant();
-                Component label = Component.translatable("room.mchjong.member", seat + 1, RiichiTableScreen.playerName(room, seat));
-                Component status = wind(state.wind()).copy().append("  ").append(player.id() == null
-                    ? Component.translatable("room.mchjong.left_room") : player.bot() ? Component.translatable("room.mchjong.bot")
-                    : presence(state.presence()));
+                Component label = RoomMembers.name(room, seat);
+                Component status = RoomMembers.status(room, externalBots(), seat);
                 int inset = PlayerPortrait.draw(graphics, player, left, top + 38 + seat * pitch, 10);
                 int nameColor = !player.bot() && state.presence() == PlayerPresence.DISCONNECTED ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
                 MahjongUi.text(graphics, font, label, left + inset, top + 39 + seat * pitch, span - 108 - inset, nameColor, false);
                 MahjongUi.text(graphics, font, status, left, top + 52 + seat * pitch, span - 108, MahjongUi.MUTED, false);
+                if (x >= left && x < left + span - 104 && y >= top + 36 + seat * pitch && y < top + 36 + (seat + 1) * pitch)
+                    graphics.setTooltipForNextFrame(font, status.getString().isEmpty() ? label : label.copy().append("\n").append(status), x, y);
             }
         }
         super.extractRenderState(graphics, x, y, partialTick);
-    }
-
-    static Component presence(PlayerPresence presence) {
-        if (presence == null) return Component.translatable("room.mchjong.empty");
-        return Component.translatable(presenceKey(presence));
-    }
-
-    private static String presenceKey(PlayerPresence presence) {
-        return switch (presence) {
-            case SEATED -> "room.mchjong.present";
-            case AWAY -> "room.mchjong.away";
-            case DISCONNECTED -> "room.mchjong.disconnected";
-        };
     }
 
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }

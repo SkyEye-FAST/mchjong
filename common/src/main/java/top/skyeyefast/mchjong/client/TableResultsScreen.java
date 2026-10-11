@@ -95,13 +95,15 @@ abstract class TableResultsScreen extends Screen {
         var c = canvas(); int mx = (int) c.localX(mouseX), my = (int) c.localY(mouseY), s = immersive() ? 2 : 1;
         c.begin(g);
         try {
+            TableBoard board = null;
             if (immersive()) {
                 g.fill(0, 0, c.width(), c.height(), MahjongUi.INPUT);
-                var board = new TableBoard(p.board(), 20, c.width() - 20, 68, c.height() - 112, c.height(), true);
+                board = new TableBoard(p.board(), 20, c.width() - 20, 68, c.height() - 112, c.height(), true);
                 board.render(g, p.board(), p.preset(), -2, p.material(), p.back(), p.backPreset(), p.cloth(), null, 0, p.artwork());
             }
             TableHud.render(font, g, p.board(), p.room(), p.result().seats().stream().map(TableResultState.Seat::status).toList(),
-                c.width(), immersive(), p.preset(), p.material(), p.back(), p.backPreset(), mx, my, p.artwork());
+                c.width(), c.height(), immersive(), TableHud.exclusions(this, null, null, board),
+                p.preset(), p.material(), p.back(), p.backPreset(), mx, my, p.artwork());
             g.pose().pushMatrix(); g.pose().translate(0, 0);
             TableExitControls.renderVote(g, font, p.room(), c.width(), c.height(), s);
             TableHud.text(font, g, progressText(), c.width() / 4, c.height() - 38 * s, c.width() / 2, MahjongUi.ACCENT, s);

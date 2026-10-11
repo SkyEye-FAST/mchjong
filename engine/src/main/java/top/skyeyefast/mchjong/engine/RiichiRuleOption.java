@@ -54,6 +54,7 @@ public enum RiichiRuleOption {
     ROB_NORTH_WITHOUT_KOKUSHI(Group.CALLS, RiichiPreset::robNorthWithoutKokushi),
     DELAYED_OPEN_KAN_DORA(Group.CALLS, RiichiPreset::delayedOpenKanDora),
     REPLACEMENT_CAPACITY(Group.CALLS, 1, 8, 1, RiichiPreset::replacementCapacity),
+    DRAWS_CLEAR_FURITEN(Group.CALLS, r -> r.mahjongSoul() || r == RiichiPreset.WRC),
     CALLS_CLEAR_FURITEN(Group.CALLS, r -> r == RiichiPreset.WRC),
     YAKULESS_FURITEN(Group.CALLS, r -> r == RiichiPreset.WRC),
 

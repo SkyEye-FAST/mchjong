@@ -35,7 +35,7 @@ class ServerIntegrationTest {
         top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, sound) ->
             assertSame(sound, BuiltInRegistries.SOUND_EVENT.getValue(MahjongContent.id(name))));
         assertTrue(server.getRecipeManager().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, MahjongContent.id("mahjong_table"))).isPresent());
-        assertTrue(server.getRecipeManager().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, MahjongContent.id("mahjong_stool"))).isPresent());
+        assertTrue(server.getRecipeManager().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, MahjongContent.id("mahjong_stool_white"))).isPresent());
         var commands = server.getCommands().getDispatcher().getRoot().getChild("mchjong");
         assertNotNull(commands);
         for (String name : java.util.List.of("world", "host", "clock", "invite", "accept", "decline", "replays", "replay"))

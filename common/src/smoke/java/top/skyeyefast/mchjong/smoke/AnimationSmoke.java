@@ -118,9 +118,16 @@ final class AnimationSmoke {
             hidden.forEach(TableSettings.get()::toggle);
             InputSmoke.verify(client, table);
         }
-        if (ticks == 114) capture(client, output, "20-riichi-selection.png");
+        if (ticks == 114) {
+            capture(client, output, "20-riichi-selection.png");
+            InputSmoke.switchView(client.screen);
+        }
         // Clearance arithmetic belongs to CompactTableLayoutTest; keep one real camera boundary.
-        if (ticks == 116) ticks = 184;
+        if (ticks == 116) {
+            capture(client, output, "20-riichi-selection-seated.png");
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE, 0, 0));
+            ticks = 184;
+        }
         if (ticks == 184) {
             windowWidth = client.getWindow().getWidth();
             windowHeight = client.getWindow().getHeight();
@@ -206,13 +213,30 @@ final class AnimationSmoke {
             capture(client, output, "57-immersive-rivers-melds-640x400.png");
             InputSmoke.switchView(client.screen);
         }
-        if (layoutsOnly && ticks == 328) { ticks = 359; return false; }
+        if (layoutsOnly && ticks == 328) {
+            originalHighlight = TableSettings.get().highlightTiles;
+            client.getWindow().setWindowed(960, 720);
+            client.options.guiScale().set(3); client.resizeGui();
+            InputSmoke.verifyCallFocus(client, table, RiichiAction.Type.PON);
+            return false;
+        }
+        if (layoutsOnly && ticks == 334) {
+            capture(client, output, "56-current-discard-320x240.png");
+            InputSmoke.switchView(client.screen);
+            return false;
+        }
+        if (layoutsOnly && ticks == 340) {
+            capture(client, output, "56-current-discard-immersive.png");
+            client.getWindow().setWindowed(windowWidth, windowHeight);
+            client.options.guiScale().set(guiScale); client.resizeGui();
+            ticks = 359;
+        }
         if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
-        if (ticks >= 328 && ticks <= 352 && (ticks - 328) % 12 == 0) {
+        if (!layoutsOnly && ticks >= 328 && ticks <= 352 && (ticks - 328) % 12 == 0) {
             var calls = new RiichiAction.Type[]{RiichiAction.Type.CHI, RiichiAction.Type.PON, RiichiAction.Type.OPEN_KAN};
             InputSmoke.verifyCallFocus(client, table, calls[(ticks - 328) / 12]);
         }
-        if (ticks >= 334 && ticks <= 358 && (ticks - 334) % 12 == 0)
+        if (!layoutsOnly && ticks >= 334 && ticks <= 358 && (ticks - 334) % 12 == 0)
             capture(client, output, "56-highlight-" + new String[]{"chi", "pon", "kan"}[(ticks - 334) / 12] + "-focus.png");
         if (ticks == 359) TableSettings.get().highlightTiles = originalHighlight;
         if (ticks == 360) {
