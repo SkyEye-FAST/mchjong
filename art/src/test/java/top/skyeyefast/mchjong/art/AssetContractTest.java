@@ -250,7 +250,8 @@ class AssetContractTest {
             }
             assertTrue(Files.isRegularFile(resources.resolve("assets/mchjong/blockstates/" + name + ".json")));
             if (!name.equals("automatic_mahjong_table"))
-                assertTrue(Files.isRegularFile(data.resolve("data/mchjong/recipe/" + name + ".json")));
+                assertTrue(Files.isRegularFile(data.resolve("data/mchjong/recipe/" +
+                    (name.equals("mahjong_stool") ? "mahjong_stool_white" : name) + ".json")));
             assertTrue(Files.isRegularFile(data.resolve("data/mchjong/loot_table/blocks/" + name + ".json")));
         }
     }

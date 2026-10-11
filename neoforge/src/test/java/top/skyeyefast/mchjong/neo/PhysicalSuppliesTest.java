@@ -133,12 +133,19 @@ class PhysicalSuppliesTest {
             assertEquals(wood, table.get(MahjongComponents.WOOD));
             ingredients.set(0, new ItemStack(vanilla(wood == FurnitureWood.OAK ? "birch_slab" : "oak_slab")));
             assertFalse(crafting(server, "mahjong_table" + suffix).matches(CraftingInput.of(3, 3, ingredients), server.overworld()));
-            ItemStack stools = craft(server, "mahjong_stool" + suffix, 2, 3,
-                List.of(new ItemStack(Items.WHITE_CARPET), new ItemStack(Items.WHITE_CARPET),
+            for (DyeColor color : DyeColor.values()) {
+                String recipe = "mahjong_stool" + suffix + "_" + color.getName();
+                var carpet = new ItemStack(vanilla(color.getName() + "_carpet"));
+                var stoolIngredients = new ArrayList<>(List.of(carpet, carpet.copy(),
                     new ItemStack(slab), new ItemStack(slab), new ItemStack(fence), new ItemStack(fence)));
-            assertTrue(stools.is(MahjongContent.STOOL_ITEM));
-            assertEquals(2, stools.getCount());
-            assertEquals(wood, stools.get(MahjongComponents.WOOD));
+                ItemStack stools = craft(server, recipe, 2, 3, stoolIngredients);
+                assertTrue(stools.is(MahjongContent.STOOL_ITEM));
+                assertEquals(2, stools.getCount());
+                assertEquals(wood, stools.get(MahjongComponents.WOOD));
+                assertEquals(color, stools.get(DataComponents.BASE_COLOR));
+                stoolIngredients.set(0, new ItemStack(color == DyeColor.WHITE ? Items.BLACK_CARPET : Items.WHITE_CARPET));
+                assertFalse(crafting(server, recipe).matches(CraftingInput.of(2, 3, stoolIngredients), server.overworld()));
+            }
             List<ItemStack> upgrade = List.of(new ItemStack(Items.IRON_INGOT), new ItemStack(Items.REDSTONE), new ItemStack(Items.IRON_INGOT),
                 new ItemStack(Items.REDSTONE), table, new ItemStack(Items.REDSTONE),
                 new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.HOPPER), new ItemStack(Items.COPPER_INGOT));
@@ -152,10 +159,32 @@ class PhysicalSuppliesTest {
             ItemStack cloth = craft(server, "table_cloth_" + color.getName(), 3, 1, List.of(carpet, carpet.copy(), carpet.copy()));
             assertTrue(cloth.is(MahjongContent.CLOTH_ITEM));
             assertEquals(color, cloth.get(DataComponents.BASE_COLOR));
+            var mixed = List.of(carpet, carpet.copy(), new ItemStack(color == DyeColor.WHITE ? Items.BLACK_CARPET : Items.WHITE_CARPET));
+            assertFalse(crafting(server, "table_cloth_" + color.getName()).matches(CraftingInput.of(3, 1, mixed), server.overworld()));
         }
         MahjongComponents.TYPES.forEach((name, component) ->
             assertSame(component, BuiltInRegistries.DATA_COMPONENT_TYPE.get(MahjongContent.id(name))));
         MahjongContent.SUPPLIES.forEach((name, item) -> assertSame(item, BuiltInRegistries.ITEM.get(MahjongContent.id(name))));
+    }
+
+    @Test void stoolsAndClothsCanBeRedyedEveryColorWithoutChangingOtherComponents(MinecraftServer server) {
+        for (var item : List.of(MahjongContent.STOOL_ITEM, MahjongContent.CLOTH_ITEM)) {
+            var target = new ItemStack(item, 2);
+            target.set(DataComponents.CUSTOM_NAME, Component.literal("Named fabric"));
+            if (item == MahjongContent.STOOL_ITEM) target.set(MahjongComponents.WOOD, FurnitureWood.SPRUCE);
+            for (DyeColor color : DyeColor.values()) {
+                target.set(DataComponents.BASE_COLOR, color == DyeColor.WHITE ? DyeColor.BLACK : DyeColor.WHITE);
+                var before = target.copy();
+                var dye = new ItemStack(vanilla(color.getName() + "_dye"));
+                for (var ingredients : List.of(List.of(target, dye), List.of(dye, target))) {
+                    var result = craft(server, "dye", 2, 1, ingredients);
+                    var expected = target.copyWithCount(1);
+                    expected.set(DataComponents.BASE_COLOR, color);
+                    assertTrue(ItemStack.matches(expected, result));
+                    assertTrue(ItemStack.matches(before, target), "Dye previews must preserve the input");
+                }
+            }
+        }
     }
 
     @Test void stonecuttingMakesOnlyBlanksAndMahjongDyeUsesFiveColors(MinecraftServer server) {

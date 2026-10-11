@@ -37,10 +37,11 @@ F . F       . = empty
 ```
 
 The following recipe produces two padded wooden stools. The slabs and fences
-use the same wood family.
+use the same wood family. Both carpets use the same color, which sets the cushion
+color. Every wood family supports all 16 carpet colors.
 
 ```text
-C C       C = white carpet
+C C       C = carpet
 S S       S = wooden slab
 F F       F = wooden fence
 ```
@@ -59,6 +60,8 @@ A mahjong box uses leather/slab/leather across the top row, slab/chest/slab
 across the middle row and one iron nugget in the bottom center. The slabs may
 use different wood types. The box keeps its single appearance.
 A cloth, stool or individual tile plus one dye changes its color, shapeless.
+Stools and cloths can be dyed any of the 16 vanilla colors, preserving their custom
+names and the stool's wood family.
 A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
 Choose face and back presets in their selection screens, then press **Apply**
