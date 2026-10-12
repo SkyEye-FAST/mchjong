@@ -96,8 +96,7 @@ class ServerIntegrationTest {
         CompoundTag afterPublicUpdate = table.saveWithoutMetadata(server.registryAccess());
         assertArrayEquals(restored.getByteArray("session"), afterPublicUpdate.getByteArray("session"));
         assertTrue(net.minecraft.world.item.ItemStack.matches(box, table.equipment().boxes().getItem(0)));
-        // The ephemeral server provides registries but no loaded level. Live packet delivery is
-        // exercised by both client smoke runs; here the exact packet-tag whitelist is the contract.
+        // The ephemeral server provides registries but no loaded level; inspect the update tag directly.
         var loaded = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
         loaded.loadWithComponents(restored, server.registryAccess());
         assertTrue(net.minecraft.world.item.ItemStack.matches(box, loaded.equipment().boxes().getItem(0)));

@@ -75,19 +75,18 @@ with the first command below, or select an individual engine test with the secon
 ./gradlew :engine:test --tests '*McrSettlementTest' --warning-mode fail
 ```
 
-For changes that need a running Minecraft client, the existing checks in
-`common/src/smoke` have loader-specific launch tasks. An interface check on
-Fabric, for example, uses:
+Changes to inventory menus or equipment handling can also be checked in an
+isolated Minecraft world. The existing checks in `fabric/src/smoke` use a real
+server player to verify menu permissions, item transfers and equipment removal:
 
 ```sh
-./gradlew :fabric:runSmokeClient -PsmokeInterface=true --warning-mode fail
+./gradlew :fabric:runSmokeClient --warning-mode fail
 ```
 
-Other profiles are declared in each loader's build script. A run writes its
-result marker and logs beneath that loader's `build/smoke` directory. Check the
-new output rather than an earlier run's results. To inspect a particular screen,
-request its capture with `-PsmokeScreenshots=<filenames>` and view the generated
-image. Keep these outputs untracked and report which checks actually completed.
+A run writes its result under `fabric/build/smoke/evidence` and its game log
+under `fabric/build/smoke/run/logs`. Inspect the current result and report which
+checks completed. For appearance and interaction changes, use the relevant
+loader's `runClient` task and inspect the affected screen directly.
 
 `./gradlew buildAll --warning-mode fail` builds all current-profile loaders and
 runs the aggregate checks. The [snapshot workflow](../.github/workflows/snapshot.yml)

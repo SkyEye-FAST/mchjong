@@ -11,7 +11,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger()
 
 def presetDirectory = rootProject.file('presets/tile_faces')
 def presetSources = rootProject.fileTree(presetDirectory) {
-    include '*/tiles/*.png', '*/theme_metadata.json', 'NOTICE.md'
+    include '*/tiles/*.png', '*/theme_metadata.json'
 }
 
 def renderedAssets = layout.buildDirectory.dir('renderedAssets')
@@ -75,21 +75,15 @@ tasks.register('generateCreateData', JavaExec) {
 
 test {
     useJUnitPlatform()
-    dependsOn generateData
     mustRunAfter generateAssets
     doFirst { testTemp.get().asFile.mkdirs() }
     systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
     systemProperty 'mchjong.resources', layout.projectDirectory.dir('generated/assets').asFile.absolutePath
-    systemProperty 'mchjong.data', rootProject.layout.buildDirectory.dir('generated/data').get().asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
-    systemProperty 'mchjong.sourceRoot', rootProject.projectDir.absolutePath
-    ['common/src/main', 'engine/src/main', 'fabric/src/main', 'neoforge/src/main'].each { source ->
-        inputs.files rootProject.fileTree(source) { include '**/*.java', '**/*.kt' }
-    }
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')
     inputs.file rootProject.file('common/src/main/resources/assets/mchjong/sounds.json')
+    inputs.files rootProject.fileTree('common/src/main/resources/assets/mchjong/sounds') { include '**/*.ogg' }
     inputs.dir layout.projectDirectory.dir('generated/assets')
-    inputs.dir rootProject.layout.buildDirectory.dir('generated/data')
     inputs.files presetSources
     doFirst {
         systemProperty 'mchjong.artwork', presetDirectory.absolutePath

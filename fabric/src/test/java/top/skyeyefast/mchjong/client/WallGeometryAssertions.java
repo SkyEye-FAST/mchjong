@@ -90,47 +90,6 @@ final class WallGeometryAssertions {
             (piece.flat() ? TileDimensions.LARGE.height() : TileDimensions.LARGE.depth()));
     }
 
-    record PublicPiece(Solid solid, int seat, boolean hand, int group) {}
-
-    static void leftMeldsAndMinimalHandShift(List<PublicPiece> pieces, List<Double> handWidths, double handZ) {
-        for (int seat = 0; seat < 4; seat++) {
-            int owner = seat;
-            var own = pieces.stream().filter(p -> p.seat() == owner).toList();
-            var hand = own.stream().filter(PublicPiece::hand).toList();
-            double expectedHandEdge = -handWidths.get(seat) / 2;
-            double previousRight = Double.NEGATIVE_INFINITY, previousZ = Double.POSITIVE_INFINITY;
-            for (int group = 0; group < 12; group++) {
-                int number = group;
-                var meld = own.stream().filter(p -> p.group() == number).toList();
-                if (meld.isEmpty()) continue;
-                double left = Double.POSITIVE_INFINITY, right = Double.NEGATIVE_INFINITY;
-                for (var part : meld) {
-                    var solid = part.solid();
-                    var local = TableGeometry.orient(solid.position().x, 0, solid.position().z, (4 - seat) % 4);
-                    double angle = Math.toRadians(solid.yaw() - seat * 90);
-                    double halfX = (solid.width() * Math.abs(Math.cos(angle)) + solid.depth() * Math.abs(Math.sin(angle))) / 2;
-                    double halfZ = (solid.width() * Math.abs(Math.sin(angle)) + solid.depth() * Math.abs(Math.cos(angle))) / 2;
-                    left = Math.min(left, local.x - halfX); right = Math.max(right, local.x + halfX);
-                    if (!hand.isEmpty() && Math.abs(local.z - handZ) < halfZ + hand.getFirst().solid().depth() / 2 - 1e-8)
-                        expectedHandEdge = Math.max(expectedHandEdge, local.x + halfX + .04);
-                }
-                if (group == 0) assertTrue((left + right) / 2 < 0, "First Chinese meld belongs on the owner's left");
-                var first = meld.getFirst().solid().position();
-                double rowZ = TableGeometry.orient(first.x, 0, first.z, (4 - seat) % 4).z;
-                if (Math.abs(rowZ - previousZ) < .05) assertTrue(left >= previousRight - 1e-7, "Groups extend right within a row");
-                previousZ = rowZ;
-                previousRight = right;
-            }
-            if (!hand.isEmpty()) {
-                double actual = hand.stream().mapToDouble(p -> {
-                    var local = TableGeometry.orient(p.solid().position().x, 0, p.solid().position().z, (4 - owner) % 4);
-                    return local.x - p.solid().width() / 2;
-                }).min().orElseThrow();
-                assertEquals(expectedHandEdge, actual, 1e-8, "Hand moves right only by the actual missing meld clearance");
-            }
-        }
-    }
-
     static void onFelt(Solid solid) {
         var housing = new Solid(new Vec3(0, TableGeometry.FELT_Y + .0175, 0), 0,
             2 * TableIndicator.HALF_WIDTH, .035, 2 * TableIndicator.HALF_WIDTH);
