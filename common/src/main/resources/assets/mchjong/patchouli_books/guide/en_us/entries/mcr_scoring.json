@@ -1,0 +1,28 @@
+{
+  "name": "manual.mchjong.entry.mcr_scoring.name",
+  "category": "mchjong:mcr",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_scoring.minimum"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_scoring.minimum.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_scoring.payments"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_scoring.payments.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_scoring.match"
+    }
+  ]
+}

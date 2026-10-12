@@ -155,7 +155,7 @@ Minecraft version and loader shown below:
 | EMI | Fabric, NeoForge | Fabric, Forge | Not included |
 | REI | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Ponder | Fabric, NeoForge | Fabric, Forge | Not included |
-| Patchouli handbook | Not included | Fabric, Forge | Fabric, NeoForge |
+| Patchouli handbook | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Mod Menu | Fabric | Fabric | Fabric |
 | Create | NeoForge | Fabric, Forge | Not included |
 | Touhou Little Maid | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |

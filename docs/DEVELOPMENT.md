@@ -95,12 +95,6 @@ under `fabric/build/smoke/run/logs`. Inspect the current result and report which
 checks completed. For appearance and interaction changes, use the relevant
 loader's `runClient` task and inspect the affected screen directly.
 
-To check the handbook on Fabric, run `:fabric:runSmokeClient -PsmokePatchouli=true`
-with Patchouli absent, then repeat with `-PwithPatchouli=true`. These profiles
-retain the handbook recommendation, recipe, navigation and layout checks. Their
-logs and results use `fabric/build/smoke/patchouli-absent-*` and
-`fabric/build/smoke/patchouli-installed-*` directories.
-
 `./gradlew buildAll --warning-mode fail` builds all current-profile loaders and
 runs the aggregate checks. The [snapshot workflow](../.github/workflows/snapshot.yml)
 currently invokes it on pushes and pull requests. That CI behavior does not make

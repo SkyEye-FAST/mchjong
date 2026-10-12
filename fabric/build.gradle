@@ -182,11 +182,8 @@ sourceSets {
 }
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
-def patchouliSmoke = providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean()
-def patchouliInstalled = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()
-def smokeProfile = patchouliSmoke ? (patchouliInstalled ? 'patchouli-installed-' : 'patchouli-absent-') : ''
-def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
-def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
+def smokeEvidence = layout.buildDirectory.dir('smoke/evidence')
+def smokeRun = layout.buildDirectory.dir('smoke/run')
 loom {
     mods {
         mchjong { sourceSet sourceSets.main }
@@ -199,9 +196,6 @@ loom {
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
-            property 'mchjong.smoke.patchouliOnly', patchouliSmoke.toString()
-            property 'mchjong.smoke.patchouli', patchouliInstalled.toString()
-            property 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             property 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
         }

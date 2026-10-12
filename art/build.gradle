@@ -30,7 +30,7 @@ tasks.register('renderAssets', JavaExec) {
         args renderedAssets.get().asFile.absolutePath
     }
     outputs.dir renderedAssets
-    inputs.files sourceSets.main.allSource
+    inputs.files sourceSets.main.allSource, sourceSets.main.resources
     systemProperty 'java.io.tmpdir', renderTemp.get().asFile.absolutePath
     systemProperty 'java.awt.headless', 'true'
 }

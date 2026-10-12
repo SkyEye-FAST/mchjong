@@ -29,10 +29,6 @@ public final class FabricSmoke implements ClientModInitializer {
 
     @Override public void onInitializeClient() {
         if (!Boolean.getBoolean("mchjong.smoke")) return;
-        if (Boolean.getBoolean("mchjong.smoke.patchouliOnly")) {
-            ClientTickEvents.END_CLIENT_TICK.register(new TableClientSmoke()::tick);
-            return;
-        }
         output = Path.of(System.getProperty("mchjong.smoke.output"));
         ClientTickEvents.END_CLIENT_TICK.register(this::tick);
     }

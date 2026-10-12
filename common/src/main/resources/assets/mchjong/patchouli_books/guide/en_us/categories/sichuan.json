@@ -1,6 +1,6 @@
 {
   "name": "manual.mchjong.category.sichuan.name",
   "description": "manual.mchjong.category.sichuan.description",
-  "icon": "minecraft:paper",
+  "icon": "mchjong:dice",
   "sortnum": 4
 }

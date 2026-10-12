@@ -6,43 +6,92 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_1"
+      "text": "manual.mchjong.entry.taiwan_payments.repeats"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_1.continued_1"
+      "text": "manual.mchjong.entry.taiwan_payments.repeats.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_2"
+      "text": "manual.mchjong.entry.taiwan_payments.repeats.continued_2"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_2.continued_1"
+      "text": "manual.mchjong.entry.taiwan_payments.payers"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_3"
+      "text": "manual.mchjong.entry.taiwan_payments.amount"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_3.continued_1"
+      "text": "manual.mchjong.entry.taiwan_payments.amount.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_3.continued_2"
+      "text": "manual.mchjong.entry.taiwan_payments.amount.continued_2"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_4"
+      "text": "manual.mchjong.entry.taiwan_payments.dealer",
+      "anchor": "dealer"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_4.continued_1"
+      "text": "manual.mchjong.entry.taiwan_payments.dealer.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.page_4.continued_2"
+      "text": "manual.mchjong.entry.taiwan_payments.dealer.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.dealer.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.flower_wins"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.flower_wins.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.flower_wins.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.flower_wins.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.flower_wins.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.flower_wins.continued_5"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.results"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.results.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.presets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.presets.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.presets.continued_2"
     }
   ]
 }

@@ -6,23 +6,35 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.stock.page_1"
+      "text": "manual.mchjong.entry.stock.intro"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.stock.page_1.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.stock.page_2"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.stock.page_2.continued_1"
+      "text": "manual.mchjong.entry.stock.intro.continued_1"
     },
     {
       "type": "patchouli:crafting",
       "recipe": "mchjong:dice"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.sticks"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.sticks.continued_1"
+    },
+    {
+      "type": "patchouli:stonecutting",
+      "recipe": "mchjong:blank_point_sticks"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.kit"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.kit.continued_1"
     }
   ]
 }

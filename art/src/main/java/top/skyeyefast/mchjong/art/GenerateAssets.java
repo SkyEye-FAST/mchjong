@@ -67,11 +67,11 @@ public final class GenerateAssets {
             text("assets/mchjong/models/item/" + name + ".json",
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
         }
-        png("item/mahjong_manual", ManualArtwork.texture());
+        png("item/mahjong_manual", resourceTexture("item/mahjong_manual"));
         text("assets/mchjong/models/item/mahjong_manual.json",
             "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/mahjong_manual\"}}");
         for (String name : java.util.List.of("mahjong_dye", "creative_mahjong_dye", "red_dora_dye", "undo_dye")) {
-            png("item/" + name, MahjongDyeArtwork.texture(name));
+            png("item/" + name, resourceTexture("item/" + name));
             text("assets/mchjong/models/item/" + name + ".json",
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
         }
@@ -204,6 +204,13 @@ public final class GenerateAssets {
         boxes.add(new float[]{-.27f, .15f, -.24f, -.25f, .18f, .24f});
         boxes.add(new float[]{.25f, .15f, -.24f, .27f, .18f, .24f});
         return boxes;
+    }
+
+    private static BufferedImage resourceTexture(String relative) throws IOException {
+        try (var stream = GenerateAssets.class.getResourceAsStream("/assets/mchjong/textures/" + relative + ".png")) {
+            if (stream == null) throw new IOException("Resource not found: " + relative);
+            return ImageIO.read(stream);
+        }
     }
 
     private void png(String name, BufferedImage image) throws IOException {

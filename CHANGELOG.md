@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Redraw Mahjong dyes with vanilla-style powder mounds, splicing crafting ingredient pigments for Mahjong Dye and scaling down Red Dora Dye and Undo Dye, replacing procedural artwork generation with static texture resources.
+- Redraw the Mahjong Manual item texture with an isometric jade-and-brass book matching the vanilla Minecraft book perspective, replacing procedural artwork generation with a static texture resource.
+- Rewrite the Mahjong Manual in all four languages around six chapters: tables and equipment, seating and play, and one chapter each for Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong. Give every yaku, scoring pattern and tai pattern its own text page, keep tile diagrams only for hand shapes that text cannot show, and point rule-setting explanations to the section describing each option.
+- Restore the revised Patchouli handbook on `main`, with optional Fabric and NeoForge integration and standalone rule explanations when Patchouli is absent.
 - Limit convenience hints to Riichi mahjong and remove the MCR, Sichuan mahjong and Taiwanese mahjong hint interfaces and calculations. Riichi hints show current waits and remaining copies only while tenpai.
 - Center action announcements in muted text clear of the HUD, controls and private hand, keep current-discard cards on the right, and show immersive seat winds and status on player plaques. Use direct hand clicks for discards in all four variants and both views, retaining single-click and double-click settings and removing discard confirmation buttons.
 - Unify room rule entry points and draft submission, organize Riichi rules into six persistent categories, move player count and preset selection into the draft, group hand display settings, centralize preparation member controls, and align Sichuan mahjong, Taiwanese mahjong and MCR navigation with four-language controls and explanations.
