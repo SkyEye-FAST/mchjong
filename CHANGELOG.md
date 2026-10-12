@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Repair the Mahjong Manual's furniture recipe tables and use a cyan table cloth and a white mahjong stool in the recipe examples.
 - Redraw Mahjong dyes with vanilla-style powder mounds, splicing crafting ingredient pigments for Mahjong Dye and scaling down Red Dora Dye and Undo Dye, replacing procedural artwork generation with static texture resources.
 - Redraw the Mahjong Manual item texture with an isometric jade-and-brass book matching the vanilla Minecraft book perspective, replacing procedural artwork generation with a static texture resource.
 - Rewrite the Mahjong Manual in all four languages around six chapters: tables and equipment, seating and play, and one chapter each for Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong. Give every yaku, scoring pattern and tai pattern its own text page, keep tile diagrams only for hand shapes that text cannot show, and point rule-setting explanations to the section describing each option.
