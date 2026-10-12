@@ -41,11 +41,12 @@ from the four shared language files. The book definition is at
 enables these resource-pack pages. The generated cover is
 `assets/mchjong/textures/item/mahjong_manual.png`.
 
-Use the checked-in entries as authoring examples. Each `mchjong:example` spread
-has two consecutive pages with matching `text`, `tiles` and `face` fields;
-only the first page carries an `anchor`. Preserve those anchors so rule
-explanations continue to reach the matching award. Tile diagrams use the
-playing atlas and the selected regional face preset.
+Use the checked-in entries as authoring examples. Each award in the award
+entries has one text page whose `anchor` is the award's identifier; preserve
+those anchors so rule explanations continue to reach the matching award. A
+`mchjong:example` tile diagram occupies a spread: two consecutive pages, starting
+on an even page index, with matching `text`, `tiles` and `face` fields. Tile
+diagrams use the playing atlas and the selected regional face preset.
 
 ## Preset ZIPs
 
