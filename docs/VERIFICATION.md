@@ -374,6 +374,7 @@ participant/Bot permissions and queue acknowledgement without duplication.
 ```text
 gradlew.bat :engine:test --tests "*TaiwanReplayTest" :fabric:test --tests "*ReplayPresentationTest" --tests "*ReplayStoreTest" --warning-mode fail --console=plain
 ```
+
 `TaiwanSessionTest` owns four-human preparation, both physical stocks,
 incarnation/mount authorization, recipient-only clocks/response privacy,
 paused/restored allowances and exit votes, partial hand acknowledgements,
