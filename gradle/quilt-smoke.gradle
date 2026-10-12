@@ -43,11 +43,6 @@ tasks.register('runQuiltSmokeClient', JavaExec) {
     systemProperty 'fabric.defaultModDistributionNamespace', 'official'
     systemProperty 'mchjong.smoke', 'true'
     systemProperty 'mchjong.smoke.quilt', 'true'
-    systemProperty 'mchjong.smoke.roomOnly', providers.gradleProperty('smokeRoom').getOrElse('false')
-    systemProperty 'mchjong.smoke.manualOnly', providers.gradleProperty('smokeManual').getOrElse('false')
-    systemProperty 'mchjong.smoke.maid', providers.gradleProperty('withMaid').getOrElse('false')
-    systemProperty 'mchjong.smoke.browser', providers.gradleProperty('recipeBrowser').getOrElse('none')
-    systemProperty 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
     systemProperty 'mchjong.smoke.output', evidence.get().asFile.absolutePath
     doFirst {
         workingDir.mkdirs()

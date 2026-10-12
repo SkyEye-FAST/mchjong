@@ -248,7 +248,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - REI supply recipes are available on Minecraft 1.21.1 Fabric and NeoForge, 1.20.1 Fabric and Forge, and 26.1.2 Fabric and NeoForge.
 - Fabric and Quilt releases require Fabric API.
-- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+- Loader-specific validation coverage is recorded in [Compatibility and verification](https://github.com/SkyEye-FAST/mchjong/blob/97f2da91d5d04cd5d38887b6f83f77f4cfd6b553/docs/COMPATIBILITY.md).
 
 ## [0.7.0] - 2026-09-24
 
@@ -282,7 +282,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Create workshop integration targets NeoForge on 1.21.1, and Fabric and Forge on 1.20.1.
 - Touhou Little Maid and Orihime integrations target Fabric and NeoForge on 1.21.1, Fabric and Forge on 1.20.1, and tested prerelease builds on 26.1.2.
 - Minecraft 1.21.1 requires Java 21; Minecraft 1.20.1 requires Java 17; Minecraft 26.1.2 requires Java 25.
-- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+- Loader-specific validation coverage is recorded in [Compatibility and verification](https://github.com/SkyEye-FAST/mchjong/blob/97f2da91d5d04cd5d38887b6f83f77f4cfd6b553/docs/COMPATIBILITY.md).
 
 ## [0.6.0] - 2026-09-22
 
@@ -310,7 +310,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Minecraft 1.21.1: Fabric, Forge and NeoForge artifacts; Minecraft 1.20.1: Fabric and Forge artifacts. Quilt uses the corresponding Fabric JAR.
 - JEI is available on all five builds. EMI, REI and Ponder integrations target Fabric and NeoForge on 1.21.1, and Fabric and Forge on 1.20.1.
 - Minecraft 1.21.1 requires Java 21; Minecraft 1.20.1 artifacts target Java 17.
-- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+- Loader-specific validation coverage is recorded in [Compatibility and verification](https://github.com/SkyEye-FAST/mchjong/blob/97f2da91d5d04cd5d38887b6f83f77f4cfd6b553/docs/COMPATIBILITY.md).
 
 ## [0.5.3] - 2026-09-22
 

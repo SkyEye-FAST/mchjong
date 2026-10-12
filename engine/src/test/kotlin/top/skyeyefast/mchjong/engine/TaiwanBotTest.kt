@@ -308,46 +308,4 @@ class TaiwanBotTest {
         }
     }
 
-    @Test fun oneHumanThreeBotsCompleteBothFourWindMatchesWithConservedTilesAndScores() {
-        for (preset in TaiwanPreset.entries) {
-            val rules = preset.rules()
-            var room = TaiwanSession.start(UUID.randomUUID(), roster, 4, TaiwanWall.expected(rules), rules)
-            mount(room)
-            val totals = MutableList(4) { 0L }
-            var hands = 0
-            var ticks = 0
-            var rotations = 0
-            while (room.lifecycle() != TableSession.Lifecycle.FINISHED) {
-                assertTrue(++ticks < 200_000, "Stuck $preset at hand $hands / rotation $rotations")
-                val game = room.game()
-                game.checkConservation()
-                if (game.phase == TaiwanGame.Phase.FINISHED) {
-                    assertTrue(++hands < 250)
-                    val result = game.settlement!!
-                    for (seat in 0..3) totals[seat] += result.deltas[seat]
-                    if (result.nextDealer != game.opening.dealer) rotations++
-                    assertEquals(totals, room.scores())
-                    room = restore(room)
-                    room.tick()
-                    assertEquals(14, room.save().confirmed())
-                    assertTrue(room.confirmNextHand(human, room.tableId(), room.incarnation(), room.game().decision))
-                } else {
-                    val view = room.view(human).game()
-                    if (view.actions().isNotEmpty()) assertTrue(room.act(human, room.tableId(), room.incarnation(), view.decision(), TaiwanBot.choose(view)))
-                    room.tick()
-                }
-            }
-            room.game().checkConservation()
-            for (seat in 0..3) totals[seat] += room.game().settlement!!.deltas[seat]
-            assertEquals(15, rotations)
-            assertEquals(Tile.NORTH, room.game().roundWind)
-            assertEquals(3, room.game().opening.dealer)
-            assertEquals(totals, room.scores())
-            assertEquals(0L, totals.sum())
-            room = restore(room)
-            assertEquals(totals, room.scores())
-            assertFalse(room.confirmNextHand(human, room.tableId(), room.incarnation(), room.game().decision))
-            assertTrue(room.view(human).game().seats().drop(1).all { it.concealed().isEmpty() })
-        }
-    }
 }

@@ -19,7 +19,6 @@ import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiRoomSettings;
-import top.skyeyefast.mchjong.engine.RiichiRules;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.engine.Tile;

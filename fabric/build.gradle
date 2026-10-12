@@ -143,36 +143,19 @@ tasks.named('sourcesJar') {
 }
 jar { from(rootProject.file('LICENSE')) }
 
-// Compile shared fixtures once; the visual smoke mod is never packaged for players.
+// Native inventory checks need a real player and world, not a screenshot harness.
 sourceSets {
-    fixtures {
-        java.srcDir '../common/src/testFixtures/java'
-        compileClasspath += sourceSets.main.compileClasspath
-    }
     smoke {
         java.srcDir '../common/src/smoke/java'
-        resources.srcDir '../common/src/smoke/resources'
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath + sourceSets.fixtures.output.classesDirs
-        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath + sourceSets.fixtures.output.classesDirs
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
-def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
-def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
-def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
-def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
-def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
-def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
-def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
-def mcrAutoSmoke = providers.gradleProperty('smokeMcrAuto').getOrElse('false').toBoolean()
-def taiwanSmoke = providers.gradleProperty('smokeTaiwan').getOrElse('false').toBoolean()
-def sichuanSmoke = providers.gradleProperty('smokeSichuan').getOrElse('false').toBoolean()
-def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
 if (!(recipeBrowser in ['none', 'jei', 'rei'])) throw new GradleException('recipeBrowser must be none, jei or rei')
-def smokeProfile = taiwanSmoke ? 'taiwan-' : sichuanSmoke ? 'sichuan-' : mcrAutoSmoke ? 'mcr-auto-' : settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
-if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
-    smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
+def patchouliSmoke = providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean()
+def patchouliInstalled = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()
+def smokeProfile = patchouliSmoke ? (patchouliInstalled ? 'patchouli-installed-' : 'patchouli-absent-') : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -181,37 +164,27 @@ loom {
         mchjong_smoke { sourceSet sourceSets.smoke }
     }
     runs {
-        smokeServer {
-            server()
-            source sourceSets.main
-            runDir layout.buildDirectory.dir("smoke/${smokeProfile}server").get().asFile.absolutePath
-            property 'java.io.tmpdir', layout.buildDirectory.dir("smoke/${smokeProfile}server").get().asFile.absolutePath
-            programArgs '--nogui', '--initSettings'
-        }
         smokeClient {
             client()
             source sourceSets.smoke
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
-            property 'mchjong.smoke.mcrAutoOnly', mcrAutoSmoke.toString()
-            property 'mchjong.smoke.taiwanOnly', taiwanSmoke.toString()
-            property 'mchjong.smoke.sichuanOnly', sichuanSmoke.toString()
-            property 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
-            property 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
-            property 'mchjong.smoke.maid', maidSmoke.toString()
-            property 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
-            property 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
-            property 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
-            property 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
-            property 'mchjong.smoke.roomOnly', roomSmoke.toString()
-            property 'mchjong.smoke.settlementOnly', settlementSmoke.toString()
-            property 'mchjong.smoke.manualOnly', manualSmoke.toString()
-            property 'mchjong.smoke.browserOnly', browserSmoke.toString()
-            property 'mchjong.smoke.browser', recipeBrowser
+            property 'mchjong.smoke.patchouliOnly', patchouliSmoke.toString()
+            property 'mchjong.smoke.patchouli', patchouliInstalled.toString()
             property 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             property 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
+        }
+    }
+}
+
+tasks.named('runSmokeClient') {
+    doFirst { delete smokeEvidence }
+    doLast {
+        def evidence = smokeEvidence.get().asFile
+        if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {
+            throw new GradleException("Client smoke failed; see ${evidence} and ${smokeRun.get().asFile}/logs/latest.log")
         }
     }
 }
@@ -228,18 +201,3 @@ tasks.register('verifyMaidSnapshot') {
 tasks.named('compileJava') { dependsOn 'verifyMaidSnapshot' }
 
 apply from: rootProject.file('gradle/quilt-smoke.gradle')
-
-tasks.named('runSmokeClient') {
-    doFirst { delete smokeEvidence }
-    doLast {
-        def evidence = smokeEvidence.get().asFile
-        if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {
-            throw new GradleException("Client smoke failed; see ${evidence} and ${smokeRun.get().asFile}/logs/latest.log")
-        }
-    }
-}
-
-sourceSets.test {
-    compileClasspath += sourceSets.fixtures.output.classesDirs
-    runtimeClasspath += sourceSets.fixtures.output.classesDirs
-}

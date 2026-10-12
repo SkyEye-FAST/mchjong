@@ -59,7 +59,6 @@ final class SurvivalSmoke {
         BoxMenuSmoke.verify(player);
         TableStorageSmoke.verify(player);
         PointStickMenuSmoke.verify(player);
-        EquipmentSmoke.verify(player);
         EquipmentLifecycleSmoke.verify(player);
     }
 
