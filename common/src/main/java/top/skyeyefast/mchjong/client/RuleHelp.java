@@ -62,6 +62,9 @@ public final class RuleHelp {
         alias(nextAwards, "mcr.mchjong.fan.mixed_kong_pair", nextAwards.get("mcr.mchjong.fan.two_melded_kongs"));
         alias(nextAwards, "sichuan.mchjong.fan.root_with_kong", nextAwards.get("sichuan.mchjong.fan.root"));
         alias(nextAwards, "sichuan.mchjong.fan.basic", nextPages.get("manual.mchjong.entry.sichuan_fan.base"));
+        var yakuhai = nextAwards.get("yaku.mchjong.yakuhai");
+        for (String honor : List.of("seat_wind", "round_wind", "haku", "hatsu", "chun"))
+            alias(nextAwards, "yaku.mchjong." + honor, yakuhai);
         for (String bonus : List.of("dora", "ura_dora", "red_dora", "nuki_dora"))
             alias(nextAwards, "yaku.mchjong." + bonus, nextPages.get("manual.mchjong.entry.riichi_points.dora"));
         alias(nextAwards, "ui.mchjong.dora", nextPages.get("manual.mchjong.entry.riichi_points.dora"));
@@ -123,7 +126,7 @@ public final class RuleHelp {
             case HEAD_BUMP, AWARD_FINAL_DEPOSITS -> "manual.mchjong.entry.riichi_presets.competition";
             case ABORTIVE_DRAWS -> "manual.mchjong.entry.riichi_presets.aborts";
             case SUUKANTSU_PAO, WHOLE_HAND_PAO, PAO_RON_HONBA_BY_DISCARDER, PAO_TSUMO_HONBA_SHARED -> "manual.mchjong.entry.riichi_presets.pao";
-            case KUITAN -> "manual.mchjong.entry.riichi_yaku.tanyao";
+            case KUITAN -> "manual.mchjong.entry.riichi_presets.choice";
             case IPPATSU -> "manual.mchjong.entry.riichi_yaku.ippatsu";
             case RENHOU_MANGAN -> "manual.mchjong.entry.riichi_yaku.renhou";
             case NAGASHI_MANGAN, NAGASHI_ALLOWS_CALLS -> "manual.mchjong.entry.riichi_yaku.nagashi_mangan";
