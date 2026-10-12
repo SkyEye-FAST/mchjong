@@ -62,7 +62,7 @@ public final class GenerateAssets {
             """);
         models();
         dice();
-        png("item/mahjong_manual", ManualArtwork.texture());
+        png("item/mahjong_manual", resourceTexture("item/mahjong_manual"));
         text("assets/mchjong/models/item/mahjong_manual.json",
             "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/mahjong_manual\"}}");
         text("assets/mchjong/items/mahjong_manual.json",
@@ -207,6 +207,13 @@ public final class GenerateAssets {
         boxes.add(new float[]{-.27f, .15f, -.24f, -.25f, .18f, .24f});
         boxes.add(new float[]{.25f, .15f, -.24f, .27f, .18f, .24f});
         return boxes;
+    }
+
+    private static BufferedImage resourceTexture(String relative) throws IOException {
+        try (var stream = GenerateAssets.class.getResourceAsStream("/assets/mchjong/textures/" + relative + ".png")) {
+            if (stream == null) throw new IOException("Resource not found: " + relative);
+            return ImageIO.read(stream);
+        }
     }
 
     private void png(String name, BufferedImage image) throws IOException {
