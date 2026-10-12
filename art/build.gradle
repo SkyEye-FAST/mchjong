@@ -81,7 +81,6 @@ test {
     systemProperty 'mchjong.resources', layout.projectDirectory.dir('generated/assets').asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')
-    inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/patchouli_books')
     inputs.file rootProject.file('common/src/main/resources/assets/mchjong/sounds.json')
     inputs.files rootProject.fileTree('common/src/main/resources/assets/mchjong/sounds') { include '**/*.ogg' }
     inputs.dir layout.projectDirectory.dir('generated/assets')

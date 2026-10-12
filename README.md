@@ -147,8 +147,7 @@ include `<world>/data/mchjong/replays/` in world backups to preserve the archive
 ## Optional integrations
 
 The following integrations are optional. Install the additional mod for the
-Minecraft version and loader shown below. The 1.21.1 Patchouli integration is
-maintained on `feature/patchouli-handbook`; `main` does not include it.
+Minecraft version and loader shown below:
 
 | Integration | 1.21.1 | 1.20.1 | 26.1.2 |
 | --- | --- | --- | --- |
