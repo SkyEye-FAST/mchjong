@@ -21,6 +21,7 @@ final class RiichiPlayerState {
     boolean firstTurn = true;
     boolean lastDraw;
     boolean rinshan;
+    boolean afterKan;
     boolean canDeclare = true;
     boolean pendingRiichi;
     boolean nextDiscardSideways;
@@ -34,7 +35,7 @@ final class RiichiPlayerState {
     record Saved(RiichiAutoPlay autoPlay, int points, List<Integer> hand, List<Meld> melds,
                  List<RiichiDiscard> river, List<Integer> norths, int drawn,
                  boolean riichi, boolean doubleRiichi, boolean ippatsu, boolean riichiFuriten,
-                 boolean temporaryFuriten, boolean firstTurn, boolean lastDraw, boolean rinshan,
+                 boolean temporaryFuriten, boolean firstTurn, boolean lastDraw, boolean rinshan, boolean afterKan,
                  boolean canDeclare, boolean pendingRiichi, boolean nextDiscardSideways,
                  List<Integer> forbiddenDiscards, int dragonPao, int windPao, int kanPao) {
         Saved {
@@ -50,7 +51,7 @@ final class RiichiPlayerState {
     Saved save() {
         return new Saved(autoPlay, points, hand, melds, river, norths, drawn,
             riichi, doubleRiichi, ippatsu, riichiFuriten, temporaryFuriten, firstTurn,
-            lastDraw, rinshan, canDeclare, pendingRiichi, nextDiscardSideways,
+            lastDraw, rinshan, afterKan, canDeclare, pendingRiichi, nextDiscardSideways,
             forbiddenDiscards, dragonPao, windPao, kanPao);
     }
 
@@ -71,6 +72,7 @@ final class RiichiPlayerState {
         player.firstTurn = saved.firstTurn();
         player.lastDraw = saved.lastDraw();
         player.rinshan = saved.rinshan();
+        player.afterKan = saved.afterKan();
         player.canDeclare = saved.canDeclare();
         player.pendingRiichi = saved.pendingRiichi();
         player.nextDiscardSideways = saved.nextDiscardSideways();
@@ -98,7 +100,7 @@ final class RiichiPlayerState {
         drawn = Tile.ABSENT;
         riichi = doubleRiichi = ippatsu = riichiFuriten = temporaryFuriten = false;
         firstTurn = canDeclare = true;
-        lastDraw = rinshan = pendingRiichi = nextDiscardSideways = false;
+        lastDraw = rinshan = afterKan = pendingRiichi = nextDiscardSideways = false;
         dragonPao = windPao = kanPao = -1;
     }
 }

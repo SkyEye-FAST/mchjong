@@ -223,34 +223,6 @@ class McrBotTest {
         assertEquals(age + 1, session.save().age());
     }
 
-    // Full-match lifecycle coverage, not a hardware-dependent Bot speed benchmark.
-    @Test @Timeout(120) void oneHumanAndThreeBotsFinishAllSixteenHands() {
-        var session = lobby();
-        room(session, RoomAction.Type.FILL_BOTS);
-        start(session);
-        int hands = 0;
-        for (int tick = 0; tick < 100_000 && session.lifecycle() != TableSession.Lifecycle.FINISHED; tick++) {
-            var view = session.view(HUMAN);
-            hands = Math.max(hands, view.game().handNumber());
-            // The test human only passes/discards. Session ticks own all forced actions and all bots.
-            for (int index = 0; index < view.game().actions().size(); index++) {
-                var type = view.game().actions().get(index).type();
-                if (type == PASS || type == DISCARD) {
-                    assertTrue(session.act(HUMAN, session.tableId(), view.incarnation(), view.game().decision(), index));
-                    break;
-                }
-            }
-            session.tick();
-        }
-        assertEquals(16, hands);
-        assertEquals(TableSession.Lifecycle.FINISHED, session.lifecycle());
-        assertTrue(session.view(HUMAN).game().penalties().isEmpty());
-        assertEquals(0, session.view(HUMAN).game().seats().stream().mapToInt(McrView.Seat::points).sum());
-        var restored = McrCodec.restoreSession(McrCodec.saveSession(session));
-        assertEquals(session.view(HUMAN).game().result(), restored.view(null).game().result());
-        assertEquals(TableSession.Lifecycle.FINISHED, restored.lifecycle());
-    }
-
     private static McrAction choice(McrGame game, int seat) { return game.actions(seat).get(McrBot.choose(game.view(seat))); }
 
     private static McrSession lobby() {

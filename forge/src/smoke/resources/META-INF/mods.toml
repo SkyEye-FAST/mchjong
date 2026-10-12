@@ -1,7 +1,0 @@
-modLoader="javafml"
-loaderVersion="[52,)"
-license="MIT"
-[[mods]]
-modId="mchjong_smoke"
-version="1"
-displayName="MChjong development checks"

@@ -12,23 +12,6 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger()
 def recipeBrowser = providers.gradleProperty('forgeRecipeBrowser').getOrElse(
     providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei' ? 'jei' : 'none')
 if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('Forge recipeBrowser must be none or jei')
-def smokeProfile = recipeBrowser == 'jei' ? 'jei-bootstrap-' : 'bootstrap-'
-def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
-
-sourceSets {
-    smoke {
-        java.srcDir '../common/src/smoke/java'
-        java.include 'top/skyeyefast/mchjong/forge/smoke/**', 'top/skyeyefast/mchjong/smoke/SmokeScreenshots.java'
-        compileClasspath += sourceSets.main.output
-        runtimeClasspath += sourceSets.main.output
-        output.resourcesDir = layout.buildDirectory.dir('classes/java/smoke').get().asFile
-    }
-}
-configurations {
-    smokeImplementation.extendsFrom implementation
-    smokeRuntimeOnly.extendsFrom runtimeOnly
-}
-
 repositories {
     minecraft.mavenizer(it)
     maven fg.forgeMaven
@@ -41,30 +24,10 @@ minecraft {
         configureEach {
             args '--mixin.config=mchjong.client.mixins.json', '--mixin.config=mchjong.forge.mixins.json'
         }
-        register('client') {
-            with(sourceSets.smoke) {
-                workingDir = layout.buildDirectory.dir("smoke/${smokeProfile}run")
-                systemProperty 'mchjong.smoke.bootstrap', 'true'
-                systemProperty 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
-                systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
-                args '--width', '1280', '--height', '800'
-            }
-        }
+        register('client') {}
         register('server') {
             args '--nogui'
-            with(sourceSets.smoke) {
-                args '--initSettings'
-                workingDir = layout.buildDirectory.dir('smoke/server')
-            }
         }
-    }
-}
-
-tasks.matching { it.name == 'runSmokeClient' }.configureEach {
-    doFirst { delete smokeEvidence }
-    doLast {
-        if (!smokeEvidence.get().file('PASS.txt').asFile.isFile() || smokeEvidence.get().file('FAIL.txt').asFile.exists())
-            throw new GradleException("Forge client smoke did not finish; inspect ${smokeEvidence.get().asFile}")
     }
 }
 

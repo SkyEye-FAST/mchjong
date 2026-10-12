@@ -1,147 +1,114 @@
-# MChjong project instructions
+# Project instructions
 
-## Ownership and architecture
+## Scope
 
-`main` is the sole feature development branch: Minecraft 1.21.1 / Java 21.
-The root Gradle project aggregates peer `fabric`, `forge` and `neoforge` loaders.
-Shared contracts are in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Develop features on `main`. Synchronize compatibility branches only when explicitly
+requested. Build profiles and the port procedure are in
+[DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-- `engine`: Minecraft-independent rules, scoring adapters and replay records.
-- `common`: shared Minecraft gameplay, items, menus, networking, client rendering
-  and translations. The server owns inventory authorization and game decisions;
-  client screens display synchronized state and send validated requests.
-- `fabric`, `forge`, `neoforge`: loader registration and lifecycle adapters;
-  gameplay and presentation belong in `common`.
-- `art`: deterministic asset and server-data generation, with separate outputs.
-  Client resources are checked in under `art/generated/assets`. Edit source generators
-  and refresh the checked-in files with `:art:generateAssets`; server data stays in build output.
-- `common/src/smoke`: shared client/server checks; loader adapters live in
-  `fabric/src/smoke` and `neoforge/src/smoke`. `forge/src/smoke` owns bootstrap checks.
-- `common/src/ponderData`: shared Minecraft-native build-time generation of Ponder
-  structures, compiled independently by both loader projects.
+Implement the requested behavior with the smallest complete change. Reuse existing
+dependencies and check their APIs before adding code or packages. Keep components
+separate by responsibility. Remove obsolete paths instead of adding compatibility
+layers, fallback implementations or migrations. Do not introduce abstractions for
+speculative requirements or interrupt working features with unfinished replacements.
 
-Optional integrations belong in the client compatibility package. Loader entry
-points must check mod availability before referencing integration classes.
-Declare optional metadata, exclude third-party implementations from release JARs,
-and verify installed/absent configurations. Quilt uses the matching Fabric JAR.
+Shared gameplay and presentation belong in `common`; Minecraft-independent rules
+belong in `engine`. Loaders adapt platform APIs. The server authorizes actions,
+inventory changes and access to private information. Optional integrations must load only
+when their dependencies are present; do not bundle third-party mod implementations.
 
-`compat/1.20.1` (Fabric/Forge, Java 17) and `compat/26.1.2` (Fabric/NeoForge,
-Java 25) are port-only branches. Synchronize only on explicit request, including
-code, tests, resources, formatting and docs while retaining each port's APIs and
-dependencies. Use signed merges from `main` into both ports and back into `main`,
-preserving each profile's tree; `main` must descend from both synchronized tips.
-Advance `.github/compat-1.20.1-ref` and `.github/compat-26.1.2-ref` to verified tips.
-Keep all README compatibility tables aligned and distinguish adapters from runtime
-validation. See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for artifact coordination.
+## Documentation and language
 
-Versions live in `gradle.properties`. Renovate handles routine dependency updates;
-Dependabot handles security only. Minecraft targets, Java toolchains, loader floors,
-compatibility profiles and `mod_version` are manual decisions, not bot updates.
+Read only the guides relevant to the task. The README is the documentation entry
+point. Development instructions, interface conventions and custom-content formats
+each have one guide under `docs/`. [TERMS.md](TERMS.md) owns localization conventions.
 
-## Interface, resources and documentation
+Update documentation when its reader-facing contract changes, not merely because
+code changed. Keep instructions needed to use or maintain this repository. Do not
+add implementation inventories, test-coverage catalogues, acceptance archives,
+project diaries or copies of dependency documentation. A resolved task does not
+require a new guide. Delete obsolete documents and update their references rather
+than leaving migration pages or moving the same prose elsewhere.
 
-Under `docs/`, player operations belong in `PLAYING.md`, `SURVIVAL.md` and `ROOMS.md`.
-`SUPPLIES.md` owns registry, persistence and recipe contracts. `ARCHITECTURE.md`
-owns module contracts, and `UI_STYLE.md` owns interface guidance.
-`COMPATIBILITY.md` covers dependencies, `DEVELOPMENT.md` covers builds, ports and
-releases, and `VERIFICATION.md` covers checks. Link to the owning guide.
-Meaningful changes get one `CHANGELOG.md` entry under `## [Unreleased]`
-(`Added`, `Changed`, `Fixed`). Documentation cleanup and routine checks do not.
+Write repository prose and code comments in English, with ASCII punctuation outside
+quoted localized text. Organize each section around a reader's task or a maintenance
+decision. When removing surrounding material, rewrite the remaining paragraph so
+its purpose, references and sequence remain clear, or remove it entirely. Do not
+keep isolated facts simply because they appeared in the previous document. Reduce
+redundant content, not the context needed to understand the remaining instructions.
 
-For UI/table changes, read [UI_STYLE.md](docs/UI_STYLE.md). Reuse `MahjongUi`,
-`MahjongButton`, `MahjongSlider`, `MahjongEditBox` and shared render/picking geometry.
-Keep the compact table footprint; tutorials belong in guides, not tooltips.
+Keep complete subjects, action objects and logical connections. Do not omit head
+nouns to shorten prose, headings, lists, tables, comments, UI labels or tooltips,
+even when context seems clear or space is limited. Use complete names and units,
+with only the locale-specific abbreviations allowed in
+[TERMS.md](TERMS.md#names-and-units). English may use MCR; Chinese must retain
+`国标麻将`/`國標麻將`. Taiwanese mahjong must not become Taiwanese or Taiwan.
+Preserve code identifiers and literal quotations exactly without treating their
+shortened forms as models for new text.
 
-Update `en_us.json`, `ja_jp.json`, `zh_cn.json` and `zh_tw.json` together: identical
-keys and format specifiers, two-space indentation, LF and alphabetical key order.
-Use hierarchical dot-separated snake_case keys, `.description` and `.short`
-suffixes. Rule titles use standard Riichi terminology; mechanics go in descriptions.
-Do not use middle dots (`·`) as generic UI separators. Use natural localized
-phrasing, appropriate punctuation or separate lines. Consult vanilla Minecraft's
-language files to align terminology, phrasing,
-punctuation and spacing conventions for each locale.
+Preserve license notices and release history. Use dates to identify releases and
+source editions, not routine reviews.
 
-- `zh_cn`: Strictly no spaces between CJK and ASCII alphanumeric characters or
-  format specifiers. Fullwidth punctuation (`：`, `（）`, `……`), curly double
-  quotes `“”` (never corner quotes `「」` or straight `"`). Follow vanilla Simplified
-  Chinese terminology and second-person address `你`.
-- `zh_tw`: Strictly add spaces between CJK and ASCII alphanumeric characters or
-  format specifiers. Fullwidth punctuation directly precedes format placeholders
-  without space. Corner quotes `「」` and `『』` (never curly `“”` or straight `"`),
-  fullwidth parentheses `（）`. Follow vanilla Traditional Chinese (Taiwan) terminology.
-- `ja_jp`: Strictly no spaces between Japanese kana/kanji and ASCII alphanumeric
-  or format specifiers. Corner quotes `「」` (never curly `“”` or straight `"`),
-  fullwidth colon `：`, fullwidth parentheses `（）`, fullwidth slash `／`. Follow
-  vanilla Japanese terminology.
-- `en_us`: Title Case for screen titles, button labels, tabs, categories, slider
-  labels, item and block names. Sentence case for descriptions, explanations,
-  subtitles, and tooltips. Direct imperatives for player actions. Follow vanilla terminology.
-Resource paths/generation follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md).
+Update all four language files together, with identical keys and compatible format
+arguments, two-space indentation, LF and alphabetical key order. Read the callers
+before changing a term. Keep agreed localized text intact when integrating it;
+integration is not permission to summarize or rewrite it.
 
-Guides describe current capabilities, permissions and privacy. Keep third-party attribution in
-`NOTICE.md`/license notices and version support in Compatibility sections.
+## Code and resources
 
-Apply these writing rules to every repository document, including guides,
-notices, the changelog and these contributor instructions.
+Follow the existing Java and Kotlin style. Javadoc and KDoc explain responsibilities
+and caller contracts; other comments explain reasons or non-obvious constraints.
+Check actual callers before documenting mutation, errors, state, threads or units.
+Do not narrate code or add empty documentation templates.
 
-- Describe current behavior with concise, positive statements. Remove repetitive
-  disclaimers, unnecessary exclusions and comparisons with retired behavior.
-  Preserve facts that define rules, eligibility, permissions, privacy and validation scope.
-- Write complete, natural sentences. Include the nouns, subjects, articles,
-  prepositions and logical connections needed to make each statement clear.
-  Shorten prose by removing repetition while preserving grammatical completeness.
-  Use complete game and rule names in prose, and name the resource or other object
-  being described. Preserve the exact names of interface labels, presets and code identifiers.
-- Use dates when they identify releases, source editions or records that depend
-  on time. Describe current guides directly, keeping review timestamps in Git history.
-- Prefer periods and ordinary conjunctions to chains of colons and semicolons.
-  Use colons for necessary labels or introductions, and retain punctuation required
-  by code, resource identifiers, URLs, citations and license text.
-- Keep each Markdown list compact, with a blank line around the list and between
-  sections. Separate list items with blank lines when they contain multiple paragraphs.
-
-## Code comments
-
-- Keep English comments concise and natural. Javadoc/KDoc describe responsibility
-  and caller contracts; ordinary comments explain reasons, constraints and surprising behavior.
-- Check implementation and callers before documenting input mutation, failure/null
-  semantics, state changes, thread/logical side, coordinate origins, units or seat numbering.
-  Do not promise guarantees the implementation does not provide.
-- Explain only algorithm ideas and invariants needed to read the code. Preserve useful
-  reasons; remove code narration, duplicate prose, empty templates and development diaries.
-  Put longer design context in the owning guide under `docs/`.
-- Identify the applicable ruleset or clause for special rules. For compatibility
-  workarounds, state the cause, affected version and removal condition. Cite real
-  issues or regression tests when available.
-- In KDoc, prefer parameter links in prose. Add tags when useful, without requiring
-  documentation for every method or a comment coverage target.
-
-Style references: [Guava contracts](https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/base/Preconditions.html),
-[OpenJDK implementation notes](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/List.java),
-[Fabric platform boundaries](https://docs.fabricmc.net/develop/networking) and
-[KDoc](https://kotlinlang.org/docs/kotlin-doc.html).
+Use the shared widgets, palette and render/picking geometry described in
+[UI_STYLE.md](docs/UI_STYLE.md). Edit asset generators and their source inputs,
+then refresh affected generated assets. Resource locations and pack formats are
+in [ASSETS.md](docs/ASSETS.md). Dependency versions belong in `gradle.properties`;
+do not duplicate them in guides unless they identify a user-facing requirement.
 
 ## Validation
 
-Use JDK 21 and the checked-in Gradle wrapper (`--warning-mode fail`). Test ownership
-and focused commands are in [VERIFICATION.md](docs/VERIFICATION.md); Ponder checks
-are in [PONDER.md](docs/PONDER.md). `buildAll` includes engine, presentation,
-generated resources and NeoForge dedicated-server tests; reserve it for broad changes.
-Client smokes cover loader/world/packet/UI boundaries. Screenshots are opt-in;
-inspect fresh PASS/FAIL markers and requested captures. Logs and screenshots stay
-in ignored build output, not tracked acceptance archives.
+Complete the requested product change without expanding the test system.
+A change does not require new tests merely because it changes code.
 
-## Versioning and releases
+Add a permanent test only when it protects a specific, meaningful behavior
+against a credible regression that existing tests do not already cover.
+Prefer a small regression case in an existing suite. One-off validation
+does not need to become a committed script, fixture, or snapshot.
 
-Keep `mod_version` on `-SNAPSHOT`; ordinary commits do not bump it. After a release,
-use the next patch Snapshot as a development placeholder. For an explicit release,
-reassess SemVer from actual changes or follow the user's requested version; update
-the target Snapshot first if necessary. Tags are bare SemVer matching `mod_version`
-without `-SNAPSHOT`. The workflow supplies the formal version to published JARs.
-Move Unreleased entries into `## [x.y.z] - YYYY-MM-DD`, retain an empty Unreleased
-section and update changelog links. Then advance to the next patch Snapshot.
+New test infrastructure requires an explicitly scoped task. Do not add or
+expand test runners, shared harnesses, source sets, dependencies, screenshot
+systems, or CI matrices as incidental work during a feature or bug fix.
+Do not add production abstractions solely to support a test harness.
 
-Commits use Conventional Commits (lowercase imperative subject, no trailing period)
-and the existing GPG signing setup. Commit complete batches by concern with
-`git commit -S`, verify signatures and push normally. Check signing readiness with
-`git signing-agent status`.
+Run the smallest existing checks needed for the changed behavior. Do not
+expand validation across unrelated features, loaders, locales, viewports,
+or complete matches. Use real-client checks when the changed behavior
+requires them, not as a routine prerequisite for every delivery.
+
+Remove obsolete and redundant tests together with their exclusive helpers,
+dependencies, tasks, and documentation requirements. Do not preserve them
+as disabled suites or replacement frameworks. Do not delete or weaken a
+valid test to conceal an unresolved product defect.
+
+Do not repair unrelated test infrastructure as part of the current task.
+Report the blocker and the validation actually completed. A delivery with
+no new tests is acceptable; unsupported claims of successful validation
+are not.
+
+Commands are in [DEVELOPMENT.md](docs/DEVELOPMENT.md#verification).
+Documentation-only changes need a diff and link review, not a client run or full
+build. Keep temporary checks, logs and screenshots outside tracked source.
+
+## Delivery
+
+Meaningful product changes get one entry under `CHANGELOG.md`'s Unreleased section.
+Documentation cleanup and routine checks do not. Ordinary work does not change
+`mod_version`; keep its `-SNAPSHOT` suffix. Follow the development guide for an
+explicit release or port synchronization.
+
+Use Conventional Commits and the existing GPG signing setup. Check
+`git signing-agent status`, commit complete batches with `git commit -S`, and verify
+the signature before pushing. Preserve unrelated working changes and do not push
+unrelated pending commits as part of a delivery.

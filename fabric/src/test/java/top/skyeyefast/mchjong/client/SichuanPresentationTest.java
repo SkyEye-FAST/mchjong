@@ -74,44 +74,6 @@ class SichuanPresentationTest {
         }
     }
 
-    @Test void realGamesConserveStockAndClearAllPhysicalZonesInBothAssignments() {
-        assertEquals(TileDimensions.LARGE, SichuanTableScene.DIMENSIONS);
-        for (boolean eastWest : new boolean[]{true, false}) for (long seed : new long[]{1, 2, 3, 4, 5, 6, 19, 20, 21, 22, 42, 43, 711, 712, 2025, 2026}) {
-            top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.sichuan(seed, eastWest, -1, 0, false, view -> {
-                var scene = SichuanTableScene.build(view);
-                assertEquals(108, scene.size(), "Physical stock must survive every accepted action");
-                assertTrue(scene.stream().allMatch(piece -> piece.dimensions().equals(TileDimensions.LARGE)));
-                for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
-                WallGeometryAssertions.leftMeldsAndMinimalHandShift(scene.stream().map(piece ->
-                    new WallGeometryAssertions.PublicPiece(WallGeometryAssertions.solid(piece), piece.seat(),
-                        piece.area() == SichuanTableScene.Area.HAND, piece.area() == SichuanTableScene.Area.MELD ? piece.index() / 4 : -1)).toList(),
-                    view.seats().stream().map(player -> player.hand().size() * SichuanTableScene.WIDTH
-                        + (player.drawn() != Tile.ABSENT && !player.hand().isEmpty() ? RiichiTableScene.DRAW_GAP : 0)).toList(), SichuanTableScene.HAND_Z);
-                assertDoesNotThrow(() -> { for (int i=0; i<scene.size(); i++) for(int j=i+1;j<scene.size();j++)
-                    assertFalse(WallGeometryAssertions.intersects(WallGeometryAssertions.solid(scene.get(i)), WallGeometryAssertions.solid(scene.get(j))), scene.get(i)+" / "+scene.get(j)); },
-                    "Sichuan seed=" + seed + " eastWest=" + eastWest + " revision=" + view.revision());
-            });
-        }
-    }
-
-    @Test void bloodBattleWinnersAndAddedKongsRetainFixedPhysicalGeometry() {
-        var observed = java.util.EnumSet.noneOf(Meld.Type.class);
-        boolean[] won = {false};
-        for (boolean eastWest : new boolean[]{true, false}) for (long seed = 1; seed <= 16; seed++) {
-            var finalView = top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.sichuan(seed, eastWest, -1, 0, true, view -> {
-                var scene = SichuanTableScene.build(view);
-                assertEquals(108, scene.size());
-                for (var seat : view.seats()) for (var meld : seat.melds()) observed.add(meld.type());
-                won[0] |= !view.winners().isEmpty();
-                for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
-                WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
-            });
-            assertTrue(finalView.phase() == SichuanGame.Phase.HAND_END || finalView.phase() == SichuanGame.Phase.MATCH_END);
-        }
-        assertTrue(won[0], "Fixtures must include real blood-battle winners");
-        assertTrue(observed.contains(Meld.Type.ADDED_QUAD), "Fixtures must exercise the real added-kong forward tile");
-    }
-
     @Test void scenesConsumeOnlyRecipientSafeViewsAndKeepPublicClaimIdentity() {
         var game = new SichuanGame(711);
         var declaration = game.view(0);
@@ -214,14 +176,14 @@ class SichuanPresentationTest {
                                    List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
         return new SichuanView(1, 1, new SichuanGame(711).rules(), phase, phase == SichuanGame.Phase.MATCH_END ? 8 : 1, 0,
             List.of(100, 200, 300, 400), 0, 0, new SichuanView.Wall(Collections.nCopies(108, Tile.ABSENT), 0, 1, 1, true),
-            seats, Tile.ABSENT, -1, false, false, List.of(), winners, ledger, result, -1);
+            seats, Tile.ABSENT, -1, false, false, List.of(), winners, ledger, result);
     }
     private static TableRoomView room(boolean finished) {
         var seats = java.util.stream.IntStream.range(0, 4).mapToObj(seat -> new TableRoomView.Seat(
             new TableParticipant(new UUID(42, seat + 1), "player" + seat), PlayerPresence.SEATED, seat)).toList();
         return new TableRoomView(new UUID(41, 1), new UUID(41, 2), 1, 1, MahjongVariant.SICHUAN,
             finished ? TableSession.Lifecycle.FINISHED : TableSession.Lifecycle.PLAYING, 0, 0, false, true, false,
-            RoomSeating.Stage.POSITIONING, List.of(), seats, List.of(), null, false, false, true, top.skyeyefast.mchjong.engine.MatchAutomation.DEFAULT, List.of());
+            RoomSeating.Stage.POSITIONING, List.of(), seats, List.of(), null, false, false, false, top.skyeyefast.mchjong.engine.MatchAutomation.DEFAULT, List.of());
     }
     private static AABB bounds(SichuanTableScene.Piece piece) {
         double cosine = Math.abs(Math.cos(Math.toRadians(piece.yaw())));

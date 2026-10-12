@@ -9,13 +9,11 @@ import top.skyeyefast.mchjong.engine.TenpaiHints;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
-/** Native focus target for an on-demand wait preview above the private hand. */
+/** Native focus target for an on-demand wait display above the private hand. */
 final class RiichiHints extends TableHintsButton {
     private final TenpaiHints hints = new TenpaiHints();
     private List<TenpaiHints.Wait> waits = List.of();
     private List<TenpaiHints.Wait> narrated = List.of();
-    private int previewDiscard = Tile.ABSENT;
-    private int lastSelected = Tile.ABSENT;
     private Layout popup;
     private Component heading = Component.empty();
 
@@ -23,15 +21,12 @@ final class RiichiHints extends TableHintsButton {
         super();
     }
 
-    void clearPreview() { previewDiscard = lastSelected = Tile.ABSENT; waits = List.of(); visible = active = false; }
+    void clear() { waits = List.of(); visible = active = false; }
 
-    void update(RiichiView view, int hovered, int selected, int screenWidth, int buttonTop,
+    void update(RiichiView view, int screenWidth, int buttonTop,
                 int leftBound, int rightBound, int bottom, int topBound, int scale) {
         this.scale = scale;
-        if (hovered >= 0) previewDiscard = hovered;
-        else if (selected != lastSelected) previewDiscard = selected;
-        lastSelected = selected;
-        waits = hints.waits(view, previewDiscard);
+        waits = hints.waits(view);
         popup = layout(rightBound, leftBound, topBound, bottom, waits.size(), scale);
         visible = active = !waits.isEmpty() && popup != null;
         if (!visible) setFocused(false);
@@ -42,8 +37,7 @@ final class RiichiHints extends TableHintsButton {
         if (visible && narrated != waits) {
             narrated = waits;
             int total = waits.stream().mapToInt(TenpaiHints.Wait::remaining).sum();
-            boolean preview = view.seats().get(view.viewerSeat()).hand().size() % 3 == 2;
-            heading = Component.translatable(preview ? "hints.mchjong.preview" : "hints.mchjong.waits", total);
+            heading = Component.translatable("hints.mchjong.waits", total);
             Component message = Component.translatable("hints.mchjong.button").append("\n").append(heading);
             for (var wait : waits) message = message.copy().append("\n")
                 .append(Component.translatable("tile.mchjong." + Tile.notation(wait.kind())))

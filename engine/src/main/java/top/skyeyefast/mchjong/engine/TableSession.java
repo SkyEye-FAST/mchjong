@@ -78,7 +78,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         java.util.Collections.fill(automation, MatchAutomation.DEFAULT);
     }
     public final boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
-        if (convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || !lobby() || exitVote != null
+        if (variant != MahjongVariant.RIICHI || convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || !lobby() || exitVote != null
             || !isHost(actor) || expectedDecision != decision) return false;
         convenienceHints = enabled;
         changed(false);
@@ -252,7 +252,6 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 replacement.participants[seat] = Participant.restore(participants[seat].snapshot());
         replacement.hostId = hostId;
         replacement.worldPolicy = worldPolicy;
-        replacement.convenienceHints = convenienceHints;
         replacement.revision = revision;
         replacement.decision = decision;
         replacement.renewIncarnation();
@@ -505,7 +504,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         return new TableRoomView(tableId, incarnation, revision, decision, variant, lifecycle,
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
             viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
-            convenienceHints, worldPolicy.allowConvenienceHints(),
+            convenienceHints, variant == MahjongVariant.RIICHI && worldPolicy.allowConvenienceHints(),
             viewer < 0 || manual || lobby() || participants[viewer].bot ? null : automation.get(viewer), List.of());
     }
 
@@ -673,7 +672,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
             Objects.requireNonNull(lifecycle);
             participants = List.copyOf(participants);
             automation = List.copyOf(automation);
-            if (automation.size() != 4) throw new IllegalArgumentException("Invalid automation preferences");
+            if (automation.size() != 4 || variant != MahjongVariant.RIICHI && convenienceHints) throw new IllegalArgumentException("Invalid automation preferences");
             if (capacity != 3 && capacity != 4
                 || participants.size() != 4 || revision < 1 || revision >= Long.MAX_VALUE - 1
                 || decision < 1 || decision >= Long.MAX_VALUE - 1 || exitVoteSequence < 0

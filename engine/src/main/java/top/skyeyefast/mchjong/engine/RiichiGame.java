@@ -459,12 +459,13 @@ public final class RiichiGame {
     void drawNow(int seat, boolean replacement, boolean kan) {
         turn = seat;
         RiichiPlayerState player = players[seat];
-        if (rules.callsClearFuriten()) player.temporaryFuriten = false;
+        if (rules.drawsClearFuriten()) player.temporaryFuriten = false;
         player.drawn = replacement ? wall.replace() : wall.draw();
         player.hand.add(player.drawn);
         if (recorder != null) recorder.draw(seat, player.drawn);
         player.lastDraw = !replacement && wall.remaining() == 0;
-        player.rinshan = kan;
+        player.rinshan = replacement;
+        player.afterKan = kan;
         player.canDeclare = true;
         newDecision(Phase.TURN);
         options.set(seat, LegalActions.onTurn(this, seat));
@@ -609,7 +610,7 @@ public final class RiichiGame {
         turn = seat;
         if (action.type() == OPEN_KAN) { completeKan(seat, false); return; }
         player.drawn = Tile.ABSENT;
-        player.rinshan = player.lastDraw = player.canDeclare = false;
+        player.rinshan = player.afterKan = player.lastDraw = player.canDeclare = false;
         player.forbiddenDiscards.addAll(LegalActions.forbiddenAfterCall(action, lastTile));
         newDecision(Phase.TURN);
         options.set(seat, LegalActions.onTurn(this, seat));
@@ -626,7 +627,7 @@ public final class RiichiGame {
             int tile = action.tiles().get(0);
             player.hand.remove(Integer.valueOf(tile));
             player.norths.add(tile);
-            draw(seat, true, true);
+            draw(seat, true, false);
             return;
         }
         if (action.type() == CLOSED_KAN) {

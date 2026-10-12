@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Move the Patchouli handbook integration to the separate `feature/patchouli-handbook` development branch. Main retains standalone rule-option descriptions.
+- Limit convenience hints to Riichi mahjong and remove the MCR, Sichuan mahjong and Taiwanese mahjong hint interfaces and calculations. Riichi hints show current waits and remaining copies only while tenpai.
 - Center action announcements in muted text clear of the HUD, controls and private hand, keep current-discard cards on the right, and show immersive seat winds and status on player plaques. Use direct hand clicks for discards in all four variants and both views, retaining single-click and double-click settings and removing discard confirmation buttons.
 - Unify room rule entry points and draft submission, organize Riichi rules into six persistent categories, move player count and preset selection into the draft, group hand display settings, centralize preparation member controls, and align Sichuan mahjong, Taiwanese mahjong and MCR navigation with four-language controls and explanations.
 - Synchronize custom award selection, Mahjong Soul ancient yaku and checked-in client resources across all three Minecraft profiles, with Taiwanese mahjong library 0.2.0 and each profile's native loader adapters.
@@ -33,7 +35,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring, preserving separate flower payouts.
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan mahjong and Taiwanese mahjong rule entrances, complete award indexes, tile illustrations, payment examples and preset differences. Align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
-- Add recipient-safe Taiwanese mahjong convenience hints with previews of sixteen-tile shanten numbers, effective tiles and legal discards, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination. Share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.
 - Add independent native Taiwanese mahjong replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.
 - Add recipient-safe Taiwanese mahjong built-in Bots with rule-driven discard/wait scoring, conservative call/kong decisions, shared room add/remove and fill controls, delayed paused/restored actions, inactive Bot clocks and automatic hand confirmations; verify complete one-human/three-Bot four-wind matches for both presets.
 - Register Taiwanese mahjong as the fourth built-in variant with shared room/NBT lifecycle, recipient-safe Minecraft packets, independent 136/144 physical stock and fixed-slot scene, preset/payment/clock editors, playable seated/immersive actions, private settlement and complete four-wind matches. Add focused Fabric end-to-end coverage.
@@ -42,6 +43,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Craft stools from every wood family with any of the 16 matching carpet colors. Stools and cloths support all 16 dye colors while preserving their other components.
+- Separate draw-time and call-time temporary furiten clearance, and prevent North replacements from qualifying the following discard for Kanburi.
+- Correct four-language mahjong terminology and scoring explanations. Distinguish revealed hands from melds and concealed kans, retain natural Chinese payment wording, and fit Japanese minimum-han choices at the smallest window size.
 - Align the Creeper tile-back mark with the vanilla face's uniform pixel grid.
 - Draw Bot portraits on integer pixel boundaries so both eyes stay the same size at small UI scales.
 - Merge equivalent Taiwanese mahjong ready-discard choices while retaining distinct tile faces and every physical ordinary discard.
@@ -249,7 +253,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - REI supply recipes are available on Minecraft 1.21.1 Fabric and NeoForge, 1.20.1 Fabric and Forge, and 26.1.2 Fabric and NeoForge.
 - Fabric and Quilt releases require Fabric API.
-- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+- Loader-specific validation coverage is recorded in [Compatibility and verification](https://github.com/SkyEye-FAST/mchjong/blob/97f2da91d5d04cd5d38887b6f83f77f4cfd6b553/docs/COMPATIBILITY.md).
 
 ## [0.7.0] - 2026-09-24
 
@@ -286,7 +290,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Create workshop integration targets NeoForge on 1.21.1, and Fabric and Forge on 1.20.1.
 - Touhou Little Maid and Orihime integrations target Fabric and NeoForge on 1.21.1, Fabric and Forge on 1.20.1, and tested prerelease builds on 26.1.2.
 - Minecraft 1.21.1 requires Java 21; Minecraft 1.20.1 requires Java 17; Minecraft 26.1.2 requires Java 25.
-- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+- Loader-specific validation coverage is recorded in [Compatibility and verification](https://github.com/SkyEye-FAST/mchjong/blob/97f2da91d5d04cd5d38887b6f83f77f4cfd6b553/docs/COMPATIBILITY.md).
 
 ## [0.6.0] - 2026-09-22
 
@@ -314,7 +318,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Minecraft 1.21.1: Fabric, Forge and NeoForge artifacts; Minecraft 1.20.1: Fabric and Forge artifacts. Quilt uses the corresponding Fabric JAR.
 - JEI is available on all five builds. EMI, REI and Ponder integrations target Fabric and NeoForge on 1.21.1, and Fabric and Forge on 1.20.1.
 - Minecraft 1.21.1 requires Java 21; Minecraft 1.20.1 artifacts target Java 17.
-- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+- Loader-specific validation coverage is recorded in [Compatibility and verification](https://github.com/SkyEye-FAST/mchjong/blob/97f2da91d5d04cd5d38887b6f83f77f4cfd6b553/docs/COMPATIBILITY.md).
 
 ## [0.5.3] - 2026-09-22
 

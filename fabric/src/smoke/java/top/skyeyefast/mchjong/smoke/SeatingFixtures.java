@@ -5,7 +5,7 @@ import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.RoomSeating;
 
-/** Fixed-seat fixtures for equipment, currency and replay checks; never included in a release jar. */
+/** Fixed seats for inventory checks that do not exercise the seating lottery. */
 public final class SeatingFixtures {
     private SeatingFixtures() {}
 
@@ -14,7 +14,7 @@ public final class SeatingFixtures {
         for (int i = 0; i < host.actions().size(); i++) if (host.actions().get(i).type() == RoomAction.Type.FILL_BOTS)
             if (!game.actRoom(humans[0], host.tableId(), host.incarnation(), host.decision(), i))
                 throw new IllegalStateException("Cannot fill fixture");
-        // Keep privileged fixture setup outside the engine's package: NeoForge uses distinct modules.
+        // Inventory checks need stable drawer owners rather than a random seating order.
         try {
             var seating = new RoomSeating();
             var position = RoomSeating.class.getDeclaredMethod("positioned", int.class);
