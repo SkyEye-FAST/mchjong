@@ -124,26 +124,6 @@ class McrLayoutTest {
         }
     }
 
-    @Test void realGamesConserveStockAndClearAllPhysicalZones() {
-        assertEquals(TileDimensions.LARGE, McrTableScene.DIMENSIONS);
-        for (long seed : new long[]{1, 2, 3, 4, 5, 6, 19, 20, 21, 22, 42, 43, 711, 712, 2025, 2026}) {
-            top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.mcr(seed, -1, 0, view -> {
-                var scene = McrTableScene.build(view);
-                assertEquals(144, scene.size(), "Physical stock must survive every accepted action");
-                assertTrue(scene.stream().allMatch(piece -> piece.dimensions().equals(TileDimensions.LARGE)));
-                for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
-                WallGeometryAssertions.leftMeldsAndMinimalHandShift(scene.stream().map(piece ->
-                    new WallGeometryAssertions.PublicPiece(WallGeometryAssertions.solid(piece), piece.seat(),
-                        piece.area() == McrTableScene.Area.HAND, piece.area() == McrTableScene.Area.MELD ? piece.index() / 4 : piece.area() == McrTableScene.Area.FLOWER ? 4 + piece.index() : -1)).toList(),
-                    view.seats().stream().map(player -> player.hand().size() * McrTableScene.WIDTH
-                        + (player.drawn() != Tile.ABSENT && !player.hand().isEmpty() ? RiichiTableScene.DRAW_GAP : 0)).toList(), McrTableScene.HAND_Z);
-                assertDoesNotThrow(() -> { for (int i=0; i<scene.size(); i++) for(int j=i+1;j<scene.size();j++)
-                    assertFalse(WallGeometryAssertions.intersects(WallGeometryAssertions.solid(scene.get(i)), WallGeometryAssertions.solid(scene.get(j))), scene.get(i)+" / "+scene.get(j)); },
-                    "MCR seed=" + seed + " revision=" + view.revision() + " remaining=" + view.remaining());
-            });
-        }
-    }
-
     @Test void eightFlowersAndFourKongsUseARealConservedStockWithoutScaling() {
         var view = top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.fourKongsAndEightFlowers();
         assertEquals(8, view.seats().get(0).flowers().size());

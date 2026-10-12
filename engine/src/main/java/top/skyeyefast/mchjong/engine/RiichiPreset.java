@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.engine;
 
 import java.util.Locale;
 
-/** Named rule presets. Source versions and settlement conventions are in docs/RULES.md. */
+/** Named rule presets and their adjustable table options. */
 public enum RiichiPreset {
     MAHJONG_SOUL_4(4), MAHJONG_SOUL_3(3), TENHOU_4(4), TENHOU_3(3), M_LEAGUE(4), JPML_A(4), WRC(4);
 

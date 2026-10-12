@@ -1,6 +1,6 @@
 package top.skyeyefast.mchjong.engine
 
-/** Engine-owned scoring and single-hand match settings; see TAIWAN_DESIGN.md for sources. */
+/** Engine-owned scoring and single-hand match settings. */
 class TaiwanRules(
     val name: String,
     values: Map<Pattern, Int>,

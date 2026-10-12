@@ -1,156 +1,143 @@
-# Building and contributing
+# Development
 
-[Documentation](README.md) | [Project overview](../README.md)
+Use JDK 21 to build this Minecraft 1.20.1 branch, targeting Java 17. Run the
+commands below from the repository root with its checked-in Gradle wrapper.
+On Windows, use `gradlew.bat` in place
+of `./gradlew`. Read [AGENTS.md](../AGENTS.md) before making changes.
 
-## Building from source
+## Build and run
 
-Use JDK 21 to build the Minecraft 1.20.1 profile, which targets Java 17.
+Build a distributable Fabric JAR with:
 
-```bash
-git clone https://github.com/SkyEye-FAST/mchjong.git
-cd mchjong
+```sh
+./gradlew :fabric:assemble --warning-mode fail
 ```
 
-Check out `compat/1.20.1` to build the Fabric and Forge profiles. Minecraft,
-loader, mappings, and Java versions are selected in `gradle.properties`.
+The output is written to `fabric/build/libs`. To test the mod interactively, run
+`:fabric:runClient` with the same Gradle wrapper; use `:fabric:runServer` for a
+development server. Replace the `fabric` task prefix with `forge` to work on Forge.
+Each loader writes artifacts under its own
+`build/libs` directory. The `build` task also runs the project's checks, whereas
+`assemble` is the packaging task.
 
-### Fabric
+When working on an optional integration, add its dependency to the development
+runtime with the corresponding Gradle property. Recipe viewers use
+`-PrecipeBrowser=jei`, `-PrecipeBrowser=emi` or `-PrecipeBrowser=rei`. Ponder and
+maid integrations use `-PwithPonder=true` and `-PwithMaid=true`; Fabric's Mod Menu
+integration uses `-PwithModMenu=true`, and the Fabric and Forge Create integrations use
+`-PwithCreate=true`. Check the [integration table](../README.md#optional-integrations)
+for loader availability. Patchouli uses `-PwithPatchouli=true`. Dependency versions are set in
+[gradle.properties](../gradle.properties), not in these command-line properties.
 
-```bash
-./gradlew :fabric:build
-./gradlew :fabric:runClient   # optional Fabric development client
-./gradlew :fabric:runServer   # optional dedicated server
+## Source organization
+
+| Module | Responsibility |
+| --- | --- |
+| `engine` | Rules, scoring adapters, game and room state, bot decisions and replay records; no Minecraft dependency |
+| `common` | Shared Minecraft items, worlds, networking, menus, rendering and localization |
+| `fabric`, `forge` | Platform registration and lifecycle adapters |
+| `art` | Asset and server-data generators |
+
+Hand-analysis changes start at the engine's analyzer adapters. The algorithms and
+scoring definitions for MCR and Taiwanese mahjong are maintained in
+[mcr-mahjong](https://github.com/SkyEye-FAST/mcr-mahjong) and
+[taiwan-mahjong](https://github.com/SkyEye-FAST/taiwan-mahjong), respectively.
+MChjong integrates those libraries with its own game progression, room settings
+and physical tables. Consult the library documentation for scoring behavior
+instead of maintaining another copy here.
+
+This profile uses native ItemStack NBT, recipe serializers and payload buffers
+for Minecraft 1.20.1. Fabric publishes a remapped JAR; Forge publishes a
+reobfuscated JAR through ModDevGradle's legacy Forge profile. Create inventory
+access uses Fabric transactions or Forge capabilities, while the shared supply
+transformations remain in `common`.
+
+Client actions are requests, not authority to change a game or inventory. The
+server must identify the sender and validate the table, permissions and current
+decision before applying a request. For inventory requests, validate the complete
+operation before moving items. A transformation changes only its intended
+components and must preserve the item's other components and stored contents.
+
+Private saves are not network views. Before serializing a live view, remove any
+information its recipient is not allowed to see, including future wall identities
+and random seeds. Hints and computer opponents use only the player's own hand and
+public information, even when room settings reveal other hands to human players.
+Completed replay records may include the original concealed information, so they
+are retrieved through the separate, participant-authorized replay path.
+
+Client resources under `art/generated/assets` are checked in. Edit generator
+inputs, run `:art:generateAssets`, and commit the affected outputs. Server data
+under `build/generated/data` is generated during resource processing and is not
+checked in. See [Custom content](ASSETS.md) when changing the resource formats
+used by pack authors.
+
+## Verification
+
+Select checks for the actual change as required by
+[AGENTS.md](../AGENTS.md#validation). For example, compile the Fabric sources
+with the first command below, or select an individual engine test with the second:
+
+```sh
+./gradlew :fabric:compileJava --warning-mode fail
+./gradlew :engine:test --tests '*McrSettlementTest' --warning-mode fail
 ```
 
-### Forge
+Changes to inventory menus or equipment handling can also be checked in an
+isolated Minecraft world. The existing checks in `fabric/src/smoke` use a real
+server player to verify menu permissions, item transfers and equipment removal:
 
-```bash
-./gradlew :forge:build
-./gradlew :forge:runClient   # optional development client
-./gradlew :forge:runServer   # optional dedicated server
+```sh
+./gradlew :fabric:runSmokeClient --warning-mode fail
 ```
 
-Run the following command to build all loaders and run the shared checks.
+A run writes its result under `fabric/build/smoke/evidence` and its game log
+under `fabric/build/smoke/run/logs`. Inspect the current result and report which
+checks completed. For appearance and interaction changes, use the relevant
+loader's `runClient` task and inspect the affected screen directly.
 
-```bash
-./gradlew buildAll
-```
+To check the handbook on Fabric, run `:fabric:runSmokeClient -PsmokePatchouli=true`
+with Patchouli absent, then repeat with `-PwithPatchouli=true`. These profiles
+retain the handbook recommendation, recipe, navigation and layout checks. Their
+logs and results use `fabric/build/smoke/patchouli-absent-*` and
+`fabric/build/smoke/patchouli-installed-*` directories.
 
-On Windows, use `gradlew.bat` instead of `./gradlew`.
+`./gradlew buildAll --warning-mode fail` builds all current-profile loaders and
+runs the aggregate checks. The [snapshot workflow](../.github/workflows/snapshot.yml)
+currently invokes it on pushes and pull requests. That CI behavior does not make
+a local full build necessary for each edit.
 
-See [Build download mirrors](BUILD_MIRRORS.md) for the configured dependency
-repositories and client asset mirror.
+## Ports
 
-## Validation
+Features are developed on `main` and ported to `compat/1.20.1` and
+`compat/26.1.2` only when synchronization is requested. Use a clean worktree for
+each port and the same committed `main` revision for both updates. Retain each
+port's own toolchains, dependencies and platform adaptations.
 
-Choose checks for the changed behavior. Use `./gradlew buildAll --warning-mode fail`
-for broad changes and releases. See [Compatibility and verification](COMPATIBILITY.md)
-for dependency profiles and [Verification](VERIFICATION.md) for focused loader,
-tutorial and visual checks. Choose one representative loader for shared behavior.
-Add another when its API or runtime path is affected. Request screenshots for the changed state.
+Each synchronization merge records its source `main` commit as the second parent.
+Use that parent of the port's previous synchronization merge to identify the
+changes since its last update. The ordinary merge base is unsuitable because
+earlier return merges may make it a port commit instead. Record the new source
+relationship with Git's `ours` merge strategy, then apply the diff between the
+old and new source commits, excluding `.github/compat-*-ref`. The merge records
+ancestry; applying the diff performs the actual content update. Resolve platform
+differences and validate the affected behavior before signing the merge commit.
 
-## Contributor guides
+After both ports are verified, merge their tips back into main with `ours` to
+preserve main's profile. Update `.github/compat-1.20.1-ref` and
+`.github/compat-26.1.2-ref` to those exact tips in the return commit. Main must
+descend from both tips. The release workflow builds the pinned revisions, not
+the ports' unreviewed latest commits.
 
-Read [the contributor instructions](../AGENTS.md) before editing.
-[Architecture](ARCHITECTURE.md) describes module ownership and shared contracts;
-[Interface style](UI_STYLE.md) covers controls, layout and accessibility.
-Follow [Assets](ASSETS.md) and [Audio](AUDIO.md) when editing resource generators.
+## Releases
 
-## Automated builds
+For an explicit release, choose a version from the actual changes or the requested
+target. At the release commit, `gradle.properties` must still contain
+`mod_version=x.y.z-SNAPSHOT`, while the Git tag must be `x.y.z`. Move the
+Unreleased changelog entries into `## [x.y.z] - YYYY-MM-DD`, update the changelog
+links, and leave an empty Unreleased section for subsequent development.
 
-[Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
-runs `buildAll` on branch pushes and pull requests and uploads separate Fabric
-and Forge snapshot artifacts.
-
-[Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
-runs on `main`, validates the tag against the development version, extracts notes
-from [the changelog](../CHANGELOG.md), and builds the reviewed compatibility
-revision selected by `main`'s `.github/compat-1.20.1-ref` alongside the other
-version profiles. This branch's snapshot workflow builds only its two loaders.
-Follow the versioning and signed-commit requirements in the contributor instructions.
-
-## Version synchronization and artifacts
-
-`main` is the sole feature development line and targets Minecraft 1.21.1 / Java 21.
-Synchronize into `compat/1.20.1` and `compat/26.1.2` only when explicitly
-requested, preserving shared gameplay while adapting actual Minecraft and loader
-API boundaries.
-The 1.20.1 port builds Fabric and Forge with a Java 17 runtime. The 26.1.2 port
-builds Fabric and NeoForge with Java 25. Quilt consumes the matching Fabric JAR.
-
-Synchronize resources, documentation and formatting configuration with code.
-Keep each branch's dependency versions, module set and single-version snapshot
-workflow. Original optional mods and cross-loader ports share one README row;
-name the concrete distributions below the table. Pin usable upstream prereleases
-to an exact build and verify their checksums and installed/absent behavior before
-marking them supported.
-
-The release workflow on `main` builds its three loader artifacts, both 1.20.1
-artifacts from `.github/compat-1.20.1-ref`, and both 26.1.2 artifacts from
-`.github/compat-26.1.2-ref`. Update each pin after reviewing and validating a port
-batch. All checkouts receive the same mod version; filenames include Minecraft
-version and loader. Advance the pins explicitly after validation.
-Tags and publication belong to `main`; port snapshots build only their own version.
-Each verified artifact is published sequentially in this order: 1.21.1
-Fabric/Quilt, NeoForge, Forge; 1.20.1 Fabric/Quilt, Forge; then 26.1.2
-Fabric/Quilt, NeoForge. Fabric/Quilt uploads list Fabric API as a required
-dependency on both platforms.
-
-Use [Verification](VERIFICATION.md) for checks and record their exact scope before
-advancing a release pin. The [compatibility tables](../README.md#compatibility)
-describe supported adapters. Verification records runtime acceptance.
-
-### Synchronizing a batch with Git
-
-Keep one worktree per branch and finish the main batch before starting a port.
-Use the same committed main SHA for both ports. Advance main after both
-have been reviewed and tested. Each port's latest synchronization merge records
-its previous main source as the second parent.
-
-Apply the difference between successive **main sources**. Return merges preserve
-main's profile, so the ordinary merge base can be a port commit. Successive main
-sources isolate the shared changes from Minecraft and loader differences.
-
-In each clean port worktree, inspect the previous merge and prepare the update
-with Git Bash (or another Bash shell):
-
-```bash
-git log --first-parent --merges -1 --format='%H %P'
-source=$(git rev-parse main)
-previous=$(git log --first-parent --merges -1 --format='%P' | cut -d' ' -f2)
-mkdir -p build
-git diff --binary --full-index "$previous" "$source" -- . ':(exclude).github/compat-*-ref' > build/compat.patch
-git merge --no-ff --no-commit -s ours "$source"
-git apply --3way --index build/compat.patch
-```
-
-The `ours` merge records the parent relationship. The patch supplies the actual
-shared changes. Resolve patch conflicts for that port's APIs, review the staged
-diff, and retain its Java target, loaders and dependencies. An empty patch leaves
-the port unchanged. Use `git merge --abort` to abandon preparation.
-Run the focused runtime checks and `buildAll --warning-mode fail` with the port's
-JDK before creating its signed merge commit:
-
-```bash
-git add <resolved-files>
-git commit -S -m "chore(compat): synchronize port with main"
-git verify-commit HEAD
-```
-
-After both ports pass, return to the clean main worktree. Record both verified
-tips in one merge, preserving main's file tree and updating the two release pins
-in that same commit:
-
-```bash
-git merge --no-ff --no-commit -s ours compat/1.20.1 compat/26.1.2
-git rev-parse compat/1.20.1 > .github/compat-1.20.1-ref
-git rev-parse compat/26.1.2 > .github/compat-26.1.2-ref
-git add .github/compat-1.20.1-ref .github/compat-26.1.2-ref
-git commit -S -m "chore(compat): record verified port synchronization"
-git verify-commit HEAD
-git push origin main compat/1.20.1 compat/26.1.2
-```
-
-The return commit changes only the pins. Its parents make main descend from both
-verified port tips. For the next batch, use the ports' second parents again,
-excluding the release-pin files from the patch as above.
+The [release workflow](https://github.com/SkyEye-FAST/mchjong/blob/main/.github/workflows/release.yml) removes the snapshot
+suffix for the published artifacts. It builds the tagged `main` revision and
+both pinned ports, then publishes to GitHub Releases, Modrinth and CurseForge.
+Publishing requires the `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` repository secrets.
+After publication, advance `main` to the next patch snapshot for development.

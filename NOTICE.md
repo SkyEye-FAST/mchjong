@@ -8,5 +8,6 @@ published in the official client's `fan` and `fandesc` tables, version
 - [Configuration schema](https://game.maj-soul.com/1/v0.10.1.w/res/proto/config.proto)
 
 The descriptions and declarative implementation are original MChjong work.
-The four contained-award exclusions follow MChjong's selected scoring policy. See
-[Rules](docs/RULES.md#custom-riichi-and-taiwanese-mahjong-awards) for the playable definitions.
+The four contained-award exclusions follow MChjong's selected scoring policy. The
+[bundled definition](engine/src/main/resources/yaku_sets/mahjong_soul_ancient.json)
+specifies the implemented awards and exclusions.
