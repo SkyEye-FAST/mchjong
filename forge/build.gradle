@@ -51,6 +51,7 @@ sourceSets.main {
     output.resourcesDir = layout.buildDirectory.dir('classes/java/main').get().asFile
     java.srcDir '../common/src/main/java'
     java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
+    java.exclude 'top/skyeyefast/mchjong/compat/patchouli/**'
     java.exclude 'top/skyeyefast/mchjong/compat/emi/**'
     java.exclude 'top/skyeyefast/mchjong/compat/rei/**'
     java.exclude 'top/skyeyefast/mchjong/compat/maid/**'
@@ -61,6 +62,7 @@ sourceSets.main {
 
 processResources {
     with rootProject.tileFaceResources
+    exclude 'data/mchjong/recipe/mahjong_manual.json'
     dependsOn ':art:generateData'
     mustRunAfter ':art:generateAssets'
     def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version, jei_version: jei_version]

@@ -19,6 +19,10 @@ repositories {
 }
 
 dependencies {
+    modCompileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-FABRIC"
+    if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
+        modLocalRuntime "vazkii.patchouli:Patchouli:${patchouli_version}-FABRIC"
+    }
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"

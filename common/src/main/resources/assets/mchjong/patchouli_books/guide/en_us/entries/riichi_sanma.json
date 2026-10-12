@@ -1,0 +1,32 @@
+{
+  "name": "manual.mchjong.entry.riichi_sanma.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.tiles"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.tiles.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.north"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.north.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.payments"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_sanma.payments.continued_1"
+    }
+  ]
+}

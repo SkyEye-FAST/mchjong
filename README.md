@@ -155,7 +155,7 @@ Minecraft version and loader shown below:
 | EMI | Fabric, NeoForge | Fabric, Forge | Not included |
 | REI | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Ponder | Fabric, NeoForge | Fabric, Forge | Not included |
-| Patchouli handbook | Not included | Fabric, Forge | Fabric, NeoForge |
+| Patchouli handbook | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Mod Menu | Fabric | Fabric | Fabric |
 | Create | NeoForge | Fabric, Forge | Not included |
 | Touhou Little Maid | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
@@ -168,6 +168,12 @@ supported item and hold the key shown in its tooltip.
 Touhou Little Maid adds maid participants; Fabric installations use Touhou
 Little Maid: Orihime. To recruit a maid, select her Mahjong task and sit at an
 equipped table with an empty stool inside her work area during working hours.
+
+Patchouli adds the Mahjong Manual, which is given once when a player first joins
+with Patchouli installed. Craft another copy with a book, green dye and a mahjong
+tile. Rule explanations link to the matching handbook entry. Without Patchouli,
+standalone explanations remain available and Personal Settings controls the
+installation recommendation.
 
 Mod Menu adds a personal-settings entry to the Fabric mod list. Forge and
 NeoForge provide that entry through their native Mods screens.

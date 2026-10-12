@@ -1,0 +1,24 @@
+{
+  "name": "manual.mchjong.entry.handling.name",
+  "category": "mchjong:playing",
+  "icon": "mchjong:dice",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.manual"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.manual.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.deal"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.collect"
+    }
+  ]
+}

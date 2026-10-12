@@ -35,6 +35,7 @@ public final class MchjongForgeClient {
 
     @SubscribeEvent public static void resources(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener((ResourceManagerReloadListener) TileFacePresets::reload);
+        event.registerReloadListener((ResourceManagerReloadListener) RuleHelp::reload);
     }
 
 

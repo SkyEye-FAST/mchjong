@@ -52,6 +52,10 @@ neoForge {
 }
 
 dependencies {
+    compileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-NEOFORGE"
+    if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
+        runtimeOnly "vazkii.patchouli:Patchouli:${patchouli_version}-NEOFORGE"
+    }
     // Optional recipe-browser APIs expose Fabric environment annotations.
     compileOnly "net.fabricmc:fabric-loader:${loader_version}"
     compileOnly "com.electronwill.night-config:toml:${night_config_version}"
@@ -139,6 +143,7 @@ processResources {
         minecraft_version: rootProject.minecraft_version,
         neo_loader_min_version: rootProject.neo_loader_min_version,
         ponder_version: rootProject.ponder_version,
+        patchouli_version: rootProject.patchouli_version,
         create_version: rootProject.create_version,
         create_ponder_min_version: rootProject.create_ponder_min_version,
         jei_version: rootProject.jei_version,

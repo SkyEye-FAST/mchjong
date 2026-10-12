@@ -25,7 +25,7 @@ runtime with the corresponding Gradle property. Recipe viewers use
 maid integrations use `-PwithPonder=true` and `-PwithMaid=true`; Fabric's Mod Menu
 integration uses `-PwithModMenu=true`, and NeoForge's Create integration uses
 `-PwithCreate=true`. Check the [integration table](../README.md#optional-integrations)
-for loader availability. Dependency versions are set in
+for loader availability. Patchouli uses `-PwithPatchouli=true`. Dependency versions are set in
 [gradle.properties](../gradle.properties), not in these command-line properties.
 
 ## Source organization

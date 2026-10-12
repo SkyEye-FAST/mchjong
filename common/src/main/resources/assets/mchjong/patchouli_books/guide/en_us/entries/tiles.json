@@ -1,0 +1,63 @@
+{
+  "name": "manual.mchjong.entry.tiles.name",
+  "category": "mchjong:equipment",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.blanks"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.blanks.continued_1"
+    },
+    {
+      "type": "patchouli:stonecutting",
+      "recipe": "mchjong:blanks_oak",
+      "recipe2": "mchjong:blanks_bone"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.printing"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.printing.continued_1"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:mahjong_box",
+      "recipe2": "mchjong:mahjong_dye"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.backs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.backs.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.red_fives"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:red_dora_dye",
+      "recipe2": "mchjong:undo_dye"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.sets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.sets.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.sets.continued_2"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.maid.name",
+  "category": "mchjong:playing",
+  "icon": "mchjong:mahjong_stool",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.maid.maid"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.maid.maid.continued_1"
+    }
+  ]
+}

@@ -38,6 +38,7 @@
   ],
   "suggests": {
     "modmenu": "*",
+    "patchouli": "*",
     "ponder": ">=${ponder_version}",
     "jei": ">=${jei_version}",
     "emi": ">=${emi_version}",

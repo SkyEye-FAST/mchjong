@@ -1,0 +1,147 @@
+{
+  "name": "manual.mchjong.entry.mcr_fan_low.name",
+  "category": "mchjong:mcr",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.intro"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.outside_hand",
+      "anchor": "outside_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.fully_concealed_hand",
+      "anchor": "fully_concealed_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.two_melded_kongs",
+      "anchor": "two_melded_kongs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.last_tile",
+      "anchor": "last_tile"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.dragon_pung",
+      "anchor": "dragon_pung"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.prevalent_wind",
+      "anchor": "prevalent_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.seat_wind",
+      "anchor": "seat_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.concealed_hand",
+      "anchor": "concealed_hand"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.all_chows",
+      "anchor": "all_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.tile_hog",
+      "anchor": "tile_hog"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.double_pung",
+      "anchor": "double_pung"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.two_concealed_pungs",
+      "anchor": "two_concealed_pungs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.concealed_kong",
+      "anchor": "concealed_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.all_simples",
+      "anchor": "all_simples"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.pure_double_chow",
+      "anchor": "pure_double_chow"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.mixed_double_chow",
+      "anchor": "mixed_double_chow"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.short_straight",
+      "anchor": "short_straight"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.two_terminal_chows",
+      "anchor": "two_terminal_chows"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.pung_of_terminals_or_honors",
+      "anchor": "pung_of_terminals_or_honors"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.melded_kong",
+      "anchor": "melded_kong"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.one_voided_suit",
+      "anchor": "one_voided_suit"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.no_honors",
+      "anchor": "no_honors"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.edge_wait",
+      "anchor": "edge_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.closed_wait",
+      "anchor": "closed_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.single_wait",
+      "anchor": "single_wait"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.self_drawn",
+      "anchor": "self_drawn"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.flower_tiles",
+      "anchor": "flower_tiles"
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.IntStream;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -39,6 +40,11 @@ public final class TableResults extends AbstractWidget {
     private int paymentPage;
     private java.util.function.IntUnaryOperator artwork = TileMesh::face;
     private final List<Hit> hits = new ArrayList<>();
+    private final List<Hit> awardHits = new ArrayList<>();
+    private int helpRow;
+    private float receiptScale = 1;
+    private float receiptX;
+    private int receiptY;
     private record Hit(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
@@ -90,7 +96,7 @@ public final class TableResults extends AbstractWidget {
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         winner = selectedWinner();
-        hits.clear();
+        hits.clear(); awardHits.clear();
         int x = getX(), y = getY();
         MahjongUi.panel(graphics, x, y, width, height);
         if (isFocused()) graphics.renderOutline(x, y, width, height, GOLD);
@@ -101,8 +107,9 @@ public final class TableResults extends AbstractWidget {
         graphics.pose().translate(x, y, 0);
         graphics.pose().scale(contentScale, contentScale, 1);
         renderContent(graphics, contentMouseX, contentMouseY, contentWidth, contentHeight);
-        for (Hit hit : hits) if (hit.contains(contentMouseX, contentMouseY)) {
-            graphics.renderTooltip(font, font.split(hit.text(), Math.min(360, contentWidth - 24)), contentMouseX, contentMouseY);
+        var tooltips = new ArrayList<>(awardHits); tooltips.addAll(hits);
+        for (Hit hit : tooltips) if (hit.contains(contentMouseX, contentMouseY)) {
+            graphics.renderTooltip(font, font.split(awardHits.contains(hit) ? RuleHelp.hover(hit.text()) : hit.text(), Math.min(360, contentWidth - 24)), contentMouseX, contentMouseY);
             break;
         }
         graphics.pose().popPose();
@@ -143,6 +150,7 @@ public final class TableResults extends AbstractWidget {
                 boolean compact = bodyHeight < 150;
                 int needed = winningHand(null, bodyWidth, compact);
                 float scale = Math.min(1f, bodyHeight / (float) Math.max(1, needed));
+                receiptScale = scale; receiptX = x + 10 + (bodyWidth - bodyWidth * scale) / 2; receiptY = top;
                 graphics.pose().pushPose();
                 graphics.pose().translate(x + 10 + (bodyWidth - bodyWidth * scale) / 2, top, 0);
                 graphics.pose().scale(scale, scale, 1);
@@ -198,6 +206,13 @@ public final class TableResults extends AbstractWidget {
                 var lines = font.split(row.label(), Math.max(1, colWidth - badgeWidth - 13));
                 int color = readout != null && !readout.complete() && first + col == visible - 1 ? GOLD : TEXT;
                 if (graphics != null && first + col < visible) {
+                    if (RuleHelp.award(row.label()) != null) {
+                        int rowIndex = awardHits.size();
+                        awardHits.add(new Hit(Math.round(receiptX + col * colWidth * receiptScale), Math.round(receiptY + y * receiptScale),
+                            Math.max(1, Math.round((colWidth - 4) * receiptScale)), Math.max(1, Math.round(Math.max(13, lines.size() * 10 + 3) * receiptScale)), row.label()));
+                        if (isFocused() && helpRow == rowIndex) graphics.renderOutline(col * colWidth - 1, y, colWidth - 4, Math.max(13, lines.size() * 10 + 3), GOLD);
+                        graphics.drawString(font, "?", col * colWidth + colWidth - 10, y + 2, MUTED, false);
+                    }
                     if (badgeWidth > 0) badge(graphics, han,
                         col * colWidth + font.width(lines.getLast()) + 4, y + (lines.size() - 1) * 10, false);
                     for (int line = 0; line < lines.size(); line++)
@@ -398,6 +413,9 @@ public final class TableResults extends AbstractWidget {
 
     @Override public boolean mouseClicked(double x, double y, int button) {
         double localX = (x - getX()) / contentScale, localY = (y - getY()) / contentScale;
+        if (button == 0) for (int i = 0; i < awardHits.size(); i++) if (awardHits.get(i).contains(localX, localY)) {
+            helpRow = i; RuleHelp.openAward(Minecraft.getInstance().screen, awardHits.get(i).text()); return true;
+        }
         int contentWidth = width / contentScale;
         if (button == 0 && page == Page.HAND && view.wins().size() > 1 && localY >= 21 && localY < 36) {
             int span = contentWidth - 20 - (contentWidth >= 500 ? 156 : 0);
@@ -405,6 +423,7 @@ public final class TableResults extends AbstractWidget {
                 if (readout != null) readout.finish(Util.getMillis());
                 RiichiAudio.finishResult();
                 winner = Math.min(view.wins().size() - 1, (int) (localX - 10) / (span / view.wins().size()));
+                helpRow = 0;
                 return true;
             }
         }
@@ -423,5 +442,7 @@ public final class TableResults extends AbstractWidget {
         for (var win : view.wins()) summary.append(". ").append(winnerSummary(win));
         output.add(NarratedElementType.TITLE, summary);
         output.add(NarratedElementType.USAGE, Component.translatable("ui.mchjong.result_help"));
+        if (!awardHits.isEmpty()) output.add(NarratedElementType.USAGE, Component.translatable("ui.mchjong.result_explanation"));
+        if (!awardHits.isEmpty()) output.add(NarratedElementType.HINT, RuleHelp.hover(awardHits.get(Math.clamp(helpRow, 0, awardHits.size() - 1)).text()));
     }
 }

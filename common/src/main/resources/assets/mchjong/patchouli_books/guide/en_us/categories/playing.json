@@ -1,0 +1,6 @@
+{
+  "name": "manual.mchjong.category.playing.name",
+  "description": "manual.mchjong.category.playing.description",
+  "icon": "mchjong:automatic_mahjong_table",
+  "sortnum": 1
+}

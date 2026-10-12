@@ -32,6 +32,22 @@ and other source resources are under
 uses the same `assets/mchjong/` paths, regardless of where the files are maintained
 in this repository.
 
+### Patchouli handbook
+
+Override handbook categories, entries and templates under
+`assets/mchjong/patchouli_books/guide/en_us/`. Page text uses translation keys
+from the four shared language files. The book definition is at
+`data/mchjong/patchouli_books/guide/book.json`; its `use_resource_pack` setting
+enables these resource-pack pages. The generated cover is
+`assets/mchjong/textures/item/mahjong_manual.png`.
+
+Use the checked-in entries as authoring examples. Each award in the award
+entries has one text page whose `anchor` is the award's identifier; preserve
+those anchors so rule explanations continue to reach the matching award. A
+`mchjong:example` tile diagram occupies a spread: two consecutive pages, starting
+on an even page index, with matching `text`, `tiles` and `face` fields. Tile
+diagrams use the playing atlas and the selected regional face preset.
+
 ## Preset ZIPs
 
 Client presets go in `config/mchjong/presets/<category>/`; shared server presets

@@ -1,0 +1,180 @@
+{
+  "name": "manual.mchjong.entry.riichi_yaku.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.intro"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.intro.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.riichi",
+      "anchor": "riichi"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.double_riichi",
+      "anchor": "double_riichi"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.ippatsu",
+      "anchor": "ippatsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.menzen_tsumo",
+      "anchor": "menzen_tsumo"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.pinhu",
+      "anchor": "pinhu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.tanyao",
+      "anchor": "tanyao"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.iipeikou",
+      "anchor": "iipeikou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.seat_wind",
+      "anchor": "seat_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.round_wind",
+      "anchor": "round_wind"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.haku",
+      "anchor": "haku"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.hatsu",
+      "anchor": "hatsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.chun",
+      "anchor": "chun"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.rinshan_kaihou",
+      "anchor": "rinshan_kaihou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.chankan",
+      "anchor": "chankan"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.haitei_raoyue",
+      "anchor": "haitei_raoyue"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.houtei_raoyui",
+      "anchor": "houtei_raoyui"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.chiitoitsu",
+      "anchor": "chiitoitsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.sanshoku_doujun",
+      "anchor": "sanshoku_doujun"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.ittsu",
+      "anchor": "ittsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.chanta",
+      "anchor": "chanta"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.toitoi",
+      "anchor": "toitoi"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.sanankou",
+      "anchor": "sanankou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.sanshoku_doukou",
+      "anchor": "sanshoku_doukou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.sankantsu",
+      "anchor": "sankantsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.shousangen",
+      "anchor": "shousangen"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.honroutou",
+      "anchor": "honroutou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.honitsu",
+      "anchor": "honitsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.junchan",
+      "anchor": "junchan"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.ryanpeikou",
+      "anchor": "ryanpeikou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.chinitsu",
+      "anchor": "chinitsu"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.renhou",
+      "anchor": "renhou"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.nagashi_mangan",
+      "anchor": "nagashi_mangan"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yaku.nagashi_mangan.continued_1"
+    }
+  ]
+}

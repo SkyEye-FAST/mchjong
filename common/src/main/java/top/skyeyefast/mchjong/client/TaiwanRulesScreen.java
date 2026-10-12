@@ -125,11 +125,14 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
                 minecraft.setScreen(new TableChoiceScreen(this, Component.translatable("taiwan.mchjong.reserve.title"),
                     Arrays.stream(reserves).map(r -> (Component) Component.translatable("taiwan.mchjong.reserve." + r.name().toLowerCase(java.util.Locale.ROOT))).toList(),
                     draft.reserve().ordinal(), index -> { replace(draft.payment(), reserves[index]); rejected = false; }, index -> editReason(true)));
-            }).bounds(left, y, span, 20).build()));
+            }).bounds(left, y, span - 24, 20).build()));
+            addRenderableWidget(RuleHelp.setting(this, name, RuleHelp.pageDescription("manual.mchjong.entry.taiwan_flow.reserve"), "manual.mchjong.entry.taiwan_flow.reserve", left + span - 20, y));
         } else {
             reset = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.restore_defaults"), ignored -> {
                 if (current != null) { draft = TaiwanGameState.Rules.of(current.rules()); Arrays.fill(paymentText, null); rejected = false; init(); }
-            }).bounds(left, y, span, 20).build());
+            }).bounds(left, y, span - 24, 20).build());
+            addRenderableWidget(RuleHelp.setting(this, Component.translatable("rules.mchjong.choose_preset"), RuleHelp.pageDescription("manual.mchjong.entry.taiwan_payments.presets"),
+                "manual.mchjong.entry.taiwan_payments.presets", left + span - 20, y));
         }
     }
     private long paymentValue(int index) {
@@ -145,7 +148,7 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
         field.setResponder(text -> { paymentText[index] = text; var payment = readPayment(); if (payment != null) replace(payment, draft.reserve()); rejected = false; updateControls(); });
         editors.add(addRenderableWidget(field));
         addRenderableWidget(RuleHelp.setting(this, name, Component.translatable("taiwan.mchjong.payment." + PAYMENT_KEYS[index] + ".description"),
-            left + span - 20, y));
+            index < 2 ? "manual.mchjong.entry.taiwan_payments.amount" : "manual.mchjong.entry.taiwan_payments.dealer", left + span - 20, y));
     }
     private TaiwanRules.Payment readPayment() {
         try {

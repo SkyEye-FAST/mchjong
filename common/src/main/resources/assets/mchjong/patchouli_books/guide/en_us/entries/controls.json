@@ -1,0 +1,28 @@
+{
+  "name": "manual.mchjong.entry.controls.name",
+  "category": "mchjong:playing",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.discard"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.discard.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.declare"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.view"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.view.continued_1"
+    }
+  ]
+}

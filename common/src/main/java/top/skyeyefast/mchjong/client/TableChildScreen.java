@@ -19,6 +19,6 @@ interface TableChildScreen {
         return null;
     }
     private static Screen parentOf(Screen screen) {
-        return screen instanceof TableChildScreen child ? child.parent() : null;
+        return screen instanceof TableChildScreen child ? child.parent() : RuleHelp.manualParent(screen);
     }
 }
