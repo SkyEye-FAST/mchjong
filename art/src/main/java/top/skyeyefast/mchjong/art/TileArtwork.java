@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.art;
 
-import java.awt.image.BufferedImage;
 import java.util.List;
 
 /** Source names and tile order for the bundled face presets. */
@@ -23,9 +22,4 @@ final class TileArtwork {
             throw new IllegalArgumentException("Tile face: " + face);
         return FACE_KEYS.get(face);
     }
-
-    static BufferedImage back() {
-        return new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-    }
-
 }

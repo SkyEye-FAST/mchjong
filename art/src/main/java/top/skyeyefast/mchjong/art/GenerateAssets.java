@@ -27,15 +27,13 @@ public final class GenerateAssets {
     }
 
     private void generate() throws IOException {
-        png("tile/back", TileArtwork.back());
+        png("tile/back", resourceTexture("tile/back"));
         for (String name : List.of("creeper", "mojang")) {
-            png("preset/back/" + name, BuiltinPresetArtwork.back(name));
+            png("preset/back/" + name, resourceTexture("preset/back/" + name));
             text("assets/mchjong/textures/preset/back/" + name + ".png.mcmeta",
                 "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         }
-        var plain = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-        for (int x = 0; x < 16; x++) for (int y = 0; y < 16; y++) plain.setRGB(x, y, 0xffffffff);
-        png("tile/plain", plain);
+        png("tile/plain", resourceTexture("tile/plain"));
         text("assets/mchjong/textures/tile/back.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         png("furniture/cloth_pattern", resourceTexture("furniture/cloth_pattern"));
         for (String name : List.of("brass", "edge", "felt", "steel",
@@ -46,8 +44,8 @@ public final class GenerateAssets {
             text("assets/mchjong/textures/furniture/" + name + ".png.mcmeta",
                 "{\"texture\":{\"blur\":false,\"clamp\":false}}");
         }
-        for (var texture : TileMaterialArtwork.textures().entrySet())
-            png("tile_material/" + texture.getKey(), texture.getValue());
+        for (String name : List.of("amethyst", "bone", "calcite", "glass", "quartz", "wood"))
+            png("tile_material/" + name, resourceTexture("tile_material/" + name));
         for (int points : PointStickArtwork.POINTS) {
             png("point_stick/" + points, PointStickArtwork.texture(points));
             text("assets/mchjong/textures/point_stick/" + points + ".png.mcmeta",
