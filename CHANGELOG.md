@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Optimize Mahjong table, stool, tablecloth, and tile textures to match authentic Minecraft wood, metal, felt, and mineral relief styles, replacing procedural artwork generation with static texture resources.
 - Repair the Mahjong Manual's furniture recipe tables and use a cyan table cloth and a white mahjong stool in the recipe examples.
 - Redraw Mahjong dyes with vanilla-style powder mounds, splicing crafting ingredient pigments for Mahjong Dye and scaling down Red Dora Dye and Undo Dye, replacing procedural artwork generation with static texture resources.
 - Redraw the Mahjong Manual item texture with an isometric jade-and-brass book matching the vanilla Minecraft book perspective, replacing procedural artwork generation with a static texture resource.
