@@ -68,7 +68,7 @@ public final class GenerateAssets {
         text("assets/mchjong/items/mahjong_manual.json",
             "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"mchjong:item/mahjong_manual\"}}");
         for (String name : java.util.List.of("mahjong_dye", "creative_mahjong_dye", "red_dora_dye", "undo_dye")) {
-            png("item/" + name, MahjongDyeArtwork.texture(name));
+            png("item/" + name, resourceTexture("item/" + name));
             text("assets/mchjong/models/item/" + name + ".json",
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
             text("assets/mchjong/items/" + name + ".json",
