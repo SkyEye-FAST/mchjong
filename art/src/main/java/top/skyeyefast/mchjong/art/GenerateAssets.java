@@ -33,14 +33,17 @@ public final class GenerateAssets {
             text("assets/mchjong/textures/preset/back/" + name + ".png.mcmeta",
                 "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         }
-        png("furniture/cloth_pattern", new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB));
         var plain = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
         for (int x = 0; x < 16; x++) for (int y = 0; y < 16; y++) plain.setRGB(x, y, 0xffffffff);
         png("tile/plain", plain);
         text("assets/mchjong/textures/tile/back.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
-        for (var texture : FurnitureArtwork.textures().entrySet()) {
-            png("furniture/" + texture.getKey(), texture.getValue());
-            text("assets/mchjong/textures/furniture/" + texture.getKey() + ".png.mcmeta",
+        png("furniture/cloth_pattern", resourceTexture("furniture/cloth_pattern"));
+        for (String name : List.of("brass", "edge", "felt", "steel",
+                "wood_acacia", "wood_bamboo", "wood_birch", "wood_cherry",
+                "wood_crimson", "wood_dark_oak", "wood_jungle", "wood_mangrove",
+                "wood_oak", "wood_spruce", "wood_warped")) {
+            png("furniture/" + name, resourceTexture("furniture/" + name));
+            text("assets/mchjong/textures/furniture/" + name + ".png.mcmeta",
                 "{\"texture\":{\"blur\":false,\"clamp\":false}}");
         }
         for (var texture : TileMaterialArtwork.textures().entrySet())
