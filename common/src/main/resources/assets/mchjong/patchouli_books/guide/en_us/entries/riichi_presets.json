@@ -1,84 +1,85 @@
 {
   "name": "manual.mchjong.entry.riichi_presets.name",
-  "category": "mchjong:rules",
-  "icon": "mchjong:mahjong_tile",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:red_dora_dye",
   "sortnum": 6,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_1"
+      "text": "manual.mchjong.entry.riichi_presets.choice"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_1.continued_1"
+      "text": "manual.mchjong.entry.riichi_presets.choice.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_1.continued_2"
+      "text": "manual.mchjong.entry.riichi_presets.scores"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_2"
+      "text": "manual.mchjong.entry.riichi_presets.scores.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_2.continued_1"
+      "text": "manual.mchjong.entry.riichi_presets.scores.continued_2"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_2.continued_2"
+      "text": "manual.mchjong.entry.riichi_presets.scores_competition"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_3"
+      "text": "manual.mchjong.entry.riichi_presets.scores_competition.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_3.continued_1"
+      "text": "manual.mchjong.entry.riichi_presets.floating",
+      "anchor": "floating"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_3.continued_2"
+      "text": "manual.mchjong.entry.riichi_presets.floating.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_4"
+      "text": "manual.mchjong.entry.riichi_presets.online"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_4.continued_1"
+      "text": "manual.mchjong.entry.riichi_presets.online.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_5"
+      "text": "manual.mchjong.entry.riichi_presets.online.continued_2"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_5.continued_1"
+      "text": "manual.mchjong.entry.riichi_presets.competition"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_6"
+      "text": "manual.mchjong.entry.riichi_presets.competition.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_6.continued_1"
+      "text": "manual.mchjong.entry.riichi_presets.aborts"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_6.continued_2"
+      "text": "manual.mchjong.entry.riichi_presets.aborts.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_7"
+      "text": "manual.mchjong.entry.riichi_presets.aborts_rules"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_7.continued_1"
+      "text": "manual.mchjong.entry.riichi_presets.pao"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.page_7.continued_2"
+      "text": "manual.mchjong.entry.riichi_presets.pao.continued_1"
     }
   ]
 }

@@ -6,71 +6,47 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_1"
+      "text": "manual.mchjong.entry.sichuan_flow.tiles"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_1.continued_1"
+      "text": "manual.mchjong.entry.sichuan_flow.void"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_2"
+      "text": "manual.mchjong.entry.sichuan_flow.void.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_2.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_3"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_3.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_4"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_4.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_5"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_5.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_6"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.page_6.continued_1"
+      "text": "manual.mchjong.entry.sichuan_flow.winning"
     },
     {
       "type": "mchjong:example",
-      "text": "manual.mchjong.entry.sichuan_flow.sichuan",
+      "text": "manual.mchjong.entry.sichuan_flow.example",
       "tiles": "1111m 22m 33m 44p 55p 66p",
       "face": "mchjong:sichuan"
     },
     {
       "type": "mchjong:example",
-      "text": "manual.mchjong.entry.sichuan_flow.sichuan",
+      "text": "manual.mchjong.entry.sichuan_flow.example",
       "tiles": "1111m 22m 33m 44p 55p 66p",
       "face": "mchjong:sichuan"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.notation"
+      "text": "manual.mchjong.entry.sichuan_flow.battle"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_flow.notation.continued_1"
+      "text": "manual.mchjong.entry.sichuan_flow.passing"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.passing.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_flow.dealer"
     }
   ]
 }

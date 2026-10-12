@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Redraw Mahjong dyes with vanilla-style powder mounds, splicing crafting ingredient pigments for Mahjong Dye and scaling down Red Dora Dye and Undo Dye, replacing procedural artwork generation with static texture resources.
+- Redraw the Mahjong Manual item texture with an isometric jade-and-brass book matching the vanilla Minecraft book perspective, replacing procedural artwork generation with a static texture resource.
+- Rewrite the Mahjong Manual in all four languages around six chapters: tables and equipment, seating and play, and one chapter each for Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong. Give every yaku, scoring pattern and tai pattern its own text page, keep tile diagrams only for hand shapes that text cannot show, and point rule-setting explanations to the section describing each option.
+- Restore the revised Patchouli handbook on `main`, with optional Fabric and NeoForge integration and standalone rule explanations when Patchouli is absent.
 - Limit convenience hints to Riichi mahjong and remove the MCR, Sichuan mahjong and Taiwanese mahjong hint interfaces and calculations. Riichi hints show current waits and remaining copies only while tenpai.
 - Center action announcements in muted text clear of the HUD, controls and private hand, keep current-discard cards on the right, and show immersive seat winds and status on player plaques. Use direct hand clicks for discards in all four variants and both views, retaining single-click and double-click settings and removing discard confirmation buttons.
 - Unify room rule entry points and draft submission, organize Riichi rules into six persistent categories, move player count and preset selection into the draft, group hand display settings, centralize preparation member controls, and align Sichuan mahjong, Taiwanese mahjong and MCR navigation with four-language controls and explanations.
@@ -42,8 +46,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Route Minecraft 26.1.2 rule-sidebar clicks to the native buttons and retain wheel scrolling across the sidebar.
-- Center and scale table and stool items in Minecraft 26.1.2 shelf displays.
 - Craft stools from every wood family with any of the 16 matching carpet colors. Stools and cloths support all 16 dye colors while preserving their other components.
 - Separate draw-time and call-time temporary furiten clearance, and prevent North replacements from qualifying the following discard for Kanburi.
 - Correct four-language mahjong terminology and scoring explanations. Distinguish revealed hands from melds and concealed kans, retain natural Chinese payment wording, and fit Japanese minimum-han choices at the smallest window size.
@@ -130,7 +132,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Clarify personal settings and preset navigation with distinct category and source levels, and compact settlement tables with aligned numeric headings.
 - Separate participant hand visibility, spectator information policy and physical open-hands presentation, with server-side redaction for each viewer role.
 - Expand administrator World settings for spectating, invitations, convenience hints, experience rewards, replays, bots, companion players and room-rule restrictions; move Minecraft experience rewards out of mahjong rule options.
-- Open personal settings and presets from the mod-list configuration button on Fabric/Quilt and NeoForge.
+- Open personal settings and presets from the mod-list configuration button on Fabric/Quilt, Forge and NeoForge.
 - Make tenpai hints a host controlled room option shared by all participants.
 - Show parent scopes and inset preset choices in secondary menus.
 - Move Touhou Little Maid integration out of the invitation entry into a dedicated handbook chapter, and rewrite handbook, rule, and interface texts across all four languages in native style.
@@ -142,6 +144,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Keep immersive view active when an exit vote opens.
 - Disable invitations for friends who are already seated in the room.
 - Allow a nearby owner's maid to take an empty lobby seat before the owner sits down.
+- Wait for the complete printing batch before a Create press moves blank tiles into a mahjong box.
 - Advance each settlement stage early only after every human player confirms, and show its remaining seconds in the single top action.
 
 ## [0.8.1] - 2026-09-27
@@ -149,6 +152,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Keep computer-player selection on the built-in Easy and Hard opponents.
+- Reuse evaluated search leaves when comparing computer-player continuations.
 - Recognize resolved post-riichi discards as opponent-specific safe tiles and price incomplete closed-hand riichi scenarios consistently.
 - Expand HARD's one-shanten search to compare non-advancing shape improvements, and weigh push/fold commitments by public opponent pressure and visible tile stock.
 - Evaluate riichi value with conditional unseen ura indicators and a consistent deposit cost, while reserving bounded search capacity for replacement declarations.
@@ -157,6 +161,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Compare searched bot actions at a common decision horizon and retain distinct candidate routes within the search budget.
 - Provide Kotlin's enum API on loader IDE classpaths and remove unused Java imports.
 - Avoid transient Java nullness warnings during IDE project import.
 - Remove unused Java declarations and a constant-only smoke assertion, and align IDE suppression diagnostics with compiler requirements.
@@ -183,6 +188,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Sequential voice playback and score announcements during settlement, with synchronized yaku highlights.
 - Dedicated voice and sound event distinguishing double riichi declarations.
 - Configurable match rule awarding player experience points according to final uma standings.
+- Create workshop recipe animations across recipe viewers, including REI recipe support on NeoForge.
 - Gradual, copy-aware yaku route evaluation for training opponents.
 
 ### Changed
@@ -191,10 +197,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Lower first-person supply grips to keep tile faces clear and restore native arms in the 26.1.2 special-item renderer.
 - Use a single Kan label for open, concealed and added kan actions and hints in all four languages.
 - Bound routine verification to affected behavior, consolidate client smoke scenarios, and make screenshot capture explicitly selectable; keep maintenance guides focused on current contracts.
-- Synchronize post-0.7.2 gameplay, presets, audio and presentation with the Minecraft 26.1.2 Fabric and NeoForge APIs.
-- Adapt preset textures, rendering extraction and voice playback callbacks to the current client APIs; document this profile's two snapshot artifacts.
+- Synchronize corner meld placement and hand clearance to both compatibility profiles, plus Ponder overlay placement to 1.20.1, and advance the release branch pins.
+- Synchronize post-0.7.2 changes across the Minecraft 1.20.1, 1.21.1 and 26.1.2 loader profiles, with signed branch ancestry and reviewed release pins.
 - Face and back presets use paginated box screens, with four sample tiles for each face design and one Mahjong dye consumed per successful change.
 - Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
+- Create workshop Kansai face printing uses a single face plate.
 - Training route matching uses packed copy-capacity caches, reusable group masks, sparse target checks, direct pair/companion evaluation and conservative head bounds. Cached continuation ordering retains deterministic ties, and exact one-shanten advances use every tied best-shanten discard from the library.
 - Hard opponents evaluate every effective draw and tenpai continuation from one-shanten candidates. Calls compare route value and closed-hand opportunity with their actual progress. Decision-local caches, reusable route tables and scratch buffers, and conservative distant-branch score bounds reduce repeated evaluation work.
 
@@ -205,6 +212,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Align the box face and back selectors, show both only with Mahjong dye, and apply their selections together from the main screen for one dye.
 - Training opponents reserve search for passing when comparing calls, evaluate replacement alternatives at matching depth, and retain the closed-hand riichi option at both difficulty levels.
 - Use supported loader APIs for native model rendering, resource identifiers and client registration across Minecraft profiles.
+- Keep Ponder item controls above the table and tutorial text in the standard reading area so the furniture remains visible.
 - Anchor immersive melds at every player's right-hand cloth corner, with complete tile bounds inside the cloth and matching animation positions. Increase crowded hand-to-meld clearance in both immersive and seated views.
 - Keep the authorized Mahjong box menu open while choosing face and back presets, and retain its native close lifecycle.
 - Tile faces keep an opaque white plate with a rear surface visible through glass, including hidden hands and face-down walls. Glass shells render after opaque plates. Only visible identities show printed artwork, and standing faces retain their owner-facing orientation in both views. Immersive melds stay in one row at their original depth while standing hands move aside.
@@ -256,13 +264,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Mahjong tile blanks can be cut from all eleven wood plank types, each retaining its own wood color.
 - Mahjong boxes accept Undo Dye in the dye compartment to clear tile-back dyeing through the Remove dye action.
-- Last-player departure confirmation with server-owned paused-match retention.
+- Optional Create workshop with efficient sawing and mixing, reusable face-printing plates, two-target back dyeing, single-tile red-five application and automatic packing.
+- Component-aware JEI/EMI workshop examples and localized Ponder production and dyeing tutorials.
+- Optional Touhou Little Maid and Orihime integration with dedicated mahjong tasks and table seating.
+- Rule option descriptions in rule screens and tooltips across all four supported languages.
 
 ### Changed
 
 - Tile inventory models show their thickness in 3D, and blank fronts use the same material finish as undyed backs.
 - Mahjong dye requires white dye alongside black, red, green and blue. Mahjong boxes use a shaped chest, wooden-slab, leather and iron-nugget recipe.
-- Match controls use compact spacing, and unavailable rule presets remain visible with their requirements.
+- Simplified Chinese translations standardize mahjong terminology for rule presets, extensions, bot actions and table furniture ([#5]).
 
 ### Fixed
 
@@ -546,3 +557,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 [0.1.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.1.0
 [#1]: https://github.com/SkyEye-FAST/mchjong/issues/1
 [#2]: https://github.com/SkyEye-FAST/mchjong/issues/2
+[#3]: https://github.com/SkyEye-FAST/mchjong/issues/3
+[#4]: https://github.com/SkyEye-FAST/mchjong/issues/4
+[#5]: https://github.com/SkyEye-FAST/mchjong/issues/5

@@ -1,0 +1,20 @@
+{
+  "name": "manual.mchjong.entry.automatic_table.name",
+  "category": "mchjong:equipment",
+  "icon": "mchjong:automatic_mahjong_table",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.automatic_table.intro"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.automatic_table.upgrade"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.automatic_table.upgrade.continued_1"
+    }
+  ]
+}

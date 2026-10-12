@@ -6,55 +6,27 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_1"
+      "text": "manual.mchjong.entry.mcr_flow.tiles"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_1.continued_1"
+      "text": "manual.mchjong.entry.mcr_flow.tiles.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_2"
+      "text": "manual.mchjong.entry.mcr_flow.tiles.continued_2"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_2.continued_1"
+      "text": "manual.mchjong.entry.mcr_flow.calls"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_2.continued_2"
+      "text": "manual.mchjong.entry.mcr_flow.calls.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_3"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_3.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_4"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_4.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_5"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_5.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_6"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_flow.page_6.continued_1"
+      "text": "manual.mchjong.entry.mcr_flow.winning"
     }
   ]
 }

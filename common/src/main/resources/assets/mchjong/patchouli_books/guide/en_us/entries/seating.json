@@ -2,23 +2,31 @@
   "name": "manual.mchjong.entry.seating.name",
   "category": "mchjong:playing",
   "icon": "mchjong:mahjong_stool",
-  "sortnum": 3,
+  "sortnum": 0,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.seating.page_1"
+      "text": "manual.mchjong.entry.seating.lobby"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.seating.page_1.continued_1"
+      "text": "manual.mchjong.entry.seating.lobby.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.seating.page_2"
+      "text": "manual.mchjong.entry.seating.invite"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.seating.page_2.continued_1"
+      "text": "manual.mchjong.entry.seating.invite.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.seating.start"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.seating.start.continued_1"
     }
   ]
 }

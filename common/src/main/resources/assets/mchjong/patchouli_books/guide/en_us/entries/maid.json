@@ -1,16 +1,16 @@
 {
   "name": "manual.mchjong.entry.maid.name",
-  "category": "mchjong:integration",
-  "icon": "mchjong:mahjong_table",
-  "sortnum": 0,
+  "category": "mchjong:playing",
+  "icon": "mchjong:mahjong_stool",
+  "sortnum": 5,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.maid.page_1"
+      "text": "manual.mchjong.entry.maid.maid"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.maid.page_1.continued_1"
+      "text": "manual.mchjong.entry.maid.maid.continued_1"
     }
   ]
 }
