@@ -20,7 +20,7 @@ final class McrRulesScreen extends Screen implements TableChildScreen {
         layout = SettingsLayout.of(width, height, 0, 110);
         lines = font.split(Component.translatable("rules.mchjong.mcr_summary"), layout.span());
         addRenderableWidget(RuleHelp.setting(this, Component.translatable("variant.mchjong.mcr"),
-            RuleHelp.pageDescription("manual.mchjong.entry.mcr_flow.page_1"), "manual.mchjong.entry.mcr_flow.page_1",
+            RuleHelp.pageDescription("manual.mchjong.entry.mcr_flow.tiles"), "manual.mchjong.entry.mcr_flow.tiles",
             layout.left() + layout.span() - 20, layout.paging()));
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.back"), ignored -> onClose())
             .bounds(layout.left(), layout.footer(), layout.span(), 20).build());

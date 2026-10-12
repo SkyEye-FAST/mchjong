@@ -77,7 +77,7 @@ final class InstalledManualSmoke {
             var resources = client.getResourceManager();
             int categories = resources.listResources("patchouli_books/guide/en_us/categories", id -> id.getNamespace().equals("mchjong") && id.getPath().endsWith(".json")).size();
             ManualSmoke.require(book.getContents().categories.size() == categories, "Missing manual chapters");
-            for (String chapter : List.of("rules", "mcr", "sichuan", "taiwan"))
+            for (String chapter : List.of("riichi", "mcr", "sichuan", "taiwan"))
                 ManualSmoke.require(book.getContents().categories.containsKey(MahjongContent.id(chapter)), "Missing rules entrance: " + chapter);
             entries = book.getContents().entries.values().stream().sorted(java.util.Comparator.comparing(e -> e.getId().toString())).toList();
             int expected = resources.listResources("patchouli_books/guide/en_us/entries", id -> id.getNamespace().equals("mchjong") && id.getPath().endsWith(".json")).size();
@@ -193,7 +193,9 @@ final class InstalledManualSmoke {
             help.setFocused(button); help.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
             ManualSmoke.require(client.screen instanceof vazkii.patchouli.client.book.gui.GuiBookEntry, "Explanation did not open handbook");
             var entryScreen = (vazkii.patchouli.client.book.gui.GuiBookEntry) client.screen;
-            ManualSmoke.require(entryScreen.getEntry().getId().equals(MahjongContent.id(targets[i])) && entryScreen.getSpread() == 1, "Incorrect handbook destination: " + keys[i]);
+            String anchor = keys[i].substring(keys[i].lastIndexOf('.') + 1);
+            ManualSmoke.require(entryScreen.getEntry().getId().equals(MahjongContent.id(targets[i]))
+                && entryScreen.getSpread() == entryScreen.getEntry().getPageFromAnchor(anchor) / 2, "Incorrect handbook destination: " + keys[i]);
             client.screen.onClose(); ManualClient.tick(true);
             ManualSmoke.require(client.screen == help, "Handbook did not return to explanation");
             help.onClose(); ManualSmoke.require(client.screen == parent, "Explanation did not return to its parent");
