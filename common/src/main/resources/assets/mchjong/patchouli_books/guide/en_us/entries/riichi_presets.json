@@ -34,7 +34,8 @@
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.floating"
+      "text": "manual.mchjong.entry.riichi_presets.floating",
+      "anchor": "floating"
     },
     {
       "type": "patchouli:text",

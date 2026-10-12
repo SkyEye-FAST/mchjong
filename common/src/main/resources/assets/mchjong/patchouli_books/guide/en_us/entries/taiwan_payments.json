@@ -6,11 +6,19 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.payers"
+      "text": "manual.mchjong.entry.taiwan_payments.repeats"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.payers.continued_1"
+      "text": "manual.mchjong.entry.taiwan_payments.repeats.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.repeats.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_payments.payers"
     },
     {
       "type": "patchouli:text",
@@ -26,19 +34,8 @@
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.repeats"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.repeats.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.repeats.continued_2"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.taiwan_payments.dealer"
+      "text": "manual.mchjong.entry.taiwan_payments.dealer",
+      "anchor": "dealer"
     },
     {
       "type": "patchouli:text",
