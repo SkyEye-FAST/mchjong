@@ -1,84 +1,60 @@
 {
   "name": "manual.mchjong.entry.riichi_flow.name",
-  "category": "mchjong:rules",
+  "category": "mchjong:riichi",
   "icon": "mchjong:mahjong_tile",
   "sortnum": 0,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_1"
+      "text": "manual.mchjong.entry.riichi_flow.tiles"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_1.continued_1"
+      "text": "manual.mchjong.entry.riichi_flow.tiles.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_2"
+      "text": "manual.mchjong.entry.riichi_flow.winning"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_2.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_3"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_3.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_4"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_4.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_5"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.page_5.continued_1"
+      "text": "manual.mchjong.entry.riichi_flow.winning.continued_1"
     },
     {
       "type": "mchjong:example",
-      "text": "manual.mchjong.entry.riichi_flow.regular",
+      "text": "manual.mchjong.entry.riichi_flow.example",
       "tiles": "123m 456m 789p 234s 55p",
       "face": "mchjong:kansai"
     },
     {
       "type": "mchjong:example",
-      "text": "manual.mchjong.entry.riichi_flow.regular",
+      "text": "manual.mchjong.entry.riichi_flow.example",
       "tiles": "123m 456m 789p 234s 55p",
       "face": "mchjong:kansai"
     },
     {
-      "type": "mchjong:example",
-      "text": "manual.mchjong.entry.riichi_flow.pairs",
-      "tiles": "11m 33m 55p 77p 22s 44s 66z",
-      "face": "mchjong:kansai"
-    },
-    {
-      "type": "mchjong:example",
-      "text": "manual.mchjong.entry.riichi_flow.pairs",
-      "tiles": "11m 33m 55p 77p 22s 44s 66z",
-      "face": "mchjong:kansai"
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.yaku"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.aborts"
+      "text": "manual.mchjong.entry.riichi_flow.dealer"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.aborts.continued_1"
+      "text": "manual.mchjong.entry.riichi_flow.dealer.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_flow.aborts.continued_2"
+      "text": "manual.mchjong.entry.riichi_flow.draws"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.draws.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_flow.length"
     }
   ]
 }

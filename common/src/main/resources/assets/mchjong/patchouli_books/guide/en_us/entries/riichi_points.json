@@ -1,52 +1,44 @@
 {
   "name": "manual.mchjong.entry.riichi_points.name",
-  "category": "mchjong:rules",
-  "icon": "mchjong:mahjong_tile",
-  "sortnum": 5,
+  "category": "mchjong:riichi",
+  "icon": "mchjong:point_stick",
+  "sortnum": 4,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_1"
+      "text": "manual.mchjong.entry.riichi_points.fu"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_2"
+      "text": "manual.mchjong.entry.riichi_points.fu.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_2.continued_1"
+      "text": "manual.mchjong.entry.riichi_points.fu_rounding"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_3"
+      "text": "manual.mchjong.entry.riichi_points.points"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_3.continued_1"
+      "text": "manual.mchjong.entry.riichi_points.points.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_4"
+      "text": "manual.mchjong.entry.riichi_points.limits"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_4.continued_1"
+      "text": "manual.mchjong.entry.riichi_points.limits.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_5"
+      "text": "manual.mchjong.entry.riichi_points.dora"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_5.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_6"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.page_6.continued_1"
+      "text": "manual.mchjong.entry.riichi_points.dora.continued_1"
     }
   ]
 }

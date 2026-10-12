@@ -6,55 +6,43 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_1"
+      "text": "manual.mchjong.entry.sichuan_payments.kongs"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_1.continued_1"
+      "text": "manual.mchjong.entry.sichuan_payments.kongs.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_2"
+      "text": "manual.mchjong.entry.sichuan_payments.shooting"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_2.continued_1"
+      "text": "manual.mchjong.entry.sichuan_payments.shooting.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_3"
+      "text": "manual.mchjong.entry.sichuan_payments.draws"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_3.continued_1"
+      "text": "manual.mchjong.entry.sichuan_payments.draws.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_3.continued_2"
+      "text": "manual.mchjong.entry.sichuan_payments.draws.continued_2"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_4"
+      "text": "manual.mchjong.entry.sichuan_payments.flower_pig"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_4.continued_1"
+      "text": "manual.mchjong.entry.sichuan_payments.flower_pig.continued_1"
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_4.continued_2"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_5"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_5.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.sichuan_payments.page_5.continued_2"
+      "text": "manual.mchjong.entry.sichuan_payments.flower_pig.continued_2"
     }
   ]
 }

@@ -1,0 +1,44 @@
+{
+  "name": "manual.mchjong.entry.riichi_calls.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:point_stick",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.calls"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.calls.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.kans"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.kans.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.riichi"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.riichi.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.deposit"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.furiten"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.furiten_clear"
+    }
+  ]
+}
