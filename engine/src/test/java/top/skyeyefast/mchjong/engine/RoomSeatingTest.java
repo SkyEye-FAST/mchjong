@@ -397,6 +397,10 @@ class RoomSeatingTest {
         var mounted = Map.of(id(0), game.seatOf(id(0)));
         game.synchronizeSeats(mounted, java.util.Set.of(id(0)));
         assertEquals(PlayerPresence.DISCONNECTED, game.roomView(null).seats().get(guest).presence());
+        var offered = game.roomView(id(0)).actions();
+        assertFalse(offered.contains(new RoomAction(RoomAction.Type.KICK, guest)));
+        assertTrue(offered.contains(new RoomAction(RoomAction.Type.TRANSFER_HOST, guest)));
+        assertTrue(offered.contains(new RoomAction(RoomAction.Type.SET_BOT, List.of(guest, BotDifficulty.EASY.ordinal()))));
         act(game, id(0), RoomAction.Type.SET_BOT, guest, BotDifficulty.EASY.ordinal());
         assertEquals(-1, game.seatOf(id(1)));
         assertEquals(BotDifficulty.EASY, game.roomView(null).seats().get(guest).participant().difficulty());

@@ -160,19 +160,36 @@ final class RoomLobby {
                 buttons.add(button);
             } else if (seat != room.host() && host(room) && participant.id() != null && !participant.bot()) {
                 int transfer = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
-                var button = RoomLobbyControls.button(Component.translatable("room.mchjong.transfer"), layout.bodyLeft() + layout.bodyWidth() - 160,
-                    y, 78, () -> send(room, transfer));
+                var transferLabel = Component.translatable("room.mchjong.transfer");
+                int transferWidth = RoomLobbyControls.buttonWidth(transferLabel, 78);
+                var button = RoomLobbyControls.button(transferLabel, layout.bodyLeft() + layout.bodyWidth() - controlsWidth(room, seat),
+                    y, transferWidth, () -> send(room, transfer));
                 button.setTooltip(Tooltip.create(Component.translatable("room.mchjong.transfer_host", participant.name())));
                 button.active = transfer >= 0 && !pending;
                 buttons.add(button);
                 int kick = RoomLobbyControls.find(room, RoomAction.Type.KICK, List.of(seat));
-                var remove = RoomLobbyControls.button(Component.translatable("room.mchjong.kick"), layout.bodyLeft() + layout.bodyWidth() - 78,
-                    y, 78, () -> send(room, kick));
-                remove.setTooltip(Tooltip.create(Component.translatable("room.mchjong.kick_player", participant.name())));
-                remove.active = kick >= 0 && !pending;
-                buttons.add(remove);
+                if (kick >= 0) {
+                    var removeLabel = Component.translatable("room.mchjong.kick");
+                    int removeWidth = RoomLobbyControls.buttonWidth(removeLabel, 78);
+                    var remove = RoomLobbyControls.button(removeLabel, layout.bodyLeft() + layout.bodyWidth() - removeWidth,
+                        y, removeWidth, () -> send(room, kick));
+                    remove.setTooltip(Tooltip.create(Component.translatable("room.mchjong.kick_player", participant.name())));
+                    remove.active = !pending;
+                    buttons.add(remove);
+                }
             }
         }
+    }
+
+    private int controlsWidth(TableRoomView room, int seat) {
+        var state = room.seats().get(seat);
+        var player = state.participant();
+        if (nextBot(room, seat) >= 0 && (player.id() == null || player.bot() || state.presence() == PlayerPresence.DISCONNECTED)) return 78;
+        if (!host(room) || player.id() == null || player.bot() || seat == room.host()) return 0;
+        int width = RoomLobbyControls.buttonWidth(Component.translatable("room.mchjong.transfer"), 78);
+        if (RoomLobbyControls.find(room, RoomAction.Type.KICK, List.of(seat)) >= 0)
+            width += 4 + RoomLobbyControls.buttonWidth(Component.translatable("room.mchjong.kick"), 78);
+        return width;
     }
 
     private void buildStage(List<AbstractWidget> buttons, TableRoomView room) {
@@ -309,10 +326,7 @@ final class RoomLobby {
             for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat); var player = state.participant();
                 int y = l.contentTop() + seat * pitch;
-                boolean control = nextBot(room, seat) >= 0 || host(room) && player.id() != null && seat != room.host() && !player.bot();
-                boolean humanControls = host(room) && player.id() != null && seat != room.host() && !player.bot()
-                    && state.presence() != PlayerPresence.DISCONNECTED;
-                int textWidth = l.bodyWidth() - (humanControls ? 168 : control ? 88 : 8);
+                int textWidth = l.bodyWidth() - controlsWidth(room, seat) - 8;
                 graphics.fill(l.bodyLeft(), y, l.bodyLeft() + l.bodyWidth(), y + pitch - 2, seat == room.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.INPUT);
                 int portrait = PlayerPortrait.draw(graphics, player, l.bodyLeft() + 5, y + 3, 10);
                 var name = RoomMembers.name(room, seat);

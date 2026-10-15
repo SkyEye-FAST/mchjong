@@ -562,7 +562,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
             }
             if (target != seat && member.id != null && !member.bot) {
                 actions.add(new RoomAction(RoomAction.Type.TRANSFER_HOST, target));
-                actions.add(new RoomAction(RoomAction.Type.KICK, target));
+                if (member.presence != PlayerPresence.DISCONNECTED) actions.add(new RoomAction(RoomAction.Type.KICK, target));
             }
         }
         return List.copyOf(actions);

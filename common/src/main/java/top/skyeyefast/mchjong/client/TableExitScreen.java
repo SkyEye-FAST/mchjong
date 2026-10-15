@@ -30,7 +30,7 @@ final class TableExitScreen extends Screen implements TableChildScreen {
         int y = Math.min(height - 36, height / 2 + 26);
         var cancel = addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
             .bounds(left, y, (span - 6) / 2, 20).build());
-        addRenderableWidget(MahjongButton.create(Component.translatable(room.lobby() ? "room.mchjong.dissolve" : "ui.mchjong.exit"), ignored -> confirm())
+        addRenderableWidget(MahjongButton.create(Component.translatable("room.mchjong.dissolve"), ignored -> confirm())
             .bounds(left + (span + 6) / 2, y, (span - 6) / 2, 20).build());
         setInitialFocus(cancel);
     }
