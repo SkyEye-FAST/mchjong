@@ -23,7 +23,6 @@ final class TableToolbar {
         Runnable[] actions = {() -> TableExitControls.request(parent, pos, room),
             () -> client.setScreen(new TableOptionsScreen(parent, pos)), switchView, () -> ClientReplays.list(0, "", false)};
         for (int index = 0; index < keys.length; index++) {
-            if (index == 0 && room.viewerSeat() < 0) continue;
             int current = index;
             var fullCaption = Component.translatable(index == 0 ? "ui.mchjong.exit_hint" : keys[index]);
             boolean compact = !immersive && width < 560;

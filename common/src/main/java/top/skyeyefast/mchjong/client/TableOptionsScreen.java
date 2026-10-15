@@ -59,8 +59,6 @@ public final class TableOptionsScreen extends Screen implements TableChildScreen
                 () -> setWorld("invitationsEnabled", !world.invitationsEnabled())));
             entries.add(Entry.toggle("settings.mchjong.invitation_teleport", world.invitationTeleport(), edit,
                 () -> setWorld("invitationTeleport", !world.invitationTeleport())));
-            entries.add(Entry.toggle("settings.mchjong.spectating_enabled", world.spectatingEnabled(), edit,
-                () -> setWorld("spectatingEnabled", !world.spectatingEnabled())));
             entries.add(Entry.choice("settings.mchjong.spectator_hand_visibility",
                 Component.translatable("settings.mchjong.spectator_hand_visibility."
                     + world.spectatorHandVisibility().name().toLowerCase(java.util.Locale.ROOT)), edit, () -> {
@@ -121,7 +119,9 @@ public final class TableOptionsScreen extends Screen implements TableChildScreen
             Component help = tab == 0 && !canEditWorld() ? Component.translatable("settings.mchjong.world_locked")
                 : entry.label().getString().equals(Component.translatable("settings.mchjong.convenience_hints").getString())
                     ? entry.message().copy().append("\n").append(Component.translatable("settings.mchjong.convenience_hints_help"))
-                    : entry.message();
+                    : tab == 0 && entry.label().getString().equals(Component.translatable("settings.mchjong.spectator_hand_visibility.label").getString())
+                        ? entry.message().copy().append("\n").append(Component.translatable("settings.mchjong.spectator_hand_visibility.help"))
+                        : entry.message();
             button.setTooltip(Tooltip.create(help));
             addRenderableWidget(button);
         }

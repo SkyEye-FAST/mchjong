@@ -97,7 +97,7 @@ public final class SichuanTableScreen extends Screen {
         }
         hand = null;
         board = immersive() ? new TableBoard(TableBoardState.live(game), 20, 1260, 68, 620, 800, true) : null;
-        if (immersive() && game.viewerSeat() >= 0) {
+        if (immersive()) {
             var player = game.seats().get(game.viewerSeat());
             var tiles = new ArrayList<>(player.hand());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
@@ -190,7 +190,7 @@ public final class SichuanTableScreen extends Screen {
     private SeatedTableProjection projection() { return SeatedTableProjection.capture(pos, width, height, framePartial); }
     private int pick(double positionX, double positionY) {
         var view = view();
-        if (view == null || view.game().viewerSeat() < 0 || table().clientTableRoom().exitVote() != null || overWidget(positionX, positionY)) return Tile.ABSENT;
+        if (view == null || table().clientTableRoom().exitVote() != null || overWidget(positionX, positionY)) return Tile.ABSENT;
         if (hand != null) return hand.pick(positionX, positionY, selected);
         if (immersive()) return Tile.ABSENT;
         var pointer = projection().pointer(positionX, positionY);
@@ -206,7 +206,7 @@ public final class SichuanTableScreen extends Screen {
         framePartial = partialTick;
         var view = view(); if (view == null || table().clientSichuanDeck() == null) return;
         if (view.revision() != shownRevision) rebuild();
-        if (turnClock != null && view.game().viewerSeat() >= 0) {
+        if (turnClock != null) {
             var clock = view.clocks().get(view.game().viewerSeat()).after(table().clientViewAgeMillis());
             int textScale = contentScale(), bottom = clockBottom();
             int nextTop = bottom - (clock.active() ? 28 * contentScale() : 0) - actionHeight;

@@ -18,16 +18,16 @@ import top.skyeyefast.mchjong.engine.WorldPolicy;
 /** One policy per world save, shared by every table and dimension. Server thread only. */
 public final class WorldSettings {
     private static final Set<String> KEYS = Set.of(
-        "invitationTeleport", "invitationsEnabled", "spectatingEnabled", "spectatorHandVisibility",
+        "invitationTeleport", "invitationsEnabled", "spectatorHandVisibility",
         "allowConvenienceHints", "allowExperienceRewards", "deductNegativeExperience", "maxExperienceChange",
         "replaysEnabled", "allowBots", "allowCompanionPlayers", "allowCustomRules", "forcedPreset");
 
-    public record Policy(boolean invitationTeleport, boolean invitationsEnabled, boolean spectatingEnabled,
+    public record Policy(boolean invitationTeleport, boolean invitationsEnabled,
                          SpectatorHandVisibility spectatorHandVisibility, boolean allowConvenienceHints,
                          boolean allowExperienceRewards, boolean deductNegativeExperience, int maxExperienceChange,
                          boolean replaysEnabled, boolean allowBots, boolean allowCompanionPlayers,
                          boolean allowCustomRules, RiichiPreset forcedPreset) {
-        public static final Policy DEFAULT = new Policy(false, true, true, SpectatorHandVisibility.HIDDEN,
+        public static final Policy DEFAULT = new Policy(false, true, SpectatorHandVisibility.HIDDEN,
             true, false, true, 5_000, true, true, true, true, null);
 
         public Policy {
@@ -68,11 +68,11 @@ public final class WorldSettings {
 
     public void reload() throws IOException {
         var config = TomlFiles.read(path);
-        if (!Set.copyOf(config.entrySet().stream().map(entry -> entry.getKey()).toList()).equals(KEYS))
+        if (!Set.copyOf(config.entrySet().stream().map(entry -> entry.getKey()).toList()).containsAll(KEYS))
             throw new IOException("Invalid mahjong world policy keys: " + path);
         try {
             policy = new Policy(bool(config, "invitationTeleport"), bool(config, "invitationsEnabled"),
-                bool(config, "spectatingEnabled"), enumValue(config, "spectatorHandVisibility", SpectatorHandVisibility.class),
+                enumValue(config, "spectatorHandVisibility", SpectatorHandVisibility.class),
                 bool(config, "allowConvenienceHints"), bool(config, "allowExperienceRewards"),
                 bool(config, "deductNegativeExperience"), integer(config, "maxExperienceChange"),
                 bool(config, "replaysEnabled"), bool(config, "allowBots"), bool(config, "allowCompanionPlayers"),
@@ -85,16 +85,15 @@ public final class WorldSettings {
     public void set(String name, boolean enabled) throws IOException {
         Policy p = policy;
         Policy next = switch (name) {
-            case "invitationTeleport" -> new Policy(enabled, p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "invitationsEnabled" -> new Policy(p.invitationTeleport(), enabled, p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "spectatingEnabled" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), enabled, p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "allowConvenienceHints" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), enabled, p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "allowExperienceRewards" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), enabled, p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "deductNegativeExperience" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), enabled, p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "replaysEnabled" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), enabled, p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "allowBots" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), enabled, p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
-            case "allowCompanionPlayers" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), enabled, p.allowCustomRules(), p.forcedPreset());
-            case "allowCustomRules" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), enabled, p.forcedPreset());
+            case "invitationTeleport" -> new Policy(enabled, p.invitationsEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
+            case "invitationsEnabled" -> new Policy(p.invitationTeleport(), enabled, p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
+            case "allowConvenienceHints" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(), enabled, p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
+            case "allowExperienceRewards" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), enabled, p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
+            case "deductNegativeExperience" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), enabled, p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
+            case "replaysEnabled" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), enabled, p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
+            case "allowBots" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), enabled, p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset());
+            case "allowCompanionPlayers" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), enabled, p.allowCustomRules(), p.forcedPreset());
+            case "allowCustomRules" -> new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(), p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(), p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), enabled, p.forcedPreset());
             default -> throw new IllegalArgumentException("Unknown boolean world setting: " + name);
         };
         update(next);
@@ -102,21 +101,21 @@ public final class WorldSettings {
 
     public void setSpectatorHandVisibility(SpectatorHandVisibility visibility) throws IOException {
         Policy p = policy;
-        update(new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), visibility,
+        update(new Policy(p.invitationTeleport(), p.invitationsEnabled(), visibility,
             p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(),
             p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset()));
     }
 
     public void setMaxExperienceChange(int amount) throws IOException {
         Policy p = policy;
-        update(new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(),
+        update(new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(),
             p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), amount,
             p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset()));
     }
 
     public void setForcedPreset(RiichiPreset preset) throws IOException {
         Policy p = policy;
-        update(new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(),
+        update(new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatorHandVisibility(),
             p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(),
             p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), preset));
     }
@@ -130,7 +129,6 @@ public final class WorldSettings {
         Config config = Config.inMemory();
         config.set("invitationTeleport", value.invitationTeleport());
         config.set("invitationsEnabled", value.invitationsEnabled());
-        config.set("spectatingEnabled", value.spectatingEnabled());
         config.set("spectatorHandVisibility", value.spectatorHandVisibility().name().toLowerCase(Locale.ROOT));
         config.set("allowConvenienceHints", value.allowConvenienceHints());
         config.set("allowExperienceRewards", value.allowExperienceRewards());

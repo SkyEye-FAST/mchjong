@@ -24,7 +24,7 @@ public final class TableCommands {
                 catch (java.io.IOException failure) { throw error("message.mchjong.world_settings_failed"); }
                 return showWorld(context.getSource());
             }));
-        for (String setting : new String[]{"invitationTeleport", "invitationsEnabled", "spectatingEnabled",
+        for (String setting : new String[]{"invitationTeleport", "invitationsEnabled",
                 "allowConvenienceHints", "allowExperienceRewards", "deductNegativeExperience", "replaysEnabled",
                 "allowBots", "allowCompanionPlayers", "allowCustomRules"})
             world.then(Commands.literal(setting).then(Commands.argument("enabled", com.mojang.brigadier.arguments.BoolArgumentType.bool())
@@ -127,7 +127,6 @@ public final class TableCommands {
         source.sendSuccess(() -> Component.translatable("message.mchjong.world_settings"), false);
         show(source, "settings.mchjong.invitations_enabled", policy.invitationsEnabled());
         show(source, "settings.mchjong.invitation_teleport", policy.invitationTeleport());
-        show(source, "settings.mchjong.spectating_enabled", policy.spectatingEnabled());
         source.sendSuccess(() -> Component.translatable("settings.mchjong.spectator_hand_visibility",
             Component.translatable("settings.mchjong.spectator_hand_visibility."
                 + policy.spectatorHandVisibility().name().toLowerCase(java.util.Locale.ROOT))), false);

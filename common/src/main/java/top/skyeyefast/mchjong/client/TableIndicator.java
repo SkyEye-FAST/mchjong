@@ -50,6 +50,31 @@ public final class TableIndicator {
     public static void render(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
         render(TableBoardState.live(view), view.phase() == RiichiView.Phase.TURN || view.phase() == RiichiView.Phase.REACTION, true, pose, buffers, light);
     }
+    /** Rim readouts leave the ordinary table's felt clear for manual tile and dice handling. */
+    public static void renderOrdinary(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
+        var vertices = buffers.getBuffer(TileRenderTypes.BACKS);
+        for (int seat = 0; seat < view.seats().size(); seat++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
+            pose.translate(0, 1 - SURFACE, TableGeometry.FELT_HALF_WIDTH + .0625);
+            TileMesh.box(pose, vertices, -.60f, SURFACE, -.04f, .60f, SURFACE + .001f, .04f, 0xff101e23, light);
+            number(pose, vertices, view.seats().get(seat).points(), -.36f, -.023f, .046f, .18f, DIGIT, light);
+            for (int tile = 0; tile < 3; tile++)
+                panel(pose, vertices, .30f + tile * .015f, -.014f, .312f + tile * .015f, .014f, DIGIT, light);
+            number(pose, vertices, view.remaining(), .46f, -.023f, .046f, .10f, DIGIT, light);
+            pose.popPose();
+        }
+        for (int seat = 0; seat < view.seats().size(); seat++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
+            pose.translate(0, 1 - SURFACE, TableGeometry.FELT_HALF_WIDTH + .0625);
+            wind(pose, buffers, Math.floorMod(seat - view.dealer(), view.rules().players()), -.54f, -.01f, light);
+            if (seat == view.dealer())
+                label(pose, buffers, Component.translatable("ui.mchjong.dealer"), -.54f, .025f, .08f, .014f, light);
+            label(pose, buffers, RiichiTableScreen.roundName(view), .02f, 0, .34f, .045f, light);
+            pose.popPose();
+        }
+    }
     public static void render(top.skyeyefast.mchjong.engine.McrView view, PoseStack pose, MultiBufferSource buffers, int light) {
         render(TableBoardState.live(view), view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.TURN
             || view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.REACTION, true, pose, buffers, light);
@@ -95,11 +120,15 @@ public final class TableIndicator {
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
             if (winds) wind(pose, buffers, Math.floorMod(seat - view.dealer(), view.players()), -.119f, .202f, light);
             else label(pose, buffers, Component.literal(Integer.toString(seat + 1)), -.119f, .202f, light);
+            if (seat == view.dealer())
+                label(pose, buffers, Component.translatable("ui.mchjong.dealer"), .10f, .231f, .08f, .012f, light);
             pose.popPose();
         }
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(Math.max(0, view.viewerSeat()) * 90));
         if (winds) wind(pose, buffers, Math.min(3, view.round() / view.players()), -.04f, -.061f, light);
+        if (view.indicator() != null)
+            label(pose, buffers, view.indicator().title(), 0, .065f, .23f, .035f, light);
         pose.popPose();
     }
 
@@ -107,8 +136,12 @@ public final class TableIndicator {
         label(pose, buffers, Component.translatable("wind.mchjong." + WINDS[wind] + ".short"), x, z, light);
     }
     private static void label(PoseStack pose, MultiBufferSource buffers, Component text, float x, float z, int light) {
+        label(pose, buffers, text, x, z, .05f, .05f, light);
+    }
+    private static void label(PoseStack pose, MultiBufferSource buffers, Component text, float x, float z,
+                              float width, float height, int light) {
         var font = Minecraft.getInstance().font;
-        float scale = .05f / Math.max(font.lineHeight, font.width(text));
+        float scale = Math.min(height / font.lineHeight, width / Math.max(1, font.width(text)));
         pose.pushPose();
         pose.translate(x, SURFACE + .004f, z);
         pose.mulPose(Axis.XP.rotationDegrees(90));

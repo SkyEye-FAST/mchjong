@@ -75,7 +75,7 @@ public final class TaiwanTableScreen extends Screen {
         }
         hand = null;
         board = immersive() ? new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true) : null;
-        if (immersive() && game.recipient() >= 0) {
+        if (immersive()) {
             var player = game.seats().get(game.recipient());
             var tiles = new ArrayList<>(player.concealed());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
@@ -155,7 +155,7 @@ public final class TaiwanTableScreen extends Screen {
     private SeatedTableProjection projection() { return SeatedTableProjection.capture(pos, width, height, framePartial); }
     private int pick(double x, double y) {
         var view = view();
-        if (view == null || view.game().recipient() < 0 || table().clientTableRoom().exitVote() != null || overWidget(x, y)) return Tile.ABSENT;
+        if (view == null || table().clientTableRoom().exitVote() != null || overWidget(x, y)) return Tile.ABSENT;
         if (hand != null) return hand.pick(x, y, selected);
         if (immersive()) return Tile.ABSENT;
         var pointer = projection().pointer(x, y);
@@ -171,7 +171,7 @@ public final class TaiwanTableScreen extends Screen {
         framePartial = partialTick;
         var view = view(); if (view == null || table().clientTaiwanDeck() == null) return;
         if (view.revision() != shownRevision) rebuild();
-        if (turnClock != null && view.game().recipient() >= 0) {
+        if (turnClock != null) {
             var clock = view.clock().after(table().clientViewAgeMillis());
             int s = contentScale(), bottom = clockBottom();
             int nextTop = bottom - (clock.active() ? 28 * contentScale() : 0) - actionHeight;

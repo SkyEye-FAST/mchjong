@@ -92,6 +92,10 @@ the match instead, use its exit control. A sole human participant confirms befor
 ending play; a match with several human participants requires unanimous approval.
 An early exit preserves completed hands without scoring the unfinished hand.
 
+To watch a match without joining it, walk around the table and look at the tiles
+and displays in the world. Right-clicking a running table shows an action-bar hint;
+it does not open a spectator screen. Lobby screens remain available before play.
+
 ## Rooms and server settings
 
 Hosts manage their room through Room settings. In Riichi mahjong, they can also
@@ -111,9 +115,12 @@ the table. An administrator can enable invitation teleportation to let players
 accept from farther away.
 
 Administrators manage these server-wide permissions in World settings, including
-invitation teleportation, spectator access, computer players, replays and custom
+invitation teleportation, spectator hand visibility, computer players, replays and custom
 rules. The values are stored in `<world>/config/mchjong-world.toml`.
 After editing that file, run `/mchjong world reload` to apply the changes.
+`spectatorHandVisibility` is the only spectator privacy control: it governs
+concealed hands in Riichi mahjong viewed in the world. Follow Player Visibility
+uses the room's hand visibility. Other variants conceal private hands during play.
 
 ### External computer opponents
 
@@ -182,6 +189,8 @@ installation recommendation.
 
 Mod Menu adds a personal-settings entry to the Fabric mod list. Forge and
 NeoForge provide that entry through their native Mods screens.
+These entries include Personal Settings and Personal Presets and remain available
+without opening a table screen. Replays are also available through `/mchjong replays`.
 
 ## Documentation
 

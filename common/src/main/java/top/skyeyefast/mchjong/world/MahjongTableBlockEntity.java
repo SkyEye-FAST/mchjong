@@ -28,7 +28,6 @@ import top.skyeyefast.mchjong.network.TaiwanActionPayload;
 import top.skyeyefast.mchjong.engine.SichuanCodec;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.RiichiView;
-import top.skyeyefast.mchjong.engine.SpectatorHandVisibility;
 import top.skyeyefast.mchjong.network.RiichiActionPayload;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.McrViewPayload;
@@ -363,9 +362,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         var policy = WorldSettings.of(level.getServer()).policy();
         UUID viewer = authorizedViewer(player);
-        var visibility = !session.lobby() && !policy.spectatingEnabled()
-            ? SpectatorHandVisibility.HIDDEN : policy.spectatorHandVisibility();
-        RiichiView snapshot = viewer == null ? session.spectatorView(visibility) : session.view(viewer);
+        RiichiView snapshot = viewer == null ? session.spectatorView(policy.spectatorHandVisibility()) : session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(
             new RiichiViewPayload(worldPosition, snapshot == null ? "" : TableNetworking.JSON.toJson(snapshot), open, controlReply,
                 session.leaveDecision(player.getUUID()), equipment.redOptions(), projectedRoom(viewer),
@@ -378,10 +375,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (session == null || player.serverLevel() != level) return;
         var stock = equipment.mcrStock();
         synchronizeSeats();
-        var snapshot = session.view(player.getUUID());
+        UUID viewer = authorizedViewer(player);
+        var snapshot = session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new McrViewPayload(worldPosition,
             snapshot == null ? "" : McrCodec.encodeSessionView(snapshot),
-            projectedRoom(authorizedViewer(player)),
+            projectedRoom(viewer),
             stock == null ? null : stock.deck(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.timeControl(), WorldSettings.of(level.getServer()).policy())));
     }
 
@@ -413,9 +411,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             return;
         }
         TableSession session = serverSession();
-        if (session != null && !session.lobby() && authorizedViewer(player) == null
-            && !WorldSettings.of(level.getServer()).policy().spectatingEnabled()) {
-            player.displayClientMessage(Component.translatable("message.mchjong.spectating_disabled"), true);
+        if (session != null && !session.lobby() && authorizedViewer(player) == null) {
+            player.displayClientMessage(Component.translatable("message.mchjong.watch_in_world"), true);
             return;
         }
         sendView(player, true, false);
