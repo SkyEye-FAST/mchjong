@@ -104,20 +104,12 @@ public class Mchjong implements ModInitializer {
             var payload = top.skyeyefast.mchjong.network.TableRoomActionPayload.decode(buffer);
             server.execute(() -> TableNetworking.receive(player, payload));
         });
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.McrNextHandPayload.TYPE, (server, player, handler, buffer, sender) -> {
-            var payload = top.skyeyefast.mchjong.network.McrNextHandPayload.decode(buffer);
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.NextHandPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.NextHandPayload.decode(buffer);
             server.execute(() -> TableNetworking.receive(player, payload));
         });
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.McrActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
-            var payload = top.skyeyefast.mchjong.network.McrActionPayload.decode(buffer);
-            server.execute(() -> TableNetworking.receive(player, payload));
-        });
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
-            var payload = top.skyeyefast.mchjong.network.SichuanActionPayload.decode(buffer);
-            server.execute(() -> TableNetworking.receive(player, payload));
-        });
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanNextHandPayload.TYPE, (server, player, handler, buffer, sender) -> {
-            var payload = top.skyeyefast.mchjong.network.SichuanNextHandPayload.decode(buffer);
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TableActionPayload.decode(buffer);
             server.execute(() -> TableNetworking.receive(player, payload));
         });
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE, (server, player, handler, buffer, sender) -> {
@@ -154,14 +146,6 @@ public class Mchjong implements ModInitializer {
         });
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE, (server, player, handler, buffer, sender) -> {
             var payload = top.skyeyefast.mchjong.network.RiichiVisibilityPayload.decode(buffer);
-            server.execute(() -> TableNetworking.receive(player, payload));
-        });
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
-            var payload = top.skyeyefast.mchjong.network.TaiwanActionPayload.decode(buffer);
-            server.execute(() -> TableNetworking.receive(player, payload));
-        });
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanNextHandPayload.TYPE, (server, player, handler, buffer, sender) -> {
-            var payload = top.skyeyefast.mchjong.network.TaiwanNextHandPayload.decode(buffer);
             server.execute(() -> TableNetworking.receive(player, payload));
         });
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanRulesPayload.TYPE, (server, player, handler, buffer, sender) -> {

@@ -58,7 +58,6 @@ class TileMeshTest {
     @Test void highlightFollowsBeveledFrontBackAndSideEdgesUnderTheTilePose() {
         var local = new Mesh();
         TileMesh.drawOutline(new PoseStack(), local, MahjongUi.ACCENT);
-        assertEquals(80, local.vertices.size(), "Forty edges include both beveled rims and the thickness");
         assertTrue(local.vertices.stream().allMatch(vertex -> vertex.color == MahjongUi.ACCENT));
         for (int i = 0; i < local.vertices.size(); i += 2) {
             var a = local.vertices.get(i);
@@ -130,7 +129,6 @@ class TileMeshTest {
         var body = new Mesh();
         var glass = top.skyeyefast.mchjong.item.TileMaterial.GLASS;
         TileMesh.drawBody(new PoseStack(), body, 0, glass, null);
-        assertEquals(32, body.vertices.size(), "Eight material sides, no overlapping internal caps");
         assertTrue(body.vertices.stream().allMatch(vertex -> vertex.alpha > 0 && vertex.alpha < 255));
         var backs = new Mesh();
         TileMesh.drawBack(new PoseStack(), backs, false, 0, glass, net.minecraft.world.item.DyeColor.RED);

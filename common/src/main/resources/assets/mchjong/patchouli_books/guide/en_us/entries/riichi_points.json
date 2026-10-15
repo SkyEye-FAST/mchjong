@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.riichi_points.name",
   "category": "mchjong:riichi",
   "icon": "mchjong:point_stick",
-  "sortnum": 4,
+  "sortnum": 9,
   "pages": [
     {
       "type": "patchouli:text",
@@ -14,7 +14,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.fu_rounding"
+      "text": "manual.mchjong.entry.riichi_points.fu.continued_2"
     },
     {
       "type": "patchouli:text",
@@ -31,14 +31,6 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_points.limits.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.dora"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.dora.continued_1"
     }
   ]
 }

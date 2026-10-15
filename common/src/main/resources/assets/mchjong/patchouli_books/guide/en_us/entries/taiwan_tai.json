@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.taiwan_tai.name",
   "category": "mchjong:taiwan",
   "icon": "mchjong:mahjong_tile",
-  "sortnum": 2,
+  "sortnum": 6,
   "pages": [
     {
       "type": "patchouli:text",

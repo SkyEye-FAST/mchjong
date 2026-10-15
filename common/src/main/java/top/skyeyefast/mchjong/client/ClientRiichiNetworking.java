@@ -52,6 +52,10 @@ public final class ClientRiichiNetworking {
             client.setScreen(null);
         var rootScreen = TableChildScreen.root(client.screen);
         RiichiTableScreen active = RiichiTableScreen.active(client.screen);
+        if (!room.lobby() && room.viewerSeat() < 0) {
+            if (active != null && active.tablePos().equals(payload.pos())) client.setScreen(null);
+            return;
+        }
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && room.viewerSeat() < 0
             && room.lobby()
             && active != null && active.tablePos().equals(payload.pos())) {

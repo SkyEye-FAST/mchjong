@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.riichi_yaku.name",
   "category": "mchjong:riichi",
   "icon": "mchjong:mahjong_tile",
-  "sortnum": 2,
+  "sortnum": 10,
   "pages": [
     {
       "type": "patchouli:text",
@@ -49,28 +49,8 @@
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_yaku.seat_wind",
-      "anchor": "seat_wind"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_yaku.round_wind",
-      "anchor": "round_wind"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_yaku.haku",
-      "anchor": "haku"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_yaku.hatsu",
-      "anchor": "hatsu"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_yaku.chun",
-      "anchor": "chun"
+      "text": "manual.mchjong.entry.riichi_yaku.yakuhai",
+      "anchor": "yakuhai"
     },
     {
       "type": "patchouli:text",

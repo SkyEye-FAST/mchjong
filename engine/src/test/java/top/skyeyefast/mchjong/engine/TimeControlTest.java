@@ -46,6 +46,61 @@ class TimeControlTest {
         assertTrue(game.wins.isEmpty());
     }
 
+    @Test void chineseVariantsDiscardTheDrawnTileOnTimeoutAndSichuanPausesForExitVotes() {
+        for (TableSession session : List.of(new McrSession(UUID.randomUUID(), 31),
+            new SichuanSession(UUID.randomUUID(), 31), new TaiwanSession(UUID.randomUUID(), 31))) {
+            for (int seat = 0; seat < 4; seat++) assertTrue(session.join(new UUID(2, seat), "Player " + seat, seat));
+            UUID host = session.participants[0].id;
+            assertTrue(session.configureClock(host, new TimeControl(0, 1)));
+            assertTrue(session.configureEquipment(false,
+                session instanceof SichuanSession ? Tile.sichuanSet() : Tile.standard144Set()));
+            if (session instanceof SichuanSession sichuan)
+                assertTrue(sichuan.configureRules(host, session.decision(), SichuanPreset.TFMJ_2024.config()));
+            session.seating.positioned(4);
+            session.startMatch();
+            int drawn;
+            if (session instanceof McrSession mcr) {
+                for (int ticks = 0; ticks < 200 && mcr.save().game().phase() != McrGame.Phase.TURN; ticks++) mcr.tick();
+                assertEquals(McrGame.Phase.TURN, mcr.save().game().phase());
+                drawn = mcr.view(host).game().seats().get(0).drawn();
+            } else if (session instanceof SichuanSession sichuan) {
+                drawn = sichuan.game().view(0).seats().get(0).drawn();
+                int suit = Tile.kind(drawn) / 9;
+                for (int seat = 0; seat < 4; seat++) {
+                    var actions = sichuan.game().actions(seat);
+                    int choice = actions.indexOf(new SichuanAction(SichuanAction.Type.VOID_SUIT, List.of(), suit));
+                    assertTrue(sichuan.act(session.participants[seat].id, session.tableId(), session.incarnation(),
+                        sichuan.game().decision(), choice));
+                }
+                var discards = sichuan.game().actions(0).stream()
+                    .filter(action -> action.type() == SichuanAction.Type.DISCARD).toList();
+                assertNotEquals(drawn, discards.getFirst().tiles().getFirst());
+                sichuan.tick();
+                var clocks = sichuan.save().clocks();
+                long token = sichuan.game().decision();
+                assertTrue(sichuan.requestExit(host));
+                for (int ticks = 0; ticks < 25; ticks++) sichuan.tick();
+                assertEquals(clocks, sichuan.save().clocks());
+                assertEquals(token, sichuan.game().decision());
+                assertTrue(sichuan.view(host).clocks().stream().noneMatch(TimeControl.Clock::active));
+                assertTrue(sichuan.answerExit(session.participants[1].id, sichuan.roomView(host).exitVote().id(), false));
+                // Complete the same 20-tick decision allowance as the other variants.
+                for (int ticks = 0; ticks < 18; ticks++) sichuan.tick();
+            } else {
+                drawn = ((TaiwanSession) session).view(host).game().seats().get(0).drawn();
+            }
+            if (!(session instanceof SichuanSession)) for (int ticks = 0; ticks < 19; ticks++) session.tick();
+            session.tick();
+            int discarded = switch (session) {
+                case McrSession mcr -> mcr.save().game().players().get(0).river().getLast().tile();
+                case SichuanSession sichuan -> sichuan.game().view(0).seats().get(0).river().getLast().tile();
+                case TaiwanSession taiwan -> taiwan.view(host).game().seats().get(0).river().getLast();
+                default -> throw new AssertionError(session.variant());
+            };
+            assertEquals(drawn, discarded, session.variant().name());
+        }
+    }
+
     @Test void respondersUseIndependentClocksAndAnAnswerStopsChargingReserve() {
         RiichiGame game = game(2, 1);
         game.newDecision(RiichiGame.Phase.REACTION);

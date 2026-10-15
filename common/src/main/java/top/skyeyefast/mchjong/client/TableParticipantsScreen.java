@@ -48,19 +48,40 @@ public final class TableParticipantsScreen extends Screen implements TableChildS
             var player = state.participant();
             if (player.id() == null || player.bot() || seat == room.host() || !host) continue;
             int index = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
-            var button = MahjongButton.create(Component.translatable("room.mchjong.transfer"), ignored -> {
+            var transferLabel = Component.translatable("room.mchjong.transfer");
+            int transferWidth = RoomLobbyControls.buttonWidth(transferLabel, room.lobby() ? 78 : 100);
+            var button = MahjongButton.create(transferLabel, ignored -> {
                 if (room.lobby()) RoomLobbyControls.send(pos, room, index);
                 else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
-            }).bounds(left + span - 100, top + 38 + seat * pitch, 100, 20)
+            }).bounds(left + span - controlsWidth(room, seat), top + 38 + seat * pitch, transferWidth, 20)
                 .tooltip(Tooltip.create(Component.translatable("room.mchjong.transfer_host", player.name()))).build();
             button.active = room.lobby() ? index >= 0 : state.presence() != PlayerPresence.DISCONNECTED
                 && room.seats().get(room.viewerSeat()).presence() == PlayerPresence.SEATED;
             if (!room.lobby() && room.seats().get(room.viewerSeat()).presence() != PlayerPresence.SEATED)
                 button.setTooltip(Tooltip.create(Component.translatable("message.mchjong.seat_required")));
             addRenderableWidget(button);
+            int kick = RoomLobbyControls.find(room, RoomAction.Type.KICK, List.of(seat));
+            if (kick >= 0) {
+                var removeLabel = Component.translatable("room.mchjong.kick");
+                int removeWidth = RoomLobbyControls.buttonWidth(removeLabel, 78);
+                var remove = RoomLobbyControls.button(removeLabel, left + span - removeWidth,
+                    top + 38 + seat * pitch, removeWidth, () -> RoomLobbyControls.send(pos, room, kick));
+                remove.setTooltip(Tooltip.create(Component.translatable("room.mchjong.kick_player", player.name())));
+                addRenderableWidget(remove);
+            }
         }
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.back"), ignored -> onClose())
             .bounds(left, top + panelHeight - 26, span, 20).build().primary());
+    }
+
+    private int controlsWidth(TableRoomView room, int seat) {
+        var player = room.seats().get(seat).participant();
+        if (room.viewerSeat() < 0 || room.viewerSeat() != room.host() || room.exitVote() != null
+            || player.id() == null || player.bot() || seat == room.host()) return 0;
+        int width = RoomLobbyControls.buttonWidth(Component.translatable("room.mchjong.transfer"), room.lobby() ? 78 : 100);
+        if (RoomLobbyControls.find(room, RoomAction.Type.KICK, List.of(seat)) >= 0)
+            width += 4 + RoomLobbyControls.buttonWidth(Component.translatable("room.mchjong.kick"), 78);
+        return width;
     }
 
     @Override public void tick() {
@@ -79,11 +100,12 @@ public final class TableParticipantsScreen extends Screen implements TableChildS
                 var player = state.participant();
                 Component label = RoomMembers.name(room, seat);
                 Component status = RoomMembers.status(room, externalBots(), seat);
+                int textWidth = span - controlsWidth(room, seat) - 8;
                 int inset = PlayerPortrait.draw(graphics, player, left, top + 38 + seat * pitch, 10);
                 int nameColor = !player.bot() && state.presence() == PlayerPresence.DISCONNECTED ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
-                MahjongUi.text(graphics, font, label, left + inset, top + 39 + seat * pitch, span - 108 - inset, nameColor, false);
-                MahjongUi.text(graphics, font, status, left, top + 52 + seat * pitch, span - 108, MahjongUi.MUTED, false);
-                if (x >= left && x < left + span - 104 && y >= top + 36 + seat * pitch && y < top + 36 + (seat + 1) * pitch)
+                MahjongUi.text(graphics, font, label, left + inset, top + 39 + seat * pitch, textWidth - inset, nameColor, false);
+                MahjongUi.text(graphics, font, status, left, top + 52 + seat * pitch, textWidth, MahjongUi.MUTED, false);
+                if (x >= left && x < left + textWidth && y >= top + 36 + seat * pitch && y < top + 36 + (seat + 1) * pitch)
                     setTooltipForNextRenderPass(status.getString().isEmpty() ? label : label.copy().append("\n").append(status));
             }
         }

@@ -6,6 +6,47 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableControlTest {
+    @Test void simultaneousBotRepliesKeepTheirClocksAndResumeAfterSaving() {
+        var game = McrGameTest.fixed(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
+            .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
+            .hand(3, "555m123789m123p1z").build());
+        McrGameTest.discardKind(game, 0, "5m");
+        UUID human = id(0);
+        var session = activeMcr(game, human, 1);
+        for (int i = 0; i < 6; i++) session.tick();
+        var clocks = session.save().clocks();
+        session = McrCodec.restoreSession(McrCodec.saveSession(session));
+        long decision = session.view(null).game().decision();
+        for (int i = 0; i < 20; i++) session.tick();
+        assertEquals(decision, session.view(null).game().decision(), "No seated human pauses bots too");
+        session.synchronizeSeats(java.util.Map.of(human, 0));
+        for (int i = 0; i < 5; i++) session.tick();
+        assertEquals(McrGame.Phase.REACTION, session.view(human).game().phase());
+        session.tick();
+        assertEquals(1, assertInstanceOf(McrSettlement.Win.class, session.view(human).game().result()).winner());
+        assertEquals(clocks, session.save().clocks());
+        assertEquals(14, session.view(human).confirmed());
+        var end = session.view(human);
+        assertTrue(session.confirmNextHand(human, session.tableId(), end.incarnation(), end.game().decision()));
+        assertEquals(2, session.view(human).game().handNumber());
+    }
+
+    static McrSession activeMcr(McrGame game, UUID human, int humans) {
+        var roster = new java.util.ArrayList<TableParticipant>();
+        for (int seat = 0; seat < 4; seat++) roster.add(new TableParticipant(seat == 0 ? human : new UUID(71, seat + 1),
+            "Seat " + seat, seat >= humans, false, BotDifficulty.EASY, null, true));
+        var seating = new RoomSeating();
+        seating.positioned(4);
+        var room = new TableSession.State(new UUID(71, 0), MahjongVariant.MCR, 4, human, roster, seating.save(),
+            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false, java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
+        var control = TimeControl.DEFAULT;
+        var clocks = java.util.Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
+        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.standard144Set(), 0,
+            control, clocks, 0, game.save(), null, null, java.util.List.of()));
+        session.synchronizeSeats(java.util.Map.of(human, 0));
+        return session;
+    }
+
     private static UUID id(int seat) { return new UUID(42, seat); }
 
     @Test void nearbyLobbyHostCanChangeRiichiRulesWhileRelocating() {
@@ -113,6 +154,44 @@ class TableControlTest {
         assertFalse(new RiichiSession(UUID.randomUUID(), RiichiPreset.WRC, 2).openHands);
     }
 
+    @Test void manualTimeoutIsHostOnlyClearsReadinessAndPersistsOnlyForOrdinaryTables() {
+        var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        assertTrue(lobby.join(id(0), "Host", 0));
+        assertTrue(lobby.join(id(1), "Guest", 1));
+        assertFalse(lobby.manualTimeout());
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+        assertTrue(lobby.configureEquipment(true, Tile.set(false, RedFives.THREE)));
+        lobby.participants[1].ready = true;
+        long token = lobby.decision;
+        long revision = lobby.revision;
+        assertFalse(lobby.configureManualTimeout(id(1), token, true));
+        assertFalse(lobby.configureManualTimeout(null, token, true));
+        assertFalse(lobby.configureManualTimeout(id(0), token - 1, true));
+        assertTrue(lobby.participants[1].ready);
+        assertTrue(lobby.configureManualTimeout(id(0), token, true));
+        assertFalse(lobby.participants[1].ready);
+        assertNotEquals(token, lobby.decision);
+        assertTrue(lobby.revision > revision);
+        assertTrue(lobby.roomSettings().manualTimeout());
+        assertFalse(lobby.configureManualTimeout(id(0), token, false));
+        var saved = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(lobby));
+        assertTrue(saved.manualTimeout());
+        assertTrue(saved.roomSettings().manualTimeout());
+        var oldSave = new Gson().fromJson(TableSessionCodec.save(lobby), com.google.gson.JsonObject.class);
+        oldSave.getAsJsonObject("state").addProperty("format", 7);
+        assertThrows(IllegalArgumentException.class, () -> TableSessionCodec.restore(oldSave.toString()));
+        assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.THREE)));
+        assertFalse(lobby.manualTimeout());
+        assertFalse(lobby.roomSettings().manualTimeout());
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+        assertTrue(lobby.configureEquipment(true, Tile.set(false, RedFives.THREE)));
+        assertFalse(lobby.manualTimeout());
+        GameLifecycleTest.startPositioned(lobby);
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+        assertTrue(lobby.requestExit(id(0)));
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+    }
+
     @Test void convenienceHintsAreControlledByTheLobbyHostAndPersistWithTheRoom() {
         var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0);
@@ -191,6 +270,23 @@ class TableControlTest {
         RiichiGame open = game(2, RiichiPreset.MAHJONG_SOUL_3, true, PlayerHandVisibility.SELF);
         assertTrue(open.spectatorView(SpectatorHandVisibility.HIDDEN).seats().stream()
             .flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0));
+    }
+
+    @Test void hiddenSpectatorViewKeepsPublicTableWithoutFollowingRevealedPlayerHands() {
+        RiichiGame game = game(4, RiichiPreset.TENHOU_4, false, PlayerHandVisibility.ALL);
+        int dealer = game.dealer;
+        int discard = RiichiGame.indexOf(game.actions(dealer), RiichiAction.Type.DISCARD);
+        assertTrue(game.act(id(dealer), game.decision(), discard));
+        var permitted = game.session.spectatorView(SpectatorHandVisibility.FOLLOW_PLAYERS);
+        assertTrue(permitted.seats().stream().flatMap(seat -> seat.hand().stream()).anyMatch(value -> value >= 0));
+        var hidden = game.session.spectatorView(SpectatorHandVisibility.HIDDEN);
+        var decoded = new Gson().fromJson(new Gson().toJson(hidden), RiichiView.class);
+        assertEquals(-1, decoded.viewerSeat());
+        assertTrue(decoded.actions().isEmpty());
+        assertTrue(decoded.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(value -> value == Tile.HIDDEN));
+        assertEquals(permitted.wall(), decoded.wall());
+        assertFalse(decoded.seats().get(dealer).river().isEmpty());
+        assertEquals(permitted.seats().get(dealer).river(), decoded.seats().get(dealer).river());
     }
 
     @Test void reloadPreservesVoteAndExitDoesNotDiscardCompletedReplayQueue() {

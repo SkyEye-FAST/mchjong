@@ -121,6 +121,48 @@ class GameLifecycleTest {
         assertEquals(displacedAge, displaced.age);
     }
 
+    @Test void idleMatchClosesAtTheLimitAndKeepsOnlyCompletedHands() {
+        var game = started(RiichiPreset.TENHOU_4, 207);
+        var session = game.session;
+        RiichiSettlement.abort(game, "nine_terminals");
+        assertEquals(1, session.pendingReplays().getFirst().handCount());
+        for (int seat = 0; seat < 4; seat++) {
+            UUID player = game.players[seat].member.id;
+            var view = game.view(player);
+            assertTrue(game.act(player, view.decision(), index(view, RiichiAction.Type.SKIP_SETTLEMENT)));
+        }
+        assertEquals(RiichiGame.Phase.TURN, game.phase());
+        var completed = session.pendingReplays();
+        session.synchronizeSeats(Map.of(), Set.of());
+        for (int tick = 1; tick < TableSession.IDLE_MATCH_TICKS; tick++) session.tick();
+        assertFalse(session.lobby());
+        session.tick();
+        assertTrue(session.lobby());
+        assertNull(session.game());
+        assertEquals(completed, session.pendingReplays());
+        assertEquals(1, session.pendingReplays().getFirst().handCount());
+    }
+
+    @Test void returningHumanResetsIdleTimeAndExitVotesDoNotConsumeIt() {
+        var session = started(RiichiPreset.TENHOU_4, 208).session;
+        UUID host = session.hostId;
+        int seat = session.seatOf(host);
+        session.synchronizeSeats(Map.of(), Set.of());
+        for (int tick = 1; tick < TableSession.IDLE_MATCH_TICKS; tick++) session.tick();
+        assertTrue(session.join(host, "Returned host", seat));
+        // Even a return between rule ticks resets the timer.
+        session.synchronizeSeats(Map.of(), Set.of());
+        session.tick();
+        assertFalse(session.lobby());
+        assertTrue(session.requestExit(host));
+        for (int tick = 0; tick < ExitVote.DURATION_TICKS; tick++) session.tick();
+        assertNull(session.exitVote);
+        for (int tick = 2; tick < TableSession.IDLE_MATCH_TICKS; tick++) session.tick();
+        assertFalse(session.lobby());
+        session.tick();
+        assertTrue(session.lobby());
+    }
+
     /** Match-rule fixtures start with an assigned roster; RoomSeatingTest exercises the lottery. */
     static void startPositioned(RiichiSession game) {
         UUID host = game.hostId;

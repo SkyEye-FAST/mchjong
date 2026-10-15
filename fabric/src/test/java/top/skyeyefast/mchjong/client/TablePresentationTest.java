@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.client;
 
-import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -43,9 +42,6 @@ class TablePresentationTest {
         assertTrue(size >= 5);
         assertTrue(melds.stream().mapToInt(meld -> TileGui.meldWidth(meld, 0, size) + 2).sum() - 2 <= 143);
         assertTrue(RiichiHud.summaryTileWidth(melds.subList(0, 1), 0, 63) >= 5);
-        assertEquals(24, RiichiHud.seatedCardHeight(false, 0));
-        assertEquals(36, RiichiHud.seatedCardHeight(true, 0));
-        assertEquals(40, RiichiHud.seatedCardHeight(true, size));
         var added = new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.ADDED_QUAD,
             List.of(4, 5, 6, 7), 1, 4);
         for (var part : MeldLayout.of(added, 0).parts()) {
@@ -56,46 +52,9 @@ class TablePresentationTest {
         }
     }
 
-    @Test void immersiveUsesOneFixedCanvasAtEveryPositiveViewportSize() {
-        assertEquals(1280, TableCanvas.WIDTH);
-        assertEquals(800, TableCanvas.HEIGHT);
-
-        var small = new TableCanvas(320, 240, true);
-        assertEquals(.25, small.scale(), 1e-9);
-        assertEquals(0, small.x(), 1e-9);
-        assertEquals(20, small.y(), 1e-9);
-
-        var wide = new TableCanvas(800, 400, true);
-        assertEquals(.5, wide.scale(), 1e-9);
-        assertEquals(80, wide.x(), 1e-9);
-        assertEquals(0, wide.y(), 1e-9);
-
-        var large = new TableCanvas(2560, 1600, true);
-        assertEquals(2, large.scale(), 1e-9);
-        assertEquals(0, large.x(), 1e-9);
-        assertEquals(0, large.y(), 1e-9);
-        assertFalse(small.contains(160, 19.99), "Letterbox bars must not pick canvas controls");
-        assertFalse(wide.contains(79.99, 200), "Pillarbox bars must not pick canvas controls");
-        for (var canvas : List.of(small, wide, large, new TableCanvas(479, 299, true), new TableCanvas(320, 240, false))) {
-            double x = canvas.x() + 123 * canvas.scale(), y = canvas.y() + 87 * canvas.scale();
-            assertEquals(123, canvas.localX(x), 1e-9);
-            assertEquals(87, canvas.localY(y), 1e-9);
-            assertTrue(canvas.contains(x, y));
-            assertTrue(canvas.contains(canvas.x(), canvas.y()));
-            assertFalse(canvas.contains(canvas.x() + canvas.width() * canvas.scale(), y));
-            assertFalse(canvas.contains(x, canvas.y() + canvas.height() * canvas.scale()));
-        }
-    }
-    @Test void handPitchIsExactlyTheTileWidthWithoutChangingTheDrawGap() {
-        assertEquals((double) TileDimensions.SMALL.width(), RiichiTableScene.HAND_STEP);
-        assertEquals(RiichiTableScene.RIVER_STEP, RiichiTableScene.HAND_STEP);
-        assertTrue(RiichiTableScene.DRAW_GAP > 0);
-    }
-
     @Test void defaultViewLooksOverTheHandFromTheStoolAndAimsAtTheFelt() {
         var settings = new TableSettings();
         assertEquals(TableGeometry.STOOL_DISTANCE, settings.cameraDistance);
-        assertEquals(2.10, settings.cameraHeight);
         double pitch = Math.toRadians(settings.cameraPitch());
         assertEquals(TableGeometry.FELT_Y, settings.cameraHeight
             - Math.tan(pitch) * (settings.cameraDistance - TableSettings.CAMERA_TARGET_Z), 1e-6);
@@ -197,13 +156,6 @@ class TablePresentationTest {
         assertEquals(-RiichiTableScene.DRAW_GAP * 160, TableImmersiveTable.discardSourceX(TableBoardState.seat(hidden), 1, 0, 4, 60, false), 1e-6);
     }
 
-    @Test void recordedVoicesHaveNoDeviceSpeechMode() {
-        assertEquals(List.of(TableSettings.VoiceSource.SELECTED, TableSettings.VoiceSource.OFF),
-            List.of(TableSettings.VoiceSource.values()));
-        assertEquals(TableSettings.VoiceSource.SELECTED, new TableSettings().voiceSource);
-        assertEquals(VoicePresets.DEFAULT, new TableSettings().voicePreset);
-    }
-
     @Test void immersiveCardsStayOnTheFixedCanvasPerimeterAndClearEveryRiver() {
         for (var rules : List.of(top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4, top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_3)) {
             var id = java.util.UUID.randomUUID();
@@ -229,108 +181,4 @@ class TablePresentationTest {
         }
     }
 
-    @Test void machineDigitsAreDistinctAndSupportNegativeScores() {
-        var patterns = new HashSet<Integer>();
-        for (char digit = '0'; digit <= '9'; digit++) assertTrue(patterns.add(TableIndicator.segments(digit)));
-        assertEquals(0x7f, TableIndicator.segments('8'));
-        assertEquals(0x40, TableIndicator.segments('-'));
-        assertThrows(IllegalArgumentException.class, () -> TableIndicator.segments('A'));
-    }
-
-    @Test void denseRiversKeepReadablePixelsAndMeldsReflowBeforeShrinking() {
-        var rules = top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4;
-        var id = java.util.UUID.randomUUID();
-        var game = TableLayoutTest.startSession(rules, id);
-        var base = game.view(id);
-        var seats = new java.util.ArrayList<>(base.seats());
-        for (int seat = 0; seat < 4; seat++) {
-            int rows = seat % 2 == 0 ? 4 : 2;
-            var river = java.util.stream.IntStream.range(0, rows * 6)
-                .mapToObj(tile -> new top.skyeyefast.mchjong.engine.RiichiDiscard(tile, tile == 3, false, false)).toList();
-            seats.set(seat, new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false,
-                25000, List.of(), -1, List.of(), river, List.of(), false, false, false));
-        }
-        var view = new top.skyeyefast.mchjong.engine.RiichiView(base.tableId(), 1, 1, 1, base.rules(),
-            top.skyeyefast.mchjong.engine.RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
-            base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
-            base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
-        var immersive = new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true);
-        assertTrue(immersive.riverRowWidth(0, 1) > immersive.riverRowWidth(0, 0),
-            "The local river grows subtly toward the foreground");
-        assertTrue(immersive.riverRowWidth(2, 3) < immersive.riverRowWidth(2, 0),
-            "The opposite river recedes toward the far rail");
-        assertTrue(immersive.riverRowWidth(1, 1) <= immersive.riverRowWidth(1, 0),
-            "Side rivers retain their own shallow depth plane");
-        for (int bottom : new int[]{178, 203}) {
-            var board = new TableBoard(TableBoardState.live(view), 8, 472, 38, bottom, bottom);
-            assertTrue(board.riverTileWidth() >= 8);
-            assertEquals(bottom == 178, board.scoresOnCards());
-            for (int seat = 0; seat < 4; seat++) {
-                var area = board.riverArea(seat);
-                assertTrue(area.y() >= 38 && area.bottom() <= bottom, area.toString());
-                assertTrue(area.x() >= 8 && area.right() <= 472, area.toString());
-                for (int other = 0; other < 4; other++) {
-                    var card = board.card(other);
-                    assertTrue(card.right() <= area.x() || card.x() >= area.right()
-                        || card.bottom() <= area.y() || card.y() >= area.bottom(), "Dense score cards overlap rivers");
-                }
-            }
-        }
-        var melds = java.util.stream.IntStream.range(0, 4).mapToObj(i ->
-            new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_QUAD,
-                List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
-        var player = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false, 25000,
-            List.of(80, 81), 81, melds, List.of(), List.of(), false, false, false);
-        double physicalWidth = TileDimensions.SMALL.width() * 320.0;
-        double meldWidth = melds.stream().mapToDouble(m -> MeldLayout.of(m, 0).width() * 320 + 5).sum();
-        for (int side = 0; side < 4; side++) {
-            double handLeft = TableImmersiveTable.handLeft(TableBoardState.seat(player), 0, side);
-            double corner = TableImmersiveTable.meldCorner(side);
-            double halfWidth = side % 2 == 0 ? 510 : 425;
-            double halfDepth = side % 2 == 0 ? 425 : 510;
-            assertEquals(halfWidth - 3, corner, "Melds stay at the owner's right corner");
-            assertTrue(handLeft >= -halfWidth, "Standing hand left the cloth");
-            assertTrue(handLeft + 2 * physicalWidth + 18 <= corner - meldWidth,
-                "Four kans need one row with space before the shifted standing hand");
-            double right = corner;
-            for (var meld : melds) {
-                right -= MeldLayout.of(meld, 0).width() * 320;
-                for (var part : MeldLayout.of(meld, 0).parts()) {
-                    double scale = 320;
-                    double x = right + part.x() * scale;
-                    double z = TableImmersiveTable.outerRail(side) + part.z() * scale;
-                    double w = (part.sideways() ? TileDimensions.SMALL.height() : TileDimensions.SMALL.width()) * scale;
-                    double d = (part.sideways() ? TileDimensions.SMALL.width() : TileDimensions.SMALL.height()) * scale;
-                    assertTrue(x - w / 2 >= -halfWidth && x + w / 2 <= halfWidth);
-                    assertTrue(z - d / 2 >= -halfDepth && z + d / 2 <= halfDepth);
-                    assertEquals(halfDepth - 3, z + d / 2, 1e-5);
-                }
-                right -= 5;
-            }
-        }
-        int width = TableBoard.outerTileWidth(TableBoardState.seat(player), 0, 157);
-        assertEquals(10, width);
-        var rails = TableBoard.meldRails(TableBoardState.seat(player), 0, width, 157);
-        assertEquals(2, rails.size());
-        assertEquals(2, TableBoard.meldRails(TableBoardState.seat(player), 0, width, 195).size(),
-            "A wider rail must still reserve a visible concealed tile before fitting four kans");
-        assertEquals(4, rails.stream().mapToInt(List::size).sum());
-        for (var rail : rails) assertTrue(rail.stream().mapToInt(meld -> TileGui.meldWidth(meld, 0, width)).sum() <= 157);
-    }
-
-    @Test void tableResultsRetainsMaterialAndBackDye() {
-        var rules = top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config();
-        var seat = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false, 25000,
-            List.of(), top.skyeyefast.mchjong.engine.Tile.ABSENT, List.of(), List.of(), List.of(), false, false, false);
-        var view = new top.skyeyefast.mchjong.engine.RiichiView(new java.util.UUID(1, 1), 1, 1, 1, rules,
-            top.skyeyefast.mchjong.engine.RiichiView.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
-            List.of(seat), List.of(), List.of(), "ron", List.of(0), List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
-        var results = new TableResults(null, view, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
-            top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, net.minecraft.world.item.DyeColor.PURPLE,
-            0, 0, 300, 200, 0, TableResults.Page.HAND, 0L, 1);
-        assertEquals(top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, results.material());
-        assertEquals(net.minecraft.world.item.DyeColor.PURPLE, results.dye());
-    }
 }

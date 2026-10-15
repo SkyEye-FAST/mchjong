@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /** Preparation controls only. Tile decisions stay in RiichiAction and McrAction. */
 public record RoomAction(Type type, List<Integer> arguments) {
-    public enum Type { READY, LEAVE_ROOM, BEGIN_SEATING, DRAW_WIND, FILL_BOTS, SET_BOT, REMOVE_BOT, TRANSFER_HOST, RETURN_TO_LOBBY }
+    public enum Type { READY, LEAVE_ROOM, BEGIN_SEATING, DRAW_WIND, FILL_BOTS, SET_BOT, REMOVE_BOT, TRANSFER_HOST, KICK, RETURN_TO_LOBBY }
 
     public RoomAction {
         Objects.requireNonNull(type);

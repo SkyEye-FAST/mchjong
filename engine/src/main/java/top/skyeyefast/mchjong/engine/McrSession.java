@@ -12,7 +12,6 @@ public final class McrSession extends TableSession {
     @Override protected long matchDecision() { return game == null ? decision : game.decision(); }
     private List<Integer> stock = List.of();
     private int confirmed;
-    static final int AUTO_ACTION_TICKS = 12;
     static final int SETTLEMENT_TICKS = 200;
     private TimeControl timeControl = TimeControl.DEFAULT;
     private List<TimeControl.Clock> clocks = new ArrayList<>();
@@ -148,45 +147,23 @@ public final class McrSession extends TableSession {
             if (age % 10 == 0) changed(false);
             return;
         }
-        long decision = game.decision();
-        // Charge all pending responders before any action can close the shared window.
-        for (int seat = 0; seat < 4; seat++) if (clockActive(seat)) {
-            var clock = clocks.get(seat);
-            var remaining = new TimeControl.Clock(clock.moveTicks(), clock.reserveTicks(), true).after(50);
-            clocks.set(seat, new TimeControl.Clock(remaining.moveTicks(), remaining.reserveTicks(), false));
-        }
-        for (int seat = 0; seat < 4 && game.decision() == decision; seat++) {
-            var actions = game.actions(seat);
-            if (actions.isEmpty()) continue;
-            var first = actions.get(0).type();
-            if (actions.size() == 1 && (first == McrAction.Type.DRAW || first == McrAction.Type.REPLACE_FLOWER)) {
-                if (age >= AUTO_ACTION_TICKS) apply(seat, decision, 0);
-            } else if (participants[seat].bot) {
-                if (age >= AUTO_ACTION_TICKS) {
-                    int choice = McrBot.choose(game.view(seat));
-                    if (choice >= 0) apply(seat, decision, choice);
-                }
-            } else {
-                int automatic = age >= AUTO_ACTION_TICKS ? McrAutomation.action(automation.get(seat), game.view(seat)) : -1;
-                if (automatic >= 0) { apply(seat, decision, automatic); continue; }
-                if (!(clockActive(seat) && clocks.get(seat).moveTicks() + clocks.get(seat).reserveTicks() == 0)) continue;
-                int fallback = -1;
-                for (int index = 0; index < actions.size(); index++) {
-                    var action = actions.get(index);
-                    if (action.type() == McrAction.Type.PASS) { fallback = index; break; }
-                    if (action.type() == McrAction.Type.DISCARD) {
-                        if (fallback < 0) fallback = index;
-                        if (action.tiles().get(0) == game.drawn(seat)) { fallback = index; break; }
-                    }
-                }
-                if (fallback >= 0) apply(seat, decision, fallback);
-            }
-        }
-        if (age == 1 || age % 10 == 0) changed(false);
+        tickTurns(List.of(0, 1, 2, 3), clocks, () -> age, game::actions, this::clockActive,
+            action -> action.type() == McrAction.Type.PASS,
+            action -> action.type() == McrAction.Type.DISCARD ? action.tiles().get(0) : Tile.ABSENT,
+            game::drawn, this::automaticAction, seat -> McrBot.choose(game.view(seat)),
+            (seat, index) -> apply(seat, game.decision(), index));
+    }
+
+    private int automaticAction(int seat) {
+        if (age < AUTO_ACTION_TICKS) return -1;
+        var actions = game.actions(seat);
+        if (actions.size() == 1 && (actions.get(0).type() == McrAction.Type.DRAW
+            || actions.get(0).type() == McrAction.Type.REPLACE_FLOWER)) return 0;
+        return participants[seat].bot ? -1 : McrAutomation.action(automation.get(seat), game.view(seat));
     }
 
     private boolean clockActive(int seat) {
-        return !participants[seat].bot && !paused() && exitVote == null && (game.phase() == McrGame.Phase.TURN || game.phase() == McrGame.Phase.REACTION)
+        return humanClockActive(seat) && (game.phase() == McrGame.Phase.TURN || game.phase() == McrGame.Phase.REACTION)
             && !game.actions(seat).isEmpty();
     }
 

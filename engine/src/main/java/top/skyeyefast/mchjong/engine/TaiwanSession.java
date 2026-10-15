@@ -10,7 +10,6 @@ import java.util.UUID;
 public final class TaiwanSession extends TableSession {
     private static final long SEED_STEP = 0x9e3779b97f4a7c15L;
     private static final int READING_TICKS = 200;
-    private static final int BOT_ACTION_TICKS = 12;
     private TaiwanGameState.Rules rules;
     private List<Integer> stock = List.of();
     private TimeControl control = TimeControl.DEFAULT;
@@ -194,7 +193,10 @@ public final class TaiwanSession extends TableSession {
             if (clocks.size() <= s) clocks.add(clock); else clocks.set(s,clock);
         }
     }
-    private boolean active(int seat) { return !participants[seat].bot && game != null && !paused() && exitVote == null && game.decisions().stream().anyMatch(d -> d.getSeat() == seat); }
+    private int automaticAction(int seat) {
+        return age < AUTO_ACTION_TICKS || participants[seat].bot ? -1 : TaiwanAutomation.action(automation.get(seat), game.view(seat));
+    }
+    private boolean active(int seat) { return game != null && humanClockActive(seat) && game.decisions().stream().anyMatch(d -> d.getSeat() == seat); }
     @Override public void tick() {
         if (!tickRoom() || game == null || lifecycle != Lifecycle.PLAYING) return;
         age = Math.min(14_400,age + 1);
@@ -204,35 +206,13 @@ public final class TaiwanSession extends TableSession {
             else if (age % 10 == 0) changed(false);
             return;
         }
-        long token = game.getDecision();
-        for (int s = 0; s < 4; s++) if (active(s)) {
-            var c = clocks.get(s); var next = new TimeControl.Clock(c.moveTicks(),c.reserveTicks(),true).after(50);
-            clocks.set(s,new TimeControl.Clock(next.moveTicks(),next.reserveTicks(),false));
-        }
-        for (var d : game.decisions()) {
-            var c = clocks.get(d.getSeat());
-            if (game.getDecision() != token) break;
-            if (participants[d.getSeat()].bot) {
-                if (age >= BOT_ACTION_TICKS) {
-                    int choice = TaiwanBot.choose(game.view(d.getSeat()));
-                    if (choice >= 0) apply(d.getSeat(),token,choice);
-                }
-                continue;
-            }
-            if (c.moveTicks()+c.reserveTicks() > 0) continue;
-            int fallback = -1;
-            int drawn = game.view(d.getSeat()).seats().get(d.getSeat()).drawn();
-            for (int i = 0; i < d.getActions().size(); i++) {
-                var a = d.getActions().get(i);
-                if (a.getType() == TaiwanAction.Type.PASS) { fallback = i; break; }
-                if (a.getType() == TaiwanAction.Type.DISCARD) {
-                    if (fallback < 0) fallback = i;
-                    if (a.getTiles().get(0) == drawn) { fallback = i; break; }
-                }
-            }
-            if (fallback >= 0) apply(d.getSeat(),token,fallback);
-        }
-        if (age % 10 == 0) changed(false);
+        tickTurns(game.decisions().stream().map(TaiwanDecision::getSeat).toList(), clocks, () -> age,
+            seat -> game.decisions().stream().filter(d -> d.getSeat() == seat).findFirst()
+                .map(d -> d.getActions()).orElse(List.of()), this::active,
+            action -> action.getType() == TaiwanAction.Type.PASS,
+            action -> action.getType() == TaiwanAction.Type.DISCARD ? action.getTiles().get(0) : Tile.ABSENT,
+            seat -> game.view(seat).seats().get(seat).drawn(), this::automaticAction,
+            seat -> TaiwanBot.choose(game.view(seat)), (seat, index) -> apply(seat, game.getDecision(), index));
     }
 
     public State save() { return new State(State.FORMAT,saveRoom(),rules,stock,control,clocks,age,confirmed,futureSeed,completed,

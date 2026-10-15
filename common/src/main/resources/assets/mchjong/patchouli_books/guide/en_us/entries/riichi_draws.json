@@ -1,0 +1,32 @@
+{
+  "name": "manual.mchjong.entry.riichi_draws.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_draws.exhaustive"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_draws.exhaustive.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_draws.tenpai"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_draws.aborts"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_draws.aborts.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_draws.aborts.continued_2"
+    }
+  ]
+}

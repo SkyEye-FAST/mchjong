@@ -22,6 +22,10 @@ final class RoomLobbyControls {
             .tooltip(Tooltip.create(label)).build();
     }
 
+    static int buttonWidth(Component label, int minimum) {
+        return Math.max(minimum, Minecraft.getInstance().font.width(label) + 12);
+    }
+
     static MahjongButton variantButton(BlockPos pos, TableRoomView room, MahjongVariant choice,
                                        int x, int y, int width, boolean automatic, Runnable sent) {
         var label = Component.translatable("variant.mchjong." + choice.name().toLowerCase(java.util.Locale.ROOT));

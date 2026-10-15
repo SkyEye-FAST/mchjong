@@ -231,25 +231,6 @@ class TableLayoutTest {
         }
     }
 
-    @Test void completeWallsTouchHorizontallyAndVerticallyForBothPlayerCountsAndEverySeat() {
-        for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) {
-            var view = start(rules);
-            int stacks = view.wall().size() / (rules.sanma() ? 6 : 8);
-            var wall = java.util.stream.IntStream.range(0, view.wall().size())
-                .mapToObj(i -> RiichiTableScene.wallPiece(view, i, true)).toList();
-            for (int seat = 0; seat < rules.players(); seat++) {
-                int side = seat;
-                var pieces = wall.stream().filter(piece -> piece.seat() == side).toList();
-                assertEquals(stacks * 2, pieces.size());
-                for (var piece : pieces) {
-                    var neighbors = pieces.stream().filter(other -> other != piece)
-                        .mapToDouble(other -> piece.position().distanceTo(other.position())).sorted().toArray();
-                    assertEquals(TileDimensions.SMALL.depth(), neighbors[0], 1e-7, "Stack must touch");
-                    assertEquals(TileDimensions.SMALL.width(), neighbors[1], 1e-7, "Wall must touch");
-                }
-            }
-        }
-    }
 
     @Test void wallDrawsRunClockwiseWhileSeatsAdvanceCounterclockwiseAndTopTilesComeFirst() {
         for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) {

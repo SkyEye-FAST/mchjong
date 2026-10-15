@@ -24,7 +24,7 @@ public record McrViewPayload(BlockPos pos, String view, TableRoomView room, McrD
     public static final ResourceLocation TYPE = MahjongContent.id("mcr_view");
     public static McrViewPayload decode(FriendlyByteBuf buffer) {
         var pos = buffer.readBlockPos();
-        var view = buffer.readUtf(65536);
+        var view = buffer.readUtf(TableNetworking.VIEW_LIMIT);
         var room = TableNetworking.JSON.fromJson(buffer.readUtf(8192), TableRoomView.class);
         McrDeck deck = null;
         if (buffer.readBoolean()) {
@@ -40,7 +40,7 @@ public record McrViewPayload(BlockPos pos, String view, TableRoomView room, McrD
             TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.world.WorldSettings.Policy.class));
     }
     @Override public void write(FriendlyByteBuf buffer) {
-        buffer.writeBlockPos(this.pos()); buffer.writeUtf(this.view(), 65536);
+        buffer.writeBlockPos(this.pos()); buffer.writeUtf(this.view(), TableNetworking.VIEW_LIMIT);
         buffer.writeUtf(TableNetworking.JSON.toJson(this.room()), 8192);
         buffer.writeBoolean(this.deck() != null);
         if (this.deck() != null) {

@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.taiwan_calls.name",
+  "category": "mchjong:taiwan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.calls"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.calls.continued_1"
+    }
+  ]
+}

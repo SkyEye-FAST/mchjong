@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.taiwan_flowers.name",
+  "category": "mchjong:taiwan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flowers.flowers"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flowers.flowers.continued_1"
+    }
+  ]
+}

@@ -88,9 +88,15 @@ double-click discards and adjust your display and audio preferences.
 Press Esc to cancel a selection or close the interface, then use the sneak
 control to stand up. Standing up does not end an active match: the table pauses
 when no human player is seated and resumes when a participant returns. To end
-the match instead, use its exit control. A sole human participant can end play
-directly; a match with several human participants requires unanimous approval.
-An early exit preserves completed hands without scoring the unfinished hand.
+the match instead, select End Match. A sole human participant confirms before
+ending play; a match with several human participants requires unanimous approval.
+Ending a match early preserves completed hands without scoring the unfinished hand.
+If no human player returns to a seat for 15 minutes, the paused match ends in
+the same way and releases its equipment. The timer restarts after a server restart.
+
+To watch a match without joining it, walk around the table and look at the tiles
+and displays in the world. Right-clicking a running table shows an action-bar hint;
+it does not open a spectator screen. Lobby screens remain available before play.
 
 ## Rooms and server settings
 
@@ -100,15 +106,35 @@ tile counts using the player's hand and public tiles; they do not reveal the
 wall. Built-in computer opponents use the same limited information, even when
 the room allows players to see other hands.
 
+Before a match, the host can remove other human members from the room. Removed
+players cannot rejoin until the room closes or the server restarts. While a room
+has human members, only its members can change the table's cloth or boxes or open
+its storage, including members who are temporarily away from their seats.
+
+On ordinary Riichi mahjong tables, the host can enable Advance Idle Manual Actions
+next to Clock Settings. This option is off by default. When enabled, idle players'
+manual steps are carried out automatically when their clock expires. When disabled,
+manual steps do not use the clock and wait for player input.
+
 To invite an online player, use `/mchjong invite <player>`. The invitation lasts
 60 seconds and normally requires the recipient to accept within six blocks of
 the table. An administrator can enable invitation teleportation to let players
 accept from farther away.
 
 Administrators manage these server-wide permissions in World settings, including
-invitation teleportation, spectator access, computer players, replays and custom
+invitation teleportation, spectator hand visibility, computer players, replays and custom
 rules. The values are stored in `<world>/config/mchjong-world.toml`.
 After editing that file, run `/mchjong world reload` to apply the changes.
+`spectatorHandVisibility` is the only spectator privacy control: it governs
+concealed hands in Riichi mahjong viewed in the world. Follow Player Visibility
+uses the room's hand visibility. Other variants conceal private hands during play.
+
+Administrators with permission level 2 can use `/mchjong table close <pos>` to
+end a match at a loaded table in their current dimension and return its room to
+the lobby, preserving completed hands. Use `/mchjong table kick <player>` to
+remove an online member from a loaded room in the lobby; end a running match
+before removing a member. Protecting tables from being broken is left to claim
+or protection mods.
 
 ### External computer opponents
 
@@ -177,6 +203,8 @@ installation recommendation.
 
 Mod Menu adds a personal-settings entry to the Fabric mod list. Forge and
 NeoForge provide that entry through their native Mods screens.
+These entries include Personal Settings and Personal Presets and remain available
+without opening a table screen. Replays are also available through `/mchjong replays`.
 
 ## Documentation
 

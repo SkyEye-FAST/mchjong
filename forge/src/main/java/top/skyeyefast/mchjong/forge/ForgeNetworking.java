@@ -10,7 +10,7 @@ final class ForgeNetworking {
 
     static void register() {
         var channel = NetworkRegistry.ChannelBuilder.named(ResourceIds.of("mchjong", "play"))
-            .networkProtocolVersion(() -> "21").clientAcceptedVersions("21"::equals).serverAcceptedVersions("21"::equals).simpleChannel();
+            .networkProtocolVersion(() -> "22").clientAcceptedVersions("22"::equals).serverAcceptedVersions("22"::equals).simpleChannel();
         channel.messageBuilder(VoiceChoicePayload.class, 0, NetworkDirection.PLAY_TO_SERVER)
             .encoder(VoiceChoicePayload::write).decoder(VoiceChoicePayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());
@@ -31,20 +31,12 @@ final class ForgeNetworking {
             .encoder(TableRoomActionPayload::write).decoder(TableRoomActionPayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
             }).add();
-        channel.messageBuilder(McrNextHandPayload.class, 5, NetworkDirection.PLAY_TO_SERVER)
-            .encoder(McrNextHandPayload::write).decoder(McrNextHandPayload::decode).consumerMainThread((payload, context) -> {
+        channel.messageBuilder(NextHandPayload.class, 5, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(NextHandPayload::write).decoder(NextHandPayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
             }).add();
-        channel.messageBuilder(McrActionPayload.class, 6, NetworkDirection.PLAY_TO_SERVER)
-            .encoder(McrActionPayload::write).decoder(McrActionPayload::decode).consumerMainThread((payload, context) -> {
-                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
-            }).add();
-        channel.messageBuilder(SichuanActionPayload.class, 7, NetworkDirection.PLAY_TO_SERVER)
-            .encoder(SichuanActionPayload::write).decoder(SichuanActionPayload::decode).consumerMainThread((payload, context) -> {
-                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
-            }).add();
-        channel.messageBuilder(SichuanNextHandPayload.class, 8, NetworkDirection.PLAY_TO_SERVER)
-            .encoder(SichuanNextHandPayload::write).decoder(SichuanNextHandPayload::decode).consumerMainThread((payload, context) -> {
+        channel.messageBuilder(TableActionPayload.class, 6, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(TableActionPayload::write).decoder(TableActionPayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
             }).add();
         channel.messageBuilder(TableVariantPayload.class, 9, NetworkDirection.PLAY_TO_SERVER)
@@ -104,14 +96,6 @@ final class ForgeNetworking {
         channel.messageBuilder(StickAppearancePayload.class, 24, NetworkDirection.PLAY_TO_CLIENT)
             .encoder(StickAppearancePayload::write).decoder(StickAppearancePayload::decode)
             .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.RiichiStickPresets.receive(payload)).add();
-        channel.messageBuilder(TaiwanActionPayload.class, 25, NetworkDirection.PLAY_TO_SERVER)
-            .encoder(TaiwanActionPayload::write).decoder(TaiwanActionPayload::decode).consumerMainThread((payload, context) -> {
-                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
-            }).add();
-        channel.messageBuilder(TaiwanNextHandPayload.class, 26, NetworkDirection.PLAY_TO_SERVER)
-            .encoder(TaiwanNextHandPayload::write).decoder(TaiwanNextHandPayload::decode).consumerMainThread((payload, context) -> {
-                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
-            }).add();
         channel.messageBuilder(TaiwanRulesPayload.class, 27, NetworkDirection.PLAY_TO_SERVER)
             .encoder(TaiwanRulesPayload::write).decoder(TaiwanRulesPayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);

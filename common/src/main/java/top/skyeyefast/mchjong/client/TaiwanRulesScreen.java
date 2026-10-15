@@ -126,7 +126,7 @@ public final class TaiwanRulesScreen extends Screen implements TableChildScreen 
                     Arrays.stream(reserves).map(r -> (Component) Component.translatable("taiwan.mchjong.reserve." + r.name().toLowerCase(java.util.Locale.ROOT))).toList(),
                     draft.reserve().ordinal(), index -> { replace(draft.payment(), reserves[index]); rejected = false; }, index -> editReason(true)));
             }).bounds(left, y, span - 24, 20).build()));
-            addRenderableWidget(RuleHelp.setting(this, name, RuleHelp.pageDescription("manual.mchjong.entry.taiwan_flow.reserve"), "manual.mchjong.entry.taiwan_flow.reserve", left + span - 20, y));
+            addRenderableWidget(RuleHelp.setting(this, name, RuleHelp.pageDescription("manual.mchjong.entry.taiwan_tiles.reserve"), "manual.mchjong.entry.taiwan_tiles.reserve", left + span - 20, y));
         } else {
             reset = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.restore_defaults"), ignored -> {
                 if (current != null) { draft = TaiwanGameState.Rules.of(current.rules()); Arrays.fill(paymentText, null); rejected = false; init(); }

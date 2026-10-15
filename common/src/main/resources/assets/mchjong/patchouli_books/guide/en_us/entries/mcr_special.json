@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.mcr_special.name",
   "category": "mchjong:mcr",
   "icon": "mchjong:mahjong_tile",
-  "sortnum": 2,
+  "sortnum": 3,
   "pages": [
     {
       "type": "patchouli:text",
@@ -31,26 +31,6 @@
       "text": "manual.mchjong.entry.mcr_special.example",
       "tiles": "147m 258p 369s 111z 55z",
       "face": "mchjong:hong_kong"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_special.combining"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_special.combining.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_special.combining.continued_2"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_special.kongs"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.mcr_special.kongs.continued_1"
     }
   ]
 }

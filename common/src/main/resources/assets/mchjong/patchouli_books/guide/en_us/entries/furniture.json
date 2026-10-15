@@ -31,7 +31,7 @@
     {
       "type": "patchouli:crafting",
       "recipe": "mchjong:mahjong_table",
-      "recipe2": "mchjong:mahjong_stool"
+      "recipe2": "mchjong:mahjong_stool_white"
     },
     {
       "type": "patchouli:text",
@@ -39,7 +39,7 @@
     },
     {
       "type": "patchouli:crafting",
-      "recipe": "mchjong:table_cloth_green",
+      "recipe": "mchjong:table_cloth_cyan",
       "recipe2": "mchjong:mahjong_manual"
     }
   ]

@@ -30,10 +30,16 @@ are not head-noun omissions. Their permission applies only to the specified loca
 Chinese uses `国标麻将`/`國標麻將`, `台湾麻将`/`台灣麻將` and `四川麻将`/`四川麻將`,
 not `国标`/`國標`, `台湾`/`台灣` or `四川` when naming the games. Japanese uses
 `台湾麻雀` and `四川麻雀`, not the place names alone. English uses Taiwanese
-mahjong, Sichuan mahjong and Riichi mahjong when naming those games.
+mahjong, Sichuan mahjong and Riichi mahjong when naming those games. English may
+shorten them to Taiwanese, Sichuan and Riichi where every neighbouring item is a
+mahjong variant, such as a variant list or the title of a rules screen, because the
+context leaves no other reading. A sentence, a standalone title or any text that
+could be read as naming the place, the cuisine or the ruleset uses the full name.
+The place name Taiwan alone never names the game.
 Apply the same rule to other named objects: identify the face preset, back preset,
 replay file or Minecraft server when that is the subject or object of the sentence.
-Wrap or resize a control instead of dropping the head noun from its label. Preserve
+Wrap or resize a control instead of dropping the head noun from its label, unless
+the control has a compact label that meets [Compact labels](#compact-labels). Preserve
 code identifiers and literal quotations, including existing UI labels, exactly;
 their spelling does not establish how to write new explanations or labels.
 
@@ -61,6 +67,84 @@ Do not use middle dots as generic interface separators. Use punctuation or separ
 lines appropriate to the language. Preserve argument types and their bindings when
 reordering a sentence. English `.one` and `.other` forms follow the displayed count.
 Quote variable player names where needed to make Traditional Chinese boundaries clear.
+
+## Compact labels
+
+Toolbars, member rows and collapsed panels can be too narrow for a full label. A
+control there may use a compact label stored under the same key with the suffix
+`.short`. The layout chooses it; it never replaces the full label in prose, tooltips
+or descriptions. A compact label is acceptable only when all of these hold:
+
+1. The full label of the same control stays reachable on the same screen, as a
+   tooltip, in the expanded state of the same panel, or as the heading of the
+   surrounding group. Check this whenever a `.short` key is added.
+2. It drops words that the surrounding screen already supplies, or it is a short form
+   already established in that language and variant. Examples are `Leave` for Leave
+   Room on a room screen, `余` for remaining tiles, a single Chinese character or
+   kanji naming an action in the Chinese and Japanese locales, and the wind letters
+   E, S, W and N. Do not coin a new abbreviation, and do not substitute a different
+   word for the full label.
+3. It keeps the meaning of the full label and differs from every other compact label
+   on the same screen.
+4. Single Latin letters are limited to the wind letters and to the Riichi mahjong
+   automatic-play toggles, whose letters are established for that variant. New
+   English labels use words.
+
+Do not use a compact label as the name of a preset or scoring pattern, and do not use
+it inside a sentence.
+
+## Leaving, ending and closing
+
+Each of these effects has one name per language, and a control is named for its
+effect. Do not give two controls the same label when they do different things; in
+particular, Chinese `退出` and Japanese `退出` alone must not label both leaving the
+room and ending the match.
+
+| Effect | `en_us` | `zh_cn` | `zh_tw` | `ja_jp` |
+| --- | --- | --- | --- | --- |
+| Leave the seat and keep the match paused | Stand Up | 起身离座 | 起身離座 | 席を立つ |
+| Give up the seat in the lobby | Leave Room | 退出房间 | 退出房間 | 部屋を退出 |
+| End a running match, after approval or by a sole player | End Match | 结束对局 | 結束對局 | 対局を終了 |
+| Remove every member and close the room | Close Room | 解散房间 | 解散房間 | 部屋を解散 |
+| Return from finished results to the lobby | Return to Room | 返回房间 | 返回房間 | 部屋に戻る |
+
+Ending a match keeps completed hands and does not score the unfinished hand. Closing
+a room ends any active match first. Say which of these a confirmation will do, in
+its title, its explanation and its confirming button.
+
+## Rule explanations
+
+These rules apply to the Mahjong Manual and to any text that explains a rule. The
+reference for tone and structure is the maintainer's article on
+[Japanese mahjong](https://mh.wdf.ink/wiki/%E6%97%A5%E6%9C%AC%E9%BA%BB%E5%B0%86).
+Each variant is still explained on its own terms; the article's comparisons with
+other variants are not a model for the manual.
+
+1. One entry explains one concept and carries that concept's name. Do not bundle
+   unrelated concepts under a joint title such as calls, riichi and furiten.
+2. Define a term before the text relies on it, in the same entry or an earlier one.
+   A term that the rules use, such as ready hand, deposit, honba or the player who
+   discarded the winning tile, needs a home entry that states what it is.
+3. Open with the definition: the term in bold, then one sentence saying what it is.
+   Give a Japanese-origin term's original form (kana, not romanization) at its first
+   definition when the locale benefits. State the conditions in the following
+   sentences.
+4. State the base rule first. Then state each preset's or platform's difference
+   directly after it, naming the preset in every sentence. Do not weave differences
+   into the base rule, and do not make a whole entry out of differences unless it
+   is the preset comparison.
+5. One condition per sentence. Put the condition that decides the outcome first or
+   in bold. Use a list for parallel cases, such as the kinds of furiten or the
+   cases of a payment. When two rules contrast, say so in the sentence that
+   introduces the second.
+6. Describe a scoring pattern in this order: name, value, restriction (concealed
+   hand only, value reduced after calling), definition, interaction with other
+   patterns, edge cases. Add a diagram only when the text cannot show the shape.
+7. Keep a formula and its worked example on the same page. When a rule has
+   parallel numeric cases, list them instead of writing them as one sentence.
+8. State a rule once. Other entries link to it instead of repeating it.
+9. Break pages between paragraphs, never inside a single thought, and prefer
+   shortening an entry to splitting it so that its conclusion lands on another page.
 
 ## Chinese scoring language
 
@@ -95,6 +179,25 @@ authorize a shortened Chinese label.
 | Mahjong Competition Rules | 国标麻将/國標麻將 | 国際公式麻雀 | Mahjong Competition Rules; MCR |
 | Sichuan mahjong | 四川麻将/四川麻將 | 四川麻雀 | Sichuan mahjong |
 | Taiwanese mahjong | 台湾麻将/台灣麻將 | 台湾麻雀 | Taiwanese mahjong |
+
+The MCR scoring table follows the first edition of the World Mahjong Organization's
+Mahjong Competition Rules (December 2014), as implemented by the mcr-mahjong library.
+Some values differ from the 1998 trial rules; for example, Two Concealed Kongs is
+8 points here and 6 in the 1998 rules. Say which edition the manual follows when a
+reader could compare it with older rules. The Sichuan preset T/TFMJ 01-2024 is the
+group standard 《四川麻将竞赛规则》 (Rules of Sichuan Mahjong Competition), published
+in July 2024 by the Tianfu New Area Mahjong Sports Association (四川天府新区麻将运动协会).
+Give that title when the text introduces the preset.
+
+SBR is the English abbreviation of Sichuan Bloody Rules, the ruleset called `血战到底`
+in Chinese and `血戦到底` in Japanese. It is an English abbreviation only: like MCR,
+it does not replace the Chinese or Japanese name. English may use it for a ruleset,
+as in the preset MIL SBR 2025, and expands it on first mention in prose. Chinese
+and Japanese write `血战到底`/`血戰到底`/`血戦到底`, as in the preset
+`国际麻联血战到底2025`. A variant title, variant list entry or replay label names the
+game, so it is `四川麻将`/`四川麻將` or `四川麻雀` in Chinese and Japanese, and Sichuan
+(in a list of variants) or Sichuan mahjong in English, never `Sichuan SBR` or
+`四川SBR`.
 
 English may use MCR in prose, headings, tables and interface labels. Expand it to
 Mahjong Competition Rules on first mention when introducing the term; do not
@@ -223,6 +326,7 @@ Identical-looking names do not establish identical rules. In particular:
 
 | Distinction | Project convention |
 | --- | --- |
+| English call names | Riichi mahjong keeps the Japanese loanwords Chi, Pon and Kan. MCR, Sichuan mahjong and Taiwanese mahjong use Chow, Pung and Kong, the terms of the official English MCR rules and of English guides to Taiwanese mahjong. Do not write Chi or Pong for the Chinese variants. |
 | Chinese sequence-pair names | 一杯口/二杯口; Japanese uses 一盃口/二盃口 |
 | Nine Gates | Riichi mahjong uses 九莲宝灯/九蓮寶燈 in Chinese and 九蓮宝燈 in Japanese. MCR uses 九連宝灯 in Japanese. |
 | Seven Pairs | Riichi mahjong uses 七对子/七對子 in Chinese and 七対子 in Japanese. MCR uses 七对/七對 in Chinese and 七対 in Japanese. Sichuan mahjong uses 七対子 in Japanese. |

@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.riichi_presets.name",
   "category": "mchjong:riichi",
   "icon": "mchjong:red_dora_dye",
-  "sortnum": 6,
+  "sortnum": 13,
   "pages": [
     {
       "type": "patchouli:text",
@@ -60,18 +60,6 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.competition.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.aborts"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.aborts.continued_1"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_presets.aborts_rules"
     },
     {
       "type": "patchouli:text",

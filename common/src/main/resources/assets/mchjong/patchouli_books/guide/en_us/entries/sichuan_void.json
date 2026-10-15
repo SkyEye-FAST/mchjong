@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.sichuan_void.name",
+  "category": "mchjong:sichuan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_void.void"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_void.void.continued_1"
+    }
+  ]
+}

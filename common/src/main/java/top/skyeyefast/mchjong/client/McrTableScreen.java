@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.McrAction;
 import top.skyeyefast.mchjong.engine.McrSession;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.network.McrActionPayload;
+import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -87,7 +87,7 @@ public final class McrTableScreen extends Screen {
         }
         hand = null;
         board = immersive() ? new TableBoard(TableBoardState.live(game), 20, 1260, 68, 620, 800, true) : null;
-        if (immersive() && game.viewerSeat() >= 0) {
+        if (immersive()) {
             var player = game.seats().get(game.viewerSeat());
             var tiles = new ArrayList<>(player.hand());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
@@ -125,7 +125,7 @@ public final class McrTableScreen extends Screen {
             || snapshot.game().decision() != current.game().decision() || index < 0 || index >= current.game().actions().size()
             || table().clientTableRoom().exitVote() != null) return;
         pending = true;
-        minecraft.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, current.tableId(),
+        minecraft.getConnection().send(PayloadPackets.serverbound(new TableActionPayload(pos, current.tableId(),
             current.incarnation(), current.game().decision(), index)));
         rebuild();
     }
@@ -171,7 +171,7 @@ public final class McrTableScreen extends Screen {
     private SeatedTableProjection projection() { return SeatedTableProjection.capture(pos, width, height, framePartial); }
     private int pick(double x, double y) {
         var view = view();
-        if (view == null || view.game().viewerSeat() < 0 || table().clientTableRoom().exitVote() != null || overWidget(x, y)) return Tile.ABSENT;
+        if (view == null || table().clientTableRoom().exitVote() != null || overWidget(x, y)) return Tile.ABSENT;
         if (hand != null) return hand.pick(x, y, selected);
         if (immersive()) return Tile.ABSENT;
         var pointer = projection().pointer(x, y);
@@ -187,7 +187,7 @@ public final class McrTableScreen extends Screen {
         framePartial = partialTick;
         var view = view(); if (view == null || table().clientMcrDeck() == null) return;
         if (view.revision() != shownRevision) rebuild();
-        if (turnClock != null && view.game().viewerSeat() >= 0) {
+        if (turnClock != null) {
             var clock = view.clocks().get(view.game().viewerSeat()).after(table().clientViewAgeMillis());
             int s = contentScale(), bottom = clockBottom();
             int nextTop = bottom - (clock.active() ? 28 * contentScale() : 0) - actionHeight;

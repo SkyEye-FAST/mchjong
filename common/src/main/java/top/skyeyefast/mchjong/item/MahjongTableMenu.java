@@ -57,7 +57,7 @@ public final class MahjongTableMenu extends AbstractContainerMenu {
         if (player != inventory.player) return false;
         if (player.level().isClientSide) return active;
         active &= table != null && player.containerMenu == this && player.isAlive() && !player.isRemoved() && !player.isSpectator()
-            && player.level() == table.getLevel() && !table.isRemoved() && table.equipmentEditable()
+            && player.level() == table.getLevel() && !table.isRemoved() && table.equipmentEditable() && table.equipmentMember(player.getUUID())
             && player.level().getBlockEntity(table.getBlockPos()) == table && player.distanceToSqr(table.getBlockPos().getCenter()) <= 64;
         return active;
     }
