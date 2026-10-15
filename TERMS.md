@@ -141,11 +141,14 @@ authorize a shortened Chinese label.
 | Sichuan mahjong | 四川麻将/四川麻將 | 四川麻雀 | Sichuan mahjong |
 | Taiwanese mahjong | 台湾麻将/台灣麻將 | 台湾麻雀 | Taiwanese mahjong |
 
-SBR is the established English abbreviation of Sichuan Bloody Rules, the ruleset
-called `血战到底` in Chinese. It names a ruleset, not the game: use it in preset names
-such as MIL SBR 2025 and expand it on first mention in prose. A variant title,
-variant list entry or replay label names the game, so it is Sichuan Mahjong and
-never `Sichuan SBR` or `四川SBR`.
+SBR is the English abbreviation of Sichuan Bloody Rules, the ruleset called `血战到底`
+in Chinese and `血戦到底` in Japanese. It is an English abbreviation only: like MCR,
+it does not replace the Chinese or Japanese name. English may use it for a ruleset,
+as in the preset MIL SBR 2025, and expands it on first mention in prose. Chinese
+and Japanese write `血战到底`/`血戰到底`/`血戦到底`, as in the preset
+`国际麻联血战到底2025`. A variant title, variant list entry or replay label names the
+game, so it is Sichuan Mahjong, `四川麻将`/`四川麻將` or `四川麻雀`, never `Sichuan SBR`
+or `四川SBR`.
 
 English may use MCR in prose, headings, tables and interface labels. Expand it to
 Mahjong Competition Rules on first mention when introducing the term; do not

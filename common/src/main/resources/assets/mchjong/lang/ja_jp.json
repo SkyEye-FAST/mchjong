@@ -1270,7 +1270,7 @@
   "sichuan.mchjong.rules.locked": "ワールド設定によりルールを変更できません",
   "sichuan.mchjong.rules.match_hands": "対局の局数",
   "sichuan.mchjong.rules.match_hands.description": "この局数を終えると最終順位を決定します。次局の親は、前局の結果に応じて決まります。",
-  "sichuan.mchjong.rules.preset.sbr_2025": "MIL SBR 2025",
+  "sichuan.mchjong.rules.preset.sbr_2025": "MIL 血戦到底 2025",
   "sichuan.mchjong.rules.preset.tfmj_2024": "T/TFMJ 01—2024",
   "sichuan.mchjong.rules.refund_kong_when_not_ready": "ノーテン時の槓返金",
   "sichuan.mchjong.rules.refund_kong_when_not_ready.description": "牌山の牌がなくなったとき、ノーテンのプレイヤーは、槓で受け取った点数のうち、まだ他家に渡していない分を返します。",
