@@ -39,6 +39,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add room-member equipment permissions, host removal with room-local rejoin restrictions, administrator table close and lobby kick commands, and a 15-minute timeout for matches paused without seated human players.
 - Add the default-off Advance Idle Manual Actions room option for ordinary Riichi mahjong tables, allowing the host to advance idle players' manual steps when their clocks expire.
 - Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring, preserving separate flower payouts.
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan mahjong and Taiwanese mahjong rule entrances, complete award indexes, tile illustrations, payment examples and preset differences. Align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.

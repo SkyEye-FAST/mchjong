@@ -14,6 +14,7 @@ import top.skyeyefast.mchjong.engine.TimeControl;
 
 /** Common Brigadier handlers; loader entry points only register them. */
 public final class TableCommands {
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("mchjong");
     private TableCommands() {}
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         top.skyeyefast.mchjong.replay.ReplayServer.register(dispatcher);
@@ -76,6 +77,33 @@ public final class TableCommands {
                 })));
         dispatcher.register(Commands.literal("mchjong")
             .then(world)
+            .then(Commands.literal("table").requires(source -> source.hasPermission(2))
+                .then(Commands.literal("close").then(Commands.argument("pos", net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos())
+                    .executes(context -> {
+                        var source = context.getSource();
+                        var pos = net.minecraft.commands.arguments.coordinates.BlockPosArgument.getBlockPos(context, "pos");
+                        var level = source.getLevel();
+                        if (!level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+                            || !(level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) || table.isRemoved())
+                            throw error("message.mchjong.table_unavailable");
+                        if (!table.closeRoomMatch()) throw error("message.mchjong.table_no_match");
+                        LOGGER.info("{} closed mahjong table at {} in {}", source.getTextName(), pos, level.dimension().location());
+                        source.sendSuccess(() -> Component.translatable("message.mchjong.table_closed", pos.getX(), pos.getY(), pos.getZ()), true);
+                        return 1;
+                    })))
+                .then(Commands.literal("kick").then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                    .executes(context -> {
+                        var source = context.getSource();
+                        var player = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
+                        var table = MahjongTableBlockEntity.memberTable(source.getServer(), player.getUUID());
+                        if (table == null) throw error("message.mchjong.table_no_room");
+                        if (!table.memberRoom(player.getUUID()).lobby()) throw error("message.mchjong.table_kick_lobby");
+                        if (!table.removeLobbyPlayer(player.getUUID())) throw error("message.mchjong.table_no_room");
+                        LOGGER.info("{} removed {} ({}) from mahjong table at {} in {}", source.getTextName(),
+                            player.getGameProfile().getName(), player.getUUID(), table.getBlockPos(), table.getLevel().dimension().location());
+                        source.sendSuccess(() -> Component.translatable("message.mchjong.table_player_removed", player.getDisplayName()), true);
+                        return 1;
+                    }))))
             .then(Commands.literal("host").then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();

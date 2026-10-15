@@ -160,11 +160,17 @@ final class RoomLobby {
                 buttons.add(button);
             } else if (seat != room.host() && host(room) && participant.id() != null && !participant.bot()) {
                 int transfer = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
-                var button = RoomLobbyControls.button(Component.translatable("room.mchjong.transfer"), layout.bodyLeft() + layout.bodyWidth() - 78,
+                var button = RoomLobbyControls.button(Component.translatable("room.mchjong.transfer"), layout.bodyLeft() + layout.bodyWidth() - 160,
                     y, 78, () -> send(room, transfer));
                 button.setTooltip(Tooltip.create(Component.translatable("room.mchjong.transfer_host", participant.name())));
                 button.active = transfer >= 0 && !pending;
                 buttons.add(button);
+                int kick = RoomLobbyControls.find(room, RoomAction.Type.KICK, List.of(seat));
+                var remove = RoomLobbyControls.button(Component.translatable("room.mchjong.kick"), layout.bodyLeft() + layout.bodyWidth() - 78,
+                    y, 78, () -> send(room, kick));
+                remove.setTooltip(Tooltip.create(Component.translatable("room.mchjong.kick_player", participant.name())));
+                remove.active = kick >= 0 && !pending;
+                buttons.add(remove);
             }
         }
     }
@@ -304,7 +310,9 @@ final class RoomLobby {
                 var state = room.seats().get(seat); var player = state.participant();
                 int y = l.contentTop() + seat * pitch;
                 boolean control = nextBot(room, seat) >= 0 || host(room) && player.id() != null && seat != room.host() && !player.bot();
-                int textWidth = l.bodyWidth() - (control ? 88 : 8);
+                boolean humanControls = host(room) && player.id() != null && seat != room.host() && !player.bot()
+                    && state.presence() != PlayerPresence.DISCONNECTED;
+                int textWidth = l.bodyWidth() - (humanControls ? 168 : control ? 88 : 8);
                 graphics.fill(l.bodyLeft(), y, l.bodyLeft() + l.bodyWidth(), y + pitch - 2, seat == room.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.INPUT);
                 int portrait = PlayerPortrait.draw(graphics, player, l.bodyLeft() + 5, y + 3, 10);
                 var name = RoomMembers.name(room, seat);
@@ -325,7 +333,7 @@ final class RoomLobby {
                     hover.append("\n").append(Component.translatable("bot.mchjong.service." + error));
                 }
                 boolean details = state.wind() >= 0 || error != null || font.width(name) > textWidth - portrait || font.width(status) > textWidth;
-                if (details && mouseX >= l.bodyLeft() && mouseX < l.bodyLeft() + l.bodyWidth() - 82 && mouseY >= y && mouseY < y + pitch - 2)
+                if (details && mouseX >= l.bodyLeft() && mouseX < l.bodyLeft() + textWidth && mouseY >= y && mouseY < y + pitch - 2)
                     parent.setTooltipForNextRenderPass(hover);
             }
         } else {

@@ -91,6 +91,8 @@ when no human player is seated and resumes when a participant returns. To end
 the match instead, use its exit control. A sole human participant confirms before
 ending play; a match with several human participants requires unanimous approval.
 An early exit preserves completed hands without scoring the unfinished hand.
+If no human player returns to a seat for 15 minutes, the paused match ends in
+the same way and releases its equipment. The timer restarts after a server restart.
 
 To watch a match without joining it, walk around the table and look at the tiles
 and displays in the world. Right-clicking a running table shows an action-bar hint;
@@ -103,6 +105,11 @@ enable convenience hints or change hand visibility. The hints estimate unseen
 tile counts using the player's hand and public tiles; they do not reveal the
 wall. Built-in computer opponents use the same limited information, even when
 the room allows players to see other hands.
+
+Before a match, the host can remove other human members from the room. Removed
+players cannot rejoin until the room closes or the server restarts. While a room
+has human members, only its members can change the table's cloth or boxes or open
+its storage, including members who are temporarily away from their seats.
 
 On ordinary Riichi mahjong tables, the host can enable Advance Idle Manual Actions
 next to Clock Settings. This option is off by default. When enabled, idle players'
@@ -121,6 +128,13 @@ After editing that file, run `/mchjong world reload` to apply the changes.
 `spectatorHandVisibility` is the only spectator privacy control: it governs
 concealed hands in Riichi mahjong viewed in the world. Follow Player Visibility
 uses the room's hand visibility. Other variants conceal private hands during play.
+
+Administrators with permission level 2 can use `/mchjong table close <pos>` to
+end a match at a loaded table in their current dimension and return its room to
+the lobby, preserving completed hands. Use `/mchjong table kick <player>` to
+remove an online member from a loaded room in the lobby; end a running match
+before removing a member. Protecting tables from being broken is left to claim
+or protection mods.
 
 ### External computer opponents
 

@@ -16,6 +16,7 @@ import java.util.UUID;
 public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession, TaiwanSession {
     public enum Lifecycle { LOBBY, PLAYING, FINISHED }
     public static final int AWAY_GRACE_TICKS = 5 * 20;
+    public static final int IDLE_MATCH_TICKS = 15 * 60 * 20;
 
     UUID tableId;
     MahjongVariant variant;
@@ -34,6 +35,9 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     UUID pendingLeaveDecision;
     long exitVoteSequence;
     int exitCooldown;
+    private int idleMatchTicks;
+    // Room-local exclusions survive variant changes, but end with the last human or a closed room, not a save.
+    private final Set<UUID> removedPlayers = new HashSet<>();
     transient WorldPolicy worldPolicy = WorldPolicy.DEFAULT;
     transient UUID incarnation = UUID.randomUUID();
 
@@ -103,7 +107,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     }
 
     public boolean join(UUID id, String name, int seat) {
-        if (id == null || name == null || name.isBlank() || seat < 0 || seat >= capacity) return false;
+        if (id == null || removedPlayer(id) || name == null || name.isBlank() || seat < 0 || seat >= capacity) return false;
         int existing = seatOf(id);
         if (existing >= 0) {
             if (existing != seat) return false;
@@ -112,6 +116,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 participants[seat].awayTicks = 0;
                 participants[seat].presenceKnown = true;
                 pendingLeaveDecision = null;
+                idleMatchTicks = 0;
                 changed(lobby());
             }
             return true;
@@ -162,6 +167,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         }
         if (changed) changed(lobby());
         if (hasSeatedHuman()) pendingLeaveDecision = null;
+        if (hasSeatedHuman()) idleMatchTicks = 0;
         return changed;
     }
 
@@ -251,6 +257,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
             if (seat < capacity && participants[seat].id != null)
                 replacement.participants[seat] = Participant.restore(participants[seat].snapshot());
         replacement.hostId = hostId;
+        replacement.removedPlayers.addAll(removedPlayers);
         replacement.worldPolicy = worldPolicy;
         replacement.revision = revision;
         replacement.decision = decision;
@@ -342,6 +349,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         }
         resetReadiness();
         rosterChanged();
+        if (hostId == null) removedPlayers.clear();
         if (hostId == null && Arrays.stream(participants).noneMatch(member -> member.entityBot)) closeMatch();
         changed(true);
     }
@@ -441,13 +449,27 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         changed(true);
     }
 
-    protected final void closeMatch() { returnToLobby(false); }
+    public final void closeMatch() { returnToLobby(false); }
+
+    public final boolean removedPlayer(UUID id) { return removedPlayers.contains(id); }
+
+    /** Server administrator override; active matches retain their human roster until the match ends. */
+    public final boolean removeLobbyPlayer(UUID id) {
+        int seat = seatOf(id);
+        if (!lobby() || seat < 0 || participants[seat].bot) return false;
+        if (exitVote != null) cancelExit();
+        removedPlayers.add(id);
+        removeMember(seat);
+        return true;
+    }
 
     protected final void returnToLobby(boolean retainParticipants) {
         exitVote = null;
         pendingLeaveDecision = null;
         exitCooldown = 0;
+        idleMatchTicks = 0;
         if (!retainParticipants) {
+            removedPlayers.clear();
             hostId = null;
             for (int seat = 0; seat < 4; seat++) participants[seat] = new Participant();
         }
@@ -477,16 +499,22 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         if (lobby() && hostId != null && Arrays.stream(participants)
             .filter(member -> member.id != null && !member.bot)
             .allMatch(member -> member.presence == PlayerPresence.DISCONNECTED)) closeMatch();
-        if (paused()) return false;
-        if (exitCooldown > 0) exitCooldown--;
-        if (exitVote == null) return true;
-        if (exitVote.ticksLeft() <= 1) cancelExit();
-        else {
-            exitVote = new ExitVote(exitVote.id(), exitVote.requester(), exitVote.ticksLeft() - 1,
-                exitVote.required(), exitVote.agreed());
-            changed(false);
+        if (hasSeatedHuman()) idleMatchTicks = 0;
+        if (exitVote != null) {
+            if (exitVote.ticksLeft() <= 1) cancelExit();
+            else {
+                exitVote = new ExitVote(exitVote.id(), exitVote.requester(), exitVote.ticksLeft() - 1,
+                    exitVote.required(), exitVote.agreed());
+                changed(false);
+            }
+            return false;
         }
-        return false;
+        if (paused()) {
+            if (!hasSeatedHuman() && ++idleMatchTicks >= IDLE_MATCH_TICKS) closeMatch();
+            return false;
+        }
+        if (exitCooldown > 0) exitCooldown--;
+        return true;
     }
 
     public List<RoomAction> roomActions(UUID actor) { return roomActions(seatOf(actor)); }
@@ -532,8 +560,10 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 if (bots) addBotChoices(actions, target, member);
                 if (member.bot) actions.add(new RoomAction(RoomAction.Type.REMOVE_BOT, target));
             }
-            if (target != seat && member.id != null && !member.bot)
+            if (target != seat && member.id != null && !member.bot) {
                 actions.add(new RoomAction(RoomAction.Type.TRANSFER_HOST, target));
+                actions.add(new RoomAction(RoomAction.Type.KICK, target));
+            }
         }
         return List.copyOf(actions);
     }
@@ -566,6 +596,11 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 setBotChoice(action.arguments().get(0), action.arguments().get(1));
             }
             case REMOVE_BOT -> removeMember(action.arguments().get(0));
+            case KICK -> {
+                int target = action.arguments().get(0);
+                removedPlayers.add(participants[target].id);
+                removeMember(target);
+            }
             case TRANSFER_HOST -> hostId = participants[action.arguments().get(0)].id;
             case RETURN_TO_LOBBY -> returnToLobby(true);
         }

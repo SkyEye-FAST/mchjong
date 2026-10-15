@@ -38,8 +38,28 @@ class ServerIntegrationTest {
         assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_stool_white")).isPresent());
         var commands = server.getCommands().getDispatcher().getRoot().getChild("mchjong");
         assertNotNull(commands);
-        for (String name : java.util.List.of("world", "host", "clock", "invite", "accept", "decline", "replays", "replay"))
+        for (String name : java.util.List.of("world", "table", "host", "clock", "invite", "accept", "decline", "replays", "replay"))
             assertNotNull(commands.getChild(name), "Missing command: " + name);
+        assertNotNull(commands.getChild("table").getChild("close").getChild("pos"));
+        assertNotNull(commands.getChild("table").getChild("kick").getChild("player"));
+    }
+
+    @Test void lobbyEquipmentRequiresMembershipEvenWithoutASeatedViewer(MinecraftServer server) {
+        var game = new RiichiSession(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 1893);
+        UUID host = new UUID(6, 0), guest = new UUID(6, 1), outsider = new UUID(6, 2);
+        assertTrue(game.join(host, "Host", 0));
+        assertTrue(game.join(guest, "Guest", 1));
+        CompoundTag saved = new CompoundTag();
+        saved.putByteArray("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game).getBytes(StandardCharsets.UTF_8));
+        var table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
+        table.loadWithComponents(saved, server.registryAccess());
+        // Restoring the session retains membership without restoring seated presence.
+        assertTrue(table.equipmentEditable());
+        assertTrue(table.equipmentMember(host));
+        assertTrue(table.equipmentMember(guest));
+        assertFalse(table.equipmentMember(outsider));
+        var empty = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
+        assertTrue(empty.equipmentMember(outsider));
     }
 
     private static RiichiSession startedGame() {

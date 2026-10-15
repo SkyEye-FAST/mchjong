@@ -45,6 +45,7 @@ import top.skyeyefast.mchjong.network.RiichiViewPayload;
 public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger("mchjong");
     private static final SecureRandom SEEDS = new SecureRandom();
+    private static final java.util.Set<MahjongTableBlockEntity> TABLES = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
     private TableHost host;
     private byte[] unreadableSave;
     private int ticks;
@@ -80,6 +81,45 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public boolean automatic() { return getBlockState().is(MahjongContent.AUTO_TABLE); }
 
     public MahjongTableBlockEntity(BlockPos pos, BlockState state) { super(MahjongContent.TABLE_ENTITY, pos, state); }
+
+    @Override public void setLevel(Level level) {
+        super.setLevel(level);
+        if (!level.isClientSide) TABLES.add(this);
+    }
+
+    static MahjongTableBlockEntity memberTable(net.minecraft.server.MinecraftServer server, UUID player) {
+        for (var table : java.util.List.copyOf(TABLES)) {
+            if (!(table.level instanceof ServerLevel loaded) || loaded.getServer() != server || table.isRemoved()
+                || !loaded.getChunkSource().hasChunk(table.worldPosition.getX() >> 4, table.worldPosition.getZ() >> 4)
+                || loaded.getBlockEntity(table.worldPosition) != table) continue;
+            if (table.memberRoom(player) != null) return table;
+        }
+        return null;
+    }
+
+    TableSession memberRoom(UUID player) {
+        return host != null && host.session().seatOf(player) >= 0 ? host.session() : null;
+    }
+
+    boolean closeRoomMatch() {
+        if (host == null || host.session().lobby()) return false;
+        host.session().closeMatch();
+        synchronizeEquipment();
+        refreshParticipants(false);
+        flushReplays();
+        setChanged();
+        sentRevision = -1;
+        return true;
+    }
+
+    boolean removeLobbyPlayer(UUID player) {
+        var session = memberRoom(player);
+        if (session == null || !session.removeLobbyPlayer(player)) return false;
+        refreshParticipants(false);
+        setChanged();
+        sentRevision = -1;
+        return true;
+    }
 
     private TableHost serverHost() {
         if (level == null || level.isClientSide) throw new IllegalStateException("Private state accessed outside server");
@@ -420,6 +460,16 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public boolean equipmentEditable() { return unreadableSave == null && (host == null || host.session().lobby()); }
 
+    public boolean equipmentMember(UUID player) {
+        return host == null || host.session().host() < 0 || host.session().seatOf(player) >= 0;
+    }
+
+    private boolean checkEquipmentMember(ServerPlayer player) {
+        if (equipmentMember(player.getUUID())) return true;
+        player.displayClientMessage(Component.translatable("message.mchjong.equipment_members_only"), true);
+        return false;
+    }
+
     private void equipmentChanged() {
         appearanceChanged();
         sentRevision = -1;
@@ -431,6 +481,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
             return;
         }
+        if (!checkEquipmentMember(player)) return;
         player.openMenu(new net.minecraft.world.SimpleMenuProvider(
             (id, inventory, owner) -> new top.skyeyefast.mchjong.item.MahjongTableMenu(id, inventory, this),
             Component.translatable("storage.mchjong.title")));
@@ -485,6 +536,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (!player.isShiftKeyDown() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()
             || player.isSpectator()) return false;
         if (!equipmentEditable() || face != net.minecraft.core.Direction.UP) return false;
+        if (player.serverLevel() != level || isRemoved() || !player.isAlive()
+            || player.distanceToSqr(worldPosition.getCenter()) > 64 || !checkEquipmentMember(player)) return true;
         var removed = equipment.removeCloth();
         if (removed.isEmpty()) return false;
         give(player, removed);
@@ -495,10 +548,12 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public boolean useEquipment(ServerPlayer player, net.minecraft.world.item.ItemStack stack) {
         if (!stack.is(MahjongContent.CLOTH_ITEM)) return false;
-        if (player.isSpectator() || !equipmentEditable()) {
+        if (player.serverLevel() != level || isRemoved() || !player.isAlive()
+            || player.distanceToSqr(worldPosition.getCenter()) > 64 || player.isSpectator() || !equipmentEditable()) {
             player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
             return true;
         }
+        if (!checkEquipmentMember(player)) return true;
         var previous = equipment.installCloth(stack);
         if (!player.isCreative()) stack.shrink(1);
         give(player, previous);
@@ -551,6 +606,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         TableSession session = serverSession();
         if (session == null) { open(player); return; }
         if (seatedViewer(player) != null) { open(player); return; }
+        if (session.removedPlayer(player.getUUID())) {
+            player.displayClientMessage(Component.translatable("message.mchjong.room_removed"), true);
+            return;
+        }
         if (seat < 0 || seat >= session.capacity()) {
             player.displayClientMessage(Component.translatable("message.mchjong.inactive_seat"), true);
             return;
@@ -732,8 +791,9 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
             || authorizedViewer(player) == null) return;
         var offered = session.roomView(player.getUUID()).actions();
-        boolean leaving = payload.actionIndex() < offered.size()
-            && offered.get(payload.actionIndex()).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM;
+        boolean leaving = payload.actionIndex() >= 0 && payload.actionIndex() < offered.size()
+            && (offered.get(payload.actionIndex()).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM
+                || offered.get(payload.actionIndex()).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.KICK);
         if (session.actRoom(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision(), payload.actionIndex())) {
             sentRevision = -1;
             setChanged();

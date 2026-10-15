@@ -97,6 +97,49 @@ class RoomSeatingTest {
         for (var human : humans) act(game, human, RoomAction.Type.READY);
     }
 
+    @Test void onlyTheLobbyHostCanRemoveAnotherHumanAndResetReadiness() {
+        var game = room(false, 2);
+        act(game, id(0), RoomAction.Type.FILL_BOTS);
+        act(game, id(0), RoomAction.Type.BEGIN_SEATING);
+        game.synchronizeSeats(Map.of(id(0), game.seatOf(id(0)), id(1), game.seatOf(id(1))));
+        act(game, id(0), RoomAction.Type.READY);
+        int host = game.seatOf(id(0)), guest = game.seatOf(id(1));
+        int bot = java.util.stream.IntStream.range(0, 4).filter(game::trainingSeat).findFirst().orElseThrow();
+        var kick = new RoomAction(RoomAction.Type.KICK, guest);
+        assertTrue(game.roomActions(id(0)).contains(kick));
+        assertFalse(game.actRoom(id(1), game.decision(), kick));
+        assertFalse(game.actRoom(id(0), game.decision(), new RoomAction(RoomAction.Type.KICK, host)));
+        assertFalse(game.actRoom(id(0), game.decision(), new RoomAction(RoomAction.Type.KICK, bot)));
+        long decision = game.decision();
+        act(game, id(0), RoomAction.Type.KICK, guest);
+        assertEquals(decision + 2, game.decision(), "Removal invalidates decisions exactly like REMOVE_BOT");
+        assertEquals(-1, game.seatOf(id(1)));
+        assertFalse(game.participants().get(host).ready());
+        assertTrue(game.participants().get(bot).ready());
+        assertFalse(game.join(id(1), "Removed guest", guest));
+        assertTrue(game.join(id(2), "Replacement", guest));
+        arriveAndReady(game);
+        assertFalse(game.lobby());
+        assertFalse(game.actRoom(id(0), game.decision(), new RoomAction(RoomAction.Type.KICK, guest)));
+        assertFalse(game.removeLobbyPlayer(id(2)));
+        assertTrue(game.requestExit(id(0)));
+        assertFalse(game.actRoom(id(0), game.decision(), new RoomAction(RoomAction.Type.KICK, guest)));
+        game.closeMatch();
+        assertTrue(game.join(id(1), "New room host", 0));
+    }
+
+    @Test void removedPlayersRemainExcludedAcrossVariantsUntilTheLastHumanLeaves() {
+        var game = room(false, 2);
+        act(game, id(0), RoomAction.Type.KICK, 1);
+        TableSession next = game.selectVariant(id(0), game.incarnation(), game.decision(), MahjongVariant.MCR);
+        assertNotNull(next);
+        assertFalse(next.join(id(1), "Removed guest", 1));
+        next.unseat(id(0));
+        assertTrue(next.join(id(1), "New host", 0));
+        assertTrue(next.removeLobbyPlayer(id(1)), "An administrator can also remove the lobby host");
+        assertTrue(next.join(id(1), "Another room", 0));
+    }
+
     @Test void seatingRequiresEquipmentBeforeLeavingTheLobby() {
         var game = room(true, 4);
         var tiles = game.suppliedTiles;
