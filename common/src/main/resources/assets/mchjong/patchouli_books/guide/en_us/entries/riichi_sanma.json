@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.riichi_sanma.name",
   "category": "mchjong:riichi",
   "icon": "mchjong:mahjong_tile",
-  "sortnum": 5,
+  "sortnum": 12,
   "pages": [
     {
       "type": "patchouli:text",

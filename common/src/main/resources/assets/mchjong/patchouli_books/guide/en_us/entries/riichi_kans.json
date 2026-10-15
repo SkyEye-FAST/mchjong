@@ -1,0 +1,24 @@
+{
+  "name": "manual.mchjong.entry.riichi_kans.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:point_stick",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.kans"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.after"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.after.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.after.continued_2"
+    }
+  ]
+}

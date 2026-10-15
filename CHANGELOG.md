@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Reorganize the Riichi mahjong chapter of the Mahjong Manual into one entry per concept in all four languages: define tiles, winning, ready hands, calls, kans, riichi, dora, furiten, rounds and draws before relying on them, state each base rule before the preset differences, and add the kuitan and swap-calling rules. Use the paper icon for the rule chapters.
 - Watch live matches by walking around the table instead of opening a spectator screen; retire the spectator-access setting, retain spectator hand privacy, and extend in-world round, dealer, score and remaining-tile displays.
 - Optimize Mahjong table, stool, tablecloth, and tile textures to match authentic Minecraft wood, metal, felt, and mineral relief styles, replacing procedural artwork generation with static texture resources.
 - Repair the Mahjong Manual's furniture recipe tables and use a cyan table cloth and a white mahjong stool in the recipe examples.

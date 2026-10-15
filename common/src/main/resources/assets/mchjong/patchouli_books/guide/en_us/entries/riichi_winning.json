@@ -1,0 +1,40 @@
+{
+  "name": "manual.mchjong.entry.riichi_winning.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.shape"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.shape.continued_1"
+    },
+    {
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_winning.example",
+      "tiles": "123m 456m 789p 234s 55p",
+      "face": "mchjong:kansai"
+    },
+    {
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.riichi_winning.example",
+      "tiles": "123m 456m 789p 234s 55p",
+      "face": "mchjong:kansai"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.win"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.win.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.requirement"
+    }
+  ]
+}

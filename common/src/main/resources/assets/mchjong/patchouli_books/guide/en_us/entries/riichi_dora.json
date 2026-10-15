@@ -1,0 +1,28 @@
+{
+  "name": "manual.mchjong.entry.riichi_dora.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:red_dora_dye",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.dora"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.dora.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.dora.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.presets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.presets.continued_1"
+    }
+  ]
+}

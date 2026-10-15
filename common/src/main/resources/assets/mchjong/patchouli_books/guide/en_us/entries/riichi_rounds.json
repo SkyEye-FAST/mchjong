@@ -1,0 +1,20 @@
+{
+  "name": "manual.mchjong.entry.riichi_rounds.name",
+  "category": "mchjong:riichi",
+  "icon": "mchjong:dice",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.rounds"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.rounds.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.rounds.continued_2"
+    }
+  ]
+}
