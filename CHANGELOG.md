@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Correct Mahjong Manual award entries against the scoring engine in all four languages: missing and unclear exclusions for MCR fan, Taiwanese tai applicability and robbed-kong wins, Riichi tanyao and suukantsu conditions, and unclear English wording.
 - List the available bot choices for a seat in a selection screen instead of cycling them with repeated clicks; a seat with one possible change still applies it directly.
 - Give Taiwanese mahjong the automatic win, no calls and automatic discard match controls and the tile sound effects that MCR and Sichuan mahjong already have.
 - Merge the MCR, Sichuan mahjong and Taiwanese mahjong action and next-hand packets into shared table packets and use one view size limit; servers and clients must run the same version.
