@@ -903,6 +903,7 @@
   "room.mchjong.add_bot": "CPUを追加",
   "room.mchjong.away": "一時離席",
   "room.mchjong.away.short": "離席",
+  "room.mchjong.choose_bot": "CPUを選択",
   "room.mchjong.disconnected": "切断",
   "room.mchjong.disconnected.short": "切断",
   "room.mchjong.dissolve": "部屋を解散",

@@ -903,6 +903,7 @@
   "room.mchjong.add_bot": "加入電腦",
   "room.mchjong.away": "暫時離座",
   "room.mchjong.away.short": "暫離",
+  "room.mchjong.choose_bot": "選擇電腦玩家",
   "room.mchjong.disconnected": "已掉線",
   "room.mchjong.disconnected.short": "已掉線",
   "room.mchjong.dissolve": "解散房間",

@@ -903,6 +903,7 @@
   "room.mchjong.add_bot": "Add Bot",
   "room.mchjong.away": "Temporarily Away",
   "room.mchjong.away.short": "Away",
+  "room.mchjong.choose_bot": "Choose Bot",
   "room.mchjong.disconnected": "Disconnected",
   "room.mchjong.disconnected.short": "Offline",
   "room.mchjong.dissolve": "Close Room",
