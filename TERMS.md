@@ -33,7 +33,8 @@ not `国标`/`國標`, `台湾`/`台灣` or `四川` when naming the games. Japa
 mahjong, Sichuan mahjong and Riichi mahjong when naming those games.
 Apply the same rule to other named objects: identify the face preset, back preset,
 replay file or Minecraft server when that is the subject or object of the sentence.
-Wrap or resize a control instead of dropping the head noun from its label. Preserve
+Wrap or resize a control instead of dropping the head noun from its label, unless
+the control has a compact label that meets [Compact labels](#compact-labels). Preserve
 code identifiers and literal quotations, including existing UI labels, exactly;
 their spelling does not establish how to write new explanations or labels.
 
@@ -61,6 +62,53 @@ Do not use middle dots as generic interface separators. Use punctuation or separ
 lines appropriate to the language. Preserve argument types and their bindings when
 reordering a sentence. English `.one` and `.other` forms follow the displayed count.
 Quote variable player names where needed to make Traditional Chinese boundaries clear.
+
+## Compact labels
+
+Toolbars, member rows and collapsed panels can be too narrow for a full label. A
+control there may use a compact label stored under the same key with the suffix
+`.short`. The layout chooses it; it never replaces the full label in prose, tooltips
+or descriptions. A compact label is acceptable only when all of these hold:
+
+1. The full label of the same control stays reachable on the same screen, as a
+   tooltip, in the expanded state of the same panel, or as the heading of the
+   surrounding group. Check this whenever a `.short` key is added.
+2. It drops words that the surrounding screen already supplies, or it is a short form
+   already established in that language and variant. Examples are `Leave` for Leave
+   Room on a room screen, `余` for remaining tiles, a single Chinese character or
+   kanji naming an action in the Chinese and Japanese locales, and the wind letters
+   E, S, W and N. Do not coin a new abbreviation, and do not substitute a different
+   word for the full label.
+3. It keeps the meaning of the full label and differs from every other compact label
+   on the same screen.
+4. When enabling a toggle turns a restriction on, such as No Calls, the compact
+   label still names the restriction. A label that names only the restricted action
+   reads as the opposite while the toggle's marker is lit.
+5. Single Latin letters are limited to the wind letters and to the Riichi mahjong
+   automatic-play toggles, whose letters are established for that variant. New
+   English labels use words.
+
+Do not use a compact label as the name of a variant, preset or scoring pattern, and
+do not use it inside a sentence.
+
+## Leaving, ending and closing
+
+Each of these effects has one name per language, and a control is named for its
+effect. Do not give two controls the same label when they do different things; in
+particular, Chinese `退出` and Japanese `退出` alone must not label both leaving the
+room and ending the match.
+
+| Effect | `en_us` | `zh_cn` | `zh_tw` | `ja_jp` |
+| --- | --- | --- | --- | --- |
+| Leave the seat and keep the match paused | Stand Up | 起身离座 | 起身離座 | 席を立つ |
+| Give up the seat in the lobby | Leave Room | 退出房间 | 退出房間 | 部屋を退出 |
+| End a running match, after approval or by a sole player | End Match | 结束对局 | 結束對局 | 対局を終了 |
+| Remove every member and close the room | Close Room | 解散房间 | 解散房間 | 部屋を解散 |
+| Return from finished results to the lobby | Return to Room | 返回房间 | 返回房間 | 部屋に戻る |
+
+Ending a match keeps completed hands and does not score the unfinished hand. Closing
+a room ends any active match first. Say which of these a confirmation will do, in
+its title, its explanation and its confirming button.
 
 ## Chinese scoring language
 
