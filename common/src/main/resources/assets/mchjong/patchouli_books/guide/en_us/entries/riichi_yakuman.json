@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.riichi_yakuman.name",
   "category": "mchjong:riichi",
   "icon": "mchjong:mahjong_tile",
-  "sortnum": 3,
+  "sortnum": 11,
   "pages": [
     {
       "type": "patchouli:text",

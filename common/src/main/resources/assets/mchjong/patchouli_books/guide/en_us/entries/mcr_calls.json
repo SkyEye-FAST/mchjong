@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.mcr_calls.name",
+  "category": "mchjong:mcr",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_calls.calls"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_calls.calls.continued_1"
+    }
+  ]
+}

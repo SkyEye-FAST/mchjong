@@ -62,9 +62,12 @@ public final class RuleHelp {
         alias(nextAwards, "mcr.mchjong.fan.mixed_kong_pair", nextAwards.get("mcr.mchjong.fan.two_melded_kongs"));
         alias(nextAwards, "sichuan.mchjong.fan.root_with_kong", nextAwards.get("sichuan.mchjong.fan.root"));
         alias(nextAwards, "sichuan.mchjong.fan.basic", nextPages.get("manual.mchjong.entry.sichuan_fan.base"));
+        var yakuhai = nextAwards.get("yaku.mchjong.yakuhai");
+        for (String honor : List.of("seat_wind", "round_wind", "haku", "hatsu", "chun"))
+            alias(nextAwards, "yaku.mchjong." + honor, yakuhai);
         for (String bonus : List.of("dora", "ura_dora", "red_dora", "nuki_dora"))
-            alias(nextAwards, "yaku.mchjong." + bonus, nextPages.get("manual.mchjong.entry.riichi_points.dora"));
-        alias(nextAwards, "ui.mchjong.dora", nextPages.get("manual.mchjong.entry.riichi_points.dora"));
+            alias(nextAwards, "yaku.mchjong." + bonus, nextPages.get("manual.mchjong.entry.riichi_dora.dora"));
+        alias(nextAwards, "ui.mchjong.dora", nextPages.get("manual.mchjong.entry.riichi_dora.dora"));
         pages = Map.copyOf(nextPages); awards = Map.copyOf(nextAwards);
     }
 
@@ -121,23 +124,23 @@ public final class RuleHelp {
             case STARTING_POINTS, RETURN_POINTS, UMA_1, UMA_2, UMA_3, UMA_4 -> "manual.mchjong.entry.riichi_presets.scores";
             case TARGET_POINTS, AGARI_YAME, EXTENSION, BANKRUPTCY, TRIPLE_RON_DRAW -> "manual.mchjong.entry.riichi_presets.online";
             case HEAD_BUMP, AWARD_FINAL_DEPOSITS -> "manual.mchjong.entry.riichi_presets.competition";
-            case ABORTIVE_DRAWS -> "manual.mchjong.entry.riichi_presets.aborts";
+            case ABORTIVE_DRAWS -> "manual.mchjong.entry.riichi_draws.aborts";
             case SUUKANTSU_PAO, WHOLE_HAND_PAO, PAO_RON_HONBA_BY_DISCARDER, PAO_TSUMO_HONBA_SHARED -> "manual.mchjong.entry.riichi_presets.pao";
-            case KUITAN -> "manual.mchjong.entry.riichi_yaku.tanyao";
+            case KUITAN -> "manual.mchjong.entry.riichi_calls.kuitan";
             case IPPATSU -> "manual.mchjong.entry.riichi_yaku.ippatsu";
             case RENHOU_MANGAN -> "manual.mchjong.entry.riichi_yaku.renhou";
             case NAGASHI_MANGAN, NAGASHI_ALLOWS_CALLS -> "manual.mchjong.entry.riichi_yaku.nagashi_mangan";
             case DOUBLE_YAKUMAN, COMPOUND_YAKUMAN -> "manual.mchjong.entry.riichi_yakuman.intro";
-            case MIN_HAN, IPPATSU_COUNTS_TOWARD_MINIMUM -> "manual.mchjong.entry.riichi_flow.yaku";
-            case MATCH_LENGTH -> "manual.mchjong.entry.riichi_flow.length";
-            case FORMAL_TENPAI_IGNORES_MELDS -> "manual.mchjong.entry.riichi_flow.draws";
-            case URA_DORA, KAN_DORA, RED_FIVES -> "manual.mchjong.entry.riichi_points.dora";
+            case MIN_HAN, IPPATSU_COUNTS_TOWARD_MINIMUM -> "manual.mchjong.entry.riichi_winning.requirement";
+            case MATCH_LENGTH -> "manual.mchjong.entry.riichi_rounds.rounds";
+            case FORMAL_TENPAI_IGNORES_MELDS -> "manual.mchjong.entry.riichi_draws.tenpai";
+            case URA_DORA, KAN_DORA, RED_FIVES -> "manual.mchjong.entry.riichi_dora.dora";
             case KAZOE_YAKUMAN, KIRIAGE_MANGAN -> "manual.mchjong.entry.riichi_points.limits";
             case DOUBLE_WIND_PAIR_FU -> "manual.mchjong.entry.riichi_points.fu";
-            case ROB_CONCEALED_KAN, DELAYED_OPEN_KAN_DORA, REPLACEMENT_CAPACITY -> "manual.mchjong.entry.riichi_calls.kans";
-            case RIICHI_KAN_KEEPS_MELDS, RIICHI_KAN_KEEPS_YAKU -> "manual.mchjong.entry.riichi_calls.riichi";
-            case MIN_RIICHI_WALL, NEEDS_RIICHI_DEPOSIT -> "manual.mchjong.entry.riichi_calls.deposit";
-            case DRAWS_CLEAR_FURITEN, CALLS_CLEAR_FURITEN, YAKULESS_FURITEN -> "manual.mchjong.entry.riichi_calls.furiten_clear";
+            case ROB_CONCEALED_KAN, DELAYED_OPEN_KAN_DORA, REPLACEMENT_CAPACITY -> "manual.mchjong.entry.riichi_kans.after";
+            case RIICHI_KAN_KEEPS_MELDS, RIICHI_KAN_KEEPS_YAKU -> "manual.mchjong.entry.riichi_riichi.after";
+            case MIN_RIICHI_WALL, NEEDS_RIICHI_DEPOSIT -> "manual.mchjong.entry.riichi_riichi.riichi";
+            case DRAWS_CLEAR_FURITEN, CALLS_CLEAR_FURITEN, YAKULESS_FURITEN -> "manual.mchjong.entry.riichi_furiten.clear";
             case ROB_NORTH_WITHOUT_KOKUSHI -> "manual.mchjong.entry.riichi_sanma.north";
             default -> "manual.mchjong.entry.riichi_presets.floating"; // Floating placement, shared ranks and the uma matrix.
         };
@@ -146,15 +149,15 @@ public final class RuleHelp {
     static MahjongButton setting(Screen parent, SichuanRuleOption option, Component label, Component description, int x, int y) {
         String target = switch (option) {
             case FAN_CAP, SELF_DRAW_BONUS -> "manual.mchjong.entry.sichuan_fan.base";
-            case MATCH_HANDS -> "manual.mchjong.entry.sichuan_flow.dealer";
-            case SELECT_FIRST_DISCARD -> "manual.mchjong.entry.sichuan_flow.void";
-            case CONCEALED_KONG_PAYMENT, DISCARD_KONG_PAYMENT, ADDED_KONG_PAYMENT -> "manual.mchjong.entry.sichuan_payments.kongs";
-            case TRANSFER_KONG_ON_SHOOT -> "manual.mchjong.entry.sichuan_payments.shooting";
+            case MATCH_HANDS -> "manual.mchjong.entry.sichuan_dealer.dealer";
+            case SELECT_FIRST_DISCARD -> "manual.mchjong.entry.sichuan_void.void";
+            case CONCEALED_KONG_PAYMENT, DISCARD_KONG_PAYMENT, ADDED_KONG_PAYMENT -> "manual.mchjong.entry.sichuan_kongs.kongs";
+            case TRANSFER_KONG_ON_SHOOT -> "manual.mchjong.entry.sichuan_kongs.shooting";
             case SEPARATE_KONG_FAN -> "manual.mchjong.entry.sichuan_fan.root";
             case ADDED_KONG_AFTER_KONG_IS_SHOOT -> "manual.mchjong.entry.sichuan_fan.shoot_after_kong";
             case EAST_WEST_LONG_WALL -> "manual.mchjong.entry.sichuan_presets.differences";
-            case REFUND_KONG_WHEN_NOT_READY -> "manual.mchjong.entry.sichuan_payments.draws";
-            case ACTIVE_FLOWER_PIG_PENALTY -> "manual.mchjong.entry.sichuan_payments.flower_pig";
+            case REFUND_KONG_WHEN_NOT_READY -> "manual.mchjong.entry.sichuan_draws.draws";
+            case ACTIVE_FLOWER_PIG_PENALTY -> "manual.mchjong.entry.sichuan_draws.flower_pig";
         };
         return setting(parent, label, description, target, x, y);
     }

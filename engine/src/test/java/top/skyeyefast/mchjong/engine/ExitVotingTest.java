@@ -12,6 +12,36 @@ class ExitVotingTest {
     private static final UUID HOST = new UUID(50, 1);
     private static final UUID GUEST = new UUID(50, 2);
 
+    @Test void exitVoteFreezesBotsAndTheirDelayAcrossRestore() {
+        var game = McrGameTest.fixed(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
+            .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
+            .hand(3, "555m123789m123p1z").build());
+        McrGameTest.discardKind(game, 0, "5m");
+        var session = TableControlTest.activeMcr(game, HOST, 2);
+        UUID other = session.participants().get(1).id();
+        UUID bot = session.participants().get(2).id();
+        session.synchronizeSeats(java.util.Map.of(HOST, 0, other, 1));
+        for (int i = 0; i < 6; i++) session.tick();
+        assertTrue(session.requestExit(HOST));
+        int age = session.save().age();
+        var clocks = session.save().clocks();
+        session = McrCodec.restoreSession(McrCodec.saveSession(session));
+        session.synchronizeSeats(java.util.Map.of(HOST, 0, other, 1));
+        for (int i = 0; i < 12; i++) session.tick();
+        assertEquals(age, session.save().age());
+        assertEquals(clocks, session.save().clocks());
+        assertTrue(session.answerExit(other, session.roomView(other).exitVote().id(), false));
+        for (int i = 0; i < 5; i++) session.tick();
+        assertFalse(session.view(bot).game().responded());
+        session.tick();
+        assertTrue(session.view(bot).game().responded());
+        assertFalse(session.view(other).game().responded());
+        assertEquals(age + 6, session.save().age());
+        assertEquals(clocks.get(2), session.save().clocks().get(2));
+        assertEquals(clocks.get(3), session.save().clocks().get(3));
+        assertEquals(clocks.get(1).moveTicks() - 6, session.save().clocks().get(1).moveTicks());
+    }
+
     @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"TENHOU_4", "TENHOU_3"})
     void singleHumanExitsEveryMatchStageWithBotsAndCanStartAgain(RiichiPreset rules) {
         for (var phase : RiichiGame.Phase.values()) {

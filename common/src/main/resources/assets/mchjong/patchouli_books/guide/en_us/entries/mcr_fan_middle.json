@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.mcr_fan_middle.name",
   "category": "mchjong:mcr",
   "icon": "mchjong:mahjong_tile",
-  "sortnum": 4,
+  "sortnum": 7,
   "pages": [
     {
       "type": "patchouli:text",

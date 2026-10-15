@@ -69,6 +69,19 @@ class TaiwanSessionTest {
         submit(session,1,Type.WIN); submit(session,3,Type.PASS)
         assertEquals(1,session.game().settlement!!.winner)
     }
+    @Test fun seatedPreferencesRespondToReactionsAfterTheDelay() {
+        val session=session(fixture(mapOf(0 to listOf(33),1 to wait,2 to wait)))
+        submit(session,0,Type.DISCARD,33)
+        fun enable(seat: Int, option: MatchAutomation.Option) = assertTrue(session.configureAutomation(
+            roster[seat].id(),session.tableId(),session.incarnation(),session.view(roster[seat].id()).game().decision(),option,true))
+        enable(2,MatchAutomation.Option.WIN); enable(3,MatchAutomation.Option.NO_CALLS)
+        repeat(TableSession.AUTO_ACTION_TICKS-1) { session.tick() }
+        assertFalse(session.view(roster[2].id()).game().responded())
+        session.tick()
+        assertTrue(session.view(roster[2].id()).game().responded())
+        assertTrue(session.view(roster[3].id()).game().responded())
+        assertFalse(session.view(roster[1].id()).game().responded())
+    }
     @Test fun pauseRestorationAndExitVotesPreserveAllClockAllowances() {
         var session=session(fixture())
         session.tick()

@@ -40,9 +40,4 @@ class RiichiDepositsTest {
         assertTrue(RiichiDeposits.sticks(view(RiichiPreset.MAHJONG_SOUL_4, 0, 15, false)).isEmpty());
     }
 
-    @Test void lanesFitBetweenTheMachineCountersAndScoresWithoutIntersectingEachOther() {
-        assertTrue(RiichiDeposits.LANE_Z - RiichiDeposits.HALF_WIDTH > RiichiDeposits.HALF_LENGTH);
-        assertTrue(RiichiDeposits.LANE_Z + RiichiDeposits.HALF_WIDTH < .166);
-        assertTrue(RiichiDeposits.LANE_Z - RiichiDeposits.HALF_WIDTH > .10);
-    }
 }

@@ -8,6 +8,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
+import java.util.function.IntSupplier;
+import java.util.function.IntUnaryOperator;
+import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 /**
  * Mutable room lifecycle shared by the built-in rule runtimes; server adapters serialize access.
@@ -16,6 +23,8 @@ import java.util.UUID;
 public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession, TaiwanSession {
     public enum Lifecycle { LOBBY, PLAYING, FINISHED }
     public static final int AWAY_GRACE_TICKS = 5 * 20;
+    public static final int IDLE_MATCH_TICKS = 15 * 60 * 20;
+    static final int AUTO_ACTION_TICKS = 12;
 
     UUID tableId;
     MahjongVariant variant;
@@ -34,6 +43,9 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     UUID pendingLeaveDecision;
     long exitVoteSequence;
     int exitCooldown;
+    private int idleMatchTicks;
+    // Room-local exclusions survive variant changes, but end with the last human or a closed room, not a save.
+    private final Set<UUID> removedPlayers = new HashSet<>();
     transient WorldPolicy worldPolicy = WorldPolicy.DEFAULT;
     transient UUID incarnation = UUID.randomUUID();
 
@@ -77,13 +89,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     protected final void resetAutomation() {
         java.util.Collections.fill(automation, MatchAutomation.DEFAULT);
     }
-    public final boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
-        if (variant != MahjongVariant.RIICHI || convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || !lobby() || exitVote != null
-            || !isHost(actor) || expectedDecision != decision) return false;
-        convenienceHints = enabled;
-        changed(false);
-        return true;
-    }
+    public boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) { return false; }
+    protected boolean allowsConvenienceHints() { return false; }
     public int host() { return seatOf(hostId); }
     public boolean isHost(UUID actor) { return actor != null && actor.equals(hostId) && seatOf(actor) >= 0; }
 
@@ -103,7 +110,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     }
 
     public boolean join(UUID id, String name, int seat) {
-        if (id == null || name == null || name.isBlank() || seat < 0 || seat >= capacity) return false;
+        if (id == null || removedPlayer(id) || name == null || name.isBlank() || seat < 0 || seat >= capacity) return false;
         int existing = seatOf(id);
         if (existing >= 0) {
             if (existing != seat) return false;
@@ -112,6 +119,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 participants[seat].awayTicks = 0;
                 participants[seat].presenceKnown = true;
                 pendingLeaveDecision = null;
+                idleMatchTicks = 0;
                 changed(lobby());
             }
             return true;
@@ -162,6 +170,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         }
         if (changed) changed(lobby());
         if (hasSeatedHuman()) pendingLeaveDecision = null;
+        if (hasSeatedHuman()) idleMatchTicks = 0;
         return changed;
     }
 
@@ -251,6 +260,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
             if (seat < capacity && participants[seat].id != null)
                 replacement.participants[seat] = Participant.restore(participants[seat].snapshot());
         replacement.hostId = hostId;
+        replacement.removedPlayers.addAll(removedPlayers);
         replacement.worldPolicy = worldPolicy;
         replacement.revision = revision;
         replacement.decision = decision;
@@ -262,6 +272,9 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     public abstract boolean equipped();
     public abstract boolean configureEquipment(boolean manual, List<Integer> tiles);
     public abstract void tick();
+    public abstract List<ReplayMatch> pendingReplays();
+    public abstract void acknowledgeReplay(UUID id);
+    public boolean hasPendingSideEffects() { return !pendingReplays().isEmpty(); }
     protected abstract void startMatch();
     protected abstract void clearMatch();
 
@@ -342,6 +355,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         }
         resetReadiness();
         rosterChanged();
+        if (hostId == null) removedPlayers.clear();
         if (hostId == null && Arrays.stream(participants).noneMatch(member -> member.entityBot)) closeMatch();
         changed(true);
     }
@@ -441,13 +455,27 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         changed(true);
     }
 
-    protected final void closeMatch() { returnToLobby(false); }
+    public final void closeMatch() { returnToLobby(false); }
+
+    public final boolean removedPlayer(UUID id) { return removedPlayers.contains(id); }
+
+    /** Server administrator override; active matches retain their human roster until the match ends. */
+    public final boolean removeLobbyPlayer(UUID id) {
+        int seat = seatOf(id);
+        if (!lobby() || seat < 0 || participants[seat].bot) return false;
+        if (exitVote != null) cancelExit();
+        removedPlayers.add(id);
+        removeMember(seat);
+        return true;
+    }
 
     protected final void returnToLobby(boolean retainParticipants) {
         exitVote = null;
         pendingLeaveDecision = null;
         exitCooldown = 0;
+        idleMatchTicks = 0;
         if (!retainParticipants) {
+            removedPlayers.clear();
             hostId = null;
             for (int seat = 0; seat < 4; seat++) participants[seat] = new Participant();
         }
@@ -477,16 +505,70 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         if (lobby() && hostId != null && Arrays.stream(participants)
             .filter(member -> member.id != null && !member.bot)
             .allMatch(member -> member.presence == PlayerPresence.DISCONNECTED)) closeMatch();
-        if (paused()) return false;
-        if (exitCooldown > 0) exitCooldown--;
-        if (exitVote == null) return true;
-        if (exitVote.ticksLeft() <= 1) cancelExit();
-        else {
-            exitVote = new ExitVote(exitVote.id(), exitVote.requester(), exitVote.ticksLeft() - 1,
-                exitVote.required(), exitVote.agreed());
-            changed(false);
+        if (hasSeatedHuman()) idleMatchTicks = 0;
+        if (exitVote != null) {
+            if (exitVote.ticksLeft() <= 1) cancelExit();
+            else {
+                exitVote = new ExitVote(exitVote.id(), exitVote.requester(), exitVote.ticksLeft() - 1,
+                    exitVote.required(), exitVote.agreed());
+                changed(false);
+            }
+            return false;
         }
-        return false;
+        if (paused()) {
+            if (!hasSeatedHuman() && ++idleMatchTicks >= IDLE_MATCH_TICKS) closeMatch();
+            return false;
+        }
+        if (exitCooldown > 0) exitCooldown--;
+        return true;
+    }
+
+    protected final boolean humanClockActive(int seat) {
+        // Away and disconnected humans keep their clocks, so their turns still time out while someone is seated.
+        return !paused() && exitVote == null && occupied(seat) && !participants[seat].bot;
+    }
+
+    /** Charges all responders before any action can close their shared decision window. */
+    protected final <A> void tickTurns(List<Integer> seats, List<TimeControl.Clock> clocks, IntSupplier age,
+                                      IntFunction<List<A>> legalActions, IntPredicate clockActive,
+                                      Predicate<A> pass, ToIntFunction<A> discardTile, IntUnaryOperator drawn,
+                                      IntUnaryOperator automaticAction, IntUnaryOperator botAction,
+                                      BiConsumer<Integer, Integer> apply) {
+        long token = matchDecision();
+        for (int seat = 0; seat < capacity; seat++) if (clockActive.test(seat)) {
+            var clock = clocks.get(seat);
+            var remaining = new TimeControl.Clock(clock.moveTicks(), clock.reserveTicks(), true).after(50);
+            clocks.set(seat, new TimeControl.Clock(remaining.moveTicks(), remaining.reserveTicks(), false));
+        }
+        for (int seat : seats) {
+            if (matchDecision() != token) break;
+            var actions = legalActions.apply(seat);
+            if (actions.isEmpty()) continue;
+            int choice = automaticAction.applyAsInt(seat);
+            if (choice >= 0) { apply.accept(seat, choice); continue; }
+            if (participants[seat].bot) {
+                if (age.getAsInt() >= AUTO_ACTION_TICKS) {
+                    choice = botAction.applyAsInt(seat);
+                    if (choice >= 0) apply.accept(seat, choice);
+                }
+                continue;
+            }
+            var clock = clocks.get(seat);
+            if (!clockActive.test(seat) || clock.moveTicks() + clock.reserveTicks() != 0) continue;
+            int discard = -1;
+            int passing = -1;
+            for (int index = 0; index < actions.size(); index++) {
+                var action = actions.get(index);
+                int tile = discardTile.applyAsInt(action);
+                if (tile >= 0) {
+                    if (discard < 0) discard = index;
+                    if (tile == drawn.applyAsInt(seat)) { discard = index; break; }
+                } else if (passing < 0 && pass.test(action)) passing = index;
+            }
+            choice = discard >= 0 ? discard : passing;
+            if (choice >= 0) apply.accept(seat, choice);
+        }
+        if (age.getAsInt() == 1 || age.getAsInt() % 10 == 0) changed(false);
     }
 
     public List<RoomAction> roomActions(UUID actor) { return roomActions(seatOf(actor)); }
@@ -504,7 +586,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         return new TableRoomView(tableId, incarnation, revision, decision, variant, lifecycle,
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
             viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
-            convenienceHints, variant == MahjongVariant.RIICHI && worldPolicy.allowConvenienceHints(),
+            convenienceHints, allowsConvenienceHints(),
             viewer < 0 || manual || lobby() || participants[viewer].bot ? null : automation.get(viewer), List.of());
     }
 
@@ -532,8 +614,10 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 if (bots) addBotChoices(actions, target, member);
                 if (member.bot) actions.add(new RoomAction(RoomAction.Type.REMOVE_BOT, target));
             }
-            if (target != seat && member.id != null && !member.bot)
+            if (target != seat && member.id != null && !member.bot) {
                 actions.add(new RoomAction(RoomAction.Type.TRANSFER_HOST, target));
+                if (member.presence != PlayerPresence.DISCONNECTED) actions.add(new RoomAction(RoomAction.Type.KICK, target));
+            }
         }
         return List.copyOf(actions);
     }
@@ -566,6 +650,11 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 setBotChoice(action.arguments().get(0), action.arguments().get(1));
             }
             case REMOVE_BOT -> removeMember(action.arguments().get(0));
+            case KICK -> {
+                int target = action.arguments().get(0);
+                removedPlayers.add(participants[target].id);
+                removeMember(target);
+            }
             case TRANSFER_HOST -> hostId = participants[action.arguments().get(0)].id;
             case RETURN_TO_LOBBY -> returnToLobby(true);
         }

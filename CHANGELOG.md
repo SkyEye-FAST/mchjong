@@ -9,7 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Optimize Mahjong table, stool, and tablecloth textures to match authentic Minecraft wood, metal, and felt styles including Pale Oak, replacing procedural artwork generation with static texture resources.
+- Correct Mahjong Manual award entries against the scoring engine in all four languages: missing and unclear exclusions for MCR fan, Taiwanese tai applicability and robbed-kong wins, Riichi tanyao and suukantsu conditions, and unclear English wording.
+- List the available bot choices for a seat in a selection screen instead of cycling them with repeated clicks; a seat with one possible change still applies it directly.
+- Give Taiwanese mahjong the automatic win, no calls and automatic discard match controls and the tile sound effects that MCR and Sichuan mahjong already have.
+- Merge the MCR, Sichuan mahjong and Taiwanese mahjong action and next-hand packets into shared table packets and use one view size limit; servers and clients must run the same version.
+- Share Chinese-variant turn timers, prefer discarding the drawn tile on timeout, and charge human players only outside pauses and exit votes; separate Riichi persistence and recipient projection from game progression.
+- Name the match-ending control End Match, distinguish its confirmation from Close Room, and correct compact labels and English label capitalization in the interface, keeping short English variant names in lists where nothing else could be meant.
+- Reorganize the four rule chapters of the Mahjong Manual into one entry per concept in all four languages: define terms before relying on them, state each base rule before the preset differences, explain each Sichuan mahjong preset difference where its rule appears, name the MCR scoring edition, add the Riichi mahjong kuitan and swap-calling rules, and use the paper icon for the rule chapters.
+- Watch live matches by walking around the table instead of opening a spectator screen; retire the spectator-access setting, retain spectator hand privacy, and extend in-world round, dealer, score and remaining-tile displays.
+- Optimize Mahjong table, stool, tablecloth, and tile textures to match authentic Minecraft wood, metal, felt, and mineral relief styles, replacing procedural artwork generation with static texture resources.
+- Repair the Mahjong Manual's furniture recipe tables and use a cyan table cloth and a white mahjong stool in the recipe examples.
 - Redraw Mahjong dyes with vanilla-style powder mounds, splicing crafting ingredient pigments for Mahjong Dye and scaling down Red Dora Dye and Undo Dye, replacing procedural artwork generation with static texture resources.
 - Redraw the Mahjong Manual item texture with an isometric jade-and-brass book matching the vanilla Minecraft book perspective, replacing procedural artwork generation with a static texture resource.
 - Rewrite the Mahjong Manual in all four languages around six chapters: tables and equipment, seating and play, and one chapter each for Riichi mahjong, MCR, Sichuan mahjong and Taiwanese mahjong. Give every yaku, scoring pattern and tai pattern its own text page, keep tile diagrams only for hand shapes that text cannot show, and point rule-setting explanations to the section describing each option.
@@ -37,6 +46,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add room-member equipment permissions, host removal with room-local rejoin restrictions, administrator table close and lobby kick commands, and a 15-minute timeout for matches paused without seated human players.
+- Add the default-off Advance Idle Manual Actions room option for ordinary Riichi mahjong tables, allowing the host to advance idle players' manual steps when their clocks expire.
 - Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring, preserving separate flower payouts.
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan mahjong and Taiwanese mahjong rule entrances, complete award indexes, tile illustrations, payment examples and preset differences. Align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
 - Add independent native Taiwanese mahjong replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.
@@ -47,6 +58,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Show ordinary-table points, remaining tiles, round and dealer on the outward-facing table rim so spectators can read them while walking around the table.
+- Use Chow and Pung for Taiwanese mahjong actions in English, name the Sichuan mahjong table and replay entries after the game instead of SBR, write the blood-battle preset name in Chinese and Japanese without the English abbreviation, write the MCR settlement title with the full game name in Chinese, and use Title Case for English table and settlement titles.
+- Keep room member control captions complete, stop offering removal for disconnected members, and use the same Close Room caption in both close-room confirmations.
+- Ask for confirmation before an exit request that immediately closes the room, and explain the exit outcomes in the Exit button tooltip.
+- Clarify scoring-pattern requirements in all four handbook languages, consolidate Riichi mahjong honor-tile yaku into one Yakuhai explanation, and link the open Tanyao setting to its rule-choice page.
 - Craft stools from every wood family with any of the 16 matching carpet colors. Stools and cloths support all 16 dye colors while preserving their other components.
 - Separate draw-time and call-time temporary furiten clearance, and prevent North replacements from qualifying the following discard for Kanburi.
 - Correct four-language mahjong terminology and scoring explanations. Distinguish revealed hands from melds and concealed kans, retain natural Chinese payment wording, and fit Japanese minimum-han choices at the smallest window size.

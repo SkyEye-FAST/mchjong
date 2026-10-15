@@ -200,22 +200,13 @@ class TaiwanBotTest {
         mount(it)
     }
 
-    @Test fun botRepliesAreDelayedPausedRestorableAndDoNotSpendClocks() {
+    @Test fun botWinAndNextHandConfirmationSurviveRestore() {
         val game = fixture(mapOf(0 to listOf(33), 1 to wait))
         act(game, 0, Type.DISCARD, 33)
         var room = room(game)
         val clocks = room.save().clocks()
-        repeat(6) { room.tick() }
-        assertEquals(6, room.save().age())
-        assertFalse(room.game().view(1).responded())
-        assertEquals(clocks, room.save().clocks())
-        room.unseat(human)
-        repeat(20) { room.tick() }
-        assertEquals(6, room.save().age())
         room = restore(room)
-        repeat(5) { room.tick() }
-        assertEquals(TaiwanGame.Phase.REACTION, room.game().phase)
-        room.tick()
+        repeat(12) { room.tick() }
         assertEquals(TaiwanGame.Phase.FINISHED, room.game().phase)
         assertEquals(1, room.game().settlement!!.winner)
         assertEquals(14, room.save().confirmed())
@@ -232,7 +223,7 @@ class TaiwanBotTest {
         assertTrue(index >= 0, "Missing $type $arguments")
         assertTrue(room.actRoom(human, room.tableId(), room.incarnation(), room.decision(), index))
     }
-    @Test fun sharedRoomControlsExposeOneBotFillRemoveReadyAndPolicy() {
+    @Test fun unsupportedBotDifficultyIsRejectedAtStartAndRestore() {
         val room = TaiwanSession(UUID.randomUUID(), 4)
         assertTrue(room.join(human, "Human", 0))
         assertTrue(room.configureEquipment(false, TaiwanWall.expected(room.rules())))
@@ -248,51 +239,6 @@ class TaiwanBotTest {
         }
         val saved = TaiwanCodec.saveSession(room)
         assertThrows(IllegalArgumentException::class.java) { TaiwanCodec.restoreSession(saved.replace("\"EASY\"", "\"HARD\"")) }
-        roomAction(room, RoomAction.Type.REMOVE_BOT, listOf(1))
-        roomAction(room, RoomAction.Type.FILL_BOTS)
-        assertTrue(room.participants().drop(1).all { it.bot() && it.ready() && it.externalBotId() == null })
-        val disabled = WorldPolicy(true, false, true, 5000, true, false, true, true, null)
-        room.configureWorld(disabled)
-        assertTrue(room.participants().none { it.bot() })
-        assertTrue(room.roomActions(human).none { it.type() == RoomAction.Type.FILL_BOTS || it.type() == RoomAction.Type.SET_BOT })
-        room.configureWorld(WorldPolicy.DEFAULT)
-        roomAction(room, RoomAction.Type.FILL_BOTS)
-        roomAction(room, RoomAction.Type.BEGIN_SEATING)
-        mount(room)
-        roomAction(room, RoomAction.Type.READY)
-        assertEquals(TableSession.Lifecycle.PLAYING, room.lifecycle())
-        assertTrue(room.participants().filter { it.bot() }.all { it.ready() })
-    }
-
-    @Test fun exitVoteAndPartialRepliesPreserveBotDelayAcrossRestore() {
-        val second = UUID(0, 2)
-        val players = roster.toMutableList().also { it[1] = TableParticipant(second, "Second human") }
-        val game = fixture(mapOf(0 to listOf(33)))
-        act(game, 0, Type.DISCARD, 33)
-        val initial = TaiwanSession.start(UUID.randomUUID(), players, 4, TaiwanWall.expected(game.rules), game.rules).save()
-        var room = TaiwanSession.restore(TaiwanSession.State(initial.format(), initial.room(), initial.rules(), initial.stock(), initial.control(),
-            initial.clocks(), 0, 0, initial.futureSeed(), emptyList(), game.save(),null,null,emptyList()))
-        fun mountBoth() = room.synchronizeSeats(mapOf(human to 0, second to 1))
-        mountBoth()
-        repeat(6) { room.tick() }
-        assertTrue(room.requestExit(human))
-        val saved = room.save()
-        repeat(20) { room.tick() }
-        assertEquals(saved.age(), room.save().age())
-        assertEquals(saved.clocks(), room.save().clocks())
-        room = TaiwanCodec.restoreSession(TaiwanCodec.saveSession(room))
-        mountBoth()
-        assertTrue(room.answerExit(second, room.save().room().exitVote().id(), false))
-        repeat(5) { room.tick() }
-        assertFalse(room.game().view(2).responded())
-        room.tick()
-        assertTrue(room.game().view(2).responded())
-        assertTrue(room.game().view(3).responded())
-        assertEquals(saved.clocks()[2], room.save().clocks()[2])
-        assertEquals(saved.clocks()[3], room.save().clocks()[3])
-        assertEquals(saved.clocks()[1].moveTicks() - 6, room.save().clocks()[1].moveTicks())
-        assertFalse(room.view(second).game().responded())
-        assertEquals(12, room.save().age())
     }
 
     @Test fun externalAndAllBotRostersAreRejected() {

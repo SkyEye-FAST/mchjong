@@ -11,6 +11,8 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
  */
 public final class TableNetworking {
     public static final Gson JSON = new GsonBuilder().disableHtmlEscaping().create();
+    /** Maximum UTF length of one serialized game view in a clientbound payload. */
+    public static final int VIEW_LIMIT = 524288;
     private TableNetworking() {}
 
     public static void receive(ServerPlayer player, RiichiActionPayload payload) {
@@ -19,40 +21,22 @@ public final class TableNetworking {
             table.act(player, payload);
     }
 
-    public static void receive(ServerPlayer player, McrActionPayload payload) {
+    public static void receive(ServerPlayer player, TableActionPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.mcrAction(player, payload);
+            table.tableAction(player, payload);
     }
 
-    public static void receive(ServerPlayer player, SichuanActionPayload payload) {
+    public static void receive(ServerPlayer player, NextHandPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.sichuanAction(player, payload);
-    }
-
-    public static void receive(ServerPlayer player, SichuanNextHandPayload payload) {
-        if (!canReach(player, payload.pos())) return;
-        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.confirmSichuanNextHand(player, payload);
+            table.confirmNextHand(player, payload);
     }
 
     public static void receive(ServerPlayer player, SichuanRulesPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
             table.configureSichuanRules(player, payload);
-    }
-
-    public static void receive(ServerPlayer player, TaiwanActionPayload payload) {
-        if (!canReach(player, payload.pos())) return;
-        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.taiwanAction(player, payload);
-    }
-
-    public static void receive(ServerPlayer player, TaiwanNextHandPayload payload) {
-        if (!canReach(player, payload.pos())) return;
-        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.confirmTaiwanNextHand(player, payload);
     }
 
     public static void receive(ServerPlayer player, TaiwanRulesPayload payload) {
@@ -71,12 +55,6 @@ public final class TableNetworking {
         if (!canReach(player, payload.pos())) return;
         if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
             table.actRoom(player, payload);
-    }
-
-    public static void receive(ServerPlayer player, McrNextHandPayload payload) {
-        if (!canReach(player, payload.pos())) return;
-        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.confirmMcrNextHand(player, payload);
     }
 
     public static void receive(ServerPlayer player, TableVariantPayload payload) {

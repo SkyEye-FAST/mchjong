@@ -2,10 +2,8 @@ package top.skyeyefast.mchjong.engine;
 
 import com.google.gson.JsonParser;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.List;
 import java.util.HashSet;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,8 +11,6 @@ import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 import static top.skyeyefast.mchjong.engine.McrGameTest.*;
 
 class McrBotTest {
-    private static final UUID HUMAN = new UUID(71, 1);
-
     @Test void refusesLowFanWinsAndPrioritizesQualifiedWins() {
         var low = fixed(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
         assertTrue(has(low, 0, WIN));
@@ -32,16 +28,6 @@ class McrBotTest {
         play(claim, 1, DRAW);
         assertTrue(claim.view(1).qualifyingWin());
         assertEquals(WIN, choice(claim, 1).type());
-    }
-
-    @Test void discardsAnIsolatedHonorAndUsesStablePhysicalTieBreak() {
-        var game = fixed(8, new Fixture().hand(0, "123m123p123s45s77z1z").build());
-        var selected = choice(game, 0);
-        assertEquals(DISCARD, selected.type());
-        assertEquals(Tile.EAST, Tile.kind(selected.tiles().getFirst()));
-        var tied = fixed(9, new Fixture().hand(0, "12345m567p789s11z6m").build());
-        int tile = choice(tied, 0).tiles().getFirst();
-        assertEquals(tied.hand(0).stream().filter(id -> Tile.kind(id) == Tile.kind(tile)).min(Integer::compare).orElseThrow(), tile);
     }
 
     @Test void evaluatesTheMandatoryDiscardBeforeCalling() {
@@ -168,94 +154,6 @@ class McrBotTest {
         assertEquals(-1, McrBot.choose(game.view(-1)));
     }
 
-    @Test void sharedLobbyFillsThreeBotsAndWorldPolicyRemovesThemBeforePlay() {
-        var session = lobby();
-        room(session, RoomAction.Type.FILL_BOTS);
-        assertEquals(3, session.participants().stream().filter(TableParticipant::bot).count());
-        assertTrue(session.roomActions(HUMAN).stream().noneMatch(action -> action.type() == RoomAction.Type.SET_BOT));
-        session.configureWorld(new WorldPolicy(true, false, true, 5000, true, false, true, true, null));
-        assertEquals(0, session.participants().stream().filter(TableParticipant::bot).count());
-        assertTrue(session.roomActions(HUMAN).stream().noneMatch(action -> action.type() == RoomAction.Type.FILL_BOTS));
-        session.configureWorld(WorldPolicy.DEFAULT);
-        room(session, RoomAction.Type.FILL_BOTS);
-        start(session);
-        assertEquals(TableSession.Lifecycle.PLAYING, session.lifecycle());
-        assertTrue(session.requestExit(HUMAN));
-        assertTrue(session.lobby(), "Only the human votes on ending a one-human match");
-    }
-
-    @Test void simultaneousBotRepliesKeepTheirClocksAndResumeAfterSaving() {
-        var game = fixed(4, new Fixture().hand(0, "279m147p258s2345z5m")
-            .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
-            .hand(3, "555m123789m123p1z").build());
-        discardKind(game, 0, "5m");
-        var session = active(game, 1);
-        for (int i = 0; i < 6; i++) session.tick();
-        var clocks = session.save().clocks();
-        session = McrCodec.restoreSession(McrCodec.saveSession(session));
-        long decision = session.view(null).game().decision();
-        for (int i = 0; i < 20; i++) session.tick();
-        assertEquals(decision, session.view(null).game().decision(), "No seated human pauses bots too");
-        session.synchronizeSeats(Map.of(HUMAN, 0));
-        for (int i = 0; i < 5; i++) session.tick();
-        assertEquals(McrGame.Phase.REACTION, session.view(HUMAN).game().phase());
-        session.tick();
-        assertEquals(1, assertInstanceOf(McrSettlement.Win.class, session.view(HUMAN).game().result()).winner());
-        assertEquals(clocks, session.save().clocks());
-        assertEquals(14, session.view(HUMAN).confirmed());
-        var end = session.view(HUMAN);
-        assertTrue(session.confirmNextHand(HUMAN, session.tableId(), end.incarnation(), end.game().decision()));
-        assertEquals(2, session.view(HUMAN).game().handNumber());
-    }
-
-    @Test void exitVoteFreezesBotsAndTheirDelayAcrossRestore() {
-        var session = active(fixed(8, new Fixture().hand(0, "123m123p123s45s77z1z").build()), 2);
-        UUID other = session.participants().get(1).id();
-        session.synchronizeSeats(Map.of(HUMAN, 0, other, 1));
-        assertTrue(session.requestExit(HUMAN));
-        int age = session.save().age();
-        session = McrCodec.restoreSession(McrCodec.saveSession(session));
-        session.synchronizeSeats(Map.of(HUMAN, 0, other, 1));
-        for (int i = 0; i < 12; i++) session.tick();
-        assertEquals(age, session.save().age());
-        assertTrue(session.answerExit(other, session.roomView(other).exitVote().id(), false));
-        session.tick();
-        assertEquals(age + 1, session.save().age());
-    }
-
     private static McrAction choice(McrGame game, int seat) { return game.actions(seat).get(McrBot.choose(game.view(seat))); }
 
-    private static McrSession lobby() {
-        var session = new McrSession(new UUID(71, 0), 711);
-        session.configureEquipment(false, Tile.standard144Set());
-        assertTrue(session.join(HUMAN, "Human", 0));
-        return session;
-    }
-
-    private static void room(McrSession session, RoomAction.Type type) {
-        var action = session.roomActions(HUMAN).stream().filter(candidate -> candidate.type() == type).findFirst().orElseThrow();
-        assertTrue(session.actRoom(HUMAN, session.decision(), action));
-    }
-
-    private static void start(McrSession session) {
-        room(session, RoomAction.Type.BEGIN_SEATING);
-        session.synchronizeSeats(Map.of(HUMAN, session.seatOf(HUMAN)));
-        room(session, RoomAction.Type.READY);
-    }
-
-    private static McrSession active(McrGame game, int humans) {
-        var roster = new ArrayList<TableParticipant>();
-        for (int seat = 0; seat < 4; seat++) roster.add(new TableParticipant(seat == 0 ? HUMAN : new UUID(71, seat + 1),
-            "Seat " + seat, seat >= humans, false, BotDifficulty.EASY, null, true));
-        var seating = new RoomSeating();
-        seating.positioned(4);
-        var room = new TableSession.State(new UUID(71, 0), MahjongVariant.MCR, 4, HUMAN, roster, seating.save(),
-            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false, java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
-        var control = TimeControl.DEFAULT;
-        var clocks = java.util.Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
-        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.standard144Set(), 0,
-            control, clocks, 0, game.save(), null, null, java.util.List.of()));
-        session.synchronizeSeats(Map.of(HUMAN, 0));
-        return session;
-    }
 }

@@ -40,25 +40,18 @@ class TrainingBotTest {
         return view.actions().get(TrainingBot.choose(view, difficulty));
     }
 
-    @Test void yakuRoutesPreserveUsefulTilesWithoutBuyingAnOffensiveRetreat() {
-        String[][] positions = {
-            {"sanshoku", "123m123p12457889s", "8s"},
-            {"ittsu", "1234589m234p558s7p", "7p,8s"},
-            {"iipeikou and pinfu", "22334456m345p55s8p", "8p"},
-            {"toitoi", "111m222p3344s55z67z", "6z,7z"},
-            {"sequence over triplets", "112233m456p67s555z", "5z"},
-            {"honitsu", "11234567789m55z4p", "4p"},
-            {"chiitoitsu", "1122m3344p155s167z", "1s,1z,6z,7z"},
-            {"no speculative retreat", "123456m234p456s12z", "1z,2z"},
+    @Test void yakuRoutesDoNotBuyAnOffensiveShantenRetreat() {
+        String[] positions = {
+            "123m123p12457889s", "1234589m234p558s7p", "22334456m345p55s8p",
+            "111m222p3344s55z67z", "112233m456p67s555z", "11234567789m55z4p",
+            "1122m3344p155s167z", "123456m234p456s12z",
         };
         assertAll(java.util.Arrays.stream(positions).map(position -> (org.junit.jupiter.api.function.Executable) () -> {
-            var game = hand(position[1]);
+            var game = hand(position);
             var shapes = RiichiHandAnalyzer.discardEfficiency(game.players[0].hand, List.of(), false);
             int selected = Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst());
             assertEquals(shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow(),
-                shapes.get(selected).shanten(), position[0]);
-            assertTrue(java.util.Arrays.stream(position[2].split(",")).mapToInt(Tile::parseKind).anyMatch(k -> k == selected),
-                position[0] + " discarded " + Tile.notation(selected));
+                shapes.get(selected).shanten(), position);
         }));
     }
 

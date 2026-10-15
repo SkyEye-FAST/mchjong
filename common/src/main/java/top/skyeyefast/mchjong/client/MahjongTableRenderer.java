@@ -128,6 +128,7 @@ public final class MahjongTableRenderer
         }
         tiles(state, pose, buffers, Layer.FACE);
         if (state.automatic) TableIndicator.render(state.view, pose, buffers, state.lightCoords);
+        else TableIndicator.renderOrdinary(state.view, pose, buffers, state.lightCoords);
         RiichiDeposits.render(state.view, state.automatic, state.animation, state.animated, state.now, pose, buffers, collector, state.lightCoords);
         RiichiDice.renderWorld(state.view, pose, collector, state.lightCoords);
         if (glass) {

@@ -2,7 +2,7 @@
   "name": "manual.mchjong.entry.sichuan_presets.name",
   "category": "mchjong:sichuan",
   "icon": "mchjong:mahjong_tile",
-  "sortnum": 3,
+  "sortnum": 8,
   "pages": [
     {
       "type": "patchouli:text",

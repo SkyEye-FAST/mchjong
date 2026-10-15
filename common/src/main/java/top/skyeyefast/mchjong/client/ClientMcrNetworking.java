@@ -46,6 +46,10 @@ public final class ClientMcrNetworking {
         boolean showing = active != null && active.tablePos().equals(payload.pos())
             || rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
             || rootScreen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos());
+        if (!payload.room().lobby() && payload.room().viewerSeat() < 0) {
+            if (showing) client.setScreen(null);
+            return;
+        }
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
             && payload.room().lobby() && showing) { client.setScreen(null); return; }
         if (view == null) {

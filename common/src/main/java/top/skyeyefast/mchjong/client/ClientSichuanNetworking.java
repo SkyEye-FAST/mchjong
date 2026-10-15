@@ -49,6 +49,10 @@ public final class ClientSichuanNetworking {
             || rootScreen instanceof SichuanLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
             || rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())
             || rootScreen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos());
+        if (!room.lobby() && room.viewerSeat() < 0) {
+            if (showing) client.setScreen(null);
+            return;
+        }
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
             && payload.room().lobby() && showing) { client.setScreen(null); return; }
         if (!payload.open() && rulesScreen != null && rulesScreen.tablePos().equals(payload.pos())) {

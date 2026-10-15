@@ -7,7 +7,6 @@ import java.util.UUID;
 
 public final class SichuanSession extends TableSession {
     private static final int SETTLEMENT_TICKS = 200;
-    private static final int AUTO_ACTION_TICKS = 12;
     private SichuanRules rules = SichuanPreset.SBR_2025.config();
     private SichuanGame game;
     @Override protected long matchDecision() { return game == null ? decision : game.decision(); }
@@ -135,40 +134,29 @@ public final class SichuanSession extends TableSession {
             else if (age % 10 == 0) changed(false);
             return;
         }
-        long expectedDecision = game.decision();
-        for (int seat = 0; seat < 4; seat++) if (clockActive(seat)) {
-            var clock = clocks.get(seat);
-            var remaining = new TimeControl.Clock(clock.moveTicks(), clock.reserveTicks(), true).after(50);
-            clocks.set(seat, new TimeControl.Clock(remaining.moveTicks(), remaining.reserveTicks(), false));
-        }
-        for (int seat = 0; seat < 4 && game.decision() == expectedDecision; seat++) {
-            var actions = game.actions(seat);
-            if (actions.isEmpty()) continue;
-            if (actions.size() == 1 && actions.get(0).type() == SichuanAction.Type.DRAW) {
-                if (age >= AUTO_ACTION_TICKS) apply(seat, expectedDecision, 0);
-            } else if (participants[seat].bot) {
-                if (age >= AUTO_ACTION_TICKS) {
-                    int choice = SichuanBot.choose(game.view(seat));
-                    if (choice >= 0) apply(seat, expectedDecision, choice);
-                }
-            } else {
-                int automatic = age >= AUTO_ACTION_TICKS ? SichuanAutomation.action(automation.get(seat), game.view(seat)) : -1;
-                if (automatic >= 0) { apply(seat, expectedDecision, automatic); continue; }
-                if (clocks.get(seat).moveTicks() + clocks.get(seat).reserveTicks() != 0) continue;
-                int fallback = -1;
-                for (int index = 0; index < actions.size(); index++) {
-                    var action = actions.get(index);
-                    if (action.type() == SichuanAction.Type.PASS) { fallback = index; break; }
-                    if (fallback < 0 && (action.type() == SichuanAction.Type.VOID_SUIT || action.type() == SichuanAction.Type.DISCARD)) fallback = index;
-                }
-                if (fallback >= 0) apply(seat, expectedDecision, fallback);
-            }
-        }
-        if (age % 10 == 0) changed(false);
+        tickTurns(List.of(0, 1, 2, 3), clocks, () -> age, game::actions, this::clockActive,
+            action -> action.type() == SichuanAction.Type.PASS,
+            action -> action.type() == SichuanAction.Type.DISCARD ? action.tiles().get(0) : Tile.ABSENT,
+            seat -> game.view(seat).seats().get(seat).drawn(), this::automaticAction,
+            seat -> SichuanBot.choose(game.view(seat)), (seat, index) -> apply(seat, game.decision(), index));
+    }
+    private int automaticAction(int seat) {
+        var actions = game.actions(seat);
+        if (actions.size() == 1 && actions.get(0).type() == SichuanAction.Type.DRAW)
+            return age >= AUTO_ACTION_TICKS ? 0 : -1;
+        if (participants[seat].bot) return -1;
+        int automatic = age >= AUTO_ACTION_TICKS ? SichuanAutomation.action(automation.get(seat), game.view(seat)) : -1;
+        if (automatic >= 0) return automatic;
+        var clock = clocks.get(seat);
+        if (clockActive(seat) && clock.moveTicks() + clock.reserveTicks() == 0)
+            for (int index = 0; index < actions.size(); index++)
+                if (actions.get(index).type() == SichuanAction.Type.VOID_SUIT) return index;
+        return -1;
     }
     private boolean clockActive(int seat) {
         var actions = game.actions(seat);
-        return !participants[seat].bot && !actions.isEmpty() && !(actions.size() == 1 && actions.get(0).type() == SichuanAction.Type.DRAW);
+        return humanClockActive(seat) && !actions.isEmpty()
+            && !(actions.size() == 1 && actions.get(0).type() == SichuanAction.Type.DRAW);
     }
     public View view(UUID recipient) {
         if (game == null) return null;

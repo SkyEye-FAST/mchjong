@@ -47,10 +47,6 @@ class TaiwanIntegrationTest {
         UUID id = UUID.randomUUID(), incarnation = UUID.randomUUID();
         var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), server.registryAccess(), ConnectionType.NEOFORGE);
         try {
-            var action = new TaiwanActionPayload(BlockPos.ZERO, id, incarnation, 9, 2);
-            TaiwanActionPayload.CODEC.encode(buffer, action); assertEquals(action, TaiwanActionPayload.CODEC.decode(buffer));
-            var confirm = new TaiwanNextHandPayload(BlockPos.ZERO, id, incarnation, 9);
-            TaiwanNextHandPayload.CODEC.encode(buffer, confirm); assertEquals(confirm, TaiwanNextHandPayload.CODEC.decode(buffer));
             var clock = new TaiwanClockPayload(BlockPos.ZERO, id, incarnation, 9, new TimeControl(120, 30));
             TaiwanClockPayload.CODEC.encode(buffer, clock); assertEquals(clock, TaiwanClockPayload.CODEC.decode(buffer));
             for (var preset : TaiwanPreset.values()) {

@@ -38,8 +38,28 @@ class ServerIntegrationTest {
         assertTrue(server.getRecipeManager().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, MahjongContent.id("mahjong_stool_white"))).isPresent());
         var commands = server.getCommands().getDispatcher().getRoot().getChild("mchjong");
         assertNotNull(commands);
-        for (String name : java.util.List.of("world", "host", "clock", "invite", "accept", "decline", "replays", "replay"))
+        for (String name : java.util.List.of("world", "table", "host", "clock", "invite", "accept", "decline", "replays", "replay"))
             assertNotNull(commands.getChild(name), "Missing command: " + name);
+        assertNotNull(commands.getChild("table").getChild("close").getChild("pos"));
+        assertNotNull(commands.getChild("table").getChild("kick").getChild("player"));
+    }
+
+    @Test void lobbyEquipmentRequiresMembershipEvenWithoutASeatedViewer(MinecraftServer server) {
+        var game = new RiichiSession(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 1893);
+        UUID host = new UUID(6, 0), guest = new UUID(6, 1), outsider = new UUID(6, 2);
+        assertTrue(game.join(host, "Host", 0));
+        assertTrue(game.join(guest, "Guest", 1));
+        CompoundTag saved = new CompoundTag();
+        saved.putByteArray("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game).getBytes(StandardCharsets.UTF_8));
+        var table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
+        table.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(net.minecraft.util.ProblemReporter.DISCARDING, server.registryAccess(), saved));
+        // Restoring the session retains membership without restoring seated presence.
+        assertTrue(table.equipmentEditable());
+        assertTrue(table.equipmentMember(host));
+        assertTrue(table.equipmentMember(guest));
+        assertFalse(table.equipmentMember(outsider));
+        var empty = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
+        assertTrue(empty.equipmentMember(outsider));
     }
 
     private static RiichiSession startedGame() {
@@ -161,23 +181,19 @@ class ServerIntegrationTest {
                 top.skyeyefast.mchjong.engine.MahjongVariant.MCR);
             top.skyeyefast.mchjong.network.TableVariantPayload.CODEC.encode(buffer, choice);
             assertEquals(choice, top.skyeyefast.mchjong.network.TableVariantPayload.CODEC.decode(buffer));
-            var action = new top.skyeyefast.mchjong.network.McrActionPayload(request.pos(), request.tableId(), UUID.randomUUID(), 9, 2);
-            top.skyeyefast.mchjong.network.McrActionPayload.CODEC.encode(buffer, action);
-            assertEquals(action, top.skyeyefast.mchjong.network.McrActionPayload.CODEC.decode(buffer));
-            assertThrows(IllegalArgumentException.class, () -> new top.skyeyefast.mchjong.network.McrActionPayload(
+            var action = new top.skyeyefast.mchjong.network.TableActionPayload(request.pos(), request.tableId(), UUID.randomUUID(), 9, 2);
+            top.skyeyefast.mchjong.network.TableActionPayload.CODEC.encode(buffer, action);
+            assertEquals(action, top.skyeyefast.mchjong.network.TableActionPayload.CODEC.decode(buffer));
+            assertThrows(IllegalArgumentException.class, () -> new top.skyeyefast.mchjong.network.TableActionPayload(
                 request.pos(), request.tableId(), UUID.randomUUID(), 9, -1));
             var roomAction = new top.skyeyefast.mchjong.network.TableRoomActionPayload(request.pos(), request.tableId(),
                 UUID.randomUUID(), 9, 2);
             top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.encode(buffer, roomAction);
             assertEquals(roomAction, top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.decode(buffer));
-            var lifecycle = new top.skyeyefast.mchjong.network.McrNextHandPayload(request.pos(), request.tableId(),
+            var lifecycle = new top.skyeyefast.mchjong.network.NextHandPayload(request.pos(), request.tableId(),
                 UUID.randomUUID(), 9);
-            top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.encode(buffer, lifecycle);
-            assertEquals(lifecycle, top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.decode(buffer));
-            var sichuanConfirmation = new top.skyeyefast.mchjong.network.SichuanNextHandPayload(request.pos(), request.tableId(),
-                UUID.randomUUID(), 9);
-            top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC.encode(buffer, sichuanConfirmation);
-            assertEquals(sichuanConfirmation, top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC.decode(buffer));
+            top.skyeyefast.mchjong.network.NextHandPayload.CODEC.encode(buffer, lifecycle);
+            assertEquals(lifecycle, top.skyeyefast.mchjong.network.NextHandPayload.CODEC.decode(buffer));
             var sichuanRoom = new top.skyeyefast.mchjong.engine.SichuanSession(request.tableId(), 7);
             var sichuanView = new top.skyeyefast.mchjong.network.SichuanViewPayload(request.pos(), "", sichuanRoom.roomView(null),
                 new top.skyeyefast.mchjong.item.SichuanDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,

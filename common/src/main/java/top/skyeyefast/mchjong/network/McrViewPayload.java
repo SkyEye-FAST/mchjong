@@ -26,7 +26,7 @@ public record McrViewPayload(BlockPos pos, String view, TableRoomView room, McrD
     public static final StreamCodec<RegistryFriendlyByteBuf, McrViewPayload> CODEC = new StreamCodec<>() {
         @Override public McrViewPayload decode(RegistryFriendlyByteBuf buffer) {
             var pos = buffer.readBlockPos();
-            var view = buffer.readUtf(65536);
+            var view = buffer.readUtf(TableNetworking.VIEW_LIMIT);
             var room = TableNetworking.JSON.fromJson(buffer.readUtf(8192), TableRoomView.class);
             McrDeck deck = null;
             if (buffer.readBoolean()) {
@@ -42,7 +42,7 @@ public record McrViewPayload(BlockPos pos, String view, TableRoomView room, McrD
                 TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.world.WorldSettings.Policy.class));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, McrViewPayload value) {
-            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), 65536);
+            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), TableNetworking.VIEW_LIMIT);
             buffer.writeUtf(TableNetworking.JSON.toJson(value.room()), 8192);
             buffer.writeBoolean(value.deck() != null);
             if (value.deck() != null) {

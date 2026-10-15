@@ -5,6 +5,7 @@ import top.skyeyefast.mchjong.text.CountedText;
 import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.TableRoomView;
@@ -14,6 +15,13 @@ import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 /** Shared session exit controls for rule-specific room and match screens. */
 final class TableExitControls {
     private TableExitControls() {}
+
+    static void request(Screen parent, BlockPos pos, TableRoomView room) {
+        boolean closesRoom = room.lobby() ? room.viewerSeat() >= 0 && room.viewerSeat() == room.host()
+            : room.seats().stream().filter(seat -> seat.participant().id() != null && !seat.participant().bot()).count() == 1;
+        if (closesRoom) net.minecraft.client.Minecraft.getInstance().setScreen(new TableExitScreen(parent, pos, room));
+        else send(pos, room, TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false);
+    }
 
     static void send(BlockPos pos, TableRoomView room, TableSessionControlPayload.Operation operation, long token, boolean enabled) {
         var connection = net.minecraft.client.Minecraft.getInstance().getConnection();

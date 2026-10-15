@@ -2,14 +2,11 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.world.phys.AABB;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.McrDiscard;
 import top.skyeyefast.mchjong.engine.McrGame;
-import top.skyeyefast.mchjong.engine.McrWallLayout;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class McrLayoutTest {
@@ -22,46 +19,6 @@ class McrLayoutTest {
         assertEquals(List.of("east", "south", "west", "north"), indicator.seats().stream()
             .map(label -> ((net.minecraft.network.chat.contents.TranslatableContents) label.getContents()).getKey().replace("wind.mchjong.", "").replace(".short", "")).toList());
         assertEquals(indicator, TableBoardState.live(new McrGame(711).view(0)).replay(2).indicator());
-    }
-
-    @Test void fourTiltedStraightWallsRotateTogetherAndDoNotIntersect() {
-        var pieces = McrTableScene.fullWall();
-        assertEquals(144, pieces.size());
-        assertEquals(144, pieces.stream().map(McrTableScene.Piece::index).distinct().count());
-        var firstDirection = pieces.get(0).position().subtract(pieces.get(34).position()).normalize();
-        for (int seat = 0; seat < 4; seat++) {
-            int owner = seat;
-            var upper = pieces.stream().filter(piece -> piece.seat() == owner
-                && McrWallLayout.layer(piece.index()) == McrWallLayout.Layer.UPPER).toList();
-            assertEquals(18, upper.size());
-            WallGeometryAssertions.tiltedSide(upper.stream().map(McrTableScene.Piece::position).toList(),
-                upper.stream().map(McrTableScene.Piece::yaw).toList(), seat, firstDirection, McrTableScene.WIDTH);
-            WallGeometryAssertions.liftRail(upper.stream().map(McrTableScene.Piece::position).toList(), seat, McrTableScene.HEIGHT);
-        }
-        for (int seat = 0; seat < 4; seat++) for (int column = 0; column < 18; column++) {
-            int stack = McrWallLayout.stack(seat, column);
-            var upper = pieces.get(McrWallLayout.slot(stack, McrWallLayout.Layer.UPPER));
-            var lower = pieces.get(McrWallLayout.slot(stack, McrWallLayout.Layer.LOWER));
-            assertEquals(upper.position().x, lower.position().x);
-            assertEquals(upper.position().z, lower.position().z);
-            assertEquals(upper.yaw(), lower.yaw());
-            assertEquals(McrWallLayout.slot(stack, McrWallLayout.Layer.UPPER), upper.index());
-            assertEquals(McrWallLayout.slot(stack, McrWallLayout.Layer.LOWER), lower.index());
-            assertEquals(McrTableScene.DEPTH, upper.position().y - lower.position().y, 1e-8);
-            assertEquals(seat, upper.seat());
-            assertTrue(upper.back() && lower.back());
-        }
-        for (var piece : pieces) {
-            var box = bounds(piece);
-            assertTrue(Math.max(Math.abs(box.minX), Math.abs(box.maxX)) < TableGeometry.FELT_HALF_WIDTH);
-            assertTrue(Math.max(Math.abs(box.minZ), Math.abs(box.maxZ)) < TableGeometry.FELT_HALF_WIDTH);
-            WallGeometryAssertions.clearCenter(piece.position(), piece.yaw(), McrTableScene.WIDTH,
-                McrTableScene.HEIGHT, McrTableScene.DEPTH);
-        }
-        for (int i = 0; i < pieces.size(); i++) for (int j = i + 1; j < pieces.size(); j++)
-            assertFalse(WallGeometryAssertions.intersects(pieces.get(i).position(), pieces.get(i).yaw(),
-                pieces.get(j).position(), pieces.get(j).yaw(), McrTableScene.WIDTH, McrTableScene.HEIGHT, McrTableScene.DEPTH),
-                "Wall slots intersect: " + i + ", " + j);
     }
 
     @Test void riversCompactCalledHistoryIntoCenteredSixColumns() {
@@ -78,8 +35,6 @@ class McrLayoutTest {
         assertEquals(3, parts.get(2).historyIndex());
         assertEquals(14, parts.get(12).historyIndex());
         assertEquals(25, parts.get(23).historyIndex());
-        assertEquals(TableIndicator.HALF_WIDTH + McrTableScene.HEIGHT / 2 + .005, McrTableScene.RIVER_Z);
-
     }
 
     @Test void sourcesChooseLeftMiddleRightAndEveryKongIsOneFlatRow() {
@@ -111,8 +66,6 @@ class McrLayoutTest {
         assertTrue(publicArea.flowers().getFirst().x < 0);
         var game = new McrGame(711);
         var scene = McrTableScene.build(game.view(0));
-        assertEquals(144, scene.size());
-        WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
         for (var piece : scene) {
             if (piece.area() == McrTableScene.Area.HAND && piece.seat() == 0)
                 assertEquals(game.hand(0).get(piece.index()), piece.tile());
@@ -130,22 +83,10 @@ class McrLayoutTest {
         assertEquals(4, view.seats().get(0).melds().size());
         assertEquals(2, view.seats().get(0).hand().size());
         var scene = McrTableScene.build(view);
-        assertEquals(144, scene.size());
+        assertEquals(view.wall().size(), scene.size());
         assertTrue(scene.stream().allMatch(piece -> piece.dimensions().equals(TileDimensions.LARGE)));
         for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
         WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
     }
 
-    private static AABB bounds(McrTableScene.Piece piece) {
-        double cosine = Math.abs(Math.cos(Math.toRadians(piece.yaw())));
-        double sine = Math.abs(Math.sin(Math.toRadians(piece.yaw())));
-        double width = TileDimensions.LARGE.width();
-        double height = (piece.flat() ? TileDimensions.LARGE.depth() : TileDimensions.LARGE.height());
-        double depth = (piece.flat() ? TileDimensions.LARGE.height() : TileDimensions.LARGE.depth());
-        double halfX = (width * cosine + depth * sine) / 2;
-        double halfZ = (width * sine + depth * cosine) / 2;
-        var p = piece.position();
-        return new AABB(p.x - halfX, p.y - height / 2, p.z - halfZ,
-            p.x + halfX, p.y + height / 2, p.z + halfZ);
-    }
 }

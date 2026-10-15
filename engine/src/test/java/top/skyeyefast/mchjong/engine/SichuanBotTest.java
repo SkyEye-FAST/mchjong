@@ -199,41 +199,14 @@ class SichuanBotTest {
         assertEquals(original, SichuanCodec.decodeView(SichuanCodec.encodeView(original)));
     }
 
-    @Test void sharedRoomControlsAndWorldPolicyOwnTheRoster() {
-        var session = lobby(SichuanPreset.SBR_2025);
-        room(session, RoomAction.Type.SET_BOT);
-        room(session, RoomAction.Type.REMOVE_BOT);
-        room(session, RoomAction.Type.FILL_BOTS);
-        assertEquals(3, session.participants().stream().filter(TableParticipant::bot).count());
-        assertTrue(session.participants().stream().filter(TableParticipant::bot).allMatch(TableParticipant::ready));
-        assertTrue(session.roomActions(HUMAN).stream().noneMatch(action -> action.type() == RoomAction.Type.SET_BOT));
-        session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
-        session.synchronizeSeats(Map.of(HUMAN, 0));
-        session.configureWorld(noBots());
-        assertEquals(0, session.participants().stream().filter(TableParticipant::bot).count());
-        assertTrue(session.roomActions(HUMAN).stream().noneMatch(action -> action.type() == RoomAction.Type.FILL_BOTS || action.type() == RoomAction.Type.SET_BOT));
-        session.configureWorld(WorldPolicy.DEFAULT);
-        room(session, RoomAction.Type.FILL_BOTS); start(session);
-        session.configureWorld(noBots());
-        assertEquals(3, session.participants().stream().filter(TableParticipant::bot).count());
-        assertTrue(session.requestExit(HUMAN));
-        assertTrue(session.lobby());
-    }
-
-    @Test void botMultiWinRepliesKeepDelayClocksAndConfirmationsThroughRestore() {
+    @Test void botMultiWinRepliesAndConfirmationsSurviveRestore() {
         var game = turn("9p", WAIT, WAIT, WAIT);
         discard(game, "9p");
         var session = active(game, 1);
-        for (int tick = 0; tick < 6; tick++) session.tick();
         var clocks = session.save().clocks();
-        assertTrue(session.view(HUMAN).clocks().stream().noneMatch(TimeControl.Clock::active));
         session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
-        for (int tick = 0; tick < 20; tick++) session.tick();
-        assertEquals(6, session.save().age());
         session.synchronizeSeats(Map.of(HUMAN, 0));
-        for (int tick = 0; tick < 5; tick++) session.tick();
-        assertEquals(SichuanGame.Phase.REACTION, session.game().phase());
-        session.tick();
+        for (int tick = 0; tick < 12; tick++) session.tick();
         assertEquals(List.of(1, 2, 3), session.game().result().wins().stream().map(SichuanSettlement.Win::seat).toList());
         assertEquals(clocks, session.save().clocks());
         assertEquals(14, session.view(HUMAN).confirmed());
@@ -244,19 +217,6 @@ class SichuanBotTest {
         assertEquals(2, session.game().handNumber());
         assertFalse(session.confirmNextHand(HUMAN, session.tableId(), end.incarnation(), end.game().decision()));
         assertEquals(0, session.view(HUMAN).confirmed());
-    }
-
-    @Test void votesFreezeBotSchedulingAcrossRestore() {
-        var session = active(turn("1m 2m 3m 1p 2p 3p 7p 8p 9p 3m 4m 6m 5p 5p"), 2);
-        UUID other = session.participants().get(1).id();
-        session.synchronizeSeats(Map.of(HUMAN, 0, other, 1));
-        assertTrue(session.requestExit(HUMAN));
-        session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
-        session.synchronizeSeats(Map.of(HUMAN, 0, other, 1));
-        for (int tick = 0; tick < 12; tick++) session.tick();
-        assertEquals(0, session.save().age());
-        assertTrue(session.answerExit(other, session.roomView(other).exitVote().id(), false));
-        session.tick(); assertEquals(1, session.save().age());
     }
 
     private static SichuanView withRules(SichuanView view, SichuanRules rules) {
@@ -276,20 +236,6 @@ class SichuanBotTest {
             && Tile.kind(actions.get(i).tiles().getFirst()) == Tile.parseKind(tile)).findFirst().orElseThrow();
         assertTrue(game.act(0, game.decision(), index));
     }
-    private static SichuanSession lobby(SichuanPreset preset) {
-        var session = new SichuanSession(new UUID(72, 0), 711);
-        session.configureEquipment(false, Tile.sichuanSet()); session.join(HUMAN, "Human", 0);
-        session.configureRules(HUMAN, session.decision(), preset.config()); return session;
-    }
-    private static void room(SichuanSession session, RoomAction.Type type) {
-        var action = session.roomActions(HUMAN).stream().filter(candidate -> candidate.type() == type).findFirst().orElseThrow();
-        assertTrue(session.actRoom(HUMAN, session.decision(), action));
-    }
-    private static void start(SichuanSession session) {
-        room(session, RoomAction.Type.BEGIN_SEATING);
-        session.synchronizeSeats(Map.of(HUMAN, session.seatOf(HUMAN))); room(session, RoomAction.Type.READY);
-    }
-    private static WorldPolicy noBots() { return new WorldPolicy(true, false, true, 5000, true, false, true, true, null); }
     private static SichuanSession active(SichuanGame game, int humans) {
         var roster = new ArrayList<TableParticipant>();
         for (int seat = 0; seat < 4; seat++) roster.add(new TableParticipant(seat == 0 ? HUMAN : new UUID(72, seat + 1),

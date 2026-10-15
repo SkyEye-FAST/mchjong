@@ -10,6 +10,7 @@ import net.minecraft.util.RandomSource;
 import top.skyeyefast.mchjong.engine.McrView;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.SichuanView;
+import top.skyeyefast.mchjong.engine.TaiwanSession;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongSounds;
 
@@ -59,6 +60,24 @@ public final class TableAudio {
         if (after.winners().size() > before.winners().size())
             effects.add(after.winners().get(before.winners().size()).selfDraw() ? "tsumo" : "ron");
         if (before.result() == null && after.result() != null) effects.add("score_reveal");
+        return List.copyOf(effects);
+    }
+
+    static List<String> between(TaiwanSession.View before, TaiwanSession.View after) {
+        if (before == null || after == null || after.revision() <= before.revision()
+            || before.recipient() != after.recipient() || before.handNumber() != after.handNumber()) return List.of();
+        var effects = new ArrayList<String>();
+        for (int seat = 0; seat < 4; seat++) {
+            var old = before.game().seats().get(seat); var next = after.game().seats().get(seat);
+            tiles(effects, old.river().size(), next.river().size(), old.drawn(), next.drawn(),
+                old.concealedCount(), next.concealedCount(), old.melds(), next.melds());
+            if (next.flowers().size() > old.flowers().size()) effects.add("tile_call");
+        }
+        var result = after.game().result();
+        if (before.game().result() == null && result != null) {
+            if (result.winner() != null) effects.add(result.supplier() == null ? "tsumo" : "ron");
+            effects.add("score_reveal");
+        }
         return List.copyOf(effects);
     }
 
