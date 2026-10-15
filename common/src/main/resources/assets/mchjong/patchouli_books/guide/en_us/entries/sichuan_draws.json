@@ -1,0 +1,28 @@
+{
+  "name": "manual.mchjong.entry.sichuan_draws.name",
+  "category": "mchjong:sichuan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.draws"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.draws.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.draws.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.flower_pig"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.flower_pig.continued_1"
+    }
+  ]
+}

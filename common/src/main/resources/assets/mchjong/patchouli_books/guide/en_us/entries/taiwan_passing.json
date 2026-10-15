@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.taiwan_passing.name",
+  "category": "mchjong:taiwan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_passing.passing"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_passing.passing.continued_1"
+    }
+  ]
+}

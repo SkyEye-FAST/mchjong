@@ -149,15 +149,15 @@ public final class RuleHelp {
     static MahjongButton setting(Screen parent, SichuanRuleOption option, Component label, Component description, int x, int y) {
         String target = switch (option) {
             case FAN_CAP, SELF_DRAW_BONUS -> "manual.mchjong.entry.sichuan_fan.base";
-            case MATCH_HANDS -> "manual.mchjong.entry.sichuan_flow.dealer";
-            case SELECT_FIRST_DISCARD -> "manual.mchjong.entry.sichuan_flow.void";
-            case CONCEALED_KONG_PAYMENT, DISCARD_KONG_PAYMENT, ADDED_KONG_PAYMENT -> "manual.mchjong.entry.sichuan_payments.kongs";
-            case TRANSFER_KONG_ON_SHOOT -> "manual.mchjong.entry.sichuan_payments.shooting";
+            case MATCH_HANDS -> "manual.mchjong.entry.sichuan_dealer.dealer";
+            case SELECT_FIRST_DISCARD -> "manual.mchjong.entry.sichuan_void.void";
+            case CONCEALED_KONG_PAYMENT, DISCARD_KONG_PAYMENT, ADDED_KONG_PAYMENT -> "manual.mchjong.entry.sichuan_kongs.kongs";
+            case TRANSFER_KONG_ON_SHOOT -> "manual.mchjong.entry.sichuan_kongs.shooting";
             case SEPARATE_KONG_FAN -> "manual.mchjong.entry.sichuan_fan.root";
             case ADDED_KONG_AFTER_KONG_IS_SHOOT -> "manual.mchjong.entry.sichuan_fan.shoot_after_kong";
             case EAST_WEST_LONG_WALL -> "manual.mchjong.entry.sichuan_presets.differences";
-            case REFUND_KONG_WHEN_NOT_READY -> "manual.mchjong.entry.sichuan_payments.draws";
-            case ACTIVE_FLOWER_PIG_PENALTY -> "manual.mchjong.entry.sichuan_payments.flower_pig";
+            case REFUND_KONG_WHEN_NOT_READY -> "manual.mchjong.entry.sichuan_draws.draws";
+            case ACTIVE_FLOWER_PIG_PENALTY -> "manual.mchjong.entry.sichuan_draws.flower_pig";
         };
         return setting(parent, label, description, target, x, y);
     }

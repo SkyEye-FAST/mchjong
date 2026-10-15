@@ -1,0 +1,40 @@
+{
+  "name": "manual.mchjong.entry.taiwan_tiles.name",
+  "category": "mchjong:taiwan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tiles.tiles"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tiles.tiles.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tiles.shape"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tiles.shape.continued_1"
+    },
+    {
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tiles.example",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
+    },
+    {
+      "type": "mchjong:example",
+      "text": "manual.mchjong.entry.taiwan_tiles.example",
+      "tiles": "123m 456m 789p 234s 678s 55p",
+      "face": "mchjong:taiwan"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tiles.reserve"
+    }
+  ]
+}

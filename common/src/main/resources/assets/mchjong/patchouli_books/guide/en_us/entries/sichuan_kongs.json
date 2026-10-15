@@ -1,0 +1,32 @@
+{
+  "name": "manual.mchjong.entry.sichuan_kongs.name",
+  "category": "mchjong:sichuan",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.kongs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.kongs.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.shooting"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.shooting.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.shooting.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.shooting.continued_3"
+    }
+  ]
+}
