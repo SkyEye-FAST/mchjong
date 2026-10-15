@@ -28,6 +28,7 @@ import top.skyeyefast.mchjong.network.TaiwanActionPayload;
 import top.skyeyefast.mchjong.engine.SichuanCodec;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.RiichiView;
+import top.skyeyefast.mchjong.engine.SpectatorHandVisibility;
 import top.skyeyefast.mchjong.network.RiichiActionPayload;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.McrViewPayload;
@@ -362,7 +363,9 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         var policy = WorldSettings.of(level.getServer()).policy();
         UUID viewer = authorizedViewer(player);
-        RiichiView snapshot = viewer == null ? session.spectatorView(policy.spectatorHandVisibility()) : session.view(viewer);
+        var visibility = !session.lobby() && !policy.spectatingEnabled()
+            ? SpectatorHandVisibility.HIDDEN : policy.spectatorHandVisibility();
+        RiichiView snapshot = viewer == null ? session.spectatorView(visibility) : session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(
             new RiichiViewPayload(worldPosition, snapshot == null ? "" : TableNetworking.JSON.toJson(snapshot), open, controlReply,
                 session.leaveDecision(player.getUUID()), equipment.redOptions(), projectedRoom(viewer),

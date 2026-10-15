@@ -193,6 +193,23 @@ class TableControlTest {
             .flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0));
     }
 
+    @Test void hiddenSpectatorViewKeepsPublicTableWithoutFollowingRevealedPlayerHands() {
+        RiichiGame game = game(4, RiichiPreset.TENHOU_4, false, PlayerHandVisibility.ALL);
+        int dealer = game.dealer;
+        int discard = RiichiGame.indexOf(game.actions(dealer), RiichiAction.Type.DISCARD);
+        assertTrue(game.act(id(dealer), game.decision(), discard));
+        var permitted = game.session.spectatorView(SpectatorHandVisibility.FOLLOW_PLAYERS);
+        assertTrue(permitted.seats().stream().flatMap(seat -> seat.hand().stream()).anyMatch(value -> value >= 0));
+        var hidden = game.session.spectatorView(SpectatorHandVisibility.HIDDEN);
+        var decoded = new Gson().fromJson(new Gson().toJson(hidden), RiichiView.class);
+        assertEquals(-1, decoded.viewerSeat());
+        assertTrue(decoded.actions().isEmpty());
+        assertTrue(decoded.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(value -> value == Tile.HIDDEN));
+        assertEquals(permitted.wall(), decoded.wall());
+        assertFalse(decoded.seats().get(dealer).river().isEmpty());
+        assertEquals(permitted.seats().get(dealer).river(), decoded.seats().get(dealer).river());
+    }
+
     @Test void reloadPreservesVoteAndExitDoesNotDiscardCompletedReplayQueue() {
         RiichiGame game = game(2, RiichiPreset.TENHOU_4, true, PlayerHandVisibility.SELF);
         RiichiSettlement.abort(game, "nine_terminals");
