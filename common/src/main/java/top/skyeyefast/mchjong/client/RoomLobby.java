@@ -81,15 +81,17 @@ final class RoomLobby {
         var client = Minecraft.getInstance();
         if (room.exitVote() != null) return new ArrayList<>(TableExitControls.voteButtons(pos, room, width, height));
         int body = layout.bodyLeft(), span = layout.bodyWidth(), top = layout.top();
-        int toolbarWidth = 48, toolbarLeft = body + span - 3 * toolbarWidth - 8;
-        buttons.add(RoomLobbyControls.button(Component.translatable("settings.mchjong.scopes"), toolbarLeft, top + 6, toolbarWidth,
-            () -> client.setScreen(new TableOptionsScreen(parent, pos))).shortCaption(Component.translatable("settings.mchjong.scopes.short")));
+        int toolbarWidth = 48;
+        int settingsWidth = RoomLobbyControls.buttonWidth(Component.translatable("settings.mchjong.scopes"), toolbarWidth);
+        int toolbarLeft = body + span - settingsWidth - 2 * toolbarWidth - 8;
+        buttons.add(RoomLobbyControls.button(Component.translatable("settings.mchjong.scopes"), toolbarLeft, top + 6, settingsWidth,
+            () -> client.setScreen(new TableOptionsScreen(parent, pos))));
         int leave = RoomLobbyControls.find(room, RoomAction.Type.LEAVE_ROOM, List.of());
-        var leaveButton = RoomLobbyControls.button(Component.translatable("action.mchjong.leave_room"), toolbarLeft + toolbarWidth + 4,
+        var leaveButton = RoomLobbyControls.button(Component.translatable("action.mchjong.leave_room"), toolbarLeft + settingsWidth + 4,
             top + 6, toolbarWidth, () -> send(room, leave)).shortCaption(Component.translatable("action.mchjong.leave_room.short"));
         leaveButton.active = leave >= 0 && !pending;
         buttons.add(leaveButton);
-        var close = RoomLobbyControls.button(Component.translatable("room.mchjong.dissolve"), toolbarLeft + 2 * (toolbarWidth + 4), top + 6,
+        var close = RoomLobbyControls.button(Component.translatable("room.mchjong.dissolve"), toolbarLeft + settingsWidth + toolbarWidth + 8, top + 6,
             toolbarWidth, () -> TableExitControls.request(parent, pos, room)).shortCaption(Component.translatable("room.mchjong.dissolve.short"));
         close.active = host(room) && !pending;
         buttons.add(close);
@@ -119,8 +121,10 @@ final class RoomLobby {
         int tabWidth = (span - 4) / 2;
         for (int index = 0; index < tabs.length; index++) {
             int selected = index;
-            buttons.add(RoomLobbyControls.button(Component.translatable(tabs[index]), body + index * (tabWidth + 4), top + 32,
-                tabWidth, () -> { tab = selected; page = 0; rebuild.run(); }).navigation().selected(tab == index).shortCaption(Component.translatable(tabs[index] + ".short")));
+            var button = RoomLobbyControls.button(Component.translatable(tabs[index]), body + index * (tabWidth + 4), top + 32,
+                tabWidth, () -> { tab = selected; page = 0; rebuild.run(); }).navigation().selected(tab == index);
+            if (index == 0) button.shortCaption(Component.translatable("room.mchjong.participants.short"));
+            buttons.add(button);
         }
         if (tab == 0) buildRoster(buttons, room);
         else {

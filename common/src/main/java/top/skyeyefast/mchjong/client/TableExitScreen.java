@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 
-/** Confirms an exit request that closes the room without an exit vote. */
+/** Confirms a host's room closure or a sole human's match ending without a vote. */
 final class TableExitScreen extends Screen implements TableChildScreen {
     private final Screen parent;
     private final BlockPos pos;
@@ -15,7 +15,7 @@ final class TableExitScreen extends Screen implements TableChildScreen {
     private boolean answered;
 
     TableExitScreen(Screen parent, BlockPos pos, TableRoomView room) {
-        super(Component.translatable("room.mchjong.dissolve"));
+        super(Component.translatable(room.lobby() ? "room.mchjong.dissolve" : "ui.mchjong.exit"));
         this.parent = parent;
         this.pos = pos.immutable();
         this.room = room;
@@ -30,7 +30,7 @@ final class TableExitScreen extends Screen implements TableChildScreen {
         int y = Math.min(height - 36, height / 2 + 26);
         var cancel = addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
             .bounds(left, y, (span - 6) / 2, 20).build());
-        addRenderableWidget(MahjongButton.create(Component.translatable("room.mchjong.dissolve"), ignored -> confirm())
+        addRenderableWidget(MahjongButton.create(title, ignored -> confirm())
             .bounds(left + (span + 6) / 2, y, (span - 6) / 2, 20).build());
         setInitialFocus(cancel);
     }
@@ -40,7 +40,7 @@ final class TableExitScreen extends Screen implements TableChildScreen {
         MahjongUi.backdrop(graphics, width, height, 470);
         MahjongUi.text(graphics, font, title, left, height / 2 - 38, span, MahjongUi.TEXT, true);
         int y = height / 2 - 18;
-        for (var line : font.split(Component.translatable("ui.mchjong.exit_confirm_note"), span)) {
+        for (var line : font.split(Component.translatable(room.lobby() ? "ui.mchjong.exit_confirm_note" : "ui.mchjong.exit_confirm_match_note"), span)) {
             graphics.drawString(font, line, left, y, MahjongUi.MUTED, false);
             y += 11;
         }

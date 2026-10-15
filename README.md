@@ -88,9 +88,9 @@ double-click discards and adjust your display and audio preferences.
 Press Esc to cancel a selection or close the interface, then use the sneak
 control to stand up. Standing up does not end an active match: the table pauses
 when no human player is seated and resumes when a participant returns. To end
-the match instead, use its exit control. A sole human participant confirms before
+the match instead, select End Match. A sole human participant confirms before
 ending play; a match with several human participants requires unanimous approval.
-An early exit preserves completed hands without scoring the unfinished hand.
+Ending a match early preserves completed hands without scoring the unfinished hand.
 If no human player returns to a seat for 15 minutes, the paused match ends in
 the same way and releases its equipment. The timer restarts after a server restart.
 

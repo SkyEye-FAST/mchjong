@@ -26,7 +26,7 @@ final class TableToolbar {
             int current = index;
             var fullCaption = Component.translatable(index == 0 ? "ui.mchjong.exit_hint" : keys[index]);
             boolean compact = !immersive && width < 560;
-            var caption = Component.translatable(keys[index] + (compact && index != 0 && index != 2 ? ".short" : ""));
+            var caption = Component.translatable(keys[index] + (compact && index == 3 ? ".short" : ""));
             int span = (client.font.width(caption) + (compact ? 8 : 14)) * scale;
             var button = MahjongButton.create(caption, ignored -> actions[current].run())
                 .bounds(right - span, y, span, 20 * scale).tooltip(Tooltip.create(fullCaption)).build().textScale(scale);
