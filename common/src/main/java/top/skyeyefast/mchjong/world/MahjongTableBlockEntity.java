@@ -412,7 +412,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         McrSession session = host == null ? null : host.mcr();
         if (session == null || player.serverLevel() != level) return;
         var stock = equipment.mcrStock();
-        synchronizeSeats();
         UUID viewer = authorizedViewer(player);
         var snapshot = session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new McrViewPayload(worldPosition,
@@ -424,7 +423,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private void sendSichuanView(ServerPlayer player, boolean open, boolean controlReply) {
         SichuanSession session = host == null ? null : host.sichuan();
         if (session == null || player.serverLevel() != level) return;
-        synchronizeSeats();
         UUID viewer = authorizedViewer(player);
         var snapshot = session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new SichuanViewPayload(worldPosition,
@@ -435,7 +433,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private void sendTaiwanView(ServerPlayer player, boolean open, boolean controlReply) {
         TaiwanSession session = host == null ? null : host.taiwan();
         if (session == null || player.serverLevel() != level) return;
-        synchronizeSeats();
         UUID viewer = authorizedViewer(player);
         var snapshot = session.lobby() ? null : session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new TaiwanViewPayload(worldPosition,
