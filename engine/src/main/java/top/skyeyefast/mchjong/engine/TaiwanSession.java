@@ -193,6 +193,9 @@ public final class TaiwanSession extends TableSession {
             if (clocks.size() <= s) clocks.add(clock); else clocks.set(s,clock);
         }
     }
+    private int automaticAction(int seat) {
+        return age < AUTO_ACTION_TICKS || participants[seat].bot ? -1 : TaiwanAutomation.action(automation.get(seat), game.view(seat));
+    }
     private boolean active(int seat) { return game != null && humanClockActive(seat) && game.decisions().stream().anyMatch(d -> d.getSeat() == seat); }
     @Override public void tick() {
         if (!tickRoom() || game == null || lifecycle != Lifecycle.PLAYING) return;
@@ -208,7 +211,7 @@ public final class TaiwanSession extends TableSession {
                 .map(d -> d.getActions()).orElse(List.of()), this::active,
             action -> action.getType() == TaiwanAction.Type.PASS,
             action -> action.getType() == TaiwanAction.Type.DISCARD ? action.getTiles().get(0) : Tile.ABSENT,
-            seat -> game.view(seat).seats().get(seat).drawn(), seat -> -1,
+            seat -> game.view(seat).seats().get(seat).drawn(), this::automaticAction,
             seat -> TaiwanBot.choose(game.view(seat)), (seat, index) -> apply(seat, game.getDecision(), index));
     }
 

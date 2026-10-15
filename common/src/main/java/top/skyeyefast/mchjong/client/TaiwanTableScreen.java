@@ -29,6 +29,16 @@ public final class TaiwanTableScreen extends Screen {
     private TableTurnClock turnClock;
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
     private int actionTop, actionHeight;
+    private final TableAutomation automation = new TableAutomation(this, this::automationOptions, this::rebuild);
+
+    private List<TableAutomation.Toggle> automationOptions() {
+        var current = view();
+        if (current == null || (current.game().phase() != top.skyeyefast.mchjong.engine.TaiwanGame.Phase.TURN
+            && current.game().phase() != top.skyeyefast.mchjong.engine.TaiwanGame.Phase.REACTION)) return List.of();
+        return TableAutomation.common(pos, table().clientTableRoom(), current.game().decision());
+    }
+    public void receivedControlReply() { automation.receivedControlReply(); }
+
     public TaiwanTableScreen(BlockPos pos) { this(pos, false); }
     public TaiwanTableScreen(BlockPos pos, boolean immersive) {
         super(Component.translatable("taiwan.mchjong.title"));
@@ -62,6 +72,7 @@ public final class TaiwanTableScreen extends Screen {
     @Override protected void init() { rebuild(); }
 
     private void rebuild() {
+        int automationFocus = automation.focusedIndex(getFocused());
         clearWidgets();
         turnClock = null;
         decisionControls.clear();
@@ -88,11 +99,13 @@ public final class TaiwanTableScreen extends Screen {
         turnClock = addRenderableWidget(new TableTurnClock());
         TableToolbar.build(this, pos, room, uiWidth(), immersive(), this::toggleView)
             .forEach(this::addRenderableWidget);
+        automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
+        automation.restoreFocus(automationFocus);
         var choices = new ArrayList<Integer>();
         for (int i = 0; i < game.actions().size(); i++)
             if (game.actions().get(i).type() != TaiwanAction.Type.DISCARD) choices.add(i);
         var grid = TableActionLayout.of(choices.size(), uiWidth(), uiHeight(), hand == null ? -1 : hand.top(),
-            immersive(), 0);
+            immersive(), automation.available() && !immersive() ? automation.width(uiWidth()) + 8 : 0);
         actionTop = grid.top(); actionHeight = grid.spanHeight();
         for (int slot = 0; slot < choices.size(); slot++) {
             int index = choices.get(slot);
