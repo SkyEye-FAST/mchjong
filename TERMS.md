@@ -107,6 +107,40 @@ Ending a match keeps completed hands and does not score the unfinished hand. Clo
 a room ends any active match first. Say which of these a confirmation will do, in
 its title, its explanation and its confirming button.
 
+## Rule explanations
+
+These rules apply to the Mahjong Manual and to any text that explains a rule. The
+reference for tone and structure is the maintainer's article on
+[Japanese mahjong](https://mh.wdf.ink/wiki/%E6%97%A5%E6%9C%AC%E9%BA%BB%E5%B0%86).
+Each variant is still explained on its own terms; the article's comparisons with
+other variants are not a model for the manual.
+
+1. One entry explains one concept and carries that concept's name. Do not bundle
+   unrelated concepts under a joint title such as calls, riichi and furiten.
+2. Define a term before the text relies on it, in the same entry or an earlier one.
+   A term that the rules use, such as ready hand, deposit, honba or the player who
+   discarded the winning tile, needs a home entry that states what it is.
+3. Open with the definition: the term in bold, then one sentence saying what it is.
+   Give a Japanese-origin term's original form (kana, not romanization) at its first
+   definition when the locale benefits. State the conditions in the following
+   sentences.
+4. State the base rule first. Then state each preset's or platform's difference
+   directly after it, naming the preset in every sentence. Do not weave differences
+   into the base rule, and do not make a whole entry out of differences unless it
+   is the preset comparison.
+5. One condition per sentence. Put the condition that decides the outcome first or
+   in bold. Use a list for parallel cases, such as the kinds of furiten or the
+   cases of a payment. When two rules contrast, say so in the sentence that
+   introduces the second.
+6. Describe a scoring pattern in this order: name, value, restriction (concealed
+   hand only, value reduced after calling), definition, interaction with other
+   patterns, edge cases. Add a diagram only when the text cannot show the shape.
+7. Keep a formula and its worked example on the same page. When a rule has
+   parallel numeric cases, list them instead of writing them as one sentence.
+8. State a rule once. Other entries link to it instead of repeating it.
+9. Break pages between paragraphs, never inside a single thought, and prefer
+   shortening an entry to splitting it so that its conclusion lands on another page.
+
 ## Chinese scoring language
 
 Describe the actual players and point changes. Do not mechanically translate
