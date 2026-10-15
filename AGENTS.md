@@ -43,11 +43,12 @@ even when context seems clear or space is limited. Use complete names and units,
 with only the locale-specific abbreviations allowed in
 [TERMS.md](TERMS.md#names-and-units). A control too narrow for its full label may
 use a compact label only under the conditions in
-[TERMS.md](TERMS.md#compact-labels); a compact label never names a variant, preset
-or scoring pattern. English may use MCR; Chinese must retain
-`国标麻将`/`國標麻將`. Taiwanese mahjong must not become Taiwanese or Taiwan, because
-the place and the game are different things. Preserve code identifiers and literal
-quotations exactly without treating their shortened forms as models for new text.
+[TERMS.md](TERMS.md#compact-labels); a compact label never names a preset or scoring
+pattern. English may use MCR; Chinese must retain `国标麻将`/`國標麻將`. A game name
+may be shortened only where TERMS.md allows it and the context leaves no other
+reading; the place name alone (Taiwan, `台湾`) never names the game. Preserve code
+identifiers and literal quotations exactly without treating their shortened forms as
+models for new text.
 
 Preserve license notices and release history. Use dates to identify releases and
 source editions, not routine reviews.

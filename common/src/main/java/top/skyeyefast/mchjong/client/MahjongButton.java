@@ -53,16 +53,8 @@ public class MahjongButton extends Button {
             return;
         }
         if (navigation) {
-            var font = Minecraft.getInstance().font;
-            var caption = caption(width - 14);
-            int color = active ? selected ? MahjongUi.ACCENT : MahjongUi.TEXT : MahjongUi.DISABLED;
-            if (height >= 20 && font.width(caption) > width - 14) {
-                // Wrap instead of truncating, so a long name keeps its head noun.
-                var lines = font.split(caption, width - 14);
-                int count = Math.min(2, lines.size());
-                for (int line = 0; line < count; line++)
-                    g.drawString(font, lines.get(line), getX() + 7, getY() + (height - count * 9) / 2 + line * 9 + 1, color, false);
-            } else MahjongUi.text(g, font, caption, getX() + 7, getY() + (height - 8) / 2, width - 14, color, false);
+            MahjongUi.text(g, Minecraft.getInstance().font, caption(width - 14), getX() + 7, getY() + (height - 8) / 2,
+                width - 14, active ? selected ? MahjongUi.ACCENT : MahjongUi.TEXT : MahjongUi.DISABLED, false);
             return;
         }
         g.pose().pushPose();

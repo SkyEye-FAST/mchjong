@@ -30,7 +30,12 @@ are not head-noun omissions. Their permission applies only to the specified loca
 Chinese uses `国标麻将`/`國標麻將`, `台湾麻将`/`台灣麻將` and `四川麻将`/`四川麻將`,
 not `国标`/`國標`, `台湾`/`台灣` or `四川` when naming the games. Japanese uses
 `台湾麻雀` and `四川麻雀`, not the place names alone. English uses Taiwanese
-mahjong, Sichuan mahjong and Riichi mahjong when naming those games.
+mahjong, Sichuan mahjong and Riichi mahjong when naming those games. English may
+shorten them to Taiwanese, Sichuan and Riichi where every neighbouring item is a
+mahjong variant, such as a variant list or the title of a rules screen, because the
+context leaves no other reading. A sentence, a standalone title or any text that
+could be read as naming the place, the cuisine or the ruleset uses the full name.
+The place name Taiwan alone never names the game.
 Apply the same rule to other named objects: identify the face preset, back preset,
 replay file or Minecraft server when that is the subject or object of the sentence.
 Wrap or resize a control instead of dropping the head noun from its label, unless
@@ -85,8 +90,8 @@ or descriptions. A compact label is acceptable only when all of these hold:
    automatic-play toggles, whose letters are established for that variant. New
    English labels use words.
 
-Do not use a compact label as the name of a variant, preset or scoring pattern, and
-do not use it inside a sentence.
+Do not use a compact label as the name of a preset or scoring pattern, and do not use
+it inside a sentence.
 
 ## Leaving, ending and closing
 
@@ -190,8 +195,9 @@ it does not replace the Chinese or Japanese name. English may use it for a rules
 as in the preset MIL SBR 2025, and expands it on first mention in prose. Chinese
 and Japanese write `血战到底`/`血戰到底`/`血戦到底`, as in the preset
 `国际麻联血战到底2025`. A variant title, variant list entry or replay label names the
-game, so it is Sichuan Mahjong, `四川麻将`/`四川麻將` or `四川麻雀`, never `Sichuan SBR`
-or `四川SBR`.
+game, so it is `四川麻将`/`四川麻將` or `四川麻雀` in Chinese and Japanese, and Sichuan
+(in a list of variants) or Sichuan mahjong in English, never `Sichuan SBR` or
+`四川SBR`.
 
 English may use MCR in prose, headings, tables and interface labels. Expand it to
 Mahjong Competition Rules on first mention when introducing the term; do not
