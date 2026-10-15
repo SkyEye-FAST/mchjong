@@ -175,6 +175,15 @@ authorize a shortened Chinese label.
 | Sichuan mahjong | 四川麻将/四川麻將 | 四川麻雀 | Sichuan mahjong |
 | Taiwanese mahjong | 台湾麻将/台灣麻將 | 台湾麻雀 | Taiwanese mahjong |
 
+The MCR scoring table follows the first edition of the World Mahjong Organization's
+Mahjong Competition Rules (December 2014), as implemented by the mcr-mahjong library.
+Some values differ from the 1998 trial rules; for example, Two Concealed Kongs is
+8 points here and 6 in the 1998 rules. Say which edition the manual follows when a
+reader could compare it with older rules. The Sichuan preset T/TFMJ 01-2024 is the
+group standard 《四川麻将竞赛规则》 (Rules of Sichuan Mahjong Competition), published
+in July 2024 by the Tianfu New Area Mahjong Sports Association (四川天府新区麻将运动协会).
+Give that title when the text introduces the preset.
+
 SBR is the English abbreviation of Sichuan Bloody Rules, the ruleset called `血战到底`
 in Chinese and `血戦到底` in Japanese. It is an English abbreviation only: like MCR,
 it does not replace the Chinese or Japanese name. English may use it for a ruleset,
