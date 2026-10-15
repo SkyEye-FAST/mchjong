@@ -10,7 +10,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Share Chinese-variant turn timers, prefer discarding the drawn tile on timeout, and charge human players only outside pauses and exit votes; separate Riichi persistence and recipient projection from game progression.
-- Name the match-ending control End Match, distinguish its confirmation from Close Room, and correct compact labels, full game names and English label capitalization in the interface.
+- Name the match-ending control End Match, distinguish its confirmation from Close Room, and correct compact labels and English label capitalization in the interface, keeping short English variant names in lists where nothing else could be meant.
 - Reorganize the four rule chapters of the Mahjong Manual into one entry per concept in all four languages: define terms before relying on them, state each base rule before the preset differences, explain each Sichuan mahjong preset difference where its rule appears, name the MCR scoring edition, add the Riichi mahjong kuitan and swap-calling rules, and use the paper icon for the rule chapters.
 - Watch live matches by walking around the table instead of opening a spectator screen; retire the spectator-access setting, retain spectator hand privacy, and extend in-world round, dealer, score and remaining-tile displays.
 - Optimize Mahjong table, stool, tablecloth, and tile textures to match authentic Minecraft wood, metal, felt, and mineral relief styles, replacing procedural artwork generation with static texture resources.
