@@ -9,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(21)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(22)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(VoiceChoicePayload.TYPE, VoiceChoicePayload.CODEC, (payload, context) -> {
@@ -27,22 +27,10 @@ final class ForgeNetworking {
             .addMain(TableRoomActionPayload.TYPE, TableRoomActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(McrNextHandPayload.TYPE, McrNextHandPayload.CODEC, (payload, context) -> {
+            .addMain(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(McrActionPayload.TYPE, McrActionPayload.CODEC, (payload, context) -> {
-                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
-            })
-            .addMain(SichuanActionPayload.TYPE, SichuanActionPayload.CODEC, (payload, context) -> {
-                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
-            })
-            .addMain(TaiwanActionPayload.TYPE, TaiwanActionPayload.CODEC, (payload, context) -> {
-                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
-            })
-            .addMain(SichuanNextHandPayload.TYPE, SichuanNextHandPayload.CODEC, (payload, context) -> {
-                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
-            })
-            .addMain(TaiwanNextHandPayload.TYPE, TaiwanNextHandPayload.CODEC, (payload, context) -> {
+            .addMain(NextHandPayload.TYPE, NextHandPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(TableVariantPayload.TYPE, TableVariantPayload.CODEC, (payload, context) -> {

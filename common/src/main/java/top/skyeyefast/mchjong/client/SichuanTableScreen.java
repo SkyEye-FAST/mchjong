@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.SichuanAction;
 import top.skyeyefast.mchjong.engine.SichuanSession;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.network.SichuanActionPayload;
+import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -138,7 +138,7 @@ public final class SichuanTableScreen extends Screen {
             || snapshot.game().decision() != current.game().decision() || index < 0 || index >= current.game().actions().size()
             || table().clientTableRoom().exitVote() != null) return;
         pending = true;
-        minecraft.getConnection().send(PayloadPackets.serverbound(new SichuanActionPayload(pos, current.tableId(),
+        minecraft.getConnection().send(PayloadPackets.serverbound(new TableActionPayload(pos, current.tableId(),
             current.incarnation(), current.game().decision(), index)));
         rebuild();
     }

@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.SichuanGame;
 import top.skyeyefast.mchjong.engine.SichuanSession;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.network.SichuanNextHandPayload;
+import top.skyeyefast.mchjong.network.NextHandPayload;
 
 /** Rule-specific synchronization for the shared settlement interface. */
 public final class SichuanResultsScreen extends TableResultsScreen {
@@ -32,7 +32,7 @@ public final class SichuanResultsScreen extends TableResultsScreen {
                 var current = view();
                 if (pending || current == null || !current.canConfirmNextHand() || minecraft.getConnection() == null) return;
                 pending = true;
-                minecraft.getConnection().send(PayloadPackets.serverbound(new SichuanNextHandPayload(tablePos(),
+                minecraft.getConnection().send(PayloadPackets.serverbound(new NextHandPayload(tablePos(),
                     current.tableId(), current.incarnation(), current.game().decision())));
                 rebuild();
             }).primary().textScale(scale);

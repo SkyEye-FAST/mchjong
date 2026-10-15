@@ -181,23 +181,19 @@ class ServerIntegrationTest {
                 top.skyeyefast.mchjong.engine.MahjongVariant.MCR);
             top.skyeyefast.mchjong.network.TableVariantPayload.CODEC.encode(buffer, choice);
             assertEquals(choice, top.skyeyefast.mchjong.network.TableVariantPayload.CODEC.decode(buffer));
-            var action = new top.skyeyefast.mchjong.network.McrActionPayload(request.pos(), request.tableId(), UUID.randomUUID(), 9, 2);
-            top.skyeyefast.mchjong.network.McrActionPayload.CODEC.encode(buffer, action);
-            assertEquals(action, top.skyeyefast.mchjong.network.McrActionPayload.CODEC.decode(buffer));
-            assertThrows(IllegalArgumentException.class, () -> new top.skyeyefast.mchjong.network.McrActionPayload(
+            var action = new top.skyeyefast.mchjong.network.TableActionPayload(request.pos(), request.tableId(), UUID.randomUUID(), 9, 2);
+            top.skyeyefast.mchjong.network.TableActionPayload.CODEC.encode(buffer, action);
+            assertEquals(action, top.skyeyefast.mchjong.network.TableActionPayload.CODEC.decode(buffer));
+            assertThrows(IllegalArgumentException.class, () -> new top.skyeyefast.mchjong.network.TableActionPayload(
                 request.pos(), request.tableId(), UUID.randomUUID(), 9, -1));
             var roomAction = new top.skyeyefast.mchjong.network.TableRoomActionPayload(request.pos(), request.tableId(),
                 UUID.randomUUID(), 9, 2);
             top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.encode(buffer, roomAction);
             assertEquals(roomAction, top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.decode(buffer));
-            var lifecycle = new top.skyeyefast.mchjong.network.McrNextHandPayload(request.pos(), request.tableId(),
+            var lifecycle = new top.skyeyefast.mchjong.network.NextHandPayload(request.pos(), request.tableId(),
                 UUID.randomUUID(), 9);
-            top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.encode(buffer, lifecycle);
-            assertEquals(lifecycle, top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.decode(buffer));
-            var sichuanConfirmation = new top.skyeyefast.mchjong.network.SichuanNextHandPayload(request.pos(), request.tableId(),
-                UUID.randomUUID(), 9);
-            top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC.encode(buffer, sichuanConfirmation);
-            assertEquals(sichuanConfirmation, top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC.decode(buffer));
+            top.skyeyefast.mchjong.network.NextHandPayload.CODEC.encode(buffer, lifecycle);
+            assertEquals(lifecycle, top.skyeyefast.mchjong.network.NextHandPayload.CODEC.decode(buffer));
             var sichuanRoom = new top.skyeyefast.mchjong.engine.SichuanSession(request.tableId(), 7);
             var sichuanView = new top.skyeyefast.mchjong.network.SichuanViewPayload(request.pos(), "", sichuanRoom.roomView(null),
                 new top.skyeyefast.mchjong.item.SichuanDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,

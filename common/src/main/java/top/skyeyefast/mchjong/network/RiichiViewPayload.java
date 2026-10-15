@@ -19,7 +19,7 @@ public record RiichiViewPayload(BlockPos pos, String view, boolean open, boolean
     public static final Type<RiichiViewPayload> TYPE = new Type<>(MahjongContent.id("riichi_view"));
     public static final StreamCodec<RegistryFriendlyByteBuf, RiichiViewPayload> CODEC = new StreamCodec<>() {
         @Override public RiichiViewPayload decode(RegistryFriendlyByteBuf buffer) {
-            return new RiichiViewPayload(buffer.readBlockPos(), buffer.readUtf(524288), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
+            return new RiichiViewPayload(buffer.readBlockPos(), buffer.readUtf(TableNetworking.VIEW_LIMIT), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
                 TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.engine.TableRoomView.class),
                 TableNetworking.JSON.fromJson(buffer.readUtf(262144), top.skyeyefast.mchjong.engine.RiichiRoomSettings.class),
                 TableNetworking.JSON.fromJson(buffer.readUtf(2048), top.skyeyefast.mchjong.world.BotServiceState.class),
@@ -27,7 +27,7 @@ public record RiichiViewPayload(BlockPos pos, String view, boolean open, boolean
                 buffer.readEnum(MahjongVariant.class));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, RiichiViewPayload value) {
-            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), 524288); buffer.writeBoolean(value.open());
+            buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), TableNetworking.VIEW_LIMIT); buffer.writeBoolean(value.open());
             buffer.writeBoolean(value.controlReply());
             buffer.writeBoolean(value.leaveDecision());
             buffer.writeByte(value.redOptions());
