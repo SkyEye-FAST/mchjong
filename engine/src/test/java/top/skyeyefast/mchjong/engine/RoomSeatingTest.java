@@ -9,6 +9,27 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RoomSeatingTest {
+    @Test void sharedLobbyFillsBotsAndWorldPolicyRemovesThemOnlyBeforePlay() {
+        var session = room(false, 1);
+        act(session, id(0), RoomAction.Type.FILL_BOTS);
+        assertEquals(3, session.roomView(null).seats().stream().filter(seat -> seat.participant().bot()).count());
+        session = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(session));
+        session.synchronizeSeats(Map.of(id(0), 0));
+        var disabled = new WorldPolicy(true, false, true, 5000, true, false, true, true, null);
+        session.configureWorld(disabled);
+        assertTrue(session.roomView(null).seats().stream().noneMatch(seat -> seat.participant().bot()));
+        assertTrue(session.roomView(id(0)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.FILL_BOTS
+            || action.type() == RoomAction.Type.SET_BOT));
+        session.configureWorld(WorldPolicy.DEFAULT);
+        act(session, id(0), RoomAction.Type.FILL_BOTS);
+        act(session, id(0), RoomAction.Type.BEGIN_SEATING);
+        arriveAndReady(session);
+        session.configureWorld(disabled);
+        assertEquals(3, session.roomView(null).seats().stream().filter(seat -> seat.participant().bot()).count());
+        assertTrue(session.requestExit(id(0)));
+        assertTrue(session.lobby(), "Only the human votes on ending a one-human match");
+    }
+
     @Test void allFourVariantsRequireFreshIncarnationAndRegisteredRestoration() {
         UUID actor = id(0); TableSession session = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 4);
         session.join(actor, "Host", 0);

@@ -75,6 +75,14 @@ with the first command below, or select an individual engine test with the secon
 ./gradlew :engine:test --tests '*McrSettlementTest' --warning-mode fail
 ```
 
+The optional Create integration test checks native basin transactions, output
+capacity and sequenced assembly using Create's installed APIs. Run it with Create
+enabled; the default test run does not compile or execute this suite:
+
+```sh
+./gradlew :neoforge:test -PwithCreate=true --tests '*CreateProcessingTest' --warning-mode fail
+```
+
 Changes to inventory menus or equipment handling can also be checked in an
 isolated Minecraft world. The existing checks in `fabric/src/smoke` use a real
 server player to verify menu permissions, item transfers and equipment removal:

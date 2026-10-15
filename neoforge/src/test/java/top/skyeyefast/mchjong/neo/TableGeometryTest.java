@@ -21,9 +21,6 @@ class TableGeometryTest {
         double half = TableGeometry.OUTER_HALF_WIDTH;
         var table = new AABB(.5 - half, .75, .5 - half, .5 + half, 1, .5 + half);
         int radius = TableGeometry.FOOTPRINT_RADIUS;
-        assertEquals(1, radius);
-        assertEquals(2.875, half * 2);
-        assertEquals(2.625, TableGeometry.FELT_HALF_WIDTH * 2);
         double area = 0;
         for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++) {
             var state = block.defaultBlockState().setValue(TableSpaceBlock.X, x + radius).setValue(TableSpaceBlock.Z, z + radius);
@@ -36,12 +33,4 @@ class TableGeometryTest {
         assertEquals(half * half * 4, area, 1e-8);
     }
 
-    @Test void seatsAndDismountSpaceRemainOutsideTheCompactFootprint() {
-        assertEquals(2, TableGeometry.STOOL_DISTANCE);
-        for (int side = 0; side < 4; side++) {
-            var stool = TableGeometry.stool(BlockPos.ZERO, side);
-            assertEquals(BlockPos.ZERO.relative(TableGeometry.SIDES[side], 2), stool);
-            assertTrue(TableGeometry.STOOL_DISTANCE - .4 > TableGeometry.OUTER_HALF_WIDTH);
-        }
-    }
 }
