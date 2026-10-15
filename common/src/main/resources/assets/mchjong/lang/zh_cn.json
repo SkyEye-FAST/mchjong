@@ -1461,6 +1461,7 @@
   "ui.mchjong.empty": "空席",
   "ui.mchjong.exit": "退出",
   "ui.mchjong.exit_agree": "同意",
+  "ui.mchjong.exit_confirm_note": "确定解散房间吗？正在进行的对局将结束，计分仅包含已结束的局。",
   "ui.mchjong.exit_hint": "只有一名真人玩家时，直接结束牌桌对局。有多名真人玩家时，需要全员同意。计分仅包含已结束的局。",
   "ui.mchjong.exit_paused": "对局和思考计时都暂停了。未回应不视为同意。",
   "ui.mchjong.exit_reject": "继续对局",

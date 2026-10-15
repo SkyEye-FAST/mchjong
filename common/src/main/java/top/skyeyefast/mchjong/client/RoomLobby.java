@@ -88,8 +88,7 @@ final class RoomLobby {
         leaveButton.active = leave >= 0 && !pending;
         buttons.add(leaveButton);
         var close = RoomLobbyControls.button(Component.translatable("room.mchjong.dissolve"), toolbarLeft + 2 * (toolbarWidth + 4), top + 6,
-            toolbarWidth, () -> TableExitControls.send(pos, room,
-                TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)).shortCaption(Component.translatable("room.mchjong.dissolve.short"));
+            toolbarWidth, () -> TableExitControls.request(parent, pos, room)).shortCaption(Component.translatable("room.mchjong.dissolve.short"));
         close.active = host(room) && !pending;
         buttons.add(close);
         var variants = new ArrayList<MahjongButton>();

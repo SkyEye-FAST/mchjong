@@ -1461,6 +1461,7 @@
   "ui.mchjong.empty": "Vacant",
   "ui.mchjong.exit": "Exit",
   "ui.mchjong.exit_agree": "Agree",
+  "ui.mchjong.exit_confirm_note": "Close this room? Any active match will end, and only completed hands will be scored.",
   "ui.mchjong.exit_hint": "With one human player, the table ends immediately. With several, everyone must agree. Scoring includes only hands that finished.",
   "ui.mchjong.exit_paused": "The match and its clocks are paused. No reply does not count as agreement.",
   "ui.mchjong.exit_reject": "Keep Playing",

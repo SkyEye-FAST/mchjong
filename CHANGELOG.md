@@ -48,7 +48,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Keep concealed hands hidden from non-participants whenever spectating is disabled, regardless of the spectator hand visibility setting.
+- Ask for confirmation before an exit request that immediately closes the room, and explain the exit outcomes in the Exit button tooltip.
 - Clarify scoring-pattern requirements in all four handbook languages, consolidate Riichi mahjong honor-tile yaku into one Yakuhai explanation, and link the open Tanyao setting to its rule-choice page.
 - Craft stools from every wood family with any of the 16 matching carpet colors. Stools and cloths support all 16 dye colors while preserving their other components.
 - Separate draw-time and call-time temporary furiten clearance, and prevent North replacements from qualifying the following discard for Kanburi.

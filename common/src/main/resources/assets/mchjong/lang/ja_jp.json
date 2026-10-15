@@ -1461,6 +1461,7 @@
   "ui.mchjong.empty": "空席",
   "ui.mchjong.exit": "退出",
   "ui.mchjong.exit_agree": "同意",
+  "ui.mchjong.exit_confirm_note": "部屋を解散しますか？進行中の対局は終了し、得点は終了した局までの結果で確定します。",
   "ui.mchjong.exit_hint": "プレイヤーが1人なら、そのまま対局を終了します。複数人なら全員の同意が必要です。得点は終了した局までの結果で確定します。",
   "ui.mchjong.exit_paused": "対局も持ち時間も止まっています。無回答は同意にはなりません。",
   "ui.mchjong.exit_reject": "対局続行",

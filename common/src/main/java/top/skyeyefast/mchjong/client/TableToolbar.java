@@ -8,7 +8,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.TableRoomView;
-import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 
 /** Shared match navigation; rule-specific actions remain beside the private hand. */
 final class TableToolbar {
@@ -21,12 +20,12 @@ final class TableToolbar {
         var buttons = new ArrayList<MahjongButton>();
         if (room.exitVote() != null) return buttons;
         String[] keys = {"ui.mchjong.exit", "settings.mchjong.scopes", immersive ? "ui.mchjong.view_seated" : "ui.mchjong.view_immersive", "replay.mchjong.title"};
-        Runnable[] actions = {() -> TableExitControls.send(pos, room, TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false),
+        Runnable[] actions = {() -> TableExitControls.request(parent, pos, room),
             () -> client.setScreen(new TableOptionsScreen(parent, pos)), switchView, () -> ClientReplays.list(0, "", false)};
         for (int index = 0; index < keys.length; index++) {
             if (index == 0 && room.viewerSeat() < 0) continue;
             int current = index;
-            var fullCaption = Component.translatable(keys[index]);
+            var fullCaption = Component.translatable(index == 0 ? "ui.mchjong.exit_hint" : keys[index]);
             boolean compact = !immersive && width < 560;
             var caption = Component.translatable(keys[index] + (compact && index != 0 && index != 2 ? ".short" : ""));
             int span = (client.font.width(caption) + (compact ? 8 : 14)) * scale;
