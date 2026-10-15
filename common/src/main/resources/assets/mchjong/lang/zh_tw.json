@@ -1130,6 +1130,8 @@
   "settings.mchjong.info.winds": "自風",
   "settings.mchjong.invitation_teleport": "接受邀請傳送",
   "settings.mchjong.invitations_enabled": "允許牌桌邀請",
+  "settings.mchjong.manual_timeout": "自動推進閒置玩家的手動操作",
+  "settings.mchjong.manual_timeout.description": "閒置玩家的計時耗盡時，自動代為完成其手動操作步驟。預設關閉。",
   "settings.mchjong.max_experience_change": "單次經驗值變化上限：%s",
   "settings.mchjong.max_experience_change.label": "單次經驗值變化上限",
   "settings.mchjong.none": "無",

@@ -12,11 +12,16 @@ class ManualHandlingTest {
     private static UUID id(int seat) { return new UUID(812, seat); }
 
     private static RiichiGame game(RiichiPreset rules, boolean manual) {
+        return game(rules, manual, false);
+    }
+
+    private static RiichiGame game(RiichiPreset rules, boolean manual, boolean manualTimeout) {
         RiichiSession session = new RiichiSession(UUID.randomUUID(), rules, 8192);
         assertTrue(session.configureEquipment(manual, Tile.set(rules.sanma(), rules.defaultRedFives())));
         for (int seat = 0; seat < rules.players(); seat++) {
             assertTrue(session.join(id(seat), "Player " + seat, seat));
         }
+        if (manualTimeout) assertTrue(session.configureManualTimeout(id(0), session.decision(), true));
         GameLifecycleTest.startPositioned(session);
         return session.game();
     }
@@ -34,6 +39,7 @@ class ManualHandlingTest {
         RiichiGame restored = GameLifecycleTest.reloadMounted(game);
         assertEquals(game.view(null).seats(), restored.view(null).seats());
         assertEquals(game.view(null).wall(), restored.view(null).wall());
+        assertEquals(game.session.manualTimeout(), restored.session.manualTimeout());
         return restored;
     }
 
@@ -50,8 +56,12 @@ class ManualHandlingTest {
             RiichiGame game = game(rules, true);
             assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
             assertNull(game.wall);
+            assertFalse(game.session.manualTimeout());
             assertEquals(new RiichiView.Handling(0, -1, 0, 0, 0, false), game.view(null).handling());
+            var clocks = game.view(id(game.dealer)).clocks();
+            assertTrue(clocks.stream().noneMatch(TimeControl.Clock::active));
             for (int tick = 0; tick < 2400; tick++) game.tick();
+            assertEquals(clocks, game.view(id(game.dealer)).clocks());
             assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
             act(game, game.dealer, RiichiAction.Type.SHUFFLE);
             assertTrue(game.view(null).wall().stream().allMatch(tile -> tile == Tile.ABSENT));
@@ -79,8 +89,11 @@ class ManualHandlingTest {
             int remaining = game.wall.remaining();
             assertEquals(new RiichiView.Handling((1 << rules.players()) - 1, 13 * rules.players(), 1,
                 game.wall.diceOne, game.wall.diceTwo, false), game.view(null).handling());
+            clocks = game.view(id(game.dealer)).clocks();
+            assertTrue(clocks.stream().noneMatch(TimeControl.Clock::active));
             for (int tick = 0; tick < 2400; tick++) game.tick();
             assertEquals(remaining, game.wall.remaining(), "Human draw must not happen on a timeout");
+            assertEquals(clocks, game.view(id(game.dealer)).clocks());
             act(game, game.dealer, RiichiAction.Type.DRAW);
             assertEquals(14, game.players[game.dealer].hand.size());
             assertEquals(remaining - 1, game.wall.remaining());
@@ -93,6 +106,38 @@ class ManualHandlingTest {
             assertEquals(automatic.wall.breakOffset, game.wall.breakOffset);
             assertFalse(game.session.configureEquipment(false, List.of()), "Cannot unload a set during a match");
         }
+    }
+
+    @Test void connectedIdleHandlingTimesOutWhileResponsiveSeatsStopCharging() {
+        RiichiGame game = game(RiichiPreset.TENHOU_4, true, true);
+        assertTrue(game.session.manualTimeout());
+        int dealer = game.dealer;
+        assertEquals(TimeControl.MANUAL, game.timeControl);
+        assertTrue(game.view(id(dealer)).clocks().get(dealer).active());
+        assertFalse(game.view(id(game.next(dealer))).clocks().get(game.next(dealer)).active());
+        long revision = game.view(id(dealer)).revision();
+        for (int tick = 0; tick < 20; tick++) game.tick();
+        assertTrue(game.view(id(dealer)).revision() > revision);
+        var clocks = game.view(id(dealer)).clocks();
+        game = reload(game);
+        assertEquals(clocks, game.view(id(dealer)).clocks());
+        for (int tick = 20; tick < 2999; tick++) game.tick();
+        assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
+        game.tick();
+        assertEquals(RiichiGame.Phase.BUILD_WALL, game.phase());
+        assertEquals(0, game.reserveTicks[dealer]);
+
+        for (int tick = 0; tick < 2999; tick++) game.tick();
+        int responsive = game.next(dealer);
+        assertEquals(1, game.reserveTicks[responsive]);
+        act(game, responsive, RiichiAction.Type.BUILD_WALL);
+        assertFalse(game.view(id(responsive)).clocks().get(responsive).active());
+        game.tick();
+        assertEquals(1, game.reserveTicks[responsive], "A completed wall must stop consuming reserve");
+        assertEquals(15, game.handling.builtWalls, "Idle connected players must build their walls on expiry");
+        assertTrue(game.handling.actions(game, responsive).isEmpty());
+        assertEquals(List.of(new RiichiAction(RiichiAction.Type.PICK_UP_DICE)), game.actions(dealer));
+        game.validate();
     }
 
     @Test void concurrentWallBuildingPreservesOtherSeatsDecisionAndRejectsDuplicateBuilds() {

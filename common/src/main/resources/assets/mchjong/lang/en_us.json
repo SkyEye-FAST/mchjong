@@ -1130,6 +1130,8 @@
   "settings.mchjong.info.winds": "Seat Winds",
   "settings.mchjong.invitation_teleport": "Invitation Teleportation",
   "settings.mchjong.invitations_enabled": "Allow Table Invitations",
+  "settings.mchjong.manual_timeout": "Advance Idle Manual Actions",
+  "settings.mchjong.manual_timeout.description": "Idle players' manual steps are carried out automatically when their clock expires. Disabled by default.",
   "settings.mchjong.max_experience_change": "Maximum Experience Change: %s",
   "settings.mchjong.max_experience_change.label": "Maximum Experience Change",
   "settings.mchjong.none": "None",

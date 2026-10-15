@@ -13,6 +13,7 @@ public final class RiichiSession extends TableSession {
     RiichiRules rules;
     List<Integer> suppliedTiles;
     TimeControl timeControl = TimeControl.DEFAULT;
+    boolean manualTimeout;
     PlayerHandVisibility playerHandVisibility = PlayerHandVisibility.SELF;
     boolean openHands;
     private transient List<ExternalBot> externalBots = List.of();
@@ -33,12 +34,13 @@ public final class RiichiSession extends TableSession {
     public RiichiGame game() { return game; }
     public RiichiRules rules() { return rules; }
     public TimeControl timeControl() { return timeControl; }
+    public boolean manualTimeout() { return manualTimeout; }
     public PlayerHandVisibility playerHandVisibility() { return playerHandVisibility; }
     public boolean openHands() { return openHands; }
     public List<ExternalBot> externalBots() { return externalBots == null ? List.of() : externalBots; }
 
     public RiichiRoomSettings roomSettings() {
-        return new RiichiRoomSettings(rules, timeControl, playerHandVisibility, openHands,
+        return new RiichiRoomSettings(rules, timeControl, manualTimeout, playerHandVisibility, openHands,
             externalBots());
     }
 
@@ -98,6 +100,7 @@ public final class RiichiSession extends TableSession {
         if (this.manual != manual) {
             seating = new RoomSeating();
             timeControl = manual ? TimeControl.MANUAL : TimeControl.DEFAULT;
+            manualTimeout = false;
         }
         this.manual = manual;
         suppliedTiles = List.copyOf(tiles);
@@ -208,6 +211,15 @@ public final class RiichiSession extends TableSession {
         return true;
     }
 
+    public boolean configureManualTimeout(UUID actor, long expectedDecision, boolean enabled) {
+        if (!manual || manualTimeout == enabled || !lobby() || exitVote != null
+            || !isHost(actor) || expectedDecision != decision) return false;
+        manualTimeout = enabled;
+        resetReadiness();
+        changed(true);
+        return true;
+    }
+
     public List<ReplayMatch> pendingReplays() { return List.copyOf(archiveQueue); }
     public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
     public Map<UUID, Integer> pendingExperience() { return Map.copyOf(pendingExperience); }
@@ -226,7 +238,7 @@ public final class RiichiSession extends TableSession {
     }
 
     public State save() {
-        return new State(State.FORMAT, saveRoom(), rules, suppliedTiles, timeControl,
+        return new State(State.FORMAT, saveRoom(), rules, suppliedTiles, timeControl, manualTimeout,
             playerHandVisibility, openHands, archiveQueue, pendingExperience,
             game == null ? null : game.save());
     }
@@ -238,6 +250,7 @@ public final class RiichiSession extends TableSession {
         session.rules = state.rules();
         session.suppliedTiles = state.suppliedTiles();
         session.timeControl = state.timeControl();
+        session.manualTimeout = state.manualTimeout();
         session.playerHandVisibility = state.playerHandVisibility();
         session.openHands = state.openHands();
         session.archiveQueue.addAll(state.archiveQueue());
@@ -247,10 +260,10 @@ public final class RiichiSession extends TableSession {
     }
 
     public record State(int format, TableSession.State room, RiichiRules rules, List<Integer> suppliedTiles,
-                        TimeControl timeControl, PlayerHandVisibility playerHandVisibility,
+                        TimeControl timeControl, boolean manualTimeout, PlayerHandVisibility playerHandVisibility,
                         boolean openHands, List<ReplayMatch> archiveQueue,
                         Map<UUID, Integer> pendingExperience, RiichiGame.State game) {
-        public static final int FORMAT = 7;
+        public static final int FORMAT = 8;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported Riichi session format");
@@ -262,6 +275,7 @@ public final class RiichiSession extends TableSession {
             archiveQueue = List.copyOf(archiveQueue);
             pendingExperience = Map.copyOf(pendingExperience);
             if (room.variant() != MahjongVariant.RIICHI || room.capacity() != rules.players()
+                || manualTimeout && !room.manual()
                 || !suppliedTiles.isEmpty() && (!Tile.validSet(suppliedTiles)
                     || suppliedTiles.size() != (rules.sanma() ? 108 : 136))
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null)

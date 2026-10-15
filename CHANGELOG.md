@@ -38,6 +38,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add the default-off Advance Idle Manual Actions room option for ordinary Riichi mahjong tables, allowing the host to advance idle players' manual steps when their clocks expire.
 - Add server-data-pack Riichi and Taiwanese mahjong award sets with bounded conditions, host draft selection, server-owned definitions, four-language receipts and frozen native replay rules; evaluate custom han/yakuman/tai before selecting the winning interpretation and retain actual awarded values throughout scoring and presentation. Use Taiwanese mahjong library 0.2.0 candidate scoring, preserving separate flower payouts.
 - Expand the four-language Mahjong Manual with independent Riichi, MCR, Sichuan mahjong and Taiwanese mahjong rule entrances, complete award indexes, tile illustrations, payment examples and preset differences. Align player rules, correct mixed-kong result labels and verify catalog coverage, links and in-game pagination.
 - Add independent native Taiwanese mahjong replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.

@@ -961,6 +961,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             case AUTO_SORT -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.SORT, payload.enabled());
             case AUTO_KITA -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.KITA, payload.enabled());
             case OPEN_HANDS -> session.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
+            case MANUAL_TIMEOUT -> session.configureManualTimeout(player.getUUID(), payload.token(), payload.enabled());
         };
         if (changed) {
             refreshParticipants(false);

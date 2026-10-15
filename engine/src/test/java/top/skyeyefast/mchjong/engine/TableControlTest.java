@@ -113,6 +113,44 @@ class TableControlTest {
         assertFalse(new RiichiSession(UUID.randomUUID(), RiichiPreset.WRC, 2).openHands);
     }
 
+    @Test void manualTimeoutIsHostOnlyClearsReadinessAndPersistsOnlyForOrdinaryTables() {
+        var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        assertTrue(lobby.join(id(0), "Host", 0));
+        assertTrue(lobby.join(id(1), "Guest", 1));
+        assertFalse(lobby.manualTimeout());
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+        assertTrue(lobby.configureEquipment(true, Tile.set(false, RedFives.THREE)));
+        lobby.participants[1].ready = true;
+        long token = lobby.decision;
+        long revision = lobby.revision;
+        assertFalse(lobby.configureManualTimeout(id(1), token, true));
+        assertFalse(lobby.configureManualTimeout(null, token, true));
+        assertFalse(lobby.configureManualTimeout(id(0), token - 1, true));
+        assertTrue(lobby.participants[1].ready);
+        assertTrue(lobby.configureManualTimeout(id(0), token, true));
+        assertFalse(lobby.participants[1].ready);
+        assertNotEquals(token, lobby.decision);
+        assertTrue(lobby.revision > revision);
+        assertTrue(lobby.roomSettings().manualTimeout());
+        assertFalse(lobby.configureManualTimeout(id(0), token, false));
+        var saved = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(lobby));
+        assertTrue(saved.manualTimeout());
+        assertTrue(saved.roomSettings().manualTimeout());
+        var oldSave = new Gson().fromJson(TableSessionCodec.save(lobby), com.google.gson.JsonObject.class);
+        oldSave.getAsJsonObject("state").addProperty("format", 7);
+        assertThrows(IllegalArgumentException.class, () -> TableSessionCodec.restore(oldSave.toString()));
+        assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.THREE)));
+        assertFalse(lobby.manualTimeout());
+        assertFalse(lobby.roomSettings().manualTimeout());
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+        assertTrue(lobby.configureEquipment(true, Tile.set(false, RedFives.THREE)));
+        assertFalse(lobby.manualTimeout());
+        GameLifecycleTest.startPositioned(lobby);
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+        assertTrue(lobby.requestExit(id(0)));
+        assertFalse(lobby.configureManualTimeout(id(0), lobby.decision, true));
+    }
+
     @Test void convenienceHintsAreControlledByTheLobbyHostAndPersistWithTheRoom() {
         var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0);

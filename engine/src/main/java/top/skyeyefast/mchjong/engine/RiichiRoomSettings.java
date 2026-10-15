@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 /** Public Riichi room configuration, separate from room lifecycle and live match state. */
-public record RiichiRoomSettings(RiichiRules rules, TimeControl timeControl,
+public record RiichiRoomSettings(RiichiRules rules, TimeControl timeControl, boolean manualTimeout,
                                  PlayerHandVisibility playerHandVisibility, boolean openHands,
                                  List<ExternalBot> externalBots) {
     public RiichiRoomSettings {

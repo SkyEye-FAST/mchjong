@@ -720,13 +720,15 @@ public final class RiichiGame {
             if (!clockActive(seat)) continue;
             if (moveTicks[seat] + reserveTicks[seat] > 0) continue;
             var legal = actions(seat);
-            int index = indexOf(legal, phase == Phase.REACTION ? PASS : DISCARD);
+            int index = ManualHandling.active(phase) ? disconnectedAction(phase, players[seat].drawn, legal)
+                : indexOf(legal, phase == Phase.REACTION ? PASS : DISCARD);
             if (phase == Phase.TURN) for (int i = 0; i < legal.size(); i++) {
                 if (legal.get(i).type() == DISCARD && legal.get(i).tiles().get(0) == players[seat].drawn) index = i;
             }
             if (index >= 0) act(players[seat].member.id, token, index);
         }
-        if ((phase == Phase.TURN || phase == Phase.REACTION) && (age == 1 || age % 10 == 0)) session.revision++;
+        if ((phase == Phase.TURN || phase == Phase.REACTION || session.manualTimeout && ManualHandling.active(phase))
+            && (age == 1 || age % 10 == 0)) session.revision++;
         if (age > 0 && age % 12 == 0) {
             for (int seat = 0; seat < rules.players(); seat++) if (players[seat].member.bot) {
                 var legal = actions(seat);
@@ -741,7 +743,7 @@ public final class RiichiGame {
     }
     private boolean clockActive(int seat) {
         return age >= 0 && session.hasSeatedHuman() && !players[seat].member.bot && players[seat].member.presence != PlayerPresence.DISCONNECTED
-            && (phase == Phase.TURN || phase == Phase.REACTION)
+            && (phase == Phase.TURN || phase == Phase.REACTION || session.manualTimeout && ManualHandling.active(phase))
             && !actions(seat).isEmpty();
     }
 

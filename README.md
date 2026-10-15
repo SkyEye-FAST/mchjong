@@ -100,6 +100,11 @@ tile counts using the player's hand and public tiles; they do not reveal the
 wall. Built-in computer opponents use the same limited information, even when
 the room allows players to see other hands.
 
+On ordinary Riichi mahjong tables, the host can enable Advance Idle Manual Actions
+next to Clock Settings. This option is off by default. When enabled, idle players'
+manual steps are carried out automatically when their clock expires. When disabled,
+manual steps do not use the clock and wait for player input.
+
 To invite an online player, use `/mchjong invite <player>`. The invitation lasts
 60 seconds and normally requires the recipient to accept within six blocks of
 the table. An administrator can enable invitation teleportation to let players

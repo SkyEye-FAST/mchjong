@@ -1130,6 +1130,8 @@
   "settings.mchjong.info.winds": "自風",
   "settings.mchjong.invitation_teleport": "招待承諾時のテレポート",
   "settings.mchjong.invitations_enabled": "卓への招待を許可",
+  "settings.mchjong.manual_timeout": "操作していないプレイヤーの手動操作を自動で進める",
+  "settings.mchjong.manual_timeout.description": "操作していないプレイヤーの持ち時間が切れると、そのプレイヤーの手動操作を自動で行います。初期設定では無効です。",
   "settings.mchjong.max_experience_change": "経験値変動の上限：%s",
   "settings.mchjong.max_experience_change.label": "経験値変動の上限",
   "settings.mchjong.none": "なし",
