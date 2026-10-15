@@ -81,10 +81,7 @@ or descriptions. A compact label is acceptable only when all of these hold:
    word for the full label.
 3. It keeps the meaning of the full label and differs from every other compact label
    on the same screen.
-4. When enabling a toggle turns a restriction on, such as No Calls, the compact
-   label still names the restriction. A label that names only the restricted action
-   reads as the opposite while the toggle's marker is lit.
-5. Single Latin letters are limited to the wind letters and to the Riichi mahjong
+4. Single Latin letters are limited to the wind letters and to the Riichi mahjong
    automatic-play toggles, whose letters are established for that variant. New
    English labels use words.
 
@@ -143,6 +140,12 @@ authorize a shortened Chinese label.
 | Mahjong Competition Rules | 国标麻将/國標麻將 | 国際公式麻雀 | Mahjong Competition Rules; MCR |
 | Sichuan mahjong | 四川麻将/四川麻將 | 四川麻雀 | Sichuan mahjong |
 | Taiwanese mahjong | 台湾麻将/台灣麻將 | 台湾麻雀 | Taiwanese mahjong |
+
+SBR is the established English abbreviation of Sichuan Bloody Rules, the ruleset
+called `血战到底` in Chinese. It names a ruleset, not the game: use it in preset names
+such as MIL SBR 2025 and expand it on first mention in prose. A variant title,
+variant list entry or replay label names the game, so it is Sichuan Mahjong and
+never `Sichuan SBR` or `四川SBR`.
 
 English may use MCR in prose, headings, tables and interface labels. Expand it to
 Mahjong Competition Rules on first mention when introducing the term; do not
@@ -271,6 +274,7 @@ Identical-looking names do not establish identical rules. In particular:
 
 | Distinction | Project convention |
 | --- | --- |
+| English call names | Riichi mahjong keeps the Japanese loanwords Chi, Pon and Kan. MCR, Sichuan mahjong and Taiwanese mahjong use Chow, Pung and Kong, the terms of the official English MCR rules and of English guides to Taiwanese mahjong. Do not write Chi or Pong for the Chinese variants. |
 | Chinese sequence-pair names | 一杯口/二杯口; Japanese uses 一盃口/二盃口 |
 | Nine Gates | Riichi mahjong uses 九莲宝灯/九蓮寶燈 in Chinese and 九蓮宝燈 in Japanese. MCR uses 九連宝灯 in Japanese. |
 | Seven Pairs | Riichi mahjong uses 七对子/七對子 in Chinese and 七対子 in Japanese. MCR uses 七对/七對 in Chinese and 七対 in Japanese. Sichuan mahjong uses 七対子 in Japanese. |
