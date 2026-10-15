@@ -415,7 +415,7 @@
   "manual.mchjong.entry.riichi_rounds.rounds.continued_2": "$(bold)本場$()記錄連莊和流局的次數。莊家連莊或流局時，本場數加一；閒家和牌後，本場數歸零。每有一本場，榮和者向放銃者多收 300 點，自摸者向每家各多收 100 點。",
   "manual.mchjong.entry.riichi_sanma.name": "三人麻將",
   "manual.mchjong.entry.riichi_sanma.north": "北風牌可以留在手中當普通牌用，也可以拔北：把北風牌亮在一旁，從王牌補摸一張牌。每拔出一張北風牌，加 1 番拔北寶牌；拔北寶牌不能當作役。拔北不破壞門前清，但會打斷一發。用拔北後的補牌自摸和牌，也計嶺上開花。",
-  "manual.mchjong.entry.riichi_sanma.north.continued_1": "他家拔北時，聽北風牌且滿足榮和條件的玩家可以榮和這張北風牌，即搶拔北，不需要聽國士無雙。拔北與開槓合計最多補摸八張牌。",
+  "manual.mchjong.entry.riichi_sanma.north.continued_1": "他家拔北時，聽北風牌且滿足榮和條件的玩家可以榮和這張北風牌，即搶拔北，不需要聽國士無雙，但不計搶槓。拔北與開槓合計最多補摸八張牌。",
   "manual.mchjong.entry.riichi_sanma.payments": "自摸時，其餘兩家各按四人立直麻將中相同身分應付的點數付分，不分攤第四家原本應付的點數。例如閒家自摸滿貫，莊家付 4000 點，另一名閒家付 2000 點。",
   "manual.mchjong.entry.riichi_sanma.payments.continued_1": "荒牌流局時，不聽罰符共 2000 點：一人聽牌時，兩名未聽牌者各付 1000 點；兩人聽牌時，未聽牌者付 2000 點，由兩人平分。",
   "manual.mchjong.entry.riichi_sanma.tiles": "三人麻將不用二萬到八萬，共 108 張牌，也不能吃牌。三名玩家按東、南、西三個座位行牌，每場三個莊位。每人配 13 張牌，莊家配 14 張。一萬作寶牌指示牌時，寶牌是九萬；九萬作指示牌時，寶牌是一萬。",
