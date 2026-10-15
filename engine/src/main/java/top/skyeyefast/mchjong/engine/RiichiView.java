@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.engine;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,5 +40,40 @@ public record RiichiView(UUID tableId, long revision, long decision, int handNum
         riichiSafeTiles = Map.copyOf(riichiSafeTiles);
         externalBots = List.copyOf(externalBots);
         if (settlementTicks < 0 || settlementSkippedSeats < 0) throw new IllegalArgumentException("Invalid settlement view");
+    }
+
+    static RiichiView project(RiichiGame game, int viewer, SpectatorHandVisibility spectatorVisibility) {
+        var seats = new ArrayList<RiichiView.Seat>();
+        RiichiView.Focus focus = null;
+        for (int seat = 0; seat < game.rules.players(); seat++) {
+            RiichiPlayerState player = game.players[seat];
+            boolean visible = game.openHands || seat == viewer || game.exposed[seat]
+                || viewer >= 0 && game.playerHandVisibility.reveals(game.players[viewer].riichi)
+                || viewer < 0 && spectatorVisibility.reveals(game.playerHandVisibility);
+            List<Integer> hand = new ArrayList<>(player.hand);
+            if (game.manual || player.autoPlay.sort()) hand.sort(Tile.ORDER);
+            if (player.drawn >= 0 && (seat != viewer || game.manual || player.autoPlay.sort())
+                && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
+            if (game.phase == RiichiGame.Phase.REACTION && seat == game.lastFrom)
+                focus = new RiichiView.Focus(seat, game.lastTile, game.pending != null,
+                    game.pending == null ? player.river.size() - 1 : hand.indexOf(game.lastTile));
+            if (!visible) hand.replaceAll(tile -> Tile.HIDDEN);
+            seats.add(new RiichiView.Seat(player.member.entityBot, player.member.name, player.member.id != null, player.member.bot, player.member.ready, player.points,
+                hand, player.drawn < 0 ? Tile.ABSENT : visible ? player.drawn : Tile.HIDDEN,
+                player.melds, player.river, player.norths, player.riichi, game.exposed[seat], player.doubleRiichi));
+        }
+        boolean ura = game.rules.uraDora() && game.wins.stream().anyMatch(win -> game.players[win.seat()].riichi);
+        var clocks = new ArrayList<TimeControl.Clock>();
+        for (int seat = 0; seat < game.rules.players(); seat++)
+            clocks.add(new TimeControl.Clock(game.moveTicks[seat], game.reserveTicks[seat], game.clockActive(seat)));
+        return new RiichiView(game.tableId, game.session.revision, game.session.decision, game.handNumber, game.rules, RiichiView.Phase.valueOf(game.phase.name()), viewer, game.dealer, game.round, game.honba, game.riichiSticks,
+            game.turn, game.wall == null ? 0 : game.wall.remaining(), game.wall == null ? 0 : game.wall.breakOffset,
+            game.wall == null ? List.of() : game.manual ? game.handling.wallView(game, ura) : game.wall.publicTiles(ura), focus, seats, game.actions(viewer), game.wins, game.result, game.deltas, game.finalScores, game.finalUma,
+            game.timeControl, clocks, game.finalRanks, game.playerHandVisibility, game.openHands, game.session.exitVote, game.manual ? game.handling.view(game) : null,
+            viewer < 0 || game.manual ? null : game.players[viewer].autoPlay,
+            viewer >= 0 && (game.players[viewer].temporaryFuriten || game.players[viewer].riichiFuriten),
+            viewer < 0 ? 0 : game.players[viewer].doubleRiichi || game.players[viewer].firstTurn && game.uninterrupted ? 2 : 1,
+            game.recorder == null ? Map.of() : game.recorder.riichiSafeTiles(),
+            game.session.externalBots(), game.settlementTicks(), game.settlementSkippedSeats());
     }
 }

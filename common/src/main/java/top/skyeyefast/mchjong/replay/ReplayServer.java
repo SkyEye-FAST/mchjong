@@ -18,10 +18,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.LoggerFactory;
-import top.skyeyefast.mchjong.engine.RiichiSession;
-import top.skyeyefast.mchjong.engine.McrSession;
-import top.skyeyefast.mchjong.engine.SichuanSession;
-import top.skyeyefast.mchjong.engine.TaiwanSession;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.network.ReplayPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -39,15 +35,9 @@ public final class ReplayServer {
     public static boolean flush(MinecraftServer server, TableSession game) throws IOException {
         if (!top.skyeyefast.mchjong.world.WorldSettings.of(server).policy().replaysEnabled()) return false;
         boolean changed = false;
-        var pending = game instanceof RiichiSession riichi ? riichi.pendingReplays()
-            : game instanceof McrSession mcr ? mcr.pendingReplays()
-            : game instanceof SichuanSession sichuan ? sichuan.pendingReplays() : ((TaiwanSession) game).pendingReplays();
-        for (var match : pending) {
+        for (var match : game.pendingReplays()) {
             state(server).store().save(match);
-            if (game instanceof RiichiSession riichi) riichi.acknowledgeReplay(match.id());
-            else if (game instanceof McrSession mcr) mcr.acknowledgeReplay(match.id());
-            else if (game instanceof SichuanSession sichuan) sichuan.acknowledgeReplay(match.id());
-            else ((TaiwanSession) game).acknowledgeReplay(match.id());
+            game.acknowledgeReplay(match.id());
             changed = true;
         }
         return changed;

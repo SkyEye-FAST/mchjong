@@ -37,6 +37,14 @@ public final class RiichiSession extends TableSession {
     public boolean manualTimeout() { return manualTimeout; }
     public PlayerHandVisibility playerHandVisibility() { return playerHandVisibility; }
     public boolean openHands() { return openHands; }
+    @Override protected boolean allowsConvenienceHints() { return worldPolicy.allowConvenienceHints(); }
+    @Override public boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
+        if (convenienceHints == enabled || enabled && !allowsConvenienceHints() || !lobby() || exitVote != null
+            || !isHost(actor) || expectedDecision != decision) return false;
+        convenienceHints = enabled;
+        changed(false);
+        return true;
+    }
     public List<ExternalBot> externalBots() { return externalBots == null ? List.of() : externalBots; }
 
     public RiichiRoomSettings roomSettings() {
@@ -223,6 +231,9 @@ public final class RiichiSession extends TableSession {
     public List<ReplayMatch> pendingReplays() { return List.copyOf(archiveQueue); }
     public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
     public Map<UUID, Integer> pendingExperience() { return Map.copyOf(pendingExperience); }
+    @Override public boolean hasPendingSideEffects() {
+        return super.hasPendingSideEffects() || !pendingExperience.isEmpty();
+    }
     public void validate() {
         validateRoom();
         if (game != null) game.validate();
@@ -255,14 +266,14 @@ public final class RiichiSession extends TableSession {
         session.openHands = state.openHands();
         session.archiveQueue.addAll(state.archiveQueue());
         session.pendingExperience.putAll(state.pendingExperience());
-        if (state.game() != null) session.game = RiichiGame.restore(session, state.game(), state.room().decision());
+        if (state.game() != null) session.game = RiichiGameState.restore(session, state.game(), state.room().decision());
         return session;
     }
 
     public record State(int format, TableSession.State room, RiichiRules rules, List<Integer> suppliedTiles,
                         TimeControl timeControl, boolean manualTimeout, PlayerHandVisibility playerHandVisibility,
                         boolean openHands, List<ReplayMatch> archiveQueue,
-                        Map<UUID, Integer> pendingExperience, RiichiGame.State game) {
+                        Map<UUID, Integer> pendingExperience, RiichiGameState game) {
         public static final int FORMAT = 8;
 
         public State {
