@@ -18,7 +18,8 @@
     },
     {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_calls.kuitan"
+      "text": "manual.mchjong.entry.riichi_calls.kuitan",
+      "anchor": "kuitan"
     },
     {
       "type": "patchouli:text",
