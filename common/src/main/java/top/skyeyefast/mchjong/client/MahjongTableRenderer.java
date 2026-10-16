@@ -57,8 +57,10 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.translate(.5, 0, .5);
             McrSceneRenderer.render(McrTableScene.build(table.clientMcrView().game()), table.clientMcrDeck(),
                 pose, buffers, light, piece -> screen == null ? 0 : screen.highlight(piece),
-                piece -> screen != null && screen.selected(piece), TableAnimation.of(table), Util.getMillis());
+                piece -> screen != null && screen.selected(piece), TableAnimation.of(table), Util.getMillis(),
+                piece -> screen == null ? net.minecraft.world.phys.Vec3.ZERO : screen.handlingOffset(piece));
             if (table.automatic()) TableIndicator.render(table.clientMcrView().game(), pose, buffers, light);
+            TableDice.renderWorld(table.clientMcrView().game(), pose, buffers, light);
             pose.popPose();
             return;
         }
@@ -81,7 +83,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             TableIndicator.render(view, pose, buffers, light);
         else TableIndicator.renderOrdinary(view, pose, buffers, light);
         RiichiDeposits.render(view, table.automatic(), animation, animated, now, pose, buffers, light);
-        RiichiDice.renderWorld(view, pose, buffers, light);
+        TableDice.renderWorld(view, pose, buffers, light);
         if (glass) {
             tiles(table, frames, pose, buffers, light, Layer.BACK);
             tiles(table, frames, pose, buffers, light, Layer.BODY);

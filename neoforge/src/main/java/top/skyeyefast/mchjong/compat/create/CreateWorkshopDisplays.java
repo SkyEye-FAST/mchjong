@@ -44,6 +44,8 @@ public final class CreateWorkshopDisplays {
         add(displays, "backs/undo", CreateProcessing.mixing(List.of(colored, colored.copy(), new ItemStack(MahjongContent.UNDO_DYE))));
         MahjongSupplies.markings().forEach((reagent, points) -> add(displays, "sticks/" + points,
             CreateProcessing.mixing(List.of(new ItemStack(MahjongContent.POINT_STICK, 16), new ItemStack(reagent)))));
+        MahjongSupplies.cardMarkings().forEach((reagent, points) -> add(displays, "cards/" + points,
+            CreateProcessing.mixing(List.of(new ItemStack(MahjongContent.SCORING_CARD, 16), new ItemStack(reagent)))));
         for (int face : new int[] {4, 13, 22}) for (boolean red : new boolean[] {false, true}) {
             var tile = MahjongSupplies.tile(new TileData(face, TileMaterial.BONE, red), 1);
             var dye = new ItemStack(red ? MahjongContent.UNDO_DYE : MahjongContent.RED_DORA_DYE);

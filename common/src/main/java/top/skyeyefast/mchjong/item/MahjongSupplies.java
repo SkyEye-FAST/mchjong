@@ -57,7 +57,8 @@ public final class MahjongSupplies {
     public static boolean storable(ItemStack stack) {
         if (stack.isEmpty() || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
         return stack.is(MahjongContent.TILE_ITEM) ? tile(stack).valid()
-            : stack.is(MahjongContent.POINT_STICK) ? validPoints(stack.getOrDefault(MahjongComponents.POINTS, 0))
+            : stack.is(MahjongContent.POINT_STICK) ? MahjongComponents.DENOMINATIONS.contains(stack.getOrDefault(MahjongComponents.POINTS, 0))
+            : stack.is(MahjongContent.SCORING_CARD) ? MahjongComponents.CARD_DENOMINATIONS.contains(stack.getOrDefault(MahjongComponents.POINTS, 0))
             : stack.is(MahjongContent.DICE);
     }
 
@@ -72,7 +73,7 @@ public final class MahjongSupplies {
     public static boolean boxAccepts(int slot, ItemStack stack) {
         if (slot < 0 || slot >= BOX_SLOTS || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
         return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM) && storable(stack)
-            : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK) && storable(stack)
+            : slot < DYE_SLOT ? (stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.SCORING_CARD)) && storable(stack)
             : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) && storable(stack) : dyeSlotItem(stack);
     }
 
@@ -97,8 +98,9 @@ public final class MahjongSupplies {
             Items.YELLOW_DYE, 5000, Items.RED_DYE, 10000, Items.BLACK_DYE, -10000);
     }
 
-    private static boolean validPoints(int points) {
-        return points == 0 || points == 100 || points == 1000 || points == 5000 || points == 10000 || points == -10000;
+    public static Map<Item, Integer> cardMarkings() {
+        return Map.of(Items.WHITE_DYE, 1, Items.GREEN_DYE, 8, Items.BLUE_DYE, 10,
+            Items.YELLOW_DYE, 50, Items.RED_DYE, 100, Items.BLACK_DYE, -500);
     }
 
     /** One physical five per application, even when the source is a larger stack. */
@@ -115,10 +117,10 @@ public final class MahjongSupplies {
 
     /** Mark a homogeneous group without discarding its name or other components. */
     public static ItemStack markSticks(List<ItemStack> blanks, ItemStack reagent, int count) {
-        int points = markings().getOrDefault(reagent.getItem(), 0);
-        if (blanks.isEmpty() || points == 0 || count <= 0) return ItemStack.EMPTY;
+        if (blanks.isEmpty() || count <= 0) return ItemStack.EMPTY;
         var template = blanks.getFirst();
-        if (!template.is(MahjongContent.POINT_STICK) || !storable(template)
+        int points = (template.is(MahjongContent.SCORING_CARD) ? cardMarkings() : markings()).getOrDefault(reagent.getItem(), 0);
+        if (points == 0 || !(template.is(MahjongContent.POINT_STICK) || template.is(MahjongContent.SCORING_CARD)) || !storable(template)
             || template.getOrDefault(MahjongComponents.POINTS, 0) != 0 || count > template.getMaxStackSize()) return ItemStack.EMPTY;
         int total = 0;
         for (var stack : blanks) {

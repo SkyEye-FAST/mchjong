@@ -11,7 +11,7 @@ public record TableRoomView(UUID tableId, UUID incarnation, long revision, long 
                             RoomSeating.Stage seating, List<Integer> availableWinds, List<Seat> seats,
                             List<RoomAction> actions, ExitVote exitVote, boolean leaveDecision,
                             boolean convenienceHints, boolean allowConvenienceHints, MatchAutomation automation,
-                            List<PreparationProblem> equipmentProblems) {
+                            List<PreparationProblem> equipmentProblems, boolean manualTimeout) {
     public TableRoomView {
         Objects.requireNonNull(tableId);
         Objects.requireNonNull(incarnation);
@@ -26,8 +26,9 @@ public record TableRoomView(UUID tableId, UUID incarnation, long revision, long 
             || host < -1 || host >= seats.size() || viewerSeat < -1 || viewerSeat >= seats.size()
             || viewerSeat < 0 && (!actions.isEmpty() || leaveDecision || automation != null)
             || automation != null && (manual || lifecycle == TableSession.Lifecycle.LOBBY || seats.get(viewerSeat).participant().bot())
-            || convenienceHints && !allowConvenienceHints
-            || variant != MahjongVariant.RIICHI && (manual || seats.size() != 4 || convenienceHints || allowConvenienceHints))
+            || convenienceHints && !allowConvenienceHints || manualTimeout && !manual
+            || manual && variant != MahjongVariant.RIICHI && variant != MahjongVariant.MCR
+            || variant != MahjongVariant.RIICHI && (seats.size() != 4 || convenienceHints || allowConvenienceHints))
             throw new IllegalArgumentException("Invalid room view");
     }
 
@@ -36,7 +37,7 @@ public record TableRoomView(UUID tableId, UUID incarnation, long revision, long 
     public TableRoomView withEquipmentProblems(List<PreparationProblem> problems) {
         return new TableRoomView(tableId, incarnation, revision, decision, variant, lifecycle, host, viewerSeat,
             manual, equipped, paused, seating, availableWinds, seats, actions, exitVote, leaveDecision,
-            convenienceHints, allowConvenienceHints, automation, problems);
+            convenienceHints, allowConvenienceHints, automation, problems, manualTimeout);
     }
 
     public record Seat(TableParticipant participant, PlayerPresence presence, int wind) {

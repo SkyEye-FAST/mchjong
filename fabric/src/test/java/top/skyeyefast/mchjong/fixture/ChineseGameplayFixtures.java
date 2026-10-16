@@ -31,6 +31,7 @@ public final class ChineseGameplayFixtures {
                     case DISCARD -> 3;
                     case PASS -> 4;
                     case WIN -> 20;
+                    case SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET -> throw new IllegalStateException("Automatic fixture requested manual setup");
                 }).toList(), random);
                 if (!game.act(seat, game.decision(), index)) throw new IllegalStateException("Rejected MCR fixture action");
                 acted = true;

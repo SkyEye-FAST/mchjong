@@ -198,6 +198,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
 
     public abstract TimeControl timeControl();
     public abstract boolean configureClock(UUID actor, TimeControl control);
+    public boolean manualTimeout() { return false; }
+    public boolean configureManualTimeout(UUID actor, long expectedDecision, boolean enabled) { return false; }
 
     public int viewerSeat(UUID recipient) {
         int seat = seatOf(recipient);
@@ -243,11 +245,11 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
      * Retains human identities at seats within the new capacity, the host, seed, world policy and hint setting.
      * Presence is not copied; rules, equipment and seating preparation start fresh with a new incarnation.
      * Returns null for an unchanged variant or a rejected request. Only the current host may switch an
-     * automatic, bot-free lobby in the gathering stage, using its current incarnation and room decision.
+     * bot-free lobby in the gathering stage, using its current incarnation and room decision.
      */
     public TableSession selectVariant(UUID actor, UUID incarnation, long expectedDecision, MahjongVariant selected) {
         if (!this.incarnation.equals(incarnation) || selected == null || selected == variant || !lobby() || !isHost(actor)
-            || expectedDecision != decision || exitVote != null || manual
+            || expectedDecision != decision || exitVote != null || manual && selected != MahjongVariant.RIICHI && selected != MahjongVariant.MCR
             || seating.stage != RoomSeating.Stage.GATHERING) return null;
         for (Participant participant : participants) if (participant.bot) return null;
         TableSession replacement = switch (selected) {
@@ -262,6 +264,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         replacement.hostId = hostId;
         replacement.removedPlayers.addAll(removedPlayers);
         replacement.worldPolicy = worldPolicy;
+        replacement.configureEquipment(manual, List.of());
         replacement.revision = revision;
         replacement.decision = decision;
         replacement.renewIncarnation();
@@ -587,7 +590,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
             viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
             convenienceHints, allowsConvenienceHints(),
-            viewer < 0 || manual || lobby() || participants[viewer].bot ? null : automation.get(viewer), List.of());
+            viewer < 0 || manual || lobby() || participants[viewer].bot ? null : automation.get(viewer), List.of(), manualTimeout());
     }
 
     protected final List<RoomAction> roomActions(int seat) {

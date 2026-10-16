@@ -41,6 +41,7 @@ final class TableHost {
     /** Returns whether equipment selection changed its public appearance. */
     boolean prepare(TableEquipment equipment, boolean automatic, WorldPolicy policy) {
         session.configureWorld(policy);
+        equipment.selectVariant(session.variant());
         return switch (session.variant()) {
         case RIICHI -> {
             var riichi = (RiichiSession) session;
@@ -60,7 +61,7 @@ final class TableHost {
         case MCR -> {
             var mcr = (McrSession) session;
             var stock = equipment.mcrStock();
-            if (mcr.lobby()) mcr.configureEquipment(false,
+            if (mcr.lobby()) mcr.configureEquipment(!automatic,
                 equipment.preparationProblems(session, automatic).isEmpty() ? stock.deck().tiles() : List.of());
             yield false;
         }

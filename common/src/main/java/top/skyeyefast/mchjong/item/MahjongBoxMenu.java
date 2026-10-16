@@ -157,7 +157,8 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(source, MahjongSupplies.BOX_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
         } else {
             int start = source.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM) ? 0
-                : source.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK) ? MahjongSupplies.TILE_SLOTS
+                : source.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK)
+                    || source.is(top.skyeyefast.mchjong.world.MahjongContent.SCORING_CARD) ? MahjongSupplies.TILE_SLOTS
                 : source.is(top.skyeyefast.mchjong.world.MahjongContent.DICE) ? MahjongSupplies.DICE_SLOT : MahjongSupplies.DYE_SLOT;
             int end = start == 0 ? MahjongSupplies.TILE_SLOTS : start == MahjongSupplies.TILE_SLOTS
                 ? MahjongSupplies.DYE_SLOT : start + 1;

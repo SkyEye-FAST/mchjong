@@ -45,7 +45,7 @@ public final class CreateProcessing {
             }
             if (undo) continue;
             for (var template : inventory) {
-                if (!template.is(MahjongContent.POINT_STICK)) continue;
+                if (!template.is(MahjongContent.POINT_STICK) && !template.is(MahjongContent.SCORING_CARD)) continue;
                 var blanks = take(inventory, template, 16);
                 var marked = MahjongSupplies.markSticks(blanks, reagent, 16);
                 if (marked.isEmpty()) continue;

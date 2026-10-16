@@ -16,6 +16,11 @@ public class MahjongSupplyItem extends Item {
 
     @Override public Component getName(ItemStack stack) {
         Integer points = stack.get(MahjongComponents.POINTS);
+        if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.SCORING_CARD)) {
+            if (points != null && points == -500) return Component.translatable("item.mchjong.debt_card");
+            if (points != null && points > 0) return Component.translatable("item.mchjong.scoring_card_value", points);
+            return super.getName(stack);
+        }
         if (points != null && points == -10000) return Component.translatable("item.mchjong.bust_stick");
         if (points != null && points > 0) return Component.translatable("item.mchjong.point_stick_value", points);
         if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.CLOTH_ITEM)) {
@@ -32,7 +37,9 @@ public class MahjongSupplyItem extends Item {
         }
         Integer points = stack.get(MahjongComponents.POINTS);
         if (points != null) {
-            lines.add(points == 0 ? Component.translatable("item.mchjong.unmarked") : CountedText.of("item.mchjong.denomination", 0, points));
+            boolean card = stack.is(top.skyeyefast.mchjong.world.MahjongContent.SCORING_CARD);
+            lines.add(points == 0 ? Component.translatable(card ? "item.mchjong.card_unmarked" : "item.mchjong.unmarked")
+                : CountedText.of(card ? "item.mchjong.card_denomination" : "item.mchjong.denomination", 0, points));
         }
         if (stack.has(net.minecraft.core.component.DataComponents.BASE_COLOR) && !stack.is(top.skyeyefast.mchjong.world.MahjongContent.CLOTH_ITEM))
             lines.add(Component.translatable("color.minecraft." + MahjongSupplies.color(stack).getName()));

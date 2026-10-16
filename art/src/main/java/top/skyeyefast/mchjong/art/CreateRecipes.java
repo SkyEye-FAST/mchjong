@@ -14,6 +14,8 @@ final class CreateRecipes {
         for (var material : SurvivalRecipes.MATERIALS) blanks(output, material.name(), material.source());
         processing(output, "blank_point_sticks", "cutting", List.of(item("minecraft:bone_block")),
             List.of(stack("point_stick", 32, Map.of("mchjong:points", 0))));
+        processing(output, "blank_scoring_cards", "cutting", List.of(item("minecraft:paper")),
+            List.of(stack("scoring_card", 12, Map.of("mchjong:points", 0))));
         processing(output, "mahjong_dye", "mixing", List.of(item("minecraft:black_dye"), item("minecraft:red_dye"),
             item("minecraft:green_dye"), item("minecraft:blue_dye"), item("minecraft:white_dye")), List.of(stack("mahjong_dye", 2, Map.of())));
         processing(output, "red_dora_dye", "mixing", List.of(item("minecraft:red_dye")), List.of(stack("red_dora_dye", 8, Map.of())));

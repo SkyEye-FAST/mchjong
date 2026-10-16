@@ -15,28 +15,41 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** The same public roll drives the physical dice, native pickup target and face tooltip. */
-final class RiichiDice extends MahjongButton {
+final class TableDice extends MahjongButton {
     private int first, second;
 
-    RiichiDice(Runnable pickup) {
+    TableDice(Runnable pickup) {
         super(0, 0, 40, 20, Component.translatable("action.mchjong.pick_up_dice"), ignored -> pickup.run());
         visible = active = false;
         setTooltip(null);
     }
 
     static boolean onTable(RiichiView view) {
-        return view != null && view.handling() != null && !view.handling().diceHeld()
-            && view.phase() != RiichiView.Phase.SHUFFLE
-            && view.phase() != RiichiView.Phase.MATCH_END
-            && (view.phase() != RiichiView.Phase.BUILD_WALL
-                || view.handling().builtWalls() == (1 << view.rules().players()) - 1);
+        return view != null && onTable(view.handling(), view.phase().name(), view.rules().players());
+    }
+
+    private static boolean onTable(top.skyeyefast.mchjong.engine.ManualHandlingView handling, String phase, int players) {
+        return handling != null && !handling.diceHeld() && !phase.equals("SHUFFLE") && !phase.equals("MATCH_END")
+            && (!phase.equals("BUILD_WALL") || handling.builtWalls() == (1 << players) - 1);
     }
 
     void update(RiichiView view, int x, int y, int width, int height, boolean seated, boolean pending) {
-        visible = seated && onTable(view);
-        active = visible && !pending && view.actions().stream().anyMatch(action -> action.type() == RiichiAction.Type.PICK_UP_DICE);
-        first = view.handling() == null ? 0 : view.handling().diceOne();
-        second = view.handling() == null ? 0 : view.handling().diceTwo();
+        update(view.handling(), onTable(view), view.actions().stream().anyMatch(action -> action.type() == RiichiAction.Type.PICK_UP_DICE),
+            x, y, width, height, seated, pending);
+    }
+
+    void update(top.skyeyefast.mchjong.engine.McrView view, int x, int y, int width, int height, boolean seated, boolean pending) {
+        update(view.handling(), onTable(view.handling(), view.phase().name(), 4),
+            view.actions().stream().anyMatch(action -> action.type() == top.skyeyefast.mchjong.engine.McrAction.Type.PICK_UP_DICE),
+            x, y, width, height, seated, pending);
+    }
+
+    private void update(top.skyeyefast.mchjong.engine.ManualHandlingView handling, boolean onTable, boolean pickup,
+                        int x, int y, int width, int height, boolean seated, boolean pending) {
+        visible = seated && onTable;
+        active = visible && !pending && pickup;
+        first = handling == null ? 0 : handling.diceOne();
+        second = handling == null ? 0 : handling.diceTwo();
         setRectangle(width, height, x, y);
         setMessage(first == 0 ? Component.translatable("action.mchjong.pick_up_dice")
             : Component.translatable("ui.mchjong.dice_result", first, second, first + second));
@@ -74,8 +87,17 @@ final class RiichiDice extends MahjongButton {
 
     static void renderWorld(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
         if (!onTable(view)) return;
+        renderWorld(view.handling(), pose, buffers, light);
+    }
+
+    static void renderWorld(top.skyeyefast.mchjong.engine.McrView view, PoseStack pose, MultiBufferSource buffers, int light) {
+        if (!onTable(view.handling(), view.phase().name(), 4)) return;
+        renderWorld(view.handling(), pose, buffers, light);
+    }
+
+    private static void renderWorld(top.skyeyefast.mchjong.engine.ManualHandlingView handling, PoseStack pose, MultiBufferSource buffers, int light) {
         for (int index = 0; index < 2; index++) {
-            int face = Math.max(1, index == 0 ? view.handling().diceOne() : view.handling().diceTwo());
+            int face = Math.max(1, index == 0 ? handling.diceOne() : handling.diceTwo());
             pose.pushPose();
             // Keep both entire cubes inside the central 0.3-block square.
             pose.translate(index == 0 ? -.065 : .065, TableGeometry.FELT_Y + .0375, -.06);

@@ -24,6 +24,11 @@ public final class TableEquipment {
     private top.skyeyefast.mchjong.engine.RiichiRules rules = top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config()
         .with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal());
     private int activeBox = -1;
+    private top.skyeyefast.mchjong.engine.MahjongVariant variant = top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
+    public void selectVariant(top.skyeyefast.mchjong.engine.MahjongVariant variant) { this.variant = variant; }
+    public boolean cards() { return variant == top.skyeyefast.mchjong.engine.MahjongVariant.MCR; }
+    public net.minecraft.world.item.Item paymentItem() { return cards() ? MahjongContent.SCORING_CARD : MahjongContent.POINT_STICK; }
+    public int reserveValue() { return cards() ? -500 : -10000; }
     private boolean loading;
     private java.util.List<ItemStack> matchSticks = java.util.List.of();
     private int clothColor = -1;
@@ -99,10 +104,12 @@ public final class TableEquipment {
     }
 
     public void returnSticks(ItemStack carried, int side) {
+        if (!carried.isEmpty() && (!carried.is(paymentItem()) || !MahjongSupplies.storable(carried)
+            || denomination(carried) == 0)) throw new IllegalArgumentException("Not an active table payment supply");
         for (int pass = 0; pass < 2; pass++) for (int offset = 0; offset < 4; offset++) {
             var drawer = drawers[(side + offset) % 4];
             for (int slot = 0; slot < STICK_SLOTS && !carried.isEmpty(); slot++) {
-                if (slot == BUST_SLOT && carried.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) != -10000) continue;
+                if (slot == BUST_SLOT && carried.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) != reserveValue()) continue;
                 var target = drawer.getItem(slot);
                 if (pass == 0 && ItemStack.isSameItemSameComponents(target, carried)) {
                     int count = Math.min(carried.getCount(), (slot == BUST_SLOT ? 1 : target.getMaxStackSize()) - target.getCount());
@@ -118,6 +125,7 @@ public final class TableEquipment {
     }
 
     public java.util.List<PreparationProblem> preparationProblems(top.skyeyefast.mchjong.engine.TableSession session, boolean automatic) {
+        selectVariant(session.variant());
         var problems = new java.util.ArrayList<PreparationProblem>();
         if (!hasCloth()) problems.add(PreparationProblem.CLOTH);
         var riichi = session instanceof top.skyeyefast.mchjong.engine.RiichiSession r ? r : null;
@@ -135,7 +143,7 @@ public final class TableEquipment {
         }
         problems.addAll(best.problems());
         if (!automatic) {
-            if (riichi == null) problems.add(PreparationProblem.AUTOMATIC_TABLE);
+            if (riichi == null && !cards()) problems.add(PreparationProblem.AUTOMATIC_TABLE);
             else problems.addAll(preparedSupplies().problems());
         }
         return java.util.List.copyOf(problems);
@@ -190,22 +198,34 @@ public final class TableEquipment {
         var copies = new java.util.ArrayList<java.util.List<ItemStack>>();
         for (int seat = 0; seat < 4; seat++) {
             var row = new java.util.ArrayList<ItemStack>();
-            for (int slot = 0; slot < STICK_SLOTS; slot++) row.add(drawers[seat].getItem(slot).copy());
+            for (int slot = 0; slot < STICK_SLOTS; slot++) {
+                var stack = drawers[seat].getItem(slot);
+                if (!stack.isEmpty() && (!stack.is(paymentItem()) || !MahjongSupplies.storable(stack) || denomination(stack) == 0)
+                    && !problems.contains(PreparationProblem.DRAWER_SPACE)) problems.add(PreparationProblem.DRAWER_SPACE);
+                row.add(stack.copy());
+            }
             copies.add(row);
         }
-        var kit = new java.util.LinkedHashMap<>(startingKit(rules.startingPoints()));
-        if (!rules.bankruptcy()) kit.put(-10000, 1);
+        var kit = new java.util.LinkedHashMap<Integer, Integer>();
+        if (cards()) {
+            kit.put(100, 1); kit.put(50, 4); kit.put(10, 10); kit.put(8, 10); kit.put(1, 20); kit.put(-500, 1);
+        } else {
+            kit.putAll(startingKit(rules.startingPoints()));
+            if (!rules.bankruptcy()) kit.put(-10000, 1);
+        }
+        int seats = cards() ? 4 : rules.players();
         for (var entry : kit.entrySet()) {
             int available = 0;
             for (var items : contents) for (int slot = MahjongSupplies.TILE_SLOTS; !items.isEmpty() && slot < MahjongSupplies.DYE_SLOT; slot++)
                 if (denomination(items.get(slot)) == entry.getKey()) available += items.get(slot).getCount();
-            if (available < entry.getValue() * rules.players()) {
-                var problem = entry.getKey() < 0 ? PreparationProblem.BUST_STICKS : PreparationProblem.POINT_STICKS;
+            if (available < entry.getValue() * seats) {
+                var problem = cards() ? entry.getKey() < 0 ? PreparationProblem.DEBT_CARDS : PreparationProblem.SCORING_CARDS
+                    : entry.getKey() < 0 ? PreparationProblem.BUST_STICKS : PreparationProblem.POINT_STICKS;
                 if (!problems.contains(problem)) problems.add(problem);
             }
         }
         if (!problems.isEmpty()) return Supplies.rejected(problems);
-        for (int seat = 0; seat < rules.players(); seat++) {
+        for (int seat = 0; seat < seats; seat++) {
             var row = copies.get(seat);
             for (var entry : kit.entrySet()) {
                 int denomination = entry.getKey(), missing = entry.getValue();
@@ -233,8 +253,8 @@ public final class TableEquipment {
         return new Supplies(boxCopies, copies, java.util.List.of());
     }
 
-    private static int denomination(ItemStack stack) {
-        return stack.is(MahjongContent.POINT_STICK) ? stack.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) : 0;
+    private int denomination(ItemStack stack) {
+        return stack.is(paymentItem()) ? stack.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) : 0;
     }
 
     public void abandonMatch() { matchSticks = java.util.List.of(); }

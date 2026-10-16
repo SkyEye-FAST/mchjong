@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
-class RiichiHandlingTest {
+class TableHandlingTest {
     private static UUID player(int seat) { return new UUID(391, seat); }
     private static RiichiGame start(RiichiPreset rules) {
         RiichiSession session = new RiichiSession(UUID.randomUUID(), rules, 12);
@@ -65,47 +65,47 @@ class RiichiHandlingTest {
             RiichiGame game = start(rules);
             int dealer = game.view(null).dealer();
             var shuffle = game.view(player(dealer));
-            assertEquals(-1, RiichiHandling.action(game.view(null)));
-            assertFalse(RiichiHandling.completes(shuffle, Vec3.ZERO, new Vec3(.1, 0, .1)));
-            assertTrue(RiichiHandling.completes(shuffle, Vec3.ZERO, new Vec3(.6, 0, .1)));
-            assertFalse(RiichiHandling.completes(shuffle, Vec3.ZERO, new Vec3(2, 0, 0)));
+            assertEquals(-1, TableHandling.action(game.view(null)));
+            assertFalse(TableHandling.completes(shuffle, Vec3.ZERO, new Vec3(.1, 0, .1)));
+            assertTrue(TableHandling.completes(shuffle, Vec3.ZERO, new Vec3(.6, 0, .1)));
+            assertFalse(TableHandling.completes(shuffle, Vec3.ZERO, new Vec3(2, 0, 0)));
             act(game, dealer, RiichiAction.Type.SHUFFLE);
             for (int seat = 0; seat < rules.players(); seat++) {
                 var view = game.view(player(seat));
                 var pieces = RiichiTableScene.build(view);
-                assertNotNull(RiichiHandling.source(view, pieces));
+                assertNotNull(TableHandling.source(view, pieces));
                 for (var piece : pieces) assertEquals(piece.area() == RiichiTableScene.Area.LOOSE && piece.seat() == seat,
-                    RiichiHandling.source(view, piece));
-                assertTrue(RiichiHandling.completes(view, Vec3.ZERO, RiichiHandling.destination(view)));
-                assertTrue(RiichiHandling.completes(view, Vec3.ZERO,
+                    TableHandling.source(view, piece));
+                assertTrue(TableHandling.completes(view, Vec3.ZERO, TableHandling.destination(view)));
+                assertTrue(TableHandling.completes(view, Vec3.ZERO,
                     TableGeometry.orient(1.0, TableGeometry.FELT_Y, RiichiTableScene.WALL_Z + .27, seat)),
                     "Expanded wall target should tolerate an imprecise drop");
-                assertFalse(RiichiHandling.completes(view, Vec3.ZERO,
+                assertFalse(TableHandling.completes(view, Vec3.ZERO,
                     TableGeometry.orient(1.16, TableGeometry.FELT_Y, RiichiTableScene.WALL_Z + .34, seat)),
                     "Expanded wall target must remain bounded");
-                assertFalse(RiichiHandling.completes(view, Vec3.ZERO, RiichiHandling.destination(view).scale(-1)));
-                assertFalse(RiichiHandling.completes(view, Vec3.ZERO, new Vec3(Double.NaN, 0, 0)));
+                assertFalse(TableHandling.completes(view, Vec3.ZERO, TableHandling.destination(view).scale(-1)));
+                assertFalse(TableHandling.completes(view, Vec3.ZERO, new Vec3(Double.NaN, 0, 0)));
                 act(game, seat, RiichiAction.Type.BUILD_WALL);
             }
             for (int packet = 0; packet < 4 * rules.players(); packet++) {
                 var view = game.view(player(game.view(null).turn()));
                 assertEquals(packet < 3 * rules.players() ? 4 : 1, view.handling().packetSize());
                 var pieces = RiichiTableScene.build(view);
-                assertEquals(view.handling().packetSize(), pieces.stream().filter(piece -> RiichiHandling.source(view, piece)).count());
+                assertEquals(view.handling().packetSize(), pieces.stream().filter(piece -> TableHandling.source(view, piece)).count());
                 for (var piece : pieces) if (piece.area() == RiichiTableScene.Area.WALL)
                     assertEquals(piece.index() >= view.handling().sourceSlot()
-                        && piece.index() < view.handling().sourceSlot() + view.handling().packetSize(), RiichiHandling.source(view, piece));
-                assertTrue(RiichiHandling.completes(view, Vec3.ZERO, RiichiHandling.destination(view)));
-                assertFalse(RiichiHandling.completes(view, Vec3.ZERO, Vec3.ZERO));
+                        && piece.index() < view.handling().sourceSlot() + view.handling().packetSize(), TableHandling.source(view, piece));
+                assertTrue(TableHandling.completes(view, Vec3.ZERO, TableHandling.destination(view)));
+                assertFalse(TableHandling.completes(view, Vec3.ZERO, Vec3.ZERO));
                 act(game, view.viewerSeat(), RiichiAction.Type.TAKE_PACKET);
             }
             var draw = game.view(player(dealer));
             assertEquals(RiichiView.Phase.DRAW, draw.phase());
-            assertNotNull(RiichiHandling.source(draw, RiichiTableScene.build(draw)));
-            assertEquals(1, RiichiTableScene.build(draw).stream().filter(piece -> RiichiHandling.source(draw, piece)).count());
-            assertTrue(RiichiHandling.completes(draw, Vec3.ZERO, RiichiHandling.destination(draw)));
+            assertNotNull(TableHandling.source(draw, RiichiTableScene.build(draw)));
+            assertEquals(1, RiichiTableScene.build(draw).stream().filter(piece -> TableHandling.source(draw, piece)).count());
+            assertTrue(TableHandling.completes(draw, Vec3.ZERO, TableHandling.destination(draw)));
             act(game, dealer, RiichiAction.Type.DRAW);
-            assertEquals(-1, RiichiHandling.action(game.view(player(dealer))));
+            assertEquals(-1, TableHandling.action(game.view(player(dealer))));
             assertEquals(-1, game.view(null).handling().sourceSlot());
         }
     }

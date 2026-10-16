@@ -10,10 +10,16 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
     public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
         return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
     }
-    private final RiichiTableScreen parent;
+    private final net.minecraft.client.gui.screens.Screen parent;
+    private final net.minecraft.core.BlockPos tablePos;
     public PointStickScreen(PointStickMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        parent = RiichiTableScreen.active(net.minecraft.client.Minecraft.getInstance().screen);
+        var screen = net.minecraft.client.Minecraft.getInstance().screen;
+        var riichi = RiichiTableScreen.active(screen);
+        var mcr = McrTableScreen.active(screen);
+        var results = TableChildScreen.root(screen) instanceof TableResultsScreen result ? result : null;
+        parent = riichi != null ? riichi : mcr != null ? mcr : results;
+        tablePos = riichi != null ? riichi.tablePos() : mcr != null ? mcr.tablePos() : results != null ? results.tablePos() : null;
         imageWidth = 304;
         imageHeight = 216;
     }
@@ -37,13 +43,13 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
 
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         MahjongUi.text(graphics, font, title, 10, 8, 266, MahjongUi.TEXT, true);
-        top.skyeyefast.mchjong.engine.RiichiView view = parent != null && minecraft.level != null
-            && minecraft.level.getBlockEntity(parent.tablePos()) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
-            ? table.clientView() : null;
+        var room = tablePos != null && minecraft.level != null
+            && minecraft.level.getBlockEntity(tablePos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
+            ? table.clientRoom() : null;
         for (int row = 0; row < 4; row++) {
             int y = 22 + row * 24;
-            Component name = view != null && row < view.seats().size() ? RiichiTableScreen.playerName(view, row)
-                : Component.translatable("sticks.mchjong.seat", row + 1);
+            Component name = room != null && row < room.seats().size() ? RoomMembers.name(room, row)
+                : Component.translatable(menu.cards() ? "cards.mchjong.seat" : "sticks.mchjong.seat", row + 1);
             MahjongUi.text(graphics, font, name, 10, y, 96, menu.canWithdraw(row) ? MahjongUi.POSITIVE : MahjongUi.TEXT, false);
             int total = menu.totalPoints(row);
             MahjongUi.text(graphics, font, Component.literal(total + " / " + menu.score(row)), 10, y + 10, 96,
@@ -51,11 +57,11 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         }
         MahjongUi.text(graphics, font, playerInventoryTitle, 113, 116, 162, MahjongUi.MUTED, false);
         int y = 128;
-        for (var line : font.split(Component.translatable("sticks.mchjong.deliver"), 94)) {
+        for (var line : font.split(Component.translatable(menu.cards() ? "cards.mchjong.deliver" : "sticks.mchjong.deliver"), 94)) {
             graphics.drawString(font, line, 10, y, MahjongUi.MUTED, false);
             y += 10;
         }
-        MahjongUi.text(graphics, font, Component.translatable("sticks.mchjong.balance"), 10, 204, 266, MahjongUi.MUTED, true);
+        MahjongUi.text(graphics, font, Component.translatable(menu.cards() ? "cards.mchjong.balance" : "sticks.mchjong.balance"), 10, 204, 266, MahjongUi.MUTED, true);
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -64,7 +70,7 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
             && hoveredSlot.index % top.skyeyefast.mchjong.world.TableEquipment.STICK_SLOTS == top.skyeyefast.mchjong.world.TableEquipment.BUST_SLOT) {
             var lines = new java.util.ArrayList<Component>();
             if (hoveredSlot.hasItem()) lines.addAll(getTooltipFromItem(minecraft, hoveredSlot.getItem()));
-            lines.add(Component.translatable("sticks.mchjong.bust_reserve"));
+            lines.add(Component.translatable(menu.cards() ? "cards.mchjong.debt_reserve" : "sticks.mchjong.bust_reserve"));
             graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
         } else renderTooltip(graphics, mouseX, mouseY);
     }
@@ -73,9 +79,9 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         if (vertical == 0 || mouseX < leftPos || mouseX >= leftPos + imageWidth
             || mouseY < topPos || mouseY >= topPos + 118) return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
         int players = 4;
-        if (parent != null && minecraft.level != null
-            && minecraft.level.getBlockEntity(parent.tablePos()) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
-            && table.clientView() != null) players = table.clientView().seats().size();
+        if (tablePos != null && minecraft.level != null
+            && minecraft.level.getBlockEntity(tablePos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
+            && table.clientRoom() != null) players = table.clientRoom().seats().size();
         int target = Math.floorMod(menu.recipientSide() + (vertical > 0 ? -1 : 1), players);
         menu.clickMenuButton(minecraft.player, target);
         minecraft.gameMode.handleInventoryButtonClick(menu.containerId, target);
@@ -86,6 +92,12 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         super.onClose();
         if (parent != null && minecraft.player != null && minecraft.player.isAlive()
             && minecraft.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat
-            && seat.tablePos().equals(parent.tablePos())) minecraft.setScreen(parent);
+            && seat.tablePos().equals(tablePos)) {
+            if (parent instanceof McrResultsScreen results && minecraft.level != null
+                && minecraft.level.getBlockEntity(tablePos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
+                && table.clientMcrView() != null && table.clientMcrView().game().result() == null)
+                minecraft.setScreen(new McrTableScreen(tablePos, results.immersive()));
+            else minecraft.setScreen(parent);
+        }
     }
 }

@@ -36,10 +36,12 @@ final class RoomLobbyControls {
                 sent.run();
             }
         }).selected(room.variant() == choice);
-        button.active = room.variant() == choice || automatic && room.viewerSeat() == room.host() && room.viewerSeat() >= 0
+        boolean supported = automatic || choice == MahjongVariant.RIICHI || choice == MahjongVariant.MCR;
+        button.active = room.variant() == choice || supported && room.viewerSeat() == room.host() && room.viewerSeat() >= 0
             && room.seating() == RoomSeating.Stage.GATHERING
             && room.seats().stream().noneMatch(seat -> seat.participant().bot());
-        if (!button.active) button.setTooltip(Tooltip.create(label.copy().append("\n").append(Component.translatable("lobby.mchjong.variant_locked"))));
+        if (!button.active) button.setTooltip(Tooltip.create(label.copy().append("\n").append(Component.translatable(
+            supported ? "lobby.mchjong.variant_host_only" : "lobby.mchjong.variant_locked"))));
         return button;
     }
 

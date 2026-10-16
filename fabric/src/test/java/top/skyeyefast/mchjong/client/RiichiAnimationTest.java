@@ -223,7 +223,7 @@ class RiichiAnimationTest {
             var base = preparation(preset.config());
             int players = preset.players(), size = preset.sanma() ? 108 : 136;
             var wall = Collections.nCopies(size, Tile.HIDDEN);
-            var handling = new RiichiView.Handling((1 << players) - 1, -1, 0, 0, 0, false);
+            var handling = new top.skyeyefast.mchjong.engine.ManualHandlingView((1 << players) - 1, -1, 0, 0, 0, false);
             var built = new RiichiView(base.tableId(), 2, 2, 1, base.rules(), RiichiView.Phase.BUILD_WALL, 0,
                 0, 0, 0, 0, 0, size - 14, 0, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
@@ -232,7 +232,7 @@ class RiichiAnimationTest {
             var opened = new RiichiView(base.tableId(), 3, 3, 1, base.rules(), RiichiView.Phase.DEAL, 0,
                 0, 0, 0, 0, 0, size - 14, wallBreak, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
-                new RiichiView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1, java.util.Map.of(), List.of(), 0, 0);
+                new top.skyeyefast.mchjong.engine.ManualHandlingView((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1, java.util.Map.of(), List.of(), 0, 0);
             var animation = new RiichiAnimation();
             animation.accept(built, 0);
             var positions = animation.sample(0).stream().filter(frame -> frame.piece().area() == RiichiTableScene.Area.WALL)

@@ -56,13 +56,15 @@ final class McrReplayRecorder {
             taken = oldWall.get(slot);
         }
         var kind = switch (action.type()) {
-            case DRAW -> McrReplayHand.Kind.DRAW;
+            case DRAW -> before.phase() == McrGame.Phase.INITIAL_FLOWERS || before.phase() == McrGame.Phase.REPLACE_FLOWER
+                ? McrReplayHand.Kind.FLOWER_REPLACEMENT : McrReplayHand.Kind.DRAW;
             case REPLACE_FLOWER -> McrReplayHand.Kind.FLOWER_REPLACEMENT;
             case DISCARD -> McrReplayHand.Kind.DISCARD;
             case CHOW, PUNG, MELDED_KONG -> McrReplayHand.Kind.RESPONSE;
             case CONCEALED_KONG -> McrReplayHand.Kind.KONG;
             case WIN -> McrReplayHand.Kind.WIN;
             case PASS -> McrReplayHand.Kind.PASS;
+            default -> throw new IllegalStateException("Physical setup is not a replay decision");
         };
         int tile = action.type() == McrAction.Type.DRAW || action.type() == McrAction.Type.REPLACE_FLOWER
             ? taken : action.tiles().isEmpty() ? Tile.ABSENT : action.tiles().get(0);
@@ -98,6 +100,6 @@ final class McrReplayRecorder {
         return new McrReplayHand(number, initialPoints, wall, opening, initialHands, events, decisions,
             game.result() instanceof McrSettlement.Win win ? win : null,
             game.result() instanceof McrSettlement.Draw,
-            game.penalties().stream().filter(penalty -> penalty.handNumber() == number).toList(), points);
+            game.penalties().stream().filter(penalty -> penalty.handNumber() == number).toList(), points, game.manual());
     }
 }

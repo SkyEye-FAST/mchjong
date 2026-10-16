@@ -77,7 +77,7 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
         var blanks = new ArrayList<ItemStack>();
         ItemStack reagent = ItemStack.EMPTY;
         for (ItemStack stack : items) {
-            if (stack.is(MahjongContent.POINT_STICK)) {
+            if (stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.SCORING_CARD)) {
                 blanks.add(stack.copyWithCount(1));
             } else {
                 if (!reagent.isEmpty()) return ItemStack.EMPTY;

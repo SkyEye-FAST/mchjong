@@ -38,13 +38,16 @@ public final class SupplyRecipeExamples {
                                 List.of(MahjongSupplies.tile(new TileData(face, material, !red), DyeColor.BLUE, 1),
                                     new ItemStack(red ? MahjongContent.RED_DORA_DYE : MahjongContent.UNDO_DYE)));
                     }
-                    case MARK_STICK -> SupplyCraftingRecipe.markings().entrySet().stream()
+                    case MARK_STICK -> {
+                        for (var item : List.of(MahjongContent.POINT_STICK, MahjongContent.SCORING_CARD))
+                            (item == MahjongContent.SCORING_CARD ? MahjongSupplies.cardMarkings() : SupplyCraftingRecipe.markings()).entrySet().stream()
                         .sorted(java.util.Map.Entry.comparingByValue()).forEach(mark -> {
                             var input = new ArrayList<ItemStack>();
-                            for (int i = 0; i < 8; i++) input.add(new ItemStack(MahjongContent.POINT_STICK));
+                            for (int i = 0; i < 8; i++) input.add(new ItemStack(item));
                             input.add(new ItemStack(mark.getKey()));
-                            add(examples, level, holder, mark.getValue() + "/8", input);
+                            add(examples, level, holder, (item == MahjongContent.SCORING_CARD ? "cards/" : "") + mark.getValue() + "/8", input);
                         });
+                    }
                     case UPGRADE_TABLE -> {
                         for (var wood : FurnitureWood.values()) {
                             var input = SupplyCraftingRecipe.upgradePattern().stream().map(ItemStack::new).toList();

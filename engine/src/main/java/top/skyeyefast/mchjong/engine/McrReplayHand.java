@@ -8,7 +8,7 @@ import java.util.Objects;
 public record McrReplayHand(int number, List<Integer> initialPoints, List<Integer> wall, McrOpening opening,
                             List<List<Integer>> initialHands, List<Event> events, List<Decision> decisions,
                             McrSettlement.Win win, boolean draw, List<McrSettlement.Penalty> penalties,
-                            List<Integer> finalPoints) {
+                            List<Integer> finalPoints, boolean manual) {
     public enum Kind { DRAW, FLOWER_REPLACEMENT, DISCARD, RESPONSE, CHOW, PUNG, KONG, WIN, PASS, WRONG_WIN, SETTLEMENT }
 
     public record Event(Kind kind, int actionCursor, int seat, int tile) {

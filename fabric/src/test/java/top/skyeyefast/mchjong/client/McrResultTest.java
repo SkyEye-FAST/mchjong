@@ -22,7 +22,7 @@ class McrResultTest {
                 List.of(points + 28, -points - 12, -8, -8));
             var view = new McrView(initial.revision(), initial.decision(), 1, McrGame.Phase.HAND_END,
                 0, 0, Tile.EAST, 0, initial.remaining(), initial.opening(), initial.wall(), null,
-                initial.seats(), List.of(), false, false, win, List.of());
+                initial.seats(), List.of(), false, false, win, List.of(), initial.handling());
             var participants = IntStream.range(0, 4).mapToObj(i -> new TableParticipant(new UUID(0, i + 1), "Player " + i)).toList();
             for (int viewer : List.of(0, -1)) {
                 var row = TableResultState.mcr(view, participants, viewer).wins().getFirst().rows().getFirst();

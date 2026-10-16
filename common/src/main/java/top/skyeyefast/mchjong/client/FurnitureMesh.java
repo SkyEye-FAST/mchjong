@@ -181,6 +181,20 @@ public final class FurnitureMesh {
         stick(pose, buffers.getBuffer(TileRenderTypes.sticks(points)), light);
     }
 
+    public static void card(PoseStack pose, MultiBufferSource buffers, int light, int points) {
+        var texture = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/scoring_card/" + points + ".png");
+        var out = buffers.getBuffer(RenderType.entityCutout(texture));
+        float x = .32f, z = .20f, y = .006f;
+        for (int face : new int[]{-1, 1}) {
+            float h = face > 0 ? y : 0;
+            float[] corners = face > 0 ? new float[]{-x,z, x,z, x,-z, -x,-z} : new float[]{-x,-z, x,-z, x,z, -x,z};
+            for (int i = 0; i < 4; i++) out.addVertex(pose.last(), corners[i * 2], h, corners[i * 2 + 1])
+                .setColor(WHITE).setUv((corners[i * 2] + x) / (2 * x), (corners[i * 2 + 1] + z) / (2 * z))
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose.last(), 0, face, 0);
+        }
+        TileMesh.box(pose, buffers.getBuffer(TileRenderTypes.BACKS), -x, .0005f, -z, x, y - .0005f, z, 0xffeee9da, light);
+    }
+
     /** A custom riichi texture occupies one 384 by 32 strip on the same bounded bar mesh. */
     public static void customStick(PoseStack pose, MultiBufferSource buffers, int light, ResourceLocation texture) {
         stick(pose, buffers.getBuffer(RenderType.entityCutout(texture)), light);

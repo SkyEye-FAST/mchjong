@@ -14,6 +14,44 @@ class McrGameTest {
 
     static McrGame fixed(long seed, List<Integer> physical) { return new McrGame(seed, physical, OPENING); }
 
+    @Test void manualDealRestoresBeforeOrderedFlowerDraws() {
+        var stock = new ArrayList<>(Tile.standard144Set());
+        java.util.Collections.reverse(stock);
+        var game = McrGame.fromStock(71, stock, true);
+        assertEquals(McrGame.Phase.SHUFFLE, game.phase());
+        assertNull(game.view(0).opening());
+        play(game, 0, SHUFFLE);
+        for (int seat = 0; seat < 4; seat++) play(game, seat, BUILD_WALL);
+        assertNull(McrCodec.decodeView(McrCodec.encodeView(game.view(0))).opening());
+        play(game, 0, PICK_UP_DICE);
+        play(game, 0, ROLL_DICE);
+        for (int packet = 0; packet < 16; packet++) {
+            play(game, game.turn(), TAKE_PACKET);
+            if (packet == 5) game = McrCodec.restore(McrCodec.save(game));
+            game.validate();
+        }
+        assertEquals(91, game.remaining());
+        int previous = -1, replacements = 0;
+        while (game.phase() == McrGame.Phase.INITIAL_FLOWERS) {
+            assertTrue(game.turn() >= previous);
+            previous = game.turn();
+            play(game, game.turn(), DRAW);
+            replacements++;
+            game.validate();
+        }
+        assertEquals(McrGame.Phase.TURN, game.phase());
+        assertTrue(replacements > 0);
+        assertEquals(91 - replacements, game.remaining());
+        for (int seat = 0; seat < 4; seat++) {
+            assertEquals(seat == 0 ? 14 : 13, game.hand(seat).size());
+            assertTrue(game.hand(seat).stream().noneMatch(Tile::isFlower));
+        }
+        assertTrue(game.actions(0).stream().anyMatch(action -> action.type() == DISCARD));
+        int total = game.remaining();
+        for (int seat = 0; seat < 4; seat++) total += game.hand(seat).size() + game.flowers(seat).size();
+        assertEquals(144, total);
+    }
+
     static List<Integer> physical(List<Integer> traversal) {
         var slots = new Integer[144];
         for (int index = 0; index < slots.length; index++) slots[McrWallLayout.drawSlot(OPENING, index)] = traversal.get(index);
