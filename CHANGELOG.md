@@ -60,7 +60,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Show ordinary-table points, remaining tiles, round and dealer on the outward-facing table rim so spectators can read them while walking around the table.
 - Use Chow and Pung for Taiwanese mahjong actions in English, name the Sichuan mahjong table and replay entries after the game instead of SBR, write the blood-battle preset name in Chinese and Japanese without the English abbreviation, write the MCR settlement title with the full game name in Chinese, and use Title Case for English table and settlement titles.
 - Keep room member control captions complete, stop offering removal for disconnected members, and use the same Close Room caption in both close-room confirmations.
 - Ask for confirmation before an exit request that immediately closes the room, and explain the exit outcomes in the Exit button tooltip.
