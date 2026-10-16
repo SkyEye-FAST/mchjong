@@ -11,7 +11,7 @@ public final class TaiwanReplayRecorder {
     public record State(int number, TaiwanGameState.Rules rules, TaiwanGameState.Opening opening,
                         int roundWind, int continuation, List<Integer> wall,
                         List<TaiwanGameState.Player> initialPlayers, List<Long> initialScores,
-                        List<TaiwanReplayHand.Decision> decisions, List<TaiwanReplayHand.Event> events) {
+                        List<TaiwanReplayHand.Decision> decisions, List<TaiwanReplayHand.Event> events, boolean manual) {
         public State {
             Objects.requireNonNull(rules); Objects.requireNonNull(opening);
             wall = List.copyOf(wall); initialPlayers = List.copyOf(initialPlayers); initialScores = List.copyOf(initialScores);
@@ -38,16 +38,17 @@ public final class TaiwanReplayRecorder {
 
     public TaiwanReplayRecorder(int number, List<Long> scores, TaiwanGame game) {
         var steps = game.replaySteps();
-        if (steps.isEmpty() || steps.get(0).wall().front() != 65 || steps.get(0).wall().tail() != 0)
+        // An ordinary-table recording starts before the shuffle and records each handling action.
+        if (steps.isEmpty() || steps.get(0).wall().front() != (game.getManual() ? 0 : 65) || steps.get(0).wall().tail() != 0)
             throw new IllegalArgumentException("Recorder requires a real opening");
         initial = new State(number,TaiwanGameState.Rules.of(game.getRules()),
             new TaiwanGameState.Opening(game.getOpening().getDealer(),game.getOpening().getDice()),game.getRoundWind(),game.getContinuation(),
-            game.replayOpeningWall(),steps.get(0).players(),scores,List.of(),List.of());
+            game.replayOpeningWall(),steps.get(0).players(),scores,List.of(),List.of(),game.getManual());
         for (var effect : openingEffects(steps)) events.add(effect.event());
     }
     public TaiwanReplayRecorder(State state) { initial = state; decisions.addAll(state.decisions()); events.addAll(state.events()); }
     public State save() { return new State(initial.number(),initial.rules(),initial.opening(),initial.roundWind(),initial.continuation(),
-        initial.wall(),initial.initialPlayers(),initial.initialScores(),decisions,events); }
+        initial.wall(),initial.initialPlayers(),initial.initialScores(),decisions,events,initial.manual()); }
     public void accepted(TaiwanGameState before, int seat, List<TaiwanAction> options, int selected, TaiwanGame game) {
         var choice = new TaiwanReplayHand.Decision(seat,options.stream().map(TaiwanGameState.Action::of).toList(),selected);
         decisions.add(choice);

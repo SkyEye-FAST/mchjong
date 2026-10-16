@@ -204,11 +204,17 @@ public final class McrTableScreen extends Screen {
         var pointer = projection().pointer(x, y);
         double nearest = Double.POSITIVE_INFINITY;
         McrTableScene.Piece picked = null;
-        for (var piece : McrTableScene.build(view().game())) {
+        var scene = McrTableScene.build(view().game());
+        for (var piece : scene) {
             double distance = TilePicking.distanceSquared(TableAnimation.of(table()).worldPose(piece, Util.getMillis()), piece.dimensions(), pointer.origin(), pointer.ray(), false);
             if (distance < nearest) { nearest = distance; picked = piece; }
         }
-        if (picked == null || !context.source(picked.area().name(), picked.seat(), picked.index(), picked.tile())) return false;
+        if (picked == null) return false;
+        var hit = picked;
+        // A lone lower tile can hide behind the next full stack, so that neighbouring stack also starts the drag.
+        if (!context.source(hit.area().name(), hit.seat(), hit.index(), hit.tile()) && (hit.area() != McrTableScene.Area.WALL
+            || scene.stream().noneMatch(piece -> context.source(piece.area().name(), piece.seat(), piece.index(), piece.tile())
+                && piece.position().distanceToSqr(hit.position()) < .03))) return false;
         handlingDecision = view().game().decision();
         handlingDrag.begin(context, tablePoint(x, y));
         setFocused(null);

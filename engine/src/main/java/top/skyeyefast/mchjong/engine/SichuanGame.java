@@ -8,7 +8,7 @@ import java.util.Objects;
 import static top.skyeyefast.mchjong.engine.SichuanAction.Type.*;
 
 public final class SichuanGame {
-    public enum Phase { VOIDING, TURN, REACTION, HAND_END, MATCH_END }
+    public enum Phase { SHUFFLE, BUILD_WALL, DEAL, VOIDING, TURN, REACTION, HAND_END, MATCH_END }
     private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     private final SichuanRules rules;
     private SichuanWall wall;
@@ -32,10 +32,15 @@ public final class SichuanGame {
     private final List<SichuanSettlement.Win> wins = new ArrayList<>();
     private final List<SichuanSettlement.Entry> ledger = new ArrayList<>();
     private SichuanSettlement.Result result;
+    /** Ordinary tables deal by handling actions; the dice stay private until the dealer rolls them. */
+    private boolean manual;
+    private ManualHandling handling = new ManualHandling();
 
     public SichuanGame(long seed) { this(seed, SichuanPreset.SBR_2025.config(), Tile.sichuanSet()); }
-    public SichuanGame(long seed, SichuanRules rules, List<Integer> stock) {
+    public SichuanGame(long seed, SichuanRules rules, List<Integer> stock) { this(seed, rules, stock, false); }
+    public SichuanGame(long seed, SichuanRules rules, List<Integer> stock, boolean manual) {
         this.rules = Objects.requireNonNull(rules);
+        this.manual = manual;
         nextWallSeed = seed + WALL_SEED_STEP;
         startHand(new SichuanWall(seed, 0, stock, rules.eastWestLongWall()));
         validate();
@@ -48,6 +53,8 @@ public final class SichuanGame {
         clearReaction(); afterKong = false; replacementDraw = false; kongLedgerStart = -1;
         wins.clear(); ledger.clear();
         for (int seat = 0; seat < 4; seat++) players[seat] = new Player();
+        initialHands = null;
+        if (manual) { handling.reset(); phase = Phase.SHUFFLE; return; }
         for (int packet = 0; packet < 3; packet++)
             for (int step = 0; step < 4; step++)
                 for (int tile = 0; tile < 4; tile++) players[(turn + step) % 4].hand.add(wall.draw());
@@ -55,8 +62,65 @@ public final class SichuanGame {
         players[turn].drawn = wall.take(52);
         players[turn].hand.add(players[turn].drawn);
         for (int step = 1; step < 4; step++) players[(turn + step) % 4].hand.add(wall.draw());
+        dealt();
+    }
+
+    private void dealt() {
         for (var player : players) player.hand.sort(Tile.ORDER);
         initialHands = Arrays.stream(players).map(player -> List.copyOf(player.hand)).toList();
+    }
+
+    public boolean manual() { return manual; }
+    public boolean physicalPhase() { return manual && (phase == Phase.SHUFFLE || phase == Phase.BUILD_WALL || phase == Phase.DEAL); }
+
+    private ManualHandling.Host host() {
+        return new ManualHandling.Host() {
+            public ManualHandling.Stage stage() {
+                return switch (phase) {
+                    case SHUFFLE -> ManualHandling.Stage.SHUFFLE;
+                    case BUILD_WALL -> ManualHandling.Stage.BUILD_WALL;
+                    case DEAL -> ManualHandling.Stage.DEAL;
+                    default -> ManualHandling.Stage.NONE;
+                };
+            }
+            public int seats() { return 4; }
+            public int dealer() { return SichuanGame.this.dealer(); }
+            public int turn() { return turn; }
+            // After three rounds of four, the dealer jumps to two tiles and each other player takes one.
+            public int packetSize(int packet) { return packet < 12 ? 4 : packet == 12 ? 2 : 1; }
+            public void phase(ManualHandling.Stage stage) { phase = Phase.valueOf(stage.name()); changed(); }
+            // The wall was shuffled and its dice were thrown privately when the hand started.
+            public void shuffled() {}
+            public void opened() {}
+            public void packet(int seat, int count) {
+                var player = players[seat];
+                if (handling.packets == 12) {
+                    player.hand.add(wall.take(48));
+                    player.drawn = wall.take(52);
+                    player.hand.add(player.drawn);
+                } else for (int i = 0; i < count; i++) player.hand.add(wall.draw());
+            }
+            public void dealt() {
+                SichuanGame.this.dealt();
+                turn = SichuanGame.this.dealer();
+                phase = Phase.VOIDING;
+                changed();
+            }
+            public void draw() { throw new IllegalStateException("Sichuan draws are turn actions"); }
+            public void next(int seat) { turn = (seat + 1) % 4; }
+            public void revised() { revision = Math.addExact(revision, 1); }
+        };
+    }
+
+    /** Recipient-safe dealing progress; absent at automatic tables. */
+    ManualHandlingView handlingView() {
+        if (!manual) return null;
+        int count = phase == Phase.DEAL ? host().packetSize(handling.packets)
+            : phase == Phase.TURN && actions(turn).stream().anyMatch(action -> action.type() == DRAW) ? 1 : 0;
+        int source = count == 0 ? -1 : phase == Phase.DEAL && handling.packets == 12 ? wall.slotAt(48) : wall.slotAt(wall.cursor());
+        boolean rolled = phase != Phase.SHUFFLE && phase != Phase.BUILD_WALL;
+        return new ManualHandlingView(handling.builtWalls, source, count,
+            rolled ? wall.save().die1() : 0, rolled ? wall.save().die2() : 0, 0, handling.diceHeld);
     }
 
     private SichuanGame(SichuanRules rules, List<Hand> completed, SichuanWall.State opening) {
@@ -86,6 +150,7 @@ public final class SichuanGame {
             responses[response.seat()] = Objects.requireNonNull(response.action());
         }
         wins.addAll(state.wins()); ledger.addAll(state.ledger()); result = state.result();
+        manual = state.manual(); handling = ManualHandling.restore(state.handling());
         validate();
         revision = Math.addExact(revision, 1); decision = Math.addExact(decision, 1);
     }
@@ -116,6 +181,8 @@ public final class SichuanGame {
     }
     public SichuanView view(int seat) { return SichuanView.project(this, seat, true); }
     public List<SichuanAction> actions(int seat) {
+        if (seat >= 0 && seat <= 3 && physicalPhase())
+            return handling.actions(host(), seat).stream().map(action -> new SichuanAction(SichuanAction.Type.valueOf(action.name()))).toList();
         if (seat < 0 || seat > 3 || players[seat].won || ended()) return List.of();
         if (phase == Phase.REACTION && responses[seat] != null) return List.of();
         return legalActions(seat);
@@ -223,6 +290,10 @@ public final class SichuanGame {
         var offered = actions(seat);
         if (index < 0 || index >= offered.size()) return false;
         var action = offered.get(index);
+        if (physicalPhase()) {
+            handling.act(host(), seat, ManualHandling.Action.valueOf(action.type().name()));
+            return true;
+        }
         if (phase == Phase.REACTION) {
             var score = winScore(seat, focus, true);
             if (action.type() != WIN && score != null) players[seat].passedFan = Math.max(players[seat].passedFan, Math.min(rules.fanCap(), score.fan()));
@@ -459,7 +530,7 @@ public final class SichuanGame {
         for (int seat = 0; seat < 4; seat++) if (responses[seat] != null) submitted.add(new Response(seat, responses[seat]));
         return new State(State.FORMAT, rules, nextWallSeed, handNumber, completedHands, phase, revision, decision, turn, wall.save(),
             Arrays.stream(players).map(Player::save).toList(), focus, supplier, pendingKong,
-            replacementDraw, afterKong, kongLedgerStart, submitted, wins, ledger, result);
+            replacementDraw, afterKong, kongLedgerStart, submitted, wins, ledger, result, manual, handling.save());
     }
 
     public record Response(int seat, SichuanAction action) {}
@@ -473,10 +544,11 @@ public final class SichuanGame {
                         Phase phase, long revision, long decision, int turn,
                         SichuanWall.State wall, List<SichuanPlayerState> players, int focus, int supplier, int pendingKong,
                         boolean replacementDraw, boolean afterKong, int kongLedgerStart, List<Response> responses,
-                        List<SichuanSettlement.Win> wins, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
-        public static final int FORMAT = 3;
+                        List<SichuanSettlement.Win> wins, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result,
+                        boolean manual, ManualHandling.Saved handling) {
+        public static final int FORMAT = 4;
         public State {
-            Objects.requireNonNull(rules); Objects.requireNonNull(phase); Objects.requireNonNull(wall);
+            Objects.requireNonNull(rules); Objects.requireNonNull(phase); Objects.requireNonNull(wall); Objects.requireNonNull(handling);
             players = List.copyOf(players); responses = List.copyOf(responses); wins = List.copyOf(wins); ledger = List.copyOf(ledger);
             completedHands = List.copyOf(completedHands);
             if (format != FORMAT || players.size() != 4 || revision < 1 || decision < 1
@@ -506,6 +578,11 @@ public final class SichuanGame {
 
     public void validate() {
         if (wall.save().eastWestLongWall() != rules.eastWestLongWall()) throw new IllegalArgumentException("Sichuan wall differs from rules");
+        if (!manual && (phase == Phase.SHUFFLE || phase == Phase.BUILD_WALL || phase == Phase.DEAL))
+            throw new IllegalArgumentException("Automatic Sichuan table in a handling phase");
+        if (physicalPhase()) { validateDealing(); return; }
+        if (manual && (handling.builtWalls != 15 || handling.packets != 16 || handling.diceHeld))
+            throw new IllegalArgumentException("Incomplete manual Sichuan deal");
         var owned = new HashSet<Integer>();
         for (int tile : wall.save().slots()) if (tile != Tile.ABSENT) own(owned, tile);
         var winningSeats = new HashSet<Integer>();
@@ -627,6 +704,33 @@ public final class SichuanGame {
                     throw new IllegalArgumentException("Invalid Sichuan ready amount");
             }
         }
+    }
+    /** Shuffling, wall building and dealing, before any player chooses a void suit. */
+    private void validateDealing() {
+        var h = handling;
+        if (h.builtWalls < 0 || h.builtWalls > 15 || h.packets < 0 || h.packets >= 16 || h.replacement || h.kan
+            || phase != Phase.DEAL && h.packets != 0 || phase == Phase.SHUFFLE && (h.builtWalls != 0 || h.diceHeld)
+            || phase == Phase.DEAL && (h.builtWalls != 15 || h.diceHeld) || h.diceHeld && h.builtWalls != 15
+            || result != null || !wins.isEmpty() || !ledger.isEmpty() || focus != Tile.ABSENT || supplier != -1 || pendingKong != -1
+            || replacementDraw || afterKong || kongLedgerStart != -1 || Arrays.stream(responses).anyMatch(Objects::nonNull)
+            || turn != (phase == Phase.DEAL ? (dealer() + h.packets) % 4 : dealer())
+            || completedHands.size() != handNumber - 1)
+            throw new IllegalArgumentException("Invalid manual Sichuan dealing");
+        var owned = new HashSet<Integer>();
+        for (int tile : wall.save().slots()) if (tile != Tile.ABSENT) own(owned, tile);
+        int dealt = 0;
+        for (int offset = 0; offset < 4; offset++) {
+            int seatOffset = offset;
+            int packets = (int) java.util.stream.IntStream.range(0, h.packets).filter(packet -> packet % 4 == seatOffset).count();
+            int expected = 4 * Math.min(packets, 3) + (packets > 3 ? offset == 0 ? 2 : 1 : 0);
+            var player = players[(dealer() + offset) % 4];
+            if (player.hand.size() != expected || !player.melds.isEmpty() || !player.river.isEmpty() || player.voidSuit != -1
+                || player.won || player.drawn != Tile.ABSENT && (offset != 0 || h.packets <= 12 || !player.hand.contains(player.drawn)))
+                throw new IllegalArgumentException("Invalid manual Sichuan packet ownership");
+            for (int tile : player.hand) own(owned, tile);
+            dealt += expected;
+        }
+        if (owned.size() != 108 || wall.remaining() != 108 - dealt) throw new IllegalArgumentException("Sichuan physical tiles are not conserved");
     }
     private static void own(HashSet<Integer> owned, int tile) {
         if (tile < 0 || tile >= 108 || !owned.add(tile)) throw new IllegalArgumentException("Invalid Sichuan physical identity");

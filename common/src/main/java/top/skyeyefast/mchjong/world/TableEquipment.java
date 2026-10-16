@@ -26,7 +26,7 @@ public final class TableEquipment {
     private int activeBox = -1;
     private top.skyeyefast.mchjong.engine.MahjongVariant variant = top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
     public void selectVariant(top.skyeyefast.mchjong.engine.MahjongVariant variant) { this.variant = variant; }
-    public boolean cards() { return variant == top.skyeyefast.mchjong.engine.MahjongVariant.MCR; }
+    public boolean cards() { return variant != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI; }
     public net.minecraft.world.item.Item paymentItem() { return cards() ? MahjongContent.SCORING_CARD : MahjongContent.POINT_STICK; }
     public int reserveValue() { return cards() ? -500 : -10000; }
     private boolean loading;
@@ -142,10 +142,7 @@ public final class TableEquipment {
             if (check.appearance() != null) { best = check; break; }
         }
         problems.addAll(best.problems());
-        if (!automatic) {
-            if (riichi == null && !cards()) problems.add(PreparationProblem.AUTOMATIC_TABLE);
-            else problems.addAll(preparedSupplies().problems());
-        }
+        if (!automatic) problems.addAll(preparedSupplies().problems());
         return java.util.List.copyOf(problems);
     }
 
@@ -194,7 +191,7 @@ public final class TableEquipment {
             contents.add(items);
             if (!items.isEmpty()) dice += items.get(MahjongSupplies.DICE_SLOT).getCount();
         }
-        if (dice < 2) problems.add(PreparationProblem.DICE);
+        if (dice < (variant == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN ? 3 : 2)) problems.add(PreparationProblem.DICE);
         var copies = new java.util.ArrayList<java.util.List<ItemStack>>();
         for (int seat = 0; seat < 4; seat++) {
             var row = new java.util.ArrayList<ItemStack>();

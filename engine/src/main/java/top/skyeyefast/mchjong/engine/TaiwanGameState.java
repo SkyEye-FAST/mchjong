@@ -10,7 +10,7 @@ public record TaiwanGameState(int format, Rules rules, Opening opening, int roun
                               long revision, long decision, TaiwanGame.Phase phase, int turn, Wall wall,
                               List<Player> players, int drawn, int turnDrawn, TaiwanWinContext.DrawOrigin origin,
                               Set<Integer> turnWaits, int calls, int draws, Offer offer, List<Reply> replies,
-                              Outcome outcome, Result settlement) {
+                              Outcome outcome, Result settlement, Manual manual) {
     public static final int FORMAT = 3;
     public TaiwanGameState {
         if (format != FORMAT || roundWind < Tile.EAST || roundWind > Tile.NORTH || continuation < 0 || continuation > 1_000_000
@@ -58,12 +58,26 @@ public record TaiwanGameState(int format, Rules rules, Opening opening, int roun
     public record Action(TaiwanAction.Type type, List<Integer> tiles) {
         public Action {
             Objects.requireNonNull(type); tiles = List.copyOf(tiles);
-            int count = switch (type) { case PASS, WIN -> 0; case DISCARD, READY_DISCARD, ADDED_KONG -> 1; case CHOW, PONG -> 2; case OPEN_KONG -> 3; case CONCEALED_KONG -> 4; };
+            int count = switch (type) { case SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW, PASS, WIN -> 0; case DISCARD, READY_DISCARD, ADDED_KONG -> 1; case CHOW, PONG -> 2; case OPEN_KONG -> 3; case CONCEALED_KONG -> 4; };
             if (tiles.size() != count || tiles.stream().distinct().count() != count || tiles.stream().anyMatch(t -> t < 0 || t >= 136))
                 throw new IllegalArgumentException("Invalid Taiwan action");
         }
         public static Action of(TaiwanAction a) { return new Action(a.getType(),a.getTiles()); }
         public TaiwanAction restore() { return new TaiwanAction(type,tiles); }
+    }
+    /**
+     * Ordinary-table progress; absent for automatic tables. Dealing ends with the dealer's extra tile and the
+     * initial flower passes, in which the seat at {@code flowerOffset} from the dealer still takes
+     * {@code flowerPending} replacements and {@code flowerChanged} records whether the current pass exposed a flower.
+     */
+    public record Manual(ManualHandling.Saved handling, Stage stage, int flowerOffset, int flowerPending, boolean flowerChanged) {
+        public enum Stage { OPENING, EXTRA, FLOWERS, PLAY }
+        public Manual {
+            Objects.requireNonNull(handling); Objects.requireNonNull(stage);
+            if (flowerOffset < 0 || flowerOffset > 3 || flowerPending < 0 || flowerPending > 8
+                || stage != Stage.FLOWERS && (flowerOffset != 0 || flowerPending != 0 || flowerChanged))
+                throw new IllegalArgumentException("Invalid manual Taiwan handling");
+        }
     }
     public record Reply(int seat, Action action) {
         public Reply { if (seat < 0 || seat > 3) throw new IllegalArgumentException("Invalid responder"); Objects.requireNonNull(action); }

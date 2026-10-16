@@ -16,7 +16,7 @@ final class TableToolbar {
     static MahjongButton drawer(BlockPos pos, int side, int x, int y, int scale, Runnable before) {
         var client = Minecraft.getInstance();
         boolean cards = client.level != null && client.level.getBlockEntity(pos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
-            && table.clientVariant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR;
+            && table.clientVariant() != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
         var caption = Component.translatable(cards ? "cards.mchjong.drawer" : "ui.mchjong.drawer");
         int width = cards ? Math.max(72, client.font.width(caption) + 12) : 72;
         return MahjongButton.create(caption, ignored -> {

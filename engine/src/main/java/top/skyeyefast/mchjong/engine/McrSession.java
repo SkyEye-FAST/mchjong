@@ -16,7 +16,6 @@ public final class McrSession extends TableSession {
     private TimeControl timeControl = TimeControl.DEFAULT;
     private List<TimeControl.Clock> clocks = new ArrayList<>();
     private int age;
-    private int lobbyTicks;
     private boolean manualTimeout;
     @Override public boolean manualTimeout() { return manualTimeout; }
     @Override public boolean configureManualTimeout(UUID actor, long expectedDecision, boolean enabled) {
@@ -160,19 +159,7 @@ public final class McrSession extends TableSession {
 
     public void tick() {
         if (!tickRoom()) return;
-        if (game == null) {
-            if (++lobbyTicks % 12 != 0) return;
-            if (seating.stage == RoomSeating.Stage.DRAWING)
-                for (int seat = 0; seat < 4; seat++) if (occupied(seat) && !participants[seat].bot && seating.winds[seat] < 0) return;
-            for (int seat = 0; seat < 4; seat++) if (participants[seat].bot) {
-                var actions = roomActions(seat);
-                for (var action : actions) if (action.type() == RoomAction.Type.DRAW_WIND || action.type() == RoomAction.Type.READY) {
-                    actRoom(participants[seat].id, decision, action);
-                    return;
-                }
-            }
-            return;
-        }
+        if (game == null) { tickLobbyBots(); return; }
         if (lifecycle == Lifecycle.FINISHED) return;
         age = Math.min(14_400, age + 1);
         if (game.phase() == McrGame.Phase.HAND_END) {

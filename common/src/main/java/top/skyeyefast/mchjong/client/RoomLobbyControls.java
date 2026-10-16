@@ -27,7 +27,7 @@ final class RoomLobbyControls {
     }
 
     static MahjongButton variantButton(BlockPos pos, TableRoomView room, MahjongVariant choice,
-                                       int x, int y, int width, boolean automatic, Runnable sent) {
+                                       int x, int y, int width, Runnable sent) {
         var label = Component.translatable("variant.mchjong." + choice.name().toLowerCase(java.util.Locale.ROOT));
         var button = button(label, x, y, width, () -> {
             var connection = Minecraft.getInstance().getConnection();
@@ -36,12 +36,11 @@ final class RoomLobbyControls {
                 sent.run();
             }
         }).selected(room.variant() == choice);
-        boolean supported = automatic || choice == MahjongVariant.RIICHI || choice == MahjongVariant.MCR;
-        button.active = room.variant() == choice || supported && room.viewerSeat() == room.host() && room.viewerSeat() >= 0
+        button.active = room.variant() == choice || room.viewerSeat() == room.host() && room.viewerSeat() >= 0
             && room.seating() == RoomSeating.Stage.GATHERING
             && room.seats().stream().noneMatch(seat -> seat.participant().bot());
         if (!button.active) button.setTooltip(Tooltip.create(label.copy().append("\n").append(Component.translatable(
-            supported ? "lobby.mchjong.variant_host_only" : "lobby.mchjong.variant_locked"))));
+            "lobby.mchjong.variant_host_only"))));
         return button;
     }
 

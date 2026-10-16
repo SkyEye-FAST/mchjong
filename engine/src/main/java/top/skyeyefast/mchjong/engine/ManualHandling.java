@@ -20,6 +20,9 @@ final class ManualHandling {
         void draw();
         void next(int seat);
         void revised();
+        /** Tiles in a dealing packet; the default deals three rounds of four, then one tile each. */
+        default int packetSize(int packet) { return packet < 3 * seats() ? 4 : 1; }
+        default int packets() { return 4 * seats(); }
     }
     int builtWalls;
     int packets;
@@ -58,7 +61,6 @@ final class ManualHandling {
         };
     }
 
-    int packetSize(int seats) { return packets < 3 * seats ? 4 : 1; }
 
     void act(Host game, int seat, Action action) {
         switch (action) {
@@ -72,8 +74,8 @@ final class ManualHandling {
             case PICK_UP_DICE -> { diceHeld = true; game.phase(Stage.BUILD_WALL); }
             case ROLL_DICE -> { game.opened(); diceHeld = false; game.phase(Stage.DEAL); }
             case TAKE_PACKET -> {
-                game.packet(seat, packetSize(game.seats()));
-                if (++packets == 4 * game.seats()) game.dealt();
+                game.packet(seat, game.packetSize(packets));
+                if (++packets == game.packets()) game.dealt();
                 else { game.next(seat); game.phase(Stage.DEAL); }
             }
             case DRAW -> game.draw();
@@ -101,10 +103,10 @@ final class ManualHandling {
         int source = count == 0 ? -1 : game.phase == RiichiGame.Phase.DRAW && replacement
             ? game.wall.nextReplacementSlot() : game.wall.cursor;
         return new ManualHandlingView(builtWalls, source, count,
-            game.wall == null ? 0 : game.wall.diceOne, game.wall == null ? 0 : game.wall.diceTwo, diceHeld);
+            game.wall == null ? 0 : game.wall.diceOne, game.wall == null ? 0 : game.wall.diceTwo, 0, diceHeld);
     }
 
-    private int packetSize(RiichiGame game) { return packetSize(game.rules.players()); }
+    private int packetSize(RiichiGame game) { return packets < 3 * game.rules.players() ? 4 : 1; }
 
     void act(RiichiGame game, int seat, RiichiAction action) {
         act(host(game), seat, Action.valueOf(action.type().name()));

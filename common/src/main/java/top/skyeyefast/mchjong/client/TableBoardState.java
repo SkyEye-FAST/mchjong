@@ -80,7 +80,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
             return new Seat(view.scores().get(i), hand, player.drawn(), player.melds(), player.river().stream()
                 .map(t -> new Discard(t, false, false, false)).toList(), player.flowers().stream().map(FlowerTile::id).toList(), false, MahjongVariant.TAIWAN);
         }).toList();
-        int dealer = game.opening().dealer();
+        int dealer = game.dealer();
         int round = (game.roundWind() - Tile.EAST) * 4 + dealer;
         var caption = Component.translatable("taiwan.mchjong.round", wind(game.roundWind() - Tile.EAST), dealer + 1, game.continuation());
         return new TableBoardState(game.recipient(), 4, dealer, round, -1, -1, game.turn(), game.drawable(), seats,

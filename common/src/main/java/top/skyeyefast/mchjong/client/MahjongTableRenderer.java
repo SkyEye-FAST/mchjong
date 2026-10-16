@@ -32,8 +32,10 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.translate(.5, 0, .5);
             TaiwanSceneRenderer.render(TaiwanTableScene.build(table.clientTaiwanView().game()), table.clientTaiwanDeck(),
                 pose, buffers, light, piece -> active == null ? 0 : active.highlight(piece),
-                piece -> active != null && active.selected(piece), TableAnimation.of(table), Util.getMillis());
+                piece -> active != null && active.selected(piece), TableAnimation.of(table), Util.getMillis(),
+                piece -> active == null ? net.minecraft.world.phys.Vec3.ZERO : active.handlingOffset(piece));
             if (table.automatic()) TableIndicator.render(table.clientTaiwanView(), pose, buffers, light);
+            TableDice.renderWorld(table.clientTaiwanView().game(), pose, buffers, light);
             pose.popPose();
             return;
         }
@@ -45,8 +47,10 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.translate(.5, 0, .5);
             SichuanSceneRenderer.render(SichuanTableScene.build(table.clientSichuanView().game()), table.clientSichuanDeck(),
                 pose, buffers, light, piece -> active == null ? 0 : active.highlight(piece),
-                piece -> active != null && active.selected(piece), TableAnimation.of(table), Util.getMillis());
+                piece -> active != null && active.selected(piece), TableAnimation.of(table), Util.getMillis(),
+                piece -> active == null ? net.minecraft.world.phys.Vec3.ZERO : active.handlingOffset(piece));
             if (table.automatic()) TableIndicator.render(table.clientSichuanView().game(), pose, buffers, light);
+            TableDice.renderWorld(table.clientSichuanView().game(), pose, buffers, light);
             pose.popPose();
             return;
         }

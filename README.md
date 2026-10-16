@@ -30,14 +30,15 @@ See [CHANGELOG.md](CHANGELOG.md) for changes in published and upcoming versions.
 
 ### Preparing a mahjong table
 
-The variant determines which mahjong table and tile set you need:
+Every variant can be played at an ordinary or an automatic mahjong table. The
+variant determines which tile set you need:
 
-| Variant | Players | Tile set | Mahjong table |
-| --- | --- | --- | --- |
-| Riichi mahjong | 3 or 4 | 108 tiles for three players; 136 tiles for four players | Ordinary or automatic |
-| Mahjong Competition Rules (MCR) | 4 | 144 tiles, including eight flowers | Ordinary or automatic |
-| Sichuan mahjong | 4 | 108 suited tiles | Automatic |
-| Taiwanese mahjong | 4 | Pocket preset: 144 tiles with flowers; Southern preset: 136 tiles without flowers | Automatic |
+| Variant | Players | Tile set |
+| --- | --- | --- |
+| Riichi mahjong | 3 or 4 | 108 tiles for three players; 136 tiles for four players |
+| Mahjong Competition Rules (MCR) | 4 | 144 tiles, including eight flowers |
+| Sichuan mahjong | 4 | 108 suited tiles |
+| Taiwanese mahjong | 4 | Pocket preset: 144 tiles with flowers; Southern preset: 136 tiles without flowers |
 
 The three-player Riichi mahjong set excludes the character tiles numbered two
 through eight. Every variant requires a complete set with matching material,
@@ -54,13 +55,15 @@ while reprinting a complete set restores all its ordinary fives.
 Place the mahjong table in a clear 3 x 3 block area with solid support beneath
 its center. Place stools two blocks from the center on the participating sides,
 install a cloth, and put the box inside the table. An ordinary mahjong table
-also needs two dice and the starting point sticks for Riichi mahjong or scoring
-cards for MCR listed by the preparation screen. Craft 24 blank scoring cards from
-three paper, then mark eight cards with one dye: white for 1 point, green for
-8 points, blue for 10 points, yellow for 50 points, red for 100 points or black
-for a -500-point debt card. Put cards in the supply slots of either box; preset
-boxes retain their point sticks, so a second box can hold the cards. The room
-footer identifies any missing equipment before play can begin.
+also needs dice and the starting payment supplies listed by the preparation
+screen: point sticks for Riichi mahjong, or scoring cards for the other
+variants. Taiwanese mahjong rolls three dice; the other variants roll two.
+Craft 24 blank scoring cards from three paper, then mark eight cards with one
+dye: white for 1 point, green for 8 points, blue for 10 points, yellow for
+50 points, red for 100 points or black for a -500-point debt card. Put cards in
+the supply slots of either box; preset boxes retain their point sticks, so a
+second box can hold the cards. The room footer identifies any missing equipment
+before play can begin.
 
 ### Starting a match
 
@@ -82,12 +85,13 @@ On ordinary mahjong tables, use the highlighted tiles and dice to shuffle the
 tiles, build the walls, deal the starting hands and draw tiles. Automatic mahjong
 tables perform these steps themselves. During play, click a tile in your hand to
 discard it and use the action buttons for calls and win declarations. At an
-ordinary mahjong table, transfer physical point sticks or MCR scoring cards through the side drawers
-after each hand, using the result screen's point changes as the payment reference.
-Each MCR player starts with 500 points in cards and one reserve debt card. The
-drawer reference is 500 plus the game score. A debt card counts as -500 points
-outside the reserve slot. Players settle by hand; the server does not move or
-verify payments. When the match ends, drawers return to their starting contents.
+ordinary mahjong table, transfer physical point sticks or scoring cards through
+the side drawers after each hand, using the result screen's point changes as the
+payment reference. Each player who pays with scoring cards starts with 500 points
+in cards and one reserve debt card. The drawer reference is 500 plus the game
+score. A debt card counts as -500 points outside the reserve slot. Players settle
+by hand; the server does not move or verify payments. When the match ends,
+drawers return to their starting contents.
 
 The view button switches between seated and immersive play. In seated view,
 drag with the right mouse button to adjust the camera and scroll the mouse

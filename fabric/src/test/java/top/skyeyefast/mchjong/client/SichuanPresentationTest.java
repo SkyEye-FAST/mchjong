@@ -113,7 +113,7 @@ class SichuanPresentationTest {
                                    List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
         return new SichuanView(1, 1, new SichuanGame(711).rules(), phase, phase == SichuanGame.Phase.MATCH_END ? 8 : 1, 0,
             List.of(100, 200, 300, 400), 0, 0, new SichuanView.Wall(Collections.nCopies(108, Tile.ABSENT), 0, 1, 1, true),
-            seats, Tile.ABSENT, -1, false, false, List.of(), winners, ledger, result);
+            seats, Tile.ABSENT, -1, false, false, List.of(), winners, ledger, result, null);
     }
     private static TableRoomView room(boolean finished) {
         var seats = java.util.stream.IntStream.range(0, 4).mapToObj(seat -> new TableRoomView.Seat(

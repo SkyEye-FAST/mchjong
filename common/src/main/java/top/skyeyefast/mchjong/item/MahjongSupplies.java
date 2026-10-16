@@ -376,7 +376,7 @@ public final class MahjongSupplies {
             stick.set(MahjongComponents.POINTS, supply[0]);
             items.set(stickSlot++, stick);
         }
-        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));
+        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 3));
         return items;
     }
 
@@ -391,7 +391,7 @@ public final class MahjongSupplies {
             tile(new TileData(-1, material, false), color, 8)));
         var result = engrave(box, TileFacePreset.KANSAI);
         var items = contents(result);
-        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));
+        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 3));
         setContents(result, items);
         return result;
     }

@@ -510,6 +510,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             var view = mcr.view(null);
             return view == null ? 500 : 500 + view.game().seats().get(side).points();
         }
+        if (serverSession() instanceof TaiwanSession taiwan)
+            return taiwan.game() == null ? 500 : Math.toIntExact(500 + taiwan.scores().get(side));
+        if (serverSession() instanceof SichuanSession sichuan)
+            return sichuan.game() == null ? 500 : 500 + sichuan.game().scores().get(side);
         RiichiGame game = serverGame();
         return game == null || side >= game.rules().players() ? 0 : game.points(side);
     }

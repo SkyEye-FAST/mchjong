@@ -14,6 +14,15 @@ public final class SichuanWallLayout {
         for (int owner = 0; owner < seat; owner++) offset += stacks(owner, eastWestLongWall) * 2;
         return offset + stack * 2 + layer;
     }
+    /** The seat that builds and owns a physical slot. */
+    public static int seat(int slot, boolean eastWestLongWall) {
+        if (slot < 0 || slot >= 108) throw new IllegalArgumentException("Invalid Sichuan wall slot");
+        for (int seat = 0; seat < 4; seat++) {
+            slot -= stacks(seat, eastWestLongWall) * 2;
+            if (slot < 0) return seat;
+        }
+        throw new IllegalStateException("Unreachable Sichuan wall slot");
+    }
     public static List<Integer> traversal(int dealer, int die1, int die2, boolean eastWestLongWall) {
         checkSeat(dealer);
         if (die1 < 1 || die1 > 6 || die2 < 1 || die2 > 6) throw new IllegalArgumentException("Invalid dice");

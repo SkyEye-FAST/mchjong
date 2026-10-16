@@ -98,7 +98,7 @@ final class RoomLobby {
         var variants = new ArrayList<MahjongButton>();
         for (var variant : MahjongVariant.values()) {
             var button = RoomLobbyControls.variantButton(pos, room, variant, 0, 0,
-                layout.sidebarWidth(), !room.manual(), () -> { pending = true; rebuild.run(); }).navigation();
+                layout.sidebarWidth(), () -> { pending = true; rebuild.run(); }).navigation();
             button.active &= !pending;
             variants.add(button);
         }

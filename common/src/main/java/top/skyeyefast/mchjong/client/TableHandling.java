@@ -91,6 +91,39 @@ public final class TableHandling {
             handling, sources, McrTableScene.WALL_Z, McrTableScene.HAND_Z);
     }
 
+    static Context context(top.skyeyefast.mchjong.engine.TaiwanView view) {
+        if (view == null) return null;
+        var handling = view.handling();
+        int size = view.wall().size();
+        var sources = new java.util.ArrayList<Integer>();
+        // Front packets run on through the dealer's opening, so a packet may wrap past the last slot.
+        if (handling != null) for (int i = 0; i < handling.packetSize(); i++) {
+            int slot = (handling.sourceSlot() + i) % size;
+            sources.add(slot);
+            // Replacements take a lower tile first; its stack is grabbed through the upper tile that covers it.
+            if (top.skyeyefast.mchjong.engine.TaiwanWallLayout.layer(slot) == top.skyeyefast.mchjong.engine.TaiwanWallLayout.Layer.LOWER
+                && view.wall().get(slot - 1) != top.skyeyefast.mchjong.engine.Tile.ABSENT && !sources.contains(slot - 1)) sources.add(slot - 1);
+        }
+        return new Context(view.phase().name(), view.recipient(), view.actions().stream().map(action -> action.type().name()).toList(),
+            handling, sources, TaiwanTableScene.wallZ(size), TaiwanTableScene.HAND_Z);
+    }
+
+    static Context context(top.skyeyefast.mchjong.engine.SichuanView view) {
+        if (view == null) return null;
+        var handling = view.handling();
+        var sources = new java.util.ArrayList<Integer>();
+        var wall = view.wall();
+        if (handling != null && handling.packetSize() > 0 && wall.die1() > 0) {
+            var traversal = top.skyeyefast.mchjong.engine.SichuanWallLayout.traversal(wall.dealer(), wall.die1(), wall.die2(), wall.eastWestLongWall());
+            // The dealer's jump takes the first and third tiles beyond the last full packet.
+            if (handling.packetSize() == 2) { sources.add(traversal.get(48)); sources.add(traversal.get(52)); }
+            else for (int index = 0; index < traversal.size() && sources.size() < handling.packetSize(); index++)
+                if (wall.slots().get(traversal.get(index)) != top.skyeyefast.mchjong.engine.Tile.ABSENT) sources.add(traversal.get(index));
+        }
+        return new Context(view.phase().name(), view.viewerSeat(), view.actions().stream().map(action -> action.type().name()).toList(),
+            handling, sources, SichuanTableScene.WALL_Z, SichuanTableScene.HAND_Z);
+    }
+
     public static boolean physical(RiichiView view, RiichiAction action) { return view.handling() != null && physical(action.type().name()); }
     public static int action(RiichiView view) { return view == null ? -1 : context(view).action(); }
     public static boolean source(RiichiView view, RiichiTableScene.Piece piece) {

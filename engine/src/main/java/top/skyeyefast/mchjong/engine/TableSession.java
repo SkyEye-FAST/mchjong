@@ -44,6 +44,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     long exitVoteSequence;
     int exitCooldown;
     private int idleMatchTicks;
+    private int lobbyTicks;
     // Room-local exclusions survive variant changes, but end with the last human or a closed room, not a save.
     private final Set<UUID> removedPlayers = new HashSet<>();
     transient WorldPolicy worldPolicy = WorldPolicy.DEFAULT;
@@ -244,12 +245,12 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
      * Creates a lobby session for another variant without changing this session; the caller installs it.
      * Retains human identities at seats within the new capacity, the host, seed, world policy and hint setting.
      * Presence is not copied; rules, equipment and seating preparation start fresh with a new incarnation.
-     * Returns null for an unchanged variant or a rejected request. Only the current host may switch an
+     * Returns null for an unchanged variant or a rejected request. Only the current host may switch a
      * bot-free lobby in the gathering stage, using its current incarnation and room decision.
      */
     public TableSession selectVariant(UUID actor, UUID incarnation, long expectedDecision, MahjongVariant selected) {
         if (!this.incarnation.equals(incarnation) || selected == null || selected == variant || !lobby() || !isHost(actor)
-            || expectedDecision != decision || exitVote != null || manual && selected != MahjongVariant.RIICHI && selected != MahjongVariant.MCR
+            || expectedDecision != decision || exitVote != null
             || seating.stage != RoomSeating.Stage.GATHERING) return null;
         for (Participant participant : participants) if (participant.bot) return null;
         TableSession replacement = switch (selected) {
@@ -492,6 +493,26 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     }
 
     /** Advances presence and exit timers; returns false when absence or an exit vote blocks the rule tick. */
+    /**
+     * Lets built-in bots draw their winds and confirm readiness at ordinary tables, after every seated human has
+     * drawn. Call only between matches, after {@link #tickRoom()} allows the tick.
+     */
+    protected final void tickLobbyBots() {
+        if (++lobbyTicks % 12 != 0) return;
+        if (seating.stage == RoomSeating.Stage.DRAWING)
+            for (int seat = 0; seat < capacity; seat++)
+                if (participants[seat].id != null && !participants[seat].bot && seating.winds[seat] < 0) return;
+        for (int seat = 0; seat < capacity; seat++) if (participants[seat].bot && participants[seat].externalBotId == null) {
+            var actions = roomActions(seat);
+            int ready = actions.indexOf(new RoomAction(RoomAction.Type.READY));
+            if (ready >= 0) { actRoom(participants[seat].id, decision, actions.get(ready)); return; }
+            for (RoomAction action : actions) if (action.type() == RoomAction.Type.DRAW_WIND) {
+                actRoom(participants[seat].id, decision, action);
+                return;
+            }
+        }
+    }
+
     protected final boolean tickRoom() {
         for (int seat = 0; seat < capacity; seat++) {
             var participant = participants[seat];

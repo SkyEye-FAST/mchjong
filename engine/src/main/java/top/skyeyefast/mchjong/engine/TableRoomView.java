@@ -27,7 +27,6 @@ public record TableRoomView(UUID tableId, UUID incarnation, long revision, long 
             || viewerSeat < 0 && (!actions.isEmpty() || leaveDecision || automation != null)
             || automation != null && (manual || lifecycle == TableSession.Lifecycle.LOBBY || seats.get(viewerSeat).participant().bot())
             || convenienceHints && !allowConvenienceHints || manualTimeout && !manual
-            || manual && variant != MahjongVariant.RIICHI && variant != MahjongVariant.MCR
             || variant != MahjongVariant.RIICHI && (seats.size() != 4 || convenienceHints || allowConvenienceHints))
             throw new IllegalArgumentException("Invalid room view");
     }

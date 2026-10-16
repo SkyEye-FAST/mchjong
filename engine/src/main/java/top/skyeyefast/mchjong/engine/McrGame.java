@@ -193,12 +193,12 @@ public final class McrGame {
 
     ManualHandlingView handlingView() {
         if (!manual) return null;
-        int count = phase == Phase.DEAL ? handling.packets == 12 ? 2 : handling.packetSize(4)
+        int count = phase == Phase.DEAL ? handlingHost().packetSize(handling.packets)
             : physicalPhase() && handlingHost().stage() == ManualHandling.Stage.DRAW ? 1 : 0;
         int source = count == 0 ? -1 : phase == Phase.DEAL ? McrWallLayout.initialDeal(opening()).get(dealOffset()).slot()
             : phase == Phase.INITIAL_FLOWERS || phase == Phase.REPLACE_FLOWER || handling.replacement ? wall.nextReplacementSlot() : wall.nextDrawSlot();
         return new ManualHandlingView(handling.builtWalls, source, count,
-            opening() == null ? 0 : opening().firstRoll().first(), opening() == null ? 0 : opening().firstRoll().second(), handling.diceHeld);
+            opening() == null ? 0 : opening().firstRoll().first(), opening() == null ? 0 : opening().firstRoll().second(), 0, handling.diceHeld);
     }
 
     private int dealOffset() { return handling.packets < 12 ? handling.packets * 4 : 48 + (handling.packets == 12 ? 0 : handling.packets - 11); }
@@ -215,6 +215,8 @@ public final class McrGame {
                 };
             }
             public int seats() { return 4; }
+            // After three rounds of four, the dealer takes two tiles and each other player takes one.
+            public int packetSize(int packet) { return packet < 12 ? 4 : packet == 12 ? 2 : 1; }
             public int dealer() { return McrGame.this.dealer(); }
             public int turn() { return turn; }
             public void phase(ManualHandling.Stage stage) { changePhase(Phase.valueOf(stage.name())); }
@@ -226,7 +228,7 @@ public final class McrGame {
             public void packet(int seat, int count) {
                 var plan = McrWallLayout.initialDeal(opening());
                 int offset = dealOffset();
-                int end = offset + (handling.packets == 12 ? 2 : count);
+                int end = offset + count;
                 for (int index = offset; index < end; index++) {
                     int tile = wall.takeRaw(plan.get(index).slot());
                     players[seat].hand.add(tile);

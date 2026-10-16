@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Objects;
 
 public record SichuanAction(Type type, List<Integer> tiles, int suit) {
-    public enum Type { VOID_SUIT, DRAW, DISCARD, PUNG, DISCARD_KONG, CONCEALED_KONG, ADDED_KONG, WIN, PASS }
+    /** The first five types are tile handling at ordinary mahjong tables. */
+    public enum Type { SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, VOID_SUIT, DRAW, DISCARD, PUNG, DISCARD_KONG, CONCEALED_KONG, ADDED_KONG, WIN, PASS }
     public SichuanAction {
         Objects.requireNonNull(type);
         tiles = List.copyOf(tiles);

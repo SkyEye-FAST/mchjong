@@ -57,7 +57,7 @@ class ManualHandlingTest {
             assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
             assertNull(game.wall);
             assertFalse(game.session.manualTimeout());
-            assertEquals(new ManualHandlingView(0, -1, 0, 0, 0, false), game.view(null).handling());
+            assertEquals(new ManualHandlingView(0, -1, 0, 0, 0, 0, false), game.view(null).handling());
             var clocks = game.view(id(game.dealer)).clocks();
             assertTrue(clocks.stream().noneMatch(TimeControl.Clock::active));
             for (int tick = 0; tick < 2400; tick++) game.tick();
@@ -88,7 +88,7 @@ class ManualHandlingTest {
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(13, game.players[seat].hand.size());
             int remaining = game.wall.remaining();
             assertEquals(new ManualHandlingView((1 << rules.players()) - 1, 13 * rules.players(), 1,
-                game.wall.diceOne, game.wall.diceTwo, false), game.view(null).handling());
+                game.wall.diceOne, game.wall.diceTwo, 0, false), game.view(null).handling());
             clocks = game.view(id(game.dealer)).clocks();
             assertTrue(clocks.stream().noneMatch(TimeControl.Clock::active));
             for (int tick = 0; tick < 2400; tick++) game.tick();
