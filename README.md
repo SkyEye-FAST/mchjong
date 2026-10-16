@@ -30,8 +30,7 @@ See [CHANGELOG.md](CHANGELOG.md) for changes in published and upcoming versions.
 
 ### Preparing a mahjong table
 
-Every variant can be played at an ordinary or an automatic mahjong table. The
-variant determines which tile set you need:
+The variant determines which tile set you need:
 
 | Variant | Players | Tile set |
 | --- | --- | --- |
@@ -57,13 +56,12 @@ its center. Place stools two blocks from the center on the participating sides,
 install a cloth, and put the box inside the table. An ordinary mahjong table
 also needs dice and the starting payment supplies listed by the preparation
 screen: point sticks for Riichi mahjong, or scoring cards for the other
-variants. Taiwanese mahjong rolls three dice; the other variants roll two.
-Craft 24 blank scoring cards from three paper, then mark eight cards with one
-dye: white for 1 point, green for 8 points, blue for 10 points, yellow for
-50 points, red for 100 points or black for a -500-point debt card. Put cards in
-the supply slots of either box; preset boxes retain their point sticks, so a
-second box can hold the cards. The room footer identifies any missing equipment
-before play can begin.
+variants. Taiwanese mahjong needs three dice. Craft 24 blank scoring cards from
+three paper, then mark eight cards with one dye: white for 1 point, green for 8
+points, blue for 10 points, yellow for 50 points, red for 100 points or black
+for a -500-point debt card. Put cards in the supply slots of either box; preset
+boxes retain their point sticks, so a second box can hold the cards. The room
+footer identifies any missing equipment before play can begin.
 
 ### Starting a match
 
