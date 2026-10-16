@@ -36,7 +36,7 @@ public final class GenerateAssets {
         png("tile/plain", resourceTexture("tile/plain"));
         text("assets/mchjong/textures/tile/back.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         png("furniture/cloth_pattern", resourceTexture("furniture/cloth_pattern"));
-        for (String name : List.of("brass", "edge", "felt", "steel",
+        for (String name : List.of("brass", "edge", "felt", "mahjong_box", "steel",
                 "wood_acacia", "wood_bamboo", "wood_birch", "wood_cherry",
                 "wood_crimson", "wood_dark_oak", "wood_jungle", "wood_mangrove",
                 "wood_oak", "wood_spruce", "wood_warped")) {
@@ -118,6 +118,7 @@ public final class GenerateAssets {
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
             // Like a held sword, the free end rises outward while the printed surface faces inward.
             String held = switch (name) {
+                case "mahjong_box" -> "{\"rotation\":[0,30,0],\"translation\":[-1,4,-1],\"scale\":[0.6,0.6,0.6]}";
                 case "mahjong_tile" -> "{\"rotation\":[-12,-65,-25],\"translation\":[1,6,-3],\"scale\":[0.4,0.4,0.4]}";
                 case "point_stick", "scoring_card" -> "{\"rotation\":[65,60,25],\"translation\":[1,6,-2],\"scale\":[0.7,0.7,0.7]}";
                 default -> "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
