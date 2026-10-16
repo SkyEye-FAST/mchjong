@@ -52,7 +52,8 @@ public final class GenerateAssets {
                 "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         }
         png("item/riichi_stick", PointStickArtwork.texture(1000));
-        for (int points : ScoringCardArtwork.POINTS) png("scoring_card/" + points, ScoringCardArtwork.texture(points));
+        for (int points : new int[]{0, 1, 8, 10, 50, 100, -500})
+            png("scoring_card/" + points, resourceTexture("scoring_card/" + points));
         png("gui/sprites/hud/riichi_stick", PointStickArtwork.texture(1000));
         png("gui/sprites/hud/honba_stick", PointStickArtwork.texture(100));
         text("assets/mchjong/models/item/riichi_stick.json", """
@@ -73,7 +74,7 @@ public final class GenerateAssets {
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
         }
         for (String name : List.of("mahjong_printing_plate", "incomplete_mahjong_box")) {
-            png("item/" + name, CreateArtwork.texture(name));
+            png("item/" + name, resourceTexture("item/" + name));
             text("assets/mchjong/models/item/" + name + ".json",
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
         }
