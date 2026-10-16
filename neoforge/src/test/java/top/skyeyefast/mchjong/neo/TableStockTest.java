@@ -84,7 +84,7 @@ class TableStockTest {
         table.endMatch();
         assertEquals(4, table.drawer(0).getItem(1).getCount());
         assertTrue(table.drawer(1).getItem(8).isEmpty());
-        assertEquals(2, MahjongSupplies.contents(table.boxes().getItem(0)).get(MahjongSupplies.DICE_SLOT).getCount());
+        assertEquals(3, MahjongSupplies.contents(table.boxes().getItem(0)).get(MahjongSupplies.DICE_SLOT).getCount());
     }
 
     @Test void onlyRulesWithoutBankruptcyRequireBustReserves(MinecraftServer server) {
