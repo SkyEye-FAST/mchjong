@@ -35,7 +35,7 @@
       "text": "manual.mchjong.entry.tiles.backs"
     },
     {
-      "type": "patchouli:text",
+      "type": "mchjong:dye_recipe",
       "text": "manual.mchjong.entry.tiles.backs.continued_1"
     },
     {
@@ -46,6 +46,9 @@
       "type": "patchouli:crafting",
       "recipe": "mchjong:red_dora_dye",
       "recipe2": "mchjong:undo_dye"
+    },
+    {
+      "type": "mchjong:red_five_recipe"
     },
     {
       "type": "patchouli:text",

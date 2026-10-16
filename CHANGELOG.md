@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Show the automatic mahjong table upgrade, point-stick marking, Red Five and dye recipes as one-example diagrams in the Mahjong Manual, remove recipe text that repeats the recipe diagrams, and describe in-world actions as left-clicks and right-clicks.
 - Correct Mahjong Manual award entries against the scoring engine in all four languages: missing and unclear exclusions for MCR fan, Taiwanese tai applicability and robbed-kong wins, Riichi tanyao and suukantsu conditions, and unclear English wording.
 - List the available bot choices for a seat in a selection screen instead of cycling them with repeated clicks; a seat with one possible change still applies it directly.
 - Give Taiwanese mahjong the automatic win, no calls and automatic discard match controls and the tile sound effects that MCR and Sichuan mahjong already have.
