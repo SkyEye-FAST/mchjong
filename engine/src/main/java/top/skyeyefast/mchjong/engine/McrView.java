@@ -9,21 +9,25 @@ import java.util.Objects;
 public record McrView(long revision, long decision, int handNumber, McrGame.Phase phase,
                       int viewerSeat, int dealer, int roundWind, int turn, int remaining, McrOpening opening,
                       List<Integer> wall, Focus focus, List<Seat> seats, List<McrAction> actions,
-                      boolean responded, boolean qualifyingWin, McrSettlement.Result result, List<McrSettlement.Penalty> penalties) {
+                      boolean responded, boolean qualifyingWin, McrSettlement.Result result, List<McrSettlement.Penalty> penalties,
+                      ManualHandlingView handling) {
     public McrView {
         Objects.requireNonNull(phase);
-        Objects.requireNonNull(opening);
         wall = List.copyOf(wall);
         seats = List.copyOf(seats);
         actions = List.copyOf(actions);
         penalties = List.copyOf(penalties);
+        boolean unopened = phase == McrGame.Phase.SHUFFLE || phase == McrGame.Phase.BUILD_WALL;
+        if ((opening == null) != unopened || unopened && handling == null)
+            throw new IllegalArgumentException("Invalid MCR opening visibility");
         if (revision < 1 || decision < 1 || handNumber < 1 || handNumber > 16 || viewerSeat < -2 || viewerSeat > 3
-            || dealer != (handNumber - 1) % 4 || opening.dealer() != dealer || roundWind != Tile.EAST + (handNumber - 1) / 4
-            || turn < 0 || turn > 3 || remaining < 0 || remaining > 91
+            || dealer != (handNumber - 1) % 4 || opening != null && opening.dealer() != dealer || roundWind != Tile.EAST + (handNumber - 1) / 4
+            || turn < 0 || turn > 3 || remaining < 0 || remaining > (handling == null ? 91 : 144)
             || seats.size() != 4 || wall.size() != 144 || actions.size() > 32 || penalties.size() > 64)
             throw new IllegalArgumentException("Invalid MCR view bounds");
         if (wall.stream().anyMatch(tile -> tile != Tile.HIDDEN && tile != Tile.ABSENT)
-            || wall.stream().filter(tile -> tile == Tile.HIDDEN).count() != remaining)
+            || phase != McrGame.Phase.SHUFFLE && phase != McrGame.Phase.BUILD_WALL
+                && wall.stream().filter(tile -> tile == Tile.HIDDEN).count() != remaining)
             throw new IllegalArgumentException("MCR views must not expose wall identities");
         if (viewerSeat == -1 && (!actions.isEmpty() || responded) || responded && !actions.isEmpty())
             throw new IllegalArgumentException("Actions do not belong to this recipient");
@@ -34,7 +38,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             || focus != null && focus.seat() != turn
             || ended && ((phase == McrGame.Phase.MATCH_END) != (handNumber == 16) || !actions.isEmpty() || responded)
             || phase != McrGame.Phase.REACTION && responded
-            || phase != McrGame.Phase.REACTION && viewerSeat != turn && !actions.isEmpty()
+            || phase != McrGame.Phase.REACTION && phase != McrGame.Phase.BUILD_WALL && viewerSeat != turn && !actions.isEmpty()
             || phase == McrGame.Phase.REACTION && viewerSeat == turn && (!actions.isEmpty() || responded))
             throw new IllegalArgumentException("Inconsistent MCR view phase");
         int winner = result instanceof McrSettlement.Win win ? win.winner() : -1;
@@ -65,8 +69,8 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             flowers = List.copyOf(flowers);
             if (wind < Tile.EAST || wind > Tile.NORTH || hand.size() > 14 || melds.size() > 4
                 || river.size() > 136 || flowers.size() > 8
-                || hand.stream().anyMatch(tile -> tile != Tile.HIDDEN && !ordinary(tile))
-                || drawn != Tile.ABSENT && drawn != Tile.HIDDEN && (!ordinary(drawn) || !hand.contains(drawn))
+                || hand.stream().anyMatch(tile -> tile != Tile.HIDDEN && (tile < 0 || tile >= 144))
+                || drawn != Tile.ABSENT && drawn != Tile.HIDDEN && (drawn < 0 || drawn >= 144 || !hand.contains(drawn))
                 || flowers.stream().anyMatch(tile -> !Tile.isFlower(tile))
                 || river.stream().anyMatch(discard -> !ordinary(discard.tile())))
                 throw new IllegalArgumentException("Invalid MCR seat view");
@@ -114,7 +118,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             game.dealer(), game.roundWind(), game.turn(), game.remaining(), game.opening(), game.publicWall(), focus, seats,
             viewerSeat < 0 || !allowActions ? List.of() : game.actions(viewerSeat), viewerSeat >= 0 && game.responded(viewerSeat),
             viewerSeat >= 0 && allowActions && game.actions(viewerSeat).stream().anyMatch(action -> action.type() == McrAction.Type.WIN)
-                && game.score(viewerSeat).meetsMinimum(), game.result(), game.penalties());
+                && game.score(viewerSeat).meetsMinimum(), game.result(), game.penalties(), game.handlingView());
     }
 
     private static boolean ordinary(int tile) { return tile >= 0 && tile < 136; }

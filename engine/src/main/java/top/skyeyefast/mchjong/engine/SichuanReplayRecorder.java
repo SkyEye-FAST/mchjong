@@ -53,6 +53,8 @@ public final class SichuanReplayRecorder {
                 case ADDED_KONG -> ADDED_KONG;
                 case PASS -> PASS;
                 case PUNG, DISCARD_KONG, CONCEALED_KONG, WIN -> RESPONSE;
+                // Recording starts after an ordinary table's deal.
+                case SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET -> throw new IllegalStateException("Dealing is not recorded");
             };
             int tile = action.tiles().isEmpty() ? Tile.ABSENT : action.tiles().get(0);
             if (kind == DRAW) for (int slot = 0; slot < 108; slot++)

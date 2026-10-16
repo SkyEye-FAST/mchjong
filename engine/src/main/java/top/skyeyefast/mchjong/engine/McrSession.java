@@ -16,6 +16,15 @@ public final class McrSession extends TableSession {
     private TimeControl timeControl = TimeControl.DEFAULT;
     private List<TimeControl.Clock> clocks = new ArrayList<>();
     private int age;
+    private boolean manualTimeout;
+    @Override public boolean manualTimeout() { return manualTimeout; }
+    @Override public boolean configureManualTimeout(UUID actor, long expectedDecision, boolean enabled) {
+        if (!manual || manualTimeout == enabled || !lobby() || exitVote != null || !isHost(actor) || expectedDecision != decision) return false;
+        manualTimeout = enabled;
+        resetReadiness();
+        changed(true);
+        return true;
+    }
     private ReplayMatch replay;
     private McrReplayRecorder recorder;
     private final List<ReplayMatch> archiveQueue = new ArrayList<>();
@@ -48,6 +57,7 @@ public final class McrSession extends TableSession {
         session.timeControl = state.timeControl();
         session.clocks = new ArrayList<>(state.clocks());
         session.age = state.age();
+        session.manualTimeout = state.manualTimeout();
         session.replay = state.replay();
         session.recorder = state.recorder() == null ? null : new McrReplayRecorder(state.recorder());
         session.archiveQueue.addAll(state.archiveQueue());
@@ -74,6 +84,8 @@ public final class McrSession extends TableSession {
         if (game.phase() == McrGame.Phase.HAND_END)
             for (int bot = 0; bot < 4; bot++) if (participants[bot].bot) confirmed |= 1 << bot;
         if (game.phase() == McrGame.Phase.MATCH_END) lifecycle = Lifecycle.FINISHED;
+        if (recorder == null && replay != null && game.initialHands() != null && game.result() == null)
+            recorder = new McrReplayRecorder(game);
         changed(false);
         return true;
     }
@@ -103,10 +115,16 @@ public final class McrSession extends TableSession {
 
     public boolean configureEquipment(boolean manual, List<Integer> tiles) {
         Objects.requireNonNull(tiles);
-        if (manual || !lobby()) return false;
+        if (!lobby() || exitVote != null) return false;
         if (!tiles.isEmpty() && !Tile.validStandard144Set(tiles))
             throw new IllegalArgumentException("An MCR table requires all 144 physical tiles");
-        if (stock.equals(tiles)) return false;
+        if (this.manual == manual && stock.equals(tiles)) return false;
+        if (this.manual != manual) {
+            seating = new RoomSeating();
+            timeControl = manual ? TimeControl.MANUAL : TimeControl.DEFAULT;
+            manualTimeout = false;
+        }
+        this.manual = manual;
         stock = List.copyOf(tiles);
         resetReadiness();
         changed(true);
@@ -116,13 +134,13 @@ public final class McrSession extends TableSession {
     protected void startMatch() {
         if (!equipped()) throw new IllegalStateException("Cannot start MCR without its complete stock");
         roster(participants());
-        game = McrGame.fromStock(seed, stock);
+        game = McrGame.fromStock(seed, stock, manual);
         if (worldPolicy.replaysEnabled()) {
             long now = System.currentTimeMillis();
             replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now,
                 participants().stream().map(player -> new ReplayMatch.Participant(player.id(), player.name(), player.bot())).toList(),
                 MahjongVariant.MCR, false, null, new McrReplay(List.of()), null, null);
-            recorder = new McrReplayRecorder(game);
+            recorder = manual ? null : new McrReplayRecorder(game);
         } else { replay = null; recorder = null; }
         resetDecision(true);
         confirmed = 0;
@@ -140,22 +158,38 @@ public final class McrSession extends TableSession {
     }
 
     public void tick() {
-        if (!tickRoom() || game == null || lifecycle == Lifecycle.FINISHED) return;
-        age++;
+        if (!tickRoom()) return;
+        if (game == null) { tickLobbyBots(); return; }
+        if (lifecycle == Lifecycle.FINISHED) return;
+        age = Math.min(14_400, age + 1);
         if (game.phase() == McrGame.Phase.HAND_END) {
             if (age >= SETTLEMENT_TICKS) nextHand();
             if (age % 10 == 0) changed(false);
             return;
         }
         tickTurns(List.of(0, 1, 2, 3), clocks, () -> age, game::actions, this::clockActive,
-            action -> action.type() == McrAction.Type.PASS,
+            action -> action.type() == McrAction.Type.PASS || manual && game.physicalPhase(),
             action -> action.type() == McrAction.Type.DISCARD ? action.tiles().get(0) : Tile.ABSENT,
-            game::drawn, this::automaticAction, seat -> McrBot.choose(game.view(seat)),
+            game::drawn, this::automaticAction, seat -> game.physicalPhase() ? 0 : McrBot.choose(game.view(seat)),
             (seat, index) -> apply(seat, game.decision(), index));
     }
 
     private int automaticAction(int seat) {
         if (age < AUTO_ACTION_TICKS) return -1;
+        if (manual) {
+            if (participants[seat].presence != PlayerPresence.DISCONNECTED) return -1;
+            if (game.physicalPhase()) return 0;
+            var view = game.view(seat);
+            var actions = view.actions();
+            int discard = -1;
+            for (int index = 0; index < actions.size(); index++) {
+                var action = actions.get(index);
+                if (action.type() == McrAction.Type.WIN && view.qualifyingWin() || action.type() == McrAction.Type.PASS) return index;
+                if (action.type() == McrAction.Type.DISCARD
+                    && (discard < 0 || action.tiles().get(0) == game.drawn(seat))) discard = index;
+            }
+            return discard;
+        }
         var actions = game.actions(seat);
         if (actions.size() == 1 && (actions.get(0).type() == McrAction.Type.DRAW
             || actions.get(0).type() == McrAction.Type.REPLACE_FLOWER)) return 0;
@@ -163,7 +197,8 @@ public final class McrSession extends TableSession {
     }
 
     private boolean clockActive(int seat) {
-        return humanClockActive(seat) && (game.phase() == McrGame.Phase.TURN || game.phase() == McrGame.Phase.REACTION)
+        return humanClockActive(seat) && (!manual || participants[seat].presence != PlayerPresence.DISCONNECTED)
+            && (game.phase() == McrGame.Phase.TURN || game.phase() == McrGame.Phase.REACTION || manualTimeout && game.physicalPhase())
             && !game.actions(seat).isEmpty();
     }
 
@@ -180,7 +215,7 @@ public final class McrSession extends TableSession {
 
     private void nextHand() {
         game.nextHand();
-        if (replay != null) recorder = new McrReplayRecorder(game);
+        if (replay != null) recorder = manual ? null : new McrReplayRecorder(game);
         confirmed = 0;
         resetDecision(true);
         changed(false);
@@ -231,7 +266,7 @@ public final class McrSession extends TableSession {
     }
 
     public State save() {
-        return new State(State.FORMAT, saveRoom(), stock, confirmed, timeControl, clocks, age, game == null ? null : game.save(),
+        return new State(State.FORMAT, saveRoom(), stock, confirmed, timeControl, clocks, age, game == null ? null : game.save(), manualTimeout,
             replay, recorder == null ? null : recorder.save(), archiveQueue);
     }
 
@@ -247,9 +282,9 @@ public final class McrSession extends TableSession {
 
     /** A private envelope, not a wire view. No mount state or reusable request incarnation is persisted. */
     public record State(int format, TableSession.State room, List<Integer> stock, int confirmed,
-                        TimeControl timeControl, List<TimeControl.Clock> clocks, int age, McrGameState game,
+                        TimeControl timeControl, List<TimeControl.Clock> clocks, int age, McrGameState game, boolean manualTimeout,
                         ReplayMatch replay, McrReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 9;
+        public static final int FORMAT = 10;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");
@@ -264,7 +299,8 @@ public final class McrSession extends TableSession {
                 throw new IllegalArgumentException("Invalid MCR clock state");
             stock = List.copyOf(stock);
             archiveQueue = List.copyOf(archiveQueue);
-            if (room.variant() != MahjongVariant.MCR || room.capacity() != 4 || room.manual()
+            if (room.variant() != MahjongVariant.MCR || room.capacity() != 4 || manualTimeout && !room.manual()
+                || game != null && game.manual() != room.manual()
                 || !stock.isEmpty() && !Tile.validStandard144Set(stock)
                 || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != McrGame.Phase.HAND_END)
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null)

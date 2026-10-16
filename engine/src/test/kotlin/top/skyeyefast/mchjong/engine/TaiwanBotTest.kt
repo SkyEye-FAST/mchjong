@@ -86,7 +86,7 @@ class TaiwanBotTest {
                 val actions = original.actions().filter { it.type() == Type.DISCARD && Tile.kind(it.tiles().single()) in listOf(31, 32) }
                 val view = TaiwanView(original.revision(), original.decision(), original.rules(), original.opening(), original.roundWind(),
                     original.continuation(), original.phase(), original.turn(), original.recipient(), original.drawable(), original.reserve(),
-                    original.wall(), seats, original.focus(), actions, original.responded(), original.passedWin(), original.result())
+                    original.wall(), seats, original.focus(), actions, original.responded(), original.passedWin(), original.result(), original.handling())
                 // Both alternatives have one live copy of the same green-dragon wait. Which triplet scores differs.
                 for (kind in listOf(31, 32)) {
                     val tile = own.concealed().first { Tile.kind(it) == kind }
@@ -128,7 +128,7 @@ class TaiwanBotTest {
                 (1..publicWhite).map { Tile.WHITE * 4 + it }, other.ready())
             return TaiwanView(original.revision(), original.decision(), original.rules(), original.opening(), original.roundWind(), original.continuation(),
                 original.phase(), original.turn(), original.recipient(), original.drawable(), original.reserve(), original.wall(), seats,
-                original.focus(), original.actions(), original.responded(), original.passedWin(), original.result())
+                original.focus(), original.actions(), original.responded(), original.passedWin(), original.result(), original.handling())
         }
         val view = position(1)
         val own = view.seats()[0]
@@ -156,7 +156,7 @@ class TaiwanBotTest {
         val actions = original.actions().filter { it.type() == Type.DISCARD && Tile.kind(it.tiles().single()) in listOf(0, 33) }
         val view = TaiwanView(original.revision(), original.decision(), original.rules(), original.opening(), original.roundWind(),
             original.continuation(), original.phase(), original.turn(), original.recipient(), original.drawable(), original.reserve(),
-            original.wall(), seats, original.focus(), actions, original.responded(), original.passedWin(), original.result())
+            original.wall(), seats, original.focus(), actions, original.responded(), original.passedWin(), original.result(), original.handling())
         assertEquals(0, Tile.kind(choice(view).tiles().single()))
     }
 
@@ -192,7 +192,7 @@ class TaiwanBotTest {
         val start = TaiwanSession.start(UUID.randomUUID(), roster, 4, TaiwanWall.expected(game.rules), game.rules)
         val saved = start.save()
         return TaiwanSession.restore(TaiwanSession.State(saved.format(), saved.room(), saved.rules(), saved.stock(), saved.control(),
-            saved.clocks(), 0, 0, saved.futureSeed(), emptyList(), game.save(),null,null,emptyList())).also(::mount)
+            saved.clocks(), 0, 0, saved.futureSeed(), emptyList(), game.save(),null,null,emptyList(),false)).also(::mount)
     }
     private fun restore(room: TaiwanSession): TaiwanSession = (TableSessionCodec.restore(TableSessionCodec.save(room)) as TaiwanSession).also {
         assertEquals(room.scores(), it.scores())

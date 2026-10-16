@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.engine.RedFives;
 /** Native 1.20.1 stack data, stored under the mod's own NBT compound. */
 public final class MahjongComponents {
     public static final Set<Integer> DENOMINATIONS = Set.of(-10000, 0, 100, 1000, 5000, 10000);
+    public static final Set<Integer> CARD_DENOMINATIONS = Set.of(-500, 0, 1, 8, 10, 50, 100);
 
     private MahjongComponents() {}
     public static FurnitureWood wood(ItemStack stack) { return read(stack, "wood", FurnitureWood.CODEC, FurnitureWood.OAK); }
@@ -32,10 +33,11 @@ public final class MahjongComponents {
     }
     public static int points(ItemStack stack) {
         int value = read(stack, "points", Codec.INT, 0);
-        return DENOMINATIONS.contains(value) ? value : 0;
+        return DENOMINATIONS.contains(value) || CARD_DENOMINATIONS.contains(value) ? value : 0;
     }
     public static void points(ItemStack stack, int points) {
-        if (!DENOMINATIONS.contains(points)) throw new IllegalArgumentException("Invalid point-stick denomination");
+        if (!DENOMINATIONS.contains(points) && !CARD_DENOMINATIONS.contains(points))
+            throw new IllegalArgumentException("Invalid payment denomination");
         write(stack, "points", Codec.INT, points);
     }
     public static DyeColor color(ItemStack stack) {
@@ -71,7 +73,8 @@ public final class MahjongComponents {
         if (data.contains("tile") && TileData.CODEC.parse(NbtOps.INSTANCE, data.get("tile")).result().isEmpty()) return false;
         if (data.contains("face_preset") && TileFacePreset.CODEC.parse(NbtOps.INSTANCE, data.get("face_preset")).result().isEmpty()) return false;
         if (data.contains("back_preset") && net.minecraft.resources.ResourceLocation.CODEC.parse(NbtOps.INSTANCE, data.get("back_preset")).result().isEmpty()) return false;
-        if (data.contains("points") && (!data.contains("points", 3) || !DENOMINATIONS.contains(data.getInt("points")))) return false;
+        if (data.contains("points") && (!data.contains("points", 3)
+            || (!DENOMINATIONS.contains(data.getInt("points")) && !CARD_DENOMINATIONS.contains(data.getInt("points"))))) return false;
         if (data.contains("color") && (!data.contains("color", 3) || data.getInt("color") < 0 || data.getInt("color") > 15)) return false;
         return !data.contains("box_preset") || boxPreset(stack) != null;
     }

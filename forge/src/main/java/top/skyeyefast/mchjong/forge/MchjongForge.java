@@ -69,7 +69,7 @@ public final class MchjongForge {
         items.register("mahjong_table", () -> MahjongContent.TABLE_ITEM);
         items.register("automatic_mahjong_table", () -> MahjongContent.AUTO_TABLE_ITEM);
         items.register("mahjong_stool", () -> MahjongContent.STOOL_ITEM);
-        for (String name : new String[] {"table_cloth", "mahjong_tile", "point_stick", "mahjong_box",
+        for (String name : new String[] {"table_cloth", "mahjong_tile", "point_stick", "scoring_card", "mahjong_box",
             "mahjong_dye", "creative_mahjong_dye", "red_dora_dye", "undo_dye", "dice"}) {
             items.register(name, () -> MahjongContent.SUPPLIES.get(name));
         }

@@ -18,6 +18,7 @@ public final class SichuanSession extends TableSession {
     private ReplayMatch replay;
     private SichuanReplayRecorder recorder;
     private final List<ReplayMatch> archiveQueue = new ArrayList<>();
+    private boolean manualTimeout;
 
     public SichuanSession(UUID tableId, long seed) { super(tableId, MahjongVariant.SICHUAN, 4, seed); }
     public SichuanGame game() { return game; }
@@ -54,10 +55,20 @@ public final class SichuanSession extends TableSession {
     public boolean equipped() { return Tile.validSichuanSet(stock); }
     public boolean configureEquipment(boolean manual, List<Integer> tiles) {
         Objects.requireNonNull(tiles);
-        if (manual || !lobby() || exitVote != null) return false;
+        if (!lobby() || exitVote != null) return false;
         if (!tiles.isEmpty() && !Tile.validSichuanSet(tiles)) throw new IllegalArgumentException("Sichuan requires 108 suited tiles");
-        if (stock.equals(tiles)) return false;
-        stock = List.copyOf(tiles); resetReadiness(); changed(true); return true;
+        if (this.manual == manual && stock.equals(tiles)) return false;
+        if (this.manual != manual) {
+            seating = new RoomSeating();
+            timeControl = manual ? TimeControl.MANUAL : TimeControl.DEFAULT;
+            manualTimeout = false;
+        }
+        this.manual = manual; stock = List.copyOf(tiles); resetReadiness(); changed(true); return true;
+    }
+    @Override public boolean manualTimeout() { return manualTimeout; }
+    @Override public boolean configureManualTimeout(UUID actor, long expectedDecision, boolean enabled) {
+        if (!manual || manualTimeout == enabled || !lobby() || exitVote != null || !isHost(actor) || expectedDecision != decision) return false;
+        manualTimeout = enabled; resetReadiness(); changed(true); return true;
     }
     public boolean configureClock(UUID actor, TimeControl control) {
         if (!lobby() || exitVote != null || !isHost(actor)) return false;
@@ -70,13 +81,14 @@ public final class SichuanSession extends TableSession {
     protected void startMatch() {
         resetAutomation();
         if (!equipped()) throw new IllegalStateException("Cannot start Sichuan without stock");
-        game = new SichuanGame(seed, rules, stock); lifecycle = Lifecycle.PLAYING;
+        game = new SichuanGame(seed, rules, stock, manual); lifecycle = Lifecycle.PLAYING;
         if (worldPolicy.replaysEnabled()) {
             long now = System.currentTimeMillis();
             replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now,
                 participants().stream().map(player -> new ReplayMatch.Participant(player.id(), player.name(), player.bot())).toList(),
                 MahjongVariant.SICHUAN, false, null, null, new SichuanReplay(rules, List.of()), null);
-            recorder = new SichuanReplayRecorder(game);
+            // An ordinary-table hand is recorded from its finished deal.
+            recorder = manual ? null : new SichuanReplayRecorder(game);
         }
         for (int seat = 0; seat < 4; seat++) clocks.add(new TimeControl.Clock(timeControl.moveSeconds() * 20, timeControl.reserveSeconds() * 20, false));
         age = 0; confirmed = 0; renewIncarnation();
@@ -97,7 +109,7 @@ public final class SichuanSession extends TableSession {
     private void nextHand() {
         resetAutomation();
         if (!game.nextHand()) throw new IllegalStateException("Sichuan hand cannot advance");
-        if (replay != null) recorder = new SichuanReplayRecorder(game);
+        if (replay != null) recorder = manual ? null : new SichuanReplayRecorder(game);
         age = 0; confirmed = 0;
         for (int seat = 0; seat < 4; seat++) clocks.set(seat,
             new TimeControl.Clock(timeControl.moveSeconds() * 20, timeControl.reserveSeconds() * 20, false));
@@ -115,7 +127,7 @@ public final class SichuanSession extends TableSession {
         if (recorder != null) {
             recorder.accepted(before, seat, options, index, game);
             if (game.ended()) finishReplay();
-        }
+        } else if (replay != null && !game.physicalPhase() && !game.ended()) recorder = new SichuanReplayRecorder(game);
         if (game.decision() != expectedDecision) {
             age = 0;
             for (int target = 0; target < 4; target++) clocks.set(target,
@@ -127,7 +139,9 @@ public final class SichuanSession extends TableSession {
         changed(false); return true;
     }
     public void tick() {
-        if (!tickRoom() || game == null || lifecycle == Lifecycle.FINISHED) return;
+        if (!tickRoom()) return;
+        if (game == null) { tickLobbyBots(); return; }
+        if (lifecycle == Lifecycle.FINISHED) return;
         age = Math.min(14_400, age + 1);
         if (game.phase() == SichuanGame.Phase.HAND_END) {
             if (age >= SETTLEMENT_TICKS) nextHand();
@@ -135,13 +149,20 @@ public final class SichuanSession extends TableSession {
             return;
         }
         tickTurns(List.of(0, 1, 2, 3), clocks, () -> age, game::actions, this::clockActive,
-            action -> action.type() == SichuanAction.Type.PASS,
+            action -> action.type() == SichuanAction.Type.PASS || manual && (game.physicalPhase() || action.type() == SichuanAction.Type.DRAW),
             action -> action.type() == SichuanAction.Type.DISCARD ? action.tiles().get(0) : Tile.ABSENT,
             seat -> game.view(seat).seats().get(seat).drawn(), this::automaticAction,
-            seat -> SichuanBot.choose(game.view(seat)), (seat, index) -> apply(seat, game.decision(), index));
+            seat -> game.physicalPhase() ? 0 : SichuanBot.choose(game.view(seat)), (seat, index) -> apply(seat, game.decision(), index));
+    }
+    /** Ordinary tables leave dealing and draws to their players. */
+    private boolean handling(int seat) {
+        var actions = game.actions(seat);
+        return manual && (game.physicalPhase() || actions.size() == 1 && actions.get(0).type() == SichuanAction.Type.DRAW);
     }
     private int automaticAction(int seat) {
         var actions = game.actions(seat);
+        if (handling(seat)) return age >= AUTO_ACTION_TICKS && (participants[seat].bot
+            || participants[seat].presence == PlayerPresence.DISCONNECTED) ? 0 : -1;
         if (actions.size() == 1 && actions.get(0).type() == SichuanAction.Type.DRAW)
             return age >= AUTO_ACTION_TICKS ? 0 : -1;
         if (participants[seat].bot) return -1;
@@ -155,6 +176,7 @@ public final class SichuanSession extends TableSession {
     }
     private boolean clockActive(int seat) {
         var actions = game.actions(seat);
+        if (handling(seat)) return manualTimeout && humanClockActive(seat) && participants[seat].presence != PlayerPresence.DISCONNECTED;
         return humanClockActive(seat) && !actions.isEmpty()
             && !(actions.size() == 1 && actions.get(0).type() == SichuanAction.Type.DRAW);
     }
@@ -179,12 +201,13 @@ public final class SichuanSession extends TableSession {
     public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
     public State save() {
         return new State(State.FORMAT, saveRoom(), rules, stock, timeControl, clocks, age, confirmed,
-            game == null ? null : game.save(), replay, recorder == null ? null : recorder.save(), archiveQueue);
+            game == null ? null : game.save(), replay, recorder == null ? null : recorder.save(), archiveQueue, manualTimeout);
     }
     public static SichuanSession restore(State state) {
         var session = new SichuanSession(state.room().tableId(), state.room().seed());
         session.restoreRoom(state.room()); session.rules = state.rules(); session.stock = state.stock(); session.timeControl = state.timeControl();
         session.clocks.addAll(state.clocks()); session.age = state.age(); session.confirmed = state.confirmed();
+        session.manualTimeout = state.manualTimeout();
         session.game = state.game() == null ? null : SichuanGame.restore(state.game());
         session.replay = state.replay();
         session.recorder = state.recorder() == null ? null : new SichuanReplayRecorder(state.recorder());
@@ -199,7 +222,8 @@ public final class SichuanSession extends TableSession {
                     reconstructed.handNumber(), reconstructed.completedHands(), reconstructed.phase(), current.revision(), current.decision(),
                     reconstructed.turn(), reconstructed.wall(), reconstructed.players(), reconstructed.focus(), reconstructed.supplier(),
                     reconstructed.pendingKong(), reconstructed.replacementDraw(), reconstructed.afterKong(), reconstructed.kongLedgerStart(),
-                    reconstructed.responses(), reconstructed.wins(), reconstructed.ledger(), reconstructed.result());
+                    reconstructed.responses(), reconstructed.wins(), reconstructed.ledger(), reconstructed.result(),
+                    current.manual(), current.handling());
                 if (!current.equals(normalized)) throw new IllegalArgumentException("Sichuan recorder disagrees with saved game");
             }
         }
@@ -207,8 +231,8 @@ public final class SichuanSession extends TableSession {
     }
     public record State(int format, TableSession.State room, SichuanRules rules, List<Integer> stock,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, int age, int confirmed, SichuanGame.State game,
-                        ReplayMatch replay, SichuanReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 6;
+                        ReplayMatch replay, SichuanReplayRecorder.State recorder, List<ReplayMatch> archiveQueue, boolean manualTimeout) {
+        public static final int FORMAT = 7;
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(timeControl);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks);
@@ -219,7 +243,7 @@ public final class SichuanSession extends TableSession {
                 || !replay.participants().equals(room.participants().stream()
                     .map(player -> new ReplayMatch.Participant(player.id(), player.name(), player.bot())).toList()))
                 || recorder != null && (replay == null || game == null || game.result() != null || recorder.number() != game.handNumber())
-                || replay != null && (game.result() == null) != (recorder != null)
+                || replay != null && (game.result() == null && !dealing(game)) != (recorder != null)
                 || archiveQueue.stream().map(ReplayMatch::id).distinct().count() != archiveQueue.size()
                 || archiveQueue.stream().anyMatch(match -> match.variant() != MahjongVariant.SICHUAN || match.handCount() == 0
                     || !match.tableId().equals(room.tableId()) || replay != null && match.id().equals(replay.id())
@@ -230,7 +254,8 @@ public final class SichuanSession extends TableSession {
                 if (!game.completedHands().get(index).equals(new SichuanGame.Hand(hand.number(), hand.opening().dealer(), hand.result())))
                     throw new IllegalArgumentException("Sichuan replay history disagrees with match");
             }
-            if (format != FORMAT || room.variant() != MahjongVariant.SICHUAN || room.capacity() != 4 || room.manual()
+            if (format != FORMAT || room.variant() != MahjongVariant.SICHUAN || room.capacity() != 4
+                || manualTimeout && !room.manual() || game != null && game.manual() != room.manual()
                 || !stock.isEmpty() && !Tile.validSichuanSet(stock) || (room.lifecycle() == Lifecycle.LOBBY) != (game == null)
                 || game != null && (!Tile.validSichuanSet(stock) || !game.rules().equals(rules)
                     || (room.lifecycle() == Lifecycle.FINISHED) != (game.phase() == SichuanGame.Phase.MATCH_END))
@@ -248,6 +273,9 @@ public final class SichuanSession extends TableSession {
                     || clock.reserveTicks() < 0 || clock.reserveTicks() > timeControl.reserveSeconds() * 20))
                 throw new IllegalArgumentException("Invalid Sichuan session state");
         }
+    }
+    private static boolean dealing(SichuanGame.State game) {
+        return game.phase() == SichuanGame.Phase.SHUFFLE || game.phase() == SichuanGame.Phase.BUILD_WALL || game.phase() == SichuanGame.Phase.DEAL;
     }
     public record View(UUID tableId, UUID incarnation, long revision, boolean paused, List<TimeControl.Clock> clocks,
                        int confirmed, int settlementTicks, SichuanView game) {

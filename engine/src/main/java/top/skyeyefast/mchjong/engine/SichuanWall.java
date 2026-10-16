@@ -37,12 +37,17 @@ public final class SichuanWall {
             int tile = slots.get(traversal.get(index));
             if (tile != Tile.ABSENT && (tile < 0 || tile >= 108 || !seen.add(tile)))
                 throw new IllegalArgumentException("Invalid wall tile");
-            if (index < cursor && tile != Tile.ABSENT || index >= cursor && tile == Tile.ABSENT)
+            // While the other players take their last tiles, the dealer's second jump tile is already gone.
+            boolean jumped = index == 52 && cursor > 48;
+            if (index < cursor && tile != Tile.ABSENT || index >= cursor && tile == Tile.ABSENT && !jumped)
                 throw new IllegalArgumentException("Invalid wall cursor");
         }
     }
     public static SichuanWall restore(State state) { return new SichuanWall(state); }
     public int remaining() { return (int) slots.stream().filter(tile -> tile != Tile.ABSENT).count(); }
+    /** The physical slot of the tile taken at a traversal position. */
+    int slotAt(int index) { return traversal.get(index); }
+    int cursor() { return cursor; }
     public int draw() { return cursor == 108 ? Tile.ABSENT : take(cursor); }
     int take(int index) {
         int slot = traversal.get(index);

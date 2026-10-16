@@ -16,11 +16,12 @@ public final class McrTableScene {
     public static final double HEIGHT = DIMENSIONS.height();
     public static final double DEPTH = DIMENSIONS.depth();
     private static final TiltedWallLayout WALL = TiltedWallLayout.compact(McrWallLayout.STACKS_PER_SIDE, WIDTH, HEIGHT);
+    public static final double WALL_Z = WALL.position(8).z;
     public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - HEIGHT / 2 - .015;
     public static final double MELD_LEFT = -TableGeometry.FELT_HALF_WIDTH + .015;
     public static final double RIVER_Z = TableIndicator.HALF_WIDTH + HEIGHT / 2 + .005;
     public static final double RIVER_X = WIDTH / 2;
-    public enum Area { WALL, HAND, RIVER, MELD, FLOWER }
+    public enum Area { WALL, HAND, RIVER, MELD, FLOWER, LOOSE }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
                         float yaw, boolean flat, boolean back) {
         public TileDimensions dimensions() { return DIMENSIONS; }
@@ -54,6 +55,18 @@ public final class McrTableScene {
 
     public static List<Piece> build(McrView view) {
         var result = new ArrayList<>(wall(view.wall()));
+        if (view.handling() != null && (view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.SHUFFLE
+            || view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.BUILD_WALL)) {
+            for (int index = 0; index < 144; index++) {
+                int seat = McrWallLayout.seat(McrWallLayout.stackOfSlot(index));
+                if ((view.handling().builtWalls() & 1 << seat) != 0) continue;
+                int slot = index * 53 % 144;
+                var random = new java.util.Random(index * 193L + view.handNumber() * 71L);
+                result.add(new Piece(Tile.HIDDEN, seat, Area.LOOSE, index,
+                    new Vec3((slot % 12 - 5.5) * .12, TableGeometry.FELT_Y + DEPTH / 2 + slot / 72 * DEPTH,
+                        (slot / 12 % 6 - 2.5) * .19), (random.nextFloat() - .5f) * 50, true, true));
+            }
+        }
         var occupied = new ArrayList<>(result.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
         occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
         boolean ended = view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.HAND_END

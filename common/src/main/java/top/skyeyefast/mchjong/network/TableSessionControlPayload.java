@@ -9,7 +9,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Shared room exit, vote and last-player leave decisions. */
 public record TableSessionControlPayload(BlockPos pos, UUID tableId, Operation operation, long token, boolean enabled)
         implements MahjongPayload {
-    public enum Operation { REQUEST_EXIT, ANSWER_EXIT, RESOLVE_LEAVE, CONVENIENCE_HINTS }
+    public enum Operation { REQUEST_EXIT, ANSWER_EXIT, RESOLVE_LEAVE, CONVENIENCE_HINTS, MANUAL_TIMEOUT }
     public static final ResourceLocation TYPE = MahjongContent.id("table_session_control");
     public static TableSessionControlPayload decode(FriendlyByteBuf buffer) {
         return new TableSessionControlPayload(buffer.readBlockPos(), buffer.readUUID(), buffer.readEnum(Operation.class),

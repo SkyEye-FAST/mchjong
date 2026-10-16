@@ -97,7 +97,7 @@ class SichuanBotTest {
         seats.set(1, new SichuanView.Seat(other.hand(), other.melds(), dead, other.voidSuit(), other.won(), other.drawn(), other.firstDiscard()));
         var exhausted = new SichuanView(view.revision(), view.decision(), view.rules(), view.phase(), view.handNumber(), view.dealer(), view.scores(),
             view.viewerSeat(), view.turn(), view.wall(), seats, view.focus(), view.supplier(), view.robbingKong(), view.submitted(),
-            view.actions(), view.winners(), view.ledger(), view.result());
+            view.actions(), view.winners(), view.ledger(), view.result(), view.handling());
         int exhaustedChoice = Tile.kind(exhausted.actions().get(SichuanBot.choose(exhausted)).tiles().getFirst());
         assertEquals(2, hand.stream().filter(tile -> Tile.kind(tile) == exhaustedChoice).count(),
             "With every pair-making single exhausted, abandon the slower seven-pairs route");
@@ -165,7 +165,7 @@ class SichuanBotTest {
         for (int i = 0; i < 12; i++) slots.set(i, Tile.HIDDEN);
         var wall = new SichuanView.Wall(slots, original.wall().dealer(), original.wall().die1(), original.wall().die2(), original.wall().eastWestLongWall());
         var threatened = new SichuanView(original.revision(), original.decision(), original.rules(), original.phase(), original.handNumber(), original.dealer(), original.scores(),
-            0, original.turn(), wall, seats, original.focus(), original.supplier(), original.robbingKong(), false, original.actions(), original.winners(), original.ledger(), null);
+            0, original.turn(), wall, seats, original.focus(), original.supplier(), original.robbingKong(), false, original.actions(), original.winners(), original.ledger(), null, null);
         var known = new HashSet<>(game.view(0).seats().getFirst().hand());
         known.addAll(melds.stream().flatMap(meld -> meld.tiles().stream()).toList()); known.add(river.getFirst().tile());
         var risk = ChineseBotDanger.sichuan(threatened, known);
@@ -173,13 +173,13 @@ class SichuanBotTest {
         assertTrue(risk.against(1, Tile.parseKind("3m")) > 0, "Sichuan repeats are not furiten-safe");
         assertTrue(risk.against(1, 5) > risk.against(2, 5));
         var early = new SichuanView(threatened.revision(), threatened.decision(), threatened.rules(), threatened.phase(), threatened.handNumber(), threatened.dealer(), threatened.scores(),
-            0, threatened.turn(), original.wall(), seats, threatened.focus(), threatened.supplier(), false, false, threatened.actions(), threatened.winners(), threatened.ledger(), null);
+            0, threatened.turn(), original.wall(), seats, threatened.focus(), threatened.supplier(), false, false, threatened.actions(), threatened.winners(), threatened.ledger(), null, null);
         assertTrue(risk.against(1, 5) > ChineseBotDanger.sichuan(early, known).against(1, 5), "Short walls increase active-opponent threat");
         assertTrue(risk.against(1, 5) > ChineseBotDanger.sichuan(withRules(threatened, SichuanRuleOption.FAN_CAP.with(game.rules(), 0)), known).against(1, 5));
         assertEquals(Tile.parseKind("3m"), Tile.kind(threatened.actions().get(SichuanBot.choose(threatened)).tiles().getFirst()));
         seats.set(1, new SichuanView.Seat(Collections.nCopies(4, Tile.HIDDEN), melds, river, 1, true, Tile.ABSENT, Tile.ABSENT));
         var retired = new SichuanView(threatened.revision(), threatened.decision(), threatened.rules(), threatened.phase(), threatened.handNumber(), threatened.dealer(), threatened.scores(),
-            0, threatened.turn(), wall, seats, threatened.focus(), threatened.supplier(), false, false, threatened.actions(), threatened.winners(), threatened.ledger(), null);
+            0, threatened.turn(), wall, seats, threatened.focus(), threatened.supplier(), false, false, threatened.actions(), threatened.winners(), threatened.ledger(), null, null);
         assertEquals(0, ChineseBotDanger.sichuan(retired, known).against(1, 5));
         assertEquals(Tile.parseKind("6m"), Tile.kind(retired.actions().get(SichuanBot.choose(retired)).tiles().getFirst()));
     }
@@ -222,7 +222,7 @@ class SichuanBotTest {
     private static SichuanView withRules(SichuanView view, SichuanRules rules) {
         return new SichuanView(view.revision(), view.decision(), rules, view.phase(), view.handNumber(), view.dealer(), view.scores(),
             view.viewerSeat(), view.turn(), view.wall(), view.seats(), view.focus(), view.supplier(), view.robbingKong(), view.submitted(),
-            view.actions(), view.winners(), view.ledger(), view.result());
+            view.actions(), view.winners(), view.ledger(), view.result(), view.handling());
     }
     private static SichuanAction selected(SichuanGame game, int seat) {
         int index = SichuanBot.choose(game.view(seat));
@@ -246,7 +246,7 @@ class SichuanBotTest {
         var control = TimeControl.DEFAULT;
         var clocks = Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
         var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),
-            control, clocks, 0, 0, game.save(), null, null, List.of()));
+            control, clocks, 0, 0, game.save(), null, null, List.of(), false));
         session.synchronizeSeats(Map.of(HUMAN, 0)); return session;
     }
     private static SichuanGame turn(String... hands) {

@@ -40,7 +40,7 @@ class TaiwanRuntimeTest {
             repeat(65) { i -> assertEquals(stock[TaiwanWallLayout.drawSlot(stock.size, opening, i)], wall.draw()) }
             repeat(5) { i -> assertEquals(stock[TaiwanWallLayout.replacementSlot(stock.size, opening, i)], wall.replace()) }
             val saved = wall.save()
-            val restored = TaiwanWall.restore(saved, opening, rules)
+            val restored = TaiwanWall.restore(saved, opening, rules, false)
             assertEquals(wall.physicalSlots(), restored.physicalSlots())
             assertEquals(wall.draw(), restored.draw())
             assertEquals(wall.replace(), restored.replace())
@@ -72,6 +72,48 @@ class TaiwanRuntimeTest {
                 game.submit(d.seat, d.token, choice)
             }
             roundTrip(game)
+        }
+    }
+
+    @Test fun manualHandsReachTheAutomaticPositionAndReplayTheirHandling() {
+        for (preset in TaiwanPreset.entries) for (seed in listOf(3L, 19L, 71L)) {
+            val rules = preset.rules()
+            val random = java.util.Random(seed)
+            val stock = TaiwanWall.expected(rules).shuffled(random)
+            val opening = TaiwanOpening((seed % 4).toInt(), List(3) { random.nextInt(6) + 1 })
+            val automatic = TaiwanGame(rules, opening, stock)
+            var manual = TaiwanGame(rules, opening, stock, Tile.EAST, 0, true)
+            val recorder = TaiwanReplayRecorder(1, listOf(0L, 0L, 0L, 0L), manual)
+            var steps = 0
+            while (manual.phase != TaiwanGame.Phase.FINISHED) {
+                assertTrue(++steps < 2000)
+                manual = roundTrip(manual)
+                for (s in -1..3) {
+                    val view = manual.view(s)
+                    assertEquals(view, TaiwanCodec.decodeView(TaiwanCodec.encodeView(view)))
+                    assertEquals(manual.handlingPhase() && manual.phase in setOf(TaiwanGame.Phase.SHUFFLE, TaiwanGame.Phase.BUILD_WALL),
+                        view.opening() == null)
+                }
+                val d = manual.decisions().first()
+                var choice = 0
+                if (!manual.handlingPhase()) {
+                    val position = json(manual).apply { remove("revision"); remove("decision"); remove("manual") }
+                    val expected = json(automatic).apply { remove("revision"); remove("decision"); remove("manual") }
+                    assertEquals(expected, position)
+                    assertEquals(automatic.decisions().map { it.seat to it.actions.map(TaiwanGameState.Action::of) },
+                        manual.decisions().map { it.seat to it.actions.map(TaiwanGameState.Action::of) })
+                    choice = d.actions.indexOfFirst { it.type == Type.WIN }.takeIf { it >= 0 }
+                        ?: d.actions.indexOfFirst { it.type == if (manual.phase == TaiwanGame.Phase.REACTION) Type.PASS else Type.DISCARD }
+                    val mirrored = automatic.decisions().single { it.seat == d.seat }
+                    automatic.submit(mirrored.seat, mirrored.token, choice)
+                }
+                val before = manual.save()
+                manual.submit(d.seat, d.token, choice)
+                recorder.accepted(before, d.seat, d.actions, choice, manual)
+            }
+            assertEquals(TaiwanGame.Phase.FINISHED, automatic.phase)
+            assertEquals(automatic.save().settlement(), manual.save().settlement())
+            assertTrue(TaiwanReplayPlayback.samePosition(TaiwanReplayPlayback.reconstruct(recorder.save()).save(), manual.save()))
         }
     }
 

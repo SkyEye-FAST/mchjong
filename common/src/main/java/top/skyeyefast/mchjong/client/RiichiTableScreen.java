@@ -61,8 +61,8 @@ public final class RiichiTableScreen extends Screen {
     private int actionHeight;
     private ScreenRectangle privateHandBounds;
     private RiichiView handlingDrag;
-    private Vec3 handlingStart;
-    private Vec3 handlingPointer;
+    private final TableHandling.Drag physicalDrag = new TableHandling.Drag();
+    private void cancelHandling() { handlingDrag = null; physicalDrag.clear(); }
     private RiichiView handDrag;
     private int handDragTile = Tile.ABSENT;
     private double handDragStartX, handDragStartY, handDragX, handDragY;
@@ -76,7 +76,7 @@ public final class RiichiTableScreen extends Screen {
                                           long started, long duration, TableHand.Point source, int sourceWidth, double opponentX) {}
     private record ImmersiveDrawMotion(int tile, long started, long duration, TableHand.Point target, int targetWidth) {}
     private final RiichiHints hints = new RiichiHints();
-    private final RiichiDice dice = new RiichiDice(() -> {
+    private final TableDice dice = new TableDice(() -> {
         var current = view();
         if (current != null) {
             int index = findAction(current, RiichiAction.Type.PICK_UP_DICE, List.of());
@@ -123,7 +123,7 @@ public final class RiichiTableScreen extends Screen {
         RiichiView view = view();
         if (view == null) return;
         presentation.toggle();
-        handlingDrag = null;
+        cancelHandling();
         handDrag = null;
         rebuild();
     }
@@ -238,7 +238,7 @@ public final class RiichiTableScreen extends Screen {
 
     private void refreshDecision(RiichiView view) {
         if (handlingDrag != null && (view == null || !handlingDrag.tableId().equals(view.tableId())
-            || handlingDrag.decision() != view.decision())) handlingDrag = null;
+            || handlingDrag.decision() != view.decision())) cancelHandling();
         if (handDrag != null && (view == null || !handDrag.tableId().equals(view.tableId())
             || handDrag.decision() != view.decision()
             || !view.seats().get(view.viewerSeat()).hand().contains(handDragTile))) handDrag = null;
@@ -272,12 +272,12 @@ public final class RiichiTableScreen extends Screen {
             for (var button : callouts) if ((button.isFocused() || highlights && button.isHovered()) && showsConsumed(button.action)
                 && button.action.tiles().contains(piece.tile())) return MahjongUi.POSITIVE;
         }
-        if (highlights && RiichiHandling.action(view) >= 0) {
+        if (highlights && TableHandling.action(view) >= 0) {
             // Keep the held outline attached to the displaced mesh throughout the gesture.
             if (handlingDrag != null)
                 return handlingOffset(table, piece).lengthSqr() > 0 ? MahjongUi.POSITIVE : 0;
-            if (!handlingMoving() && RiichiHandling.source(view, piece)
-                && (view.phase() != RiichiView.Phase.SHUFFLE || piece.equals(RiichiHandling.source(view, scene))))
+            if (!handlingMoving() && TableHandling.source(view, piece)
+                && (view.phase() != RiichiView.Phase.SHUFFLE || piece.equals(TableHandling.source(view, scene))))
                 return MahjongUi.ACCENT;
         }
         return 0;
@@ -366,7 +366,7 @@ public final class RiichiTableScreen extends Screen {
             RiichiAction action = view.actions().get(i);
             if (action.type() == RiichiAction.Type.DISCARD || action.type() == RiichiAction.Type.RIICHI || action.type() == RiichiAction.Type.NEXT
                 || action.type() == RiichiAction.Type.SKIP_SETTLEMENT || action.type() == RiichiAction.Type.SETTLEMENT_DONE
-                || !immersive() && RiichiHandling.physical(view, action)) continue;
+                || !immersive() && TableHandling.physical(view, action)) continue;
             choices.add(i);
         }
         boolean riichi = view.actions().stream().anyMatch(action -> action.type() == RiichiAction.Type.RIICHI);
@@ -569,12 +569,7 @@ public final class RiichiTableScreen extends Screen {
     }
 
     private MahjongButton drawerButton(int side, int x, int scale) {
-        return MahjongButton.create(Component.translatable("ui.mchjong.drawer"), ignored -> {
-            Vec3 location = TableGeometry.world(pos, TableGeometry.drawerBounds(side).getCenter());
-            var hit = new net.minecraft.world.phys.BlockHitResult(location, TableGeometry.SIDES[side], BlockPos.containing(location), false);
-            handlingDrag = null;
-            minecraft.gameMode.useItemOn(minecraft.player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
-        }).bounds(x, 8 * scale, 72 * scale, 20 * scale).build().textScale(scale);
+        return TableToolbar.drawer(pos, side, x, 8 * scale, scale, this::cancelHandling);
     }
 
     void configureVisibility(top.skyeyefast.mchjong.engine.PlayerHandVisibility visibility) {
@@ -736,13 +731,13 @@ public final class RiichiTableScreen extends Screen {
 
     private RiichiTableScene.Piece pickPhysical(double mouseX, double mouseY) {
         RiichiView view = view();
-        if (immersive() || RiichiHandling.action(view) < 0 || handlingMoving() || decision.pending()
+        if (immersive() || TableHandling.action(view) < 0 || handlingMoving() || decision.pending()
             || results != null || overWidget(mouseX, mouseY) || overInformation(mouseX, mouseY)) return null;
         SeatedTableProjection.Pointer pointer = pointer(mouseX, mouseY);
         RiichiTableScene.Piece nearest = null;
         double distance = Double.POSITIVE_INFINITY;
         for (var frame : frames) {
-            if (!RiichiHandling.source(view, frame.piece())) continue;
+            if (!TableHandling.source(view, frame.piece())) continue;
             double candidate = TilePicking.distanceSquared(frame, pointer.origin(), pointer.ray(), false, .018);
             if (candidate < distance) { distance = candidate; nearest = frame.piece(); }
         }
@@ -750,17 +745,8 @@ public final class RiichiTableScreen extends Screen {
     }
 
     public Vec3 handlingOffset(BlockPos table, RiichiTableScene.Piece piece) {
-        if (!pos.equals(table) || handlingDrag == null || handlingStart == null || handlingPointer == null) return Vec3.ZERO;
-        int index = RiichiHandling.action(handlingDrag);
-        if (index < 0) return Vec3.ZERO;
-        boolean held = switch (handlingDrag.actions().get(index).type()) {
-            case SHUFFLE -> piece.area() == RiichiTableScene.Area.LOOSE && piece.position().distanceToSqr(handlingStart) < .2;
-            case BUILD_WALL -> piece.area() == RiichiTableScene.Area.LOOSE && piece.seat() == handlingDrag.viewerSeat();
-            case TAKE_PACKET, DRAW -> RiichiHandling.source(handlingDrag, piece);
-            case NEXT -> piece.area() != RiichiTableScene.Area.WALL && piece.seat() == handlingDrag.viewerSeat();
-            default -> false;
-        };
-        return held ? handlingPointer.subtract(handlingStart).add(0, .05, 0) : Vec3.ZERO;
+        if (!pos.equals(table) || handlingDrag == null) return Vec3.ZERO;
+        return physicalDrag.offset(piece.area().name(), piece.seat(), piece.index(), piece.tile(), piece.position());
     }
 
     private boolean openDrawer(double mouseX, double mouseY) {
@@ -1033,23 +1019,14 @@ public final class RiichiTableScreen extends Screen {
 
     private void renderHandling(GuiGraphics graphics, RiichiView view, int mouseX, int mouseY) {
         if (immersive()) return;
-        int index = RiichiHandling.action(view);
+        int index = TableHandling.action(view);
         if (index < 0 || results != null) return;
-        RiichiTableScene.Piece source = RiichiHandling.source(view, scene);
+        RiichiTableScene.Piece source = TableHandling.source(view, scene);
         if (source != null) {
-            SeatedTableProjection.Point target = project(RiichiHandling.destination(view));
-            if (target != null && handlingDrag != null) {
-                int halfWidth = net.minecraft.util.Mth.clamp((int) Math.round(target.scale() * .45), 36, Math.max(36, Math.min(120, width / 4)));
-                int halfHeight = net.minecraft.util.Mth.clamp((int) Math.round(target.scale() * .12), 12, 28);
-                graphics.fill((int) target.x() - halfWidth, (int) target.y() - halfHeight,
-                    (int) target.x() + halfWidth, (int) target.y() + halfHeight, 0x443c8c68);
-                graphics.renderOutline((int) target.x() - halfWidth, (int) target.y() - halfHeight,
-                    halfWidth * 2, halfHeight * 2, MahjongUi.POSITIVE);
-                graphics.hLine(Math.min(mouseX, (int) target.x()), Math.max(mouseX, (int) target.x()), mouseY, MahjongUi.POSITIVE);
-                graphics.vLine((int) target.x(), Math.min(mouseY, (int) target.y()), Math.max(mouseY, (int) target.y()), MahjongUi.POSITIVE);
-            }
+            SeatedTableProjection.Point target = project(TableHandling.destination(view));
+            if (handlingDrag != null) TableHandling.renderTarget(graphics, target, width, mouseX, mouseY);
         }
-        Component help = Component.translatable(RiichiHandling.help(view));
+        Component help = Component.translatable(TableHandling.help(view));
         var lines = font.split(help, width - 24);
         int y = height - 29 - lines.size() * 10;
         for (var line : lines) {
@@ -1126,8 +1103,7 @@ public final class RiichiTableScreen extends Screen {
             RiichiTableScene.Piece physical = overHand ? null : pickPhysical(mouseX, mouseY);
             if (physical != null) {
                 handlingDrag = view();
-                handlingStart = tablePoint(mouseX, mouseY);
-                handlingPointer = handlingStart;
+                physicalDrag.begin(TableHandling.context(handlingDrag), tablePoint(mouseX, mouseY));
                 setFocused(null);
                 return true;
             }
@@ -1223,12 +1199,10 @@ public final class RiichiTableScreen extends Screen {
         }
         if (button == 0 && handlingDrag != null) {
             RiichiView snapshot = handlingDrag;
+            int action = physicalDrag.release(!overWidget(mouseX, mouseY) && !overInformation(mouseX, mouseY) ? tablePoint(mouseX, mouseY) : null);
             handlingDrag = null;
             if (view() != null && snapshot.tableId().equals(view().tableId()) && snapshot.decision() == view().decision()
-                && !overWidget(mouseX, mouseY) && !overInformation(mouseX, mouseY)
-                && RiichiHandling.completes(snapshot, handlingStart, tablePoint(mouseX, mouseY)))
-                send(snapshot, RiichiHandling.action(snapshot));
-            handlingStart = null;
+                && action >= 0) send(snapshot, action);
             return true;
         }
         if (presentation.releaseDrag(button, this::cancelSelection)) return true;
@@ -1249,12 +1223,12 @@ public final class RiichiTableScreen extends Screen {
             handDragMoved |= Math.hypot(mouseX - handDragStartX, mouseY - handDragStartY) > 4;
             return true;
         }
-        if (button == 0 && handlingDrag != null) { handlingPointer = tablePoint(mouseX, mouseY); return true; }
+        if (button == 0 && handlingDrag != null) { physicalDrag.move(tablePoint(mouseX, mouseY)); return true; }
         if (presentation.drag(button, dx, dy, hasShiftDown())) return true;
         return super.mouseDragged(mouseX, mouseY, button, dx, dy);
     }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (key == GLFW.GLFW_KEY_ESCAPE && handlingDrag != null) { handlingDrag = null; handlingStart = null; return true; }
+        if (key == GLFW.GLFW_KEY_ESCAPE && handlingDrag != null) { cancelHandling(); return true; }
         if (key == GLFW.GLFW_KEY_ESCAPE && handDrag != null) { handDrag = null; return true; }
         if (key == GLFW.GLFW_KEY_ESCAPE && (choosingRiichi || selectedTile >= 0)) { cancelSelection(); return true; }
         return super.keyPressed(key, scanCode, modifiers);

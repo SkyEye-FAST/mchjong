@@ -22,6 +22,7 @@ Other replacement paths under `assets/mchjong/` include:
 | Tile materials | `textures/tile_material/` |
 | Cloth pattern | `textures/furniture/cloth_pattern.png` |
 | Physical point sticks | `textures/point_stick/<points>.png` |
+| Physical scoring cards | `textures/scoring_card/<points>.png` |
 | Default riichi-stick model and texture | `models/item/riichi_stick.json`, `textures/item/riichi_stick.png` |
 | Effect recordings and voice events | `sounds/table/`, `sounds.json` |
 

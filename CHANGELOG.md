@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Enable MCR on ordinary mahjong tables with manual wall handling, flower replacements, craftable scoring cards and debt cards, and physical drawer settlement; Sichuan mahjong and Taiwanese mahjong still require automatic tables.
+- Enable Taiwanese mahjong and Sichuan mahjong on ordinary mahjong tables, so every variant can use either kind of table: manual wall handling, three dice for Taiwanese mahjong, Taiwanese flower replacements, the Sichuan dealer's jump tiles, manual draws and scoring-card settlement. Computer opponents now draw their winds at every ordinary table, and preset mahjong boxes hold three dice.
 - Show the automatic mahjong table upgrade, point-stick marking, Red Five and dye recipes as one-example diagrams in the Mahjong Manual, remove recipe text that repeats the recipe diagrams, and describe in-world actions as left-clicks and right-clicks.
 - Correct Mahjong Manual award entries against the scoring engine in all four languages: missing and unclear exclusions for MCR fan, Taiwanese tai applicability and robbed-kong wins, Riichi tanyao and suukantsu conditions, and unclear English wording.
 - List the available bot choices for a seat in a selection screen instead of cycling them with repeated clicks; a seat with one possible change still applies it directly.
@@ -59,7 +61,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Show ordinary-table points, remaining tiles, round and dealer on the outward-facing table rim so spectators can read them while walking around the table.
 - Use Chow and Pung for Taiwanese mahjong actions in English, name the Sichuan mahjong table and replay entries after the game instead of SBR, write the blood-battle preset name in Chinese and Japanese without the English abbreviation, write the MCR settlement title with the full game name in Chinese, and use Title Case for English table and settlement titles.
 - Keep room member control captions complete, stop offering removal for disconnected members, and use the same Close Room caption in both close-room confirmations.
 - Ask for confirmation before an exit request that immediately closes the room, and explain the exit outcomes in the Exit button tooltip.

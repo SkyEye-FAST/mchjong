@@ -8,7 +8,9 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
                           int handNumber, int dealer, List<Integer> scores,
                           int viewerSeat, int turn, Wall wall, List<Seat> seats, int focus, int supplier,
                           boolean robbingKong, boolean submitted, List<SichuanAction> actions,
-                          List<Winner> winners, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
+                          List<Winner> winners, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result,
+                          ManualHandlingView handling) {
+    /** At ordinary tables {@code handling} is present and the wall dice stay zero until the dealer rolls them. */
     public SichuanView {
         Objects.requireNonNull(rules); Objects.requireNonNull(phase); Objects.requireNonNull(wall);
         seats = List.copyOf(seats); actions = List.copyOf(actions); winners = List.copyOf(winners); ledger = List.copyOf(ledger);
@@ -54,22 +56,33 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
                 privateHand ? player.firstDiscard() : Tile.ABSENT));
         }
         var wall = state.wall();
+        var handling = game.handlingView();
+        boolean unrolled = handling != null && handling.diceOne() == 0;
+        boolean shuffling = state.phase() == SichuanGame.Phase.SHUFFLE;
+        var slots = new ArrayList<Integer>(108);
+        for (int slot = 0; slot < 108; slot++) {
+            int tile = wall.slots().get(slot);
+            boolean unbuilt = shuffling || handling != null && state.phase() == SichuanGame.Phase.BUILD_WALL
+                && (handling.builtWalls() & 1 << SichuanWallLayout.seat(slot, wall.eastWestLongWall())) == 0;
+            slots.add(tile == Tile.ABSENT || unbuilt ? Tile.ABSENT : Tile.HIDDEN);
+        }
         var winners = state.wins().stream().map(win -> new Winner(win.seat(), win.supplier(),
             win.selfDraw() && !ended ? Tile.HIDDEN : win.tile(), win.selfDraw(), win.robbingKong(), win.score())).toList();
         return new SichuanView(state.revision(), state.decision(), state.rules(), state.phase(), game.handNumber(), game.dealer(), game.scores(), viewer, state.turn(),
-            new Wall(wall.slots().stream().map(tile -> tile == Tile.ABSENT ? Tile.ABSENT : Tile.HIDDEN).toList(),
-                wall.dealer(), wall.die1(), wall.die2(), wall.eastWestLongWall()), seats, state.focus(), state.supplier(), state.pendingKong() >= 0
+            new Wall(slots, wall.dealer(), unrolled ? 0 : wall.die1(), unrolled ? 0 : wall.die2(), wall.eastWestLongWall()), seats, state.focus(), state.supplier(), state.pendingKong() >= 0
                     && !(state.afterKong() && state.rules().addedKongAfterKongIsShoot()),
             viewer >= 0 && (state.responses().stream().anyMatch(response -> response.seat() == viewer)
                 || state.phase() == SichuanGame.Phase.VOIDING && state.players().get(viewer).voidSuit() >= 0),
-            interactive ? game.actions(viewer) : List.of(), winners, state.ledger(), state.result());
+            interactive ? game.actions(viewer) : List.of(), winners, state.ledger(), state.result(), handling);
     }
     public record Wall(List<Integer> slots, int dealer, int die1, int die2, boolean eastWestLongWall) {
         public Wall {
             slots = List.copyOf(slots);
             if (slots.size() != 108 || slots.stream().anyMatch(tile -> tile != Tile.HIDDEN && tile != Tile.ABSENT))
                 throw new IllegalArgumentException("Invalid Sichuan public wall");
-            SichuanWallLayout.traversal(dealer, die1, die2, eastWestLongWall);
+            // Zero dice mark an ordinary-table wall before the dealer's roll.
+            if (die1 != 0 || die2 != 0) SichuanWallLayout.traversal(dealer, die1, die2, eastWestLongWall);
+            else if (dealer < 0 || dealer > 3) throw new IllegalArgumentException("Invalid Sichuan dealer");
         }
         public int remaining() { return (int) slots.stream().filter(tile -> tile == Tile.HIDDEN).count(); }
     }

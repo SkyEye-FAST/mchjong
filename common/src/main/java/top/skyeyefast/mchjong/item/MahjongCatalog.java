@@ -48,6 +48,11 @@ public final class MahjongCatalog {
             MahjongComponents.points(stick, points);
             entries.add(stick);
         });
+        MahjongComponents.CARD_DENOMINATIONS.stream().sorted().forEach(points -> {
+            var card = new ItemStack(MahjongContent.SCORING_CARD);
+            MahjongComponents.points(card, points);
+            entries.add(card);
+        });
         return List.copyOf(entries);
     }
 }

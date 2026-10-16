@@ -3,20 +3,27 @@ package top.skyeyefast.mchjong.engine;
 import java.util.List;
 import java.util.Objects;
 
-/** Recipient data only. Opponent concealed identities have no place in this contract. */
+/**
+ * Recipient data only. Opponent concealed identities have no place in this contract. At ordinary tables
+ * {@code handling} is present and {@code opening} stays absent until the dealer rolls the dice.
+ */
 public record TaiwanView(long revision, long decision, TaiwanGameState.Rules rules, TaiwanGameState.Opening opening,
                          int roundWind, int continuation, TaiwanGame.Phase phase, int turn, int recipient,
                          int drawable, int reserve, List<Integer> wall, List<Seat> seats, Focus focus,
-                         List<TaiwanGameState.Action> actions, boolean responded, Boolean passedWin, Result result) {
+                         List<TaiwanGameState.Action> actions, boolean responded, Boolean passedWin, Result result,
+                         ManualHandlingView handling) {
     public TaiwanView {
-        Objects.requireNonNull(rules); Objects.requireNonNull(opening); Objects.requireNonNull(phase);
+        Objects.requireNonNull(rules); Objects.requireNonNull(phase);
         wall = List.copyOf(wall); seats = List.copyOf(seats); actions = List.copyOf(actions);
         int size = rules.flowers() == TaiwanRules.Flowers.NONE ? 136 : 144;
+        boolean unopened = phase == TaiwanGame.Phase.SHUFFLE || phase == TaiwanGame.Phase.BUILD_WALL;
+        if ((opening == null) != unopened || handling == null && (unopened || phase == TaiwanGame.Phase.DEAL || phase == TaiwanGame.Phase.DRAW))
+            throw new IllegalArgumentException("Invalid Taiwan opening visibility");
         if (revision < 1 || decision < 1 || recipient < -1 || recipient > 3 || turn < 0 || turn > 3
             || roundWind < Tile.EAST || roundWind > Tile.NORTH || continuation < 0 || continuation > 1_000_000
             || drawable < 0 || reserve < 16 || reserve > 36 || seats.size() != 4 || wall.size() != size || actions.size() > 64
             || wall.stream().anyMatch(t -> t != Tile.HIDDEN && t != Tile.ABSENT)
-            || wall.stream().filter(t -> t == Tile.HIDDEN).count() != drawable + reserve
+            || !unopened && wall.stream().filter(t -> t == Tile.HIDDEN).count() != drawable + reserve
             || (phase == TaiwanGame.Phase.REACTION) != (focus != null)
             || focus != null && focus.seat() != turn
             || (phase == TaiwanGame.Phase.FINISHED) != (result != null)
@@ -24,7 +31,7 @@ public record TaiwanView(long revision, long decision, TaiwanGameState.Rules rul
             || recipient < 0 && (!actions.isEmpty() || responded || passedWin != null)
             || recipient >= 0 && passedWin == null || responded && !actions.isEmpty()
             || responded && (phase != TaiwanGame.Phase.REACTION || recipient == turn)
-            || !actions.isEmpty() && (phase == TaiwanGame.Phase.TURN ? recipient != turn : recipient == turn))
+            || !actions.isEmpty() && (phase == TaiwanGame.Phase.REACTION ? recipient == turn : phase != TaiwanGame.Phase.BUILD_WALL && recipient != turn))
             throw new IllegalArgumentException("Invalid Taiwan recipient view");
         for (int s = 0; s < 4; s++) {
             var p = seats.get(s);
@@ -68,13 +75,16 @@ public record TaiwanView(long revision, long decision, TaiwanGameState.Rules rul
                 throw new IllegalArgumentException("Invalid public dealer succession");
         }
     }
+    /** The dealer is public before the roll, when the turn still rests with the dealer. */
+    public int dealer() { return opening == null ? turn : opening.dealer(); }
+
     public record Seat(int concealedCount, List<Integer> concealed, int drawn, List<Meld> melds,
                        List<FlowerTile> flowers, List<Integer> river, TaiwanWinContext.Ready ready) {
         public Seat {
             concealed = List.copyOf(concealed); melds = List.copyOf(melds); flowers = List.copyOf(flowers); river = List.copyOf(river);
             Objects.requireNonNull(ready);
-            if (concealedCount < 1 || concealedCount > 17 || melds.size() > 5 || flowers.size() > 8 || river.size() > 144
-                || concealed.stream().anyMatch(t -> t < 0 || t >= 136) || river.stream().anyMatch(t -> t < 0 || t >= 136)
+            if (concealedCount < 0 || concealedCount > 17 || melds.size() > 5 || flowers.size() > 8 || river.size() > 144
+                || concealed.stream().anyMatch(t -> t < 0 || t >= 144) || river.stream().anyMatch(t -> t < 0 || t >= 136)
                 || drawn != Tile.ABSENT && !concealed.contains(drawn)) throw new IllegalArgumentException("Invalid Taiwan seat view");
             for (var meld : melds) if (meld.tiles().size() != (meld.closed() || meld.type() == Meld.Type.OPEN_QUAD || meld.type() == Meld.Type.ADDED_QUAD ? 4 : 3)
                 || meld.fromSeat() < 0 || meld.fromSeat() > 3 || (meld.closed() ? meld.calledTile() != Tile.ABSENT : !meld.tiles().contains(meld.calledTile())))

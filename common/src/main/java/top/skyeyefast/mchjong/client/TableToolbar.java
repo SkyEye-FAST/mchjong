@@ -13,6 +13,21 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 final class TableToolbar {
     private TableToolbar() {}
 
+    static MahjongButton drawer(BlockPos pos, int side, int x, int y, int scale, Runnable before) {
+        var client = Minecraft.getInstance();
+        boolean cards = client.level != null && client.level.getBlockEntity(pos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
+            && table.clientVariant() != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
+        var caption = Component.translatable(cards ? "cards.mchjong.drawer" : "ui.mchjong.drawer");
+        int width = cards ? Math.max(72, client.font.width(caption) + 12) : 72;
+        return MahjongButton.create(caption, ignored -> {
+            before.run();
+            var location = top.skyeyefast.mchjong.world.TableGeometry.world(pos,
+                top.skyeyefast.mchjong.world.TableGeometry.drawerBounds(side).getCenter());
+            client.gameMode.useItemOn(client.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(location, top.skyeyefast.mchjong.world.TableGeometry.SIDES[side], BlockPos.containing(location), false));
+        }).bounds(x, y, width * scale, 20 * scale).build().textScale(scale);
+    }
+
     static List<MahjongButton> build(Screen parent, BlockPos pos, TableRoomView room, int width,
                                      boolean immersive, Runnable switchView) {
         var client = Minecraft.getInstance();

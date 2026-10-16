@@ -54,8 +54,11 @@ public final class MahjongSupplies {
     }
 
     public static boolean storable(ItemStack stack) {
-        return (stack.is(MahjongContent.TILE_ITEM) || stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.DICE))
-            && !hasStorage(stack) && MahjongComponents.valid(stack);
+        if (stack.isEmpty() || hasStorage(stack) || !MahjongComponents.valid(stack)) return false;
+        return stack.is(MahjongContent.TILE_ITEM) ? tile(stack).valid()
+            : stack.is(MahjongContent.POINT_STICK) ? MahjongComponents.DENOMINATIONS.contains(MahjongComponents.points(stack))
+            : stack.is(MahjongContent.SCORING_CARD) ? MahjongComponents.CARD_DENOMINATIONS.contains(MahjongComponents.points(stack))
+            : stack.is(MahjongContent.DICE);
     }
 
     public static boolean mahjongDye(ItemStack stack) {
@@ -68,9 +71,9 @@ public final class MahjongSupplies {
 
     public static boolean boxAccepts(int slot, ItemStack stack) {
         if (slot < 0 || slot >= BOX_SLOTS || hasStorage(stack) || !MahjongComponents.valid(stack)) return false;
-        return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM)
-            : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK)
-            : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) : dyeSlotItem(stack);
+        return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM) && storable(stack)
+            : slot < DYE_SLOT ? (stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.SCORING_CARD)) && storable(stack)
+            : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) && storable(stack) : dyeSlotItem(stack);
     }
 
     /** Do not truncate oversized command-created containers when opening or crafting them. */
@@ -112,6 +115,12 @@ public final class MahjongSupplies {
             net.minecraft.world.item.Items.BLACK_DYE, -10000);
     }
 
+    public static java.util.Map<net.minecraft.world.item.Item, Integer> cardMarkings() {
+        return java.util.Map.of(net.minecraft.world.item.Items.WHITE_DYE, 1, net.minecraft.world.item.Items.GREEN_DYE, 8,
+            net.minecraft.world.item.Items.BLUE_DYE, 10, net.minecraft.world.item.Items.YELLOW_DYE, 50,
+            net.minecraft.world.item.Items.RED_DYE, 100, net.minecraft.world.item.Items.BLACK_DYE, -500);
+    }
+
     /** One physical five per application, even when the source is a larger stack. */
     public static ItemStack redFive(ItemStack target, ItemStack reagent) {
         boolean red = reagent.is(MahjongContent.RED_DORA_DYE);
@@ -126,10 +135,10 @@ public final class MahjongSupplies {
 
     /** Mark a homogeneous group without discarding its name or other stack data. */
     public static ItemStack markSticks(List<ItemStack> blanks, ItemStack reagent, int count) {
-        int points = markings().getOrDefault(reagent.getItem(), 0);
-        if (blanks.isEmpty() || points == 0 || count <= 0) return ItemStack.EMPTY;
+        if (blanks.isEmpty() || count <= 0) return ItemStack.EMPTY;
         var template = blanks.get(0);
-        if (!template.is(MahjongContent.POINT_STICK) || !storable(template)
+        int points = (template.is(MahjongContent.SCORING_CARD) ? cardMarkings() : markings()).getOrDefault(reagent.getItem(), 0);
+        if (points == 0 || !(template.is(MahjongContent.POINT_STICK) || template.is(MahjongContent.SCORING_CARD)) || !storable(template)
             || MahjongComponents.points(template) != 0 || count > template.getMaxStackSize()) return ItemStack.EMPTY;
         int total = 0;
         for (var stack : blanks) {
@@ -377,7 +386,7 @@ public final class MahjongSupplies {
             MahjongComponents.points(stick, supply[0]);
             items.set(stickSlot++, stick);
         }
-        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));
+        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 3));
         return items;
     }
 
@@ -392,7 +401,7 @@ public final class MahjongSupplies {
             tile(new TileData(-1, material, false), color, 8)));
         var result = engrave(box, TileFacePreset.KANSAI);
         var items = contents(result);
-        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));
+        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 3));
         setContents(result, items);
         return result;
     }

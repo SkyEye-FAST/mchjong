@@ -11,10 +11,15 @@ class TaiwanGame private constructor(
     val continuation: Int,
     restoredWall: TaiwanWall?,
     deal: Boolean,
+    /** Ordinary tables hand dealing, flower replacements and draws to the players as handling actions. */
+    val manual: Boolean,
 ) {
     constructor(rules: TaiwanRules, opening: TaiwanOpening, stock: List<Int>, roundWind: Int = Tile.EAST, continuation: Int = 0) :
-        this(rules, opening, stock, roundWind, continuation, null, true)
-    enum class Phase { TURN, REACTION, FINISHED }
+        this(rules, opening, stock, roundWind, continuation, null, true, false)
+    /** Starts an ordinary-table hand at the shuffle; the dice in [opening] stay private until they are rolled. */
+    constructor(rules: TaiwanRules, opening: TaiwanOpening, stock: List<Int>, roundWind: Int, continuation: Int, manual: Boolean) :
+        this(rules, opening, stock, roundWind, continuation, null, true, manual)
+    enum class Phase { SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, FINISHED }
     private class Player {
         val hand = mutableListOf<Int>()
         val melds = mutableListOf<Meld>()
@@ -50,6 +55,41 @@ class TaiwanGame private constructor(
     private var outcome: TaiwanGameState.Outcome? = null
     private val openingWall = java.util.List.copyOf(stock)
     private val replaySteps = mutableListOf<TaiwanGameState>()
+    private var handling = ManualHandling()
+    private var stage = TaiwanGameState.Manual.Stage.PLAY
+    private var flowerOffset = 0
+    private var flowerPending = 0
+    private var flowerChanged = false
+    // Declared before init, which publishes the first handling decision.
+    private val host = object : ManualHandling.Host {
+        override fun stage() = when (phase) {
+            Phase.SHUFFLE -> ManualHandling.Stage.SHUFFLE
+            Phase.BUILD_WALL -> ManualHandling.Stage.BUILD_WALL
+            Phase.DEAL -> ManualHandling.Stage.DEAL
+            Phase.DRAW -> ManualHandling.Stage.DRAW
+            else -> ManualHandling.Stage.NONE
+        }
+        override fun seats() = 4
+        override fun dealer() = opening.dealer
+        override fun turn() = turn
+        // Four rounds of four tiles; the dealer's seventeenth tile is a separate draw.
+        override fun packetSize(packet: Int) = 4
+        override fun packets() = 16
+        override fun phase(stage: ManualHandling.Stage) { phase = Phase.valueOf(stage.name); publishManual() }
+        // The session supplies a shuffled stock and private dice; these steps only reveal them.
+        override fun shuffled() {}
+        override fun opened() {}
+        override fun packet(seat: Int, count: Int) { repeat(count) { players[seat].hand += checkNotNull(wall.draw()) } }
+        override fun dealt() {
+            stage = TaiwanGameState.Manual.Stage.EXTRA
+            turn = opening.dealer
+            phase = Phase.DRAW
+            publishManual()
+        }
+        override fun draw() = manualDraw()
+        override fun next(seat: Int) { turn = (seat + 1) % 4 }
+        override fun revised() = publishManual(renew = false)
+    }
     /** Passive physical checkpoints; playback executes the engine, never these snapshots. */
     fun replayOpeningWall(): List<Int> = openingWall
     fun replaySteps(): List<TaiwanGameState> = java.util.List.copyOf(replaySteps)
@@ -57,7 +97,12 @@ class TaiwanGame private constructor(
 
     init {
         require(roundWind in Tile.EAST..Tile.NORTH && continuation in 0..1_000_000)
-        if (deal) {
+        if (deal && manual) {
+            stage = TaiwanGameState.Manual.Stage.OPENING
+            phase = Phase.SHUFFLE
+            publishManual()
+            checkpoint()
+        } else if (deal) {
             repeat(4) {
                 repeat(4) { offset -> repeat(4) { players[seat(offset)].hand += checkNotNull(wall.draw()) } }
             }
@@ -78,7 +123,7 @@ class TaiwanGame private constructor(
     fun player(seat: Int): TaiwanPlayerState {
         require(seat in 0..3)
         val p = players[seat]
-        return TaiwanPlayerState(seat, p.hand.sortedWith(Tile.ORDER), p.melds, p.flowers, p.river, p.ready, p.passed)
+        return TaiwanPlayerState(seat, p.hand.sortedWith(HAND_ORDER), p.melds, p.flowers, p.river, p.ready, p.passed)
     }
     fun decisions(): List<TaiwanDecision> = java.util.List.copyOf(issued.filter { it.seat !in responses })
 
@@ -88,7 +133,8 @@ class TaiwanGame private constructor(
         require(decision != null && actionIndex in decision.actions.indices) { "Not an issued action" }
         val action = decision.actions[actionIndex]
         replaySteps.clear()
-        if (phase == Phase.REACTION) {
+        if (handlingPhase()) handling.act(host, seat, ManualHandling.Action.valueOf(action.type.name))
+        else if (phase == Phase.REACTION) {
             responses[seat] = action
             checkpoint()
             if (responses.size == issued.size) resolve()
@@ -102,7 +148,7 @@ class TaiwanGame private constructor(
     fun checkConservation() {
         val all = wall.remaining() + players.flatMap { p -> p.hand + p.melds.flatMap { it.tiles() } + p.flowers.map { it.id() } + p.river }
         check(all.size == stockIds.size && all.toSet() == stockIds) { "Physical tile conservation failed" }
-        if (phase != Phase.FINISHED) for ((s, p) in players.withIndex()) {
+        if (phase != Phase.FINISHED && stage == TaiwanGameState.Manual.Stage.PLAY) for ((s, p) in players.withIndex()) {
             val expected = if (phase == Phase.TURN && s == turn || offered?.addedMeld != null && offered?.seat == s) 17 else 16
             check(p.hand.size + 3 * p.melds.size == expected) { "Invalid structural hand at seat $s" }
             check(p.hand.none(Tile::isFlower))
@@ -135,6 +181,87 @@ class TaiwanGame private constructor(
             val s = seat(offset)
             if (ownFlowerVictory(s, initial = true)) return
         }
+    }
+
+    fun handlingPhase() = manual && phase in setOf(Phase.SHUFFLE, Phase.BUILD_WALL, Phase.DEAL, Phase.DRAW)
+
+    /** Independent wall builders keep the current token so that their held drags remain valid. */
+    private fun publishManual(renew: Boolean = true) {
+        offered = null
+        responses.clear()
+        if (renew) token = Math.addExact(token, 1)
+        issued = (0..3).mapNotNull { s ->
+            handling.actions(host, s).takeIf { it.isNotEmpty() }
+                ?.let { actions -> TaiwanDecision(token, s, actions.map { TaiwanAction(Type.valueOf(it.name)) }) }
+        }
+    }
+
+    private fun manualDraw() {
+        when (stage) {
+            TaiwanGameState.Manual.Stage.EXTRA -> {
+                drawn = checkNotNull(wall.draw())
+                players[turn].hand += drawn
+                checkpoint()
+                stage = TaiwanGameState.Manual.Stage.FLOWERS
+                beginFlowerPass()
+            }
+            TaiwanGameState.Manual.Stage.FLOWERS -> {
+                val tile = checkNotNull(wall.replace())
+                players[turn].hand += tile
+                if (turn == opening.dealer) { drawn = tile; origin = TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT }
+                checkpoint()
+                if (--flowerPending == 0) { flowerOffset++; beginFlowerPass() } else publishManual()
+            }
+            TaiwanGameState.Manual.Stage.PLAY -> {
+                val ordinary = origin == TaiwanWinContext.DrawOrigin.ORDINARY
+                if (ordinary) draws++
+                draw(if (ordinary) wall.draw() else wall.replace(), origin)
+            }
+            TaiwanGameState.Manual.Stage.OPENING -> error("No manual draw before dealing ends")
+        }
+    }
+
+    /** The manual form of [initialFlowers]: each seat exposes the flowers it holds, then takes their replacements. */
+    private fun beginFlowerPass() {
+        while (true) {
+            if (flowerOffset == 4) {
+                if (!flowerChanged) { finishInitialFlowers(); return }
+                flowerOffset = 0
+                flowerChanged = false
+            }
+            val s = seat(flowerOffset)
+            val p = players[s]
+            val flowers = p.hand.filter(Tile::isFlower)
+            if (flowers.isEmpty()) { flowerOffset++; continue }
+            flowerChanged = true
+            for (flower in flowers) {
+                p.hand.remove(flower)
+                p.flowers += checkNotNull(FlowerTile.of(flower))
+            }
+            checkpoint()
+            flowerPending = flowers.size
+            turn = s
+            phase = Phase.DRAW
+            publishManual()
+            return
+        }
+    }
+
+    private fun finishInitialFlowers() {
+        stage = TaiwanGameState.Manual.Stage.PLAY
+        flowerOffset = 0
+        turn = opening.dealer
+        for (offset in 0..3) if (ownFlowerVictory(seat(offset), initial = true)) return
+        turnWaits = waitsWithoutDraw(turn)
+        publishTurn()
+    }
+
+    /** Leaves a draw for the player to take; an exhausted wall still ends the hand at once. */
+    private fun pendDraw(drawOrigin: TaiwanWinContext.DrawOrigin) {
+        drawn = Tile.ABSENT
+        origin = drawOrigin
+        phase = Phase.DRAW
+        publishManual()
     }
 
     private fun context(s: Int, method: TaiwanWinContext.Method): TaiwanWinContext {
@@ -304,6 +431,7 @@ class TaiwanGame private constructor(
             turn = (offer.seat + 1) % 4
             val p = players[turn]
             turnWaits = TaiwanHandAnalyzer.waits(p.hand, p.melds, turn)
+            if (manual && wall.drawable > 0) { pendDraw(TaiwanWinContext.DrawOrigin.ORDINARY); return }
             draws++
             draw(wall.draw(), TaiwanWinContext.DrawOrigin.ORDINARY)
         }
@@ -311,7 +439,7 @@ class TaiwanGame private constructor(
 
     private fun drawReplacement(drawOrigin: TaiwanWinContext.DrawOrigin) {
         turnWaits = TaiwanHandAnalyzer.waits(players[turn].hand, players[turn].melds, turn)
-        draw(wall.replace(), drawOrigin)
+        if (manual && wall.drawable > 0) pendDraw(drawOrigin) else draw(wall.replace(), drawOrigin)
     }
 
     private fun draw(first: Int?, drawOrigin: TaiwanWinContext.DrawOrigin) {
@@ -330,6 +458,7 @@ class TaiwanGame private constructor(
                 return
             }
             origin = TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT
+            if (manual && wall.drawable > 0) { pendDraw(origin); return }
             tile = wall.replace()
         }
         if (tile == null) { finish(null, null, null); return }
@@ -405,29 +534,57 @@ class TaiwanGame private constructor(
         TaiwanGameState.Opening(opening.dealer, opening.dice), roundWind, continuation, revision, token, phase, turn,
         wall.save(), players.map { TaiwanGameState.Player(it.hand, it.melds, it.flowers, it.river, it.ready, it.passed, it.discards) },
         drawn, turnDrawn, origin, turnWaits, calls, draws, offered?.let { TaiwanGameState.Offer(it.seat, it.tile, it.addedMeld) },
-        replies, outcome, TaiwanGameState.Result.of(settlement))
+        replies, outcome, TaiwanGameState.Result.of(settlement),
+        if (manual) TaiwanGameState.Manual(handling.save(), stage, flowerOffset, flowerPending, flowerChanged) else null)
 
     fun view(recipient: Int): TaiwanView = view(recipient, true)
     fun view(recipient: Int, allowActions: Boolean): TaiwanView {
         require(recipient in -1..3)
-        return TaiwanView(revision, token, TaiwanGameState.Rules.of(rules), TaiwanGameState.Opening(opening.dealer, opening.dice),
+        val rolled = phase != Phase.SHUFFLE && phase != Phase.BUILD_WALL
+        val size = wall.physicalSlots().size
+        return TaiwanView(revision, token, TaiwanGameState.Rules.of(rules), if (rolled) TaiwanGameState.Opening(opening.dealer, opening.dice) else null,
             roundWind, continuation, phase, turn, recipient, wall.drawable, wall.reserve,
-            wall.physicalSlots().map { if (it == Tile.ABSENT) it else Tile.HIDDEN },
-            players.mapIndexed { s, p -> TaiwanView.Seat(p.hand.size, if (s == recipient) p.hand.sortedWith(Tile.ORDER) else emptyList(),
+            wall.physicalSlots().mapIndexed { slot, tile -> if (tile == Tile.ABSENT || !rolled
+                && (phase == Phase.SHUFFLE || handling.builtWalls and (1 shl TaiwanWallLayout.side(size, slot)) == 0)) Tile.ABSENT else Tile.HIDDEN },
+            players.mapIndexed { s, p -> TaiwanView.Seat(p.hand.size, if (s == recipient) p.hand.sortedWith(HAND_ORDER) else emptyList(),
                 if (s == recipient) drawn.takeIf { s == turn && it in p.hand } ?: Tile.ABSENT else Tile.ABSENT,
                 p.melds.map { if (it.closed() && s != recipient) Meld(it.type(), List(4) { Tile.HIDDEN }, s, Tile.ABSENT) else it },
                 p.flowers, p.river, p.ready) },
             offered?.let { TaiwanView.Focus(it.seat, it.tile, it.addedMeld != null) },
             if (allowActions) decisions().singleOrNull { it.seat == recipient }?.actions?.map(TaiwanGameState.Action::of).orEmpty() else emptyList(),
-            recipient in responses, if (recipient >= 0) players[recipient].passed else null, TaiwanView.Result.of(settlement))
+            recipient in responses, if (recipient >= 0) players[recipient].passed else null, TaiwanView.Result.of(settlement),
+            if (manual) handlingView(rolled) else null)
+    }
+
+    private fun handlingView(rolled: Boolean): ManualHandlingView {
+        val count = when {
+            phase == Phase.DEAL -> 4
+            phase == Phase.DRAW -> 1
+            else -> 0
+        }
+        val replacement = stage == TaiwanGameState.Manual.Stage.FLOWERS
+            || stage == TaiwanGameState.Manual.Stage.PLAY && origin != TaiwanWinContext.DrawOrigin.ORDINARY
+        val source = if (count == 0) -1 else if (replacement) wall.nextReplacementSlot() else wall.nextDrawSlot()
+        val dice = if (rolled) opening.dice else listOf(0, 0, 0)
+        return ManualHandlingView(handling.builtWalls, source, count, dice[0], dice[1], dice[2], handling.diceHeld)
     }
 
     companion object {
+        /** Flowers wait after the ordinary tiles until a manual flower pass exposes them. */
+        private val HAND_ORDER = compareBy<Int>({ if (Tile.isFlower(it)) 1 else 0 }, { if (Tile.isFlower(it)) it else Tile.kind(it) }, { it })
         @JvmStatic fun restore(state: TaiwanGameState): TaiwanGame {
             val rules = state.rules().restore()
             val opening = state.opening().restore()
+            val manual = state.manual()
             val game = TaiwanGame(rules, opening, emptyList(), state.roundWind(), state.continuation(),
-                TaiwanWall.restore(state.wall(), opening, rules), false)
+                TaiwanWall.restore(state.wall(), opening, rules, manual != null), false, manual != null)
+            if (manual != null) {
+                game.handling = ManualHandling.restore(manual.handling())
+                game.stage = manual.stage()
+                game.flowerOffset = manual.flowerOffset()
+                game.flowerPending = manual.flowerPending()
+                game.flowerChanged = manual.flowerChanged()
+            }
             game.phase = state.phase()
             game.turn = state.turn()
             game.token = state.decision()
@@ -447,7 +604,8 @@ class TaiwanGame private constructor(
             game.outcome = state.outcome()
             game.validateRestored(state)
             // Rebuild every action from the position. A response stores a choice, never an action cache.
-            if (game.phase == Phase.TURN) game.publishTurn()
+            if (game.handlingPhase()) game.publishManual()
+            else if (game.phase == Phase.TURN) game.publishTurn()
             else if (game.phase == Phase.REACTION) {
                 game.react(checkNotNull(game.offered))
                 for (reply in state.replies()) {
@@ -479,6 +637,10 @@ class TaiwanGame private constructor(
         require(phase == Phase.FINISHED || state.settlement() == null && outcome == null)
         val all = wall.remaining() + players.flatMap { it.hand + it.melds.flatMap(Meld::tiles) + it.flowers.map(FlowerTile::id) + it.river }
         require(all.size == stockIds.size && all.toSet() == stockIds) { "Invalid physical stock" }
+        require(manual || phase in setOf(Phase.TURN, Phase.REACTION, Phase.FINISHED))
+        if (manual && stage != TaiwanGameState.Manual.Stage.PLAY) { validateOpening(state); return }
+        require(!manual || handling.builtWalls == 15 && handling.packets == 16 && !handling.diceHeld
+            && phase !in setOf(Phase.SHUFFLE, Phase.BUILD_WALL, Phase.DEAL))
         require(wall.kongs == players.sumOf { p -> p.melds.count { it.quad() } })
         require(calls == players.sumOf { p -> p.melds.size + p.melds.count { it.type() == Meld.Type.ADDED_QUAD } })
         val terminal = outcome
@@ -486,7 +648,8 @@ class TaiwanGame private constructor(
             TaiwanHandAnalyzer.FlowerEvent.SEVEN_AFTER_INITIAL_REPLACEMENT)
         val tailTakes = players.sumOf { it.flowers.size } + wall.kongs
         val missingReplacement = terminal?.flowerEvent() == TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER ||
-            phase == Phase.FINISHED && terminal?.winner() == null && state.wall().tail() == tailTakes - 1
+            phase == Phase.FINISHED && terminal?.winner() == null && state.wall().tail() == tailTakes - 1 ||
+            phase == Phase.DRAW && origin != TaiwanWinContext.DrawOrigin.ORDINARY
         require(state.wall().tail() == tailTakes - if (missingReplacement) 1 else 0)
         require(origin != TaiwanWinContext.DrawOrigin.KONG_REPLACEMENT || players[turn].melds.any { it.quad() })
         require(origin != TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT || players[turn].flowers.isNotEmpty())
@@ -549,6 +712,42 @@ class TaiwanGame private constructor(
             }
         }
         if (phase == Phase.FINISHED) restoreSettlement(checkNotNull(terminal), checkNotNull(state.settlement()))
+    }
+
+    /** Dealing and the initial flower passes, before any ordinary turn exists. */
+    private fun validateOpening(state: TaiwanGameState) {
+        val front = state.wall().front()
+        val tail = state.wall().tail()
+        val h = handling
+        val dealer = opening.dealer
+        require(state.settlement() == null && outcome == null && offered == null && calls == 0 && draws == 0 && wall.kongs == 0)
+        require(turnDrawn == Tile.ABSENT && players.all { it.melds.isEmpty() && it.river.isEmpty() && it.discards == 0
+            && it.ready == TaiwanWinContext.Ready.NONE && !it.passed })
+        require(h.builtWalls in 0..15 && h.packets in 0..16 && !h.replacement && !h.kan)
+        when (stage) {
+            TaiwanGameState.Manual.Stage.OPENING -> {
+                require(phase in setOf(Phase.SHUFFLE, Phase.BUILD_WALL, Phase.DEAL) && tail == 0 && front == 4 * h.packets)
+                require(phase != Phase.SHUFFLE || h.builtWalls == 0 && !h.diceHeld)
+                require(phase == Phase.DEAL || h.packets == 0)
+                require(phase != Phase.DEAL || h.builtWalls == 15 && !h.diceHeld && h.packets < 16 && turn == seat(h.packets % 4))
+                require(phase == Phase.DEAL || turn == dealer)
+                require(!h.diceHeld || h.builtWalls == 15)
+                for (offset in 0..3) require(players[seat(offset)].hand.size == 4 * (0 until h.packets).count { it % 4 == offset })
+                require(players.all { it.flowers.isEmpty() } && drawn == Tile.ABSENT)
+            }
+            TaiwanGameState.Manual.Stage.EXTRA -> {
+                require(phase == Phase.DRAW && front == 64 && tail == 0 && h.builtWalls == 15 && h.packets == 16 && !h.diceHeld && turn == dealer)
+                require(players.all { it.hand.size == 16 && it.flowers.isEmpty() } && drawn == Tile.ABSENT)
+            }
+            TaiwanGameState.Manual.Stage.FLOWERS -> {
+                require(phase == Phase.DRAW && front == 65 && h.builtWalls == 15 && h.packets == 16 && !h.diceHeld)
+                require(flowerPending > 0 && turn == seat(flowerOffset) && tail == players.sumOf { it.flowers.size } - flowerPending)
+                for ((seat, p) in players.withIndex())
+                    require(p.hand.size == (if (seat == dealer) 17 else 16) - if (seat == turn) flowerPending else 0)
+                require(drawn in players[dealer].hand || players[dealer].flowers.any { it.id() == drawn })
+            }
+            TaiwanGameState.Manual.Stage.PLAY -> error("Ordinary play is validated separately")
+        }
     }
 
     /** Session hand boundaries keep request tokens increasing within one room incarnation. */

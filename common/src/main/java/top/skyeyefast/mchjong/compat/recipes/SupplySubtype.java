@@ -21,7 +21,7 @@ public final class SupplySubtype {
 
     public static List<Item> items() {
         return List.of(MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.STOOL_ITEM,
-            MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.POINT_STICK, MahjongContent.BOX_ITEM,
+            MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.POINT_STICK, MahjongContent.SCORING_CARD, MahjongContent.BOX_ITEM,
             MahjongContent.MAHJONG_DYE, MahjongContent.CREATIVE_MAHJONG_DYE, MahjongContent.RED_DORA_DYE,
             MahjongContent.UNDO_DYE, MahjongContent.DICE);
     }

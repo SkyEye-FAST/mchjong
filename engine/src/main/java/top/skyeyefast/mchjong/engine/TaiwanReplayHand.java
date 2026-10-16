@@ -19,7 +19,7 @@ public record TaiwanReplayHand(TaiwanReplayRecorder.State recording, TaiwanGameS
         public Event {
             Objects.requireNonNull(kind);
             if (actionCursor < 0 || actionCursor > 4096 || seat < 0 || seat > 3 || tile < Tile.ABSENT || tile >= 144
-                || slot < -1 || slot >= 144 || front < 65 || front > 144 || tail < 0 || tail > 144 || kongs < 0 || kongs > 20)
+                || slot < -1 || slot >= 144 || front < 0 || front > 144 || tail < 0 || tail > 144 || kongs < 0 || kongs > 20)
                 throw new IllegalArgumentException("Invalid Taiwan replay event");
         }
     }
