@@ -52,6 +52,7 @@ public final class GenerateAssets {
                 "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         }
         png("item/riichi_stick", PointStickArtwork.texture(1000));
+        for (int points : ScoringCardArtwork.POINTS) png("scoring_card/" + points, ScoringCardArtwork.texture(points));
         png("gui/sprites/hud/riichi_stick", PointStickArtwork.texture(1000));
         png("gui/sprites/hud/honba_stick", PointStickArtwork.texture(100));
         text("assets/mchjong/models/item/riichi_stick.json", """
@@ -106,7 +107,7 @@ public final class GenerateAssets {
         for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"}) {
             text("assets/mchjong/blockstates/" + name + ".json", "{\"variants\":{\"\":{\"model\":\"mchjong:block/" + name + "\"}}}");
         }
-        for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "mahjong_tile", "mahjong_box", "table_cloth", "point_stick"}) {
+        for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "mahjong_tile", "mahjong_box", "table_cloth", "point_stick", "scoring_card"}) {
             if (name.endsWith("mahjong_table") || name.equals("mahjong_stool")) {
                 text("assets/mchjong/models/item/" + name + ".json",
                     "{\"parent\":\"minecraft:builtin/entity\",\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"gui_light\":\"side\"}");
@@ -115,19 +116,19 @@ public final class GenerateAssets {
                         + "\",\"model\":{\"type\":\"mchjong:supply\"}}}");
                 continue;
             }
-            String rotation = name.equals("mahjong_tile") ? "[25,35,0]" : "[30,225,0]";
-            String lighting = name.equals("mahjong_tile") ? "front" : "side";
+            String rotation = name.equals("scoring_card") ? "[90,0,0]" : name.equals("mahjong_tile") ? "[25,35,0]" : "[30,225,0]";
+            String lighting = name.equals("mahjong_tile") || name.equals("scoring_card") ? "front" : "side";
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
             // Like a held sword, the free end rises outward while the printed surface faces inward.
             String held = switch (name) {
                 case "mahjong_tile" -> "{\"rotation\":[-12,-65,-25],\"translation\":[1,6,-3],\"scale\":[0.4,0.4,0.4]}";
-                case "point_stick" -> "{\"rotation\":[65,60,25],\"translation\":[1,6,-2],\"scale\":[0.7,0.7,0.7]}";
+                case "point_stick", "scoring_card" -> "{\"rotation\":[65,60,25],\"translation\":[1,6,-2],\"scale\":[0.7,0.7,0.7]}";
                 default -> "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
             };
             text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:item/generated\","
                 + "\"textures\":{\"layer0\":\"mchjong:furniture/wood_oak\",\"particle\":\"mchjong:furniture/wood_oak\"},"
                 + "\"gui_light\":\"" + lighting + "\",\"display\":{"
-                + "\"gui\":{\"rotation\":" + rotation + "},"
+                + "\"gui\":{\"rotation\":" + rotation + (name.equals("scoring_card") ? ",\"scale\":[1.6,1.6,1.6]" : "") + "},"
                 + "\"ground\":{\"translation\":[0,2,0],\"scale\":[0.5,0.5,0.5]},"
                 + "\"head\":{\"rotation\":[0,180,0],\"translation\":[0,13,7],\"scale\":[1,1,1]},"
                 + "\"firstperson_righthand\":" + held + ","

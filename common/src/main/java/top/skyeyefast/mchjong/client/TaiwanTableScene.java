@@ -19,7 +19,7 @@ public final class TaiwanTableScene {
     public static final double MELD_LEFT = -TableGeometry.FELT_HALF_WIDTH + .015;
     public static final double RIVER_Z = TableIndicator.HALF_WIDTH + HEIGHT / 2 + .005;
     public static final double RIVER_X = WIDTH / 2;
-    public enum Area { WALL, HAND, RIVER, MELD, FLOWER }
+    public enum Area { WALL, HAND, RIVER, MELD, FLOWER, LOOSE }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
                         float yaw, boolean flat, boolean back) {
         public TileDimensions dimensions() { return DIMENSIONS; }
@@ -40,6 +40,11 @@ public final class TaiwanTableScene {
         return piece(tile, TaiwanWallLayout.side(size, physicalSlot), Area.WALL, physicalSlot,
             position.x, (upper ? 1.5 : .5) * DEPTH, position.z, rail.yaw(), true, true);
     }
+    /** The seat-local depth of the middle of a built wall, the destination of a wall-building drag. */
+    public static double wallZ(int size) {
+        int stacks = TaiwanWallLayout.stacks(size);
+        return TiltedWallLayout.compact(stacks, WIDTH, HEIGHT).position(stacks / 2).z;
+    }
     public static List<Piece> fullWall(int size) { return List.copyOf(wall(Collections.nCopies(size, Tile.HIDDEN))); }
 
     private static List<Piece> wall(List<Integer> slots) {
@@ -51,6 +56,20 @@ public final class TaiwanTableScene {
 
     public static List<Piece> build(TaiwanView view) {
         var result = new ArrayList<>(wall(view.wall()));
+        if (view.handling() != null && (view.phase() == top.skyeyefast.mchjong.engine.TaiwanGame.Phase.SHUFFLE
+            || view.phase() == top.skyeyefast.mchjong.engine.TaiwanGame.Phase.BUILD_WALL)) {
+            // Unbuilt sides lie face down in the middle of the table, each tile owned by the seat that builds it.
+            int size = view.wall().size();
+            for (int index = 0; index < size; index++) {
+                int seat = TaiwanWallLayout.side(size, index);
+                if ((view.handling().builtWalls() & 1 << seat) != 0) continue;
+                int slot = index * 53 % size;
+                var random = new java.util.Random(index * 193L + view.roundWind() * 71L + view.dealer() * 17L + view.continuation());
+                result.add(new Piece(Tile.HIDDEN, seat, Area.LOOSE, index,
+                    new Vec3((slot % 12 - 5.5) * .12, TableGeometry.FELT_Y + DEPTH / 2 + slot / 72 * DEPTH,
+                        (slot / 12 % 6 - 2.5) * .19), (random.nextFloat() - .5f) * 50, true, true));
+            }
+        }
         var occupied = new ArrayList<>(result.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
         occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
         for (int seat = 0; seat < 4; seat++) {

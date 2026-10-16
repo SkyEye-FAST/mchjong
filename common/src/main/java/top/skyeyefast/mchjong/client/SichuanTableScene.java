@@ -19,7 +19,9 @@ public final class SichuanTableScene {
     public static final double RIVER_Z = TableIndicator.HALF_WIDTH + HEIGHT / 2 + .005;
     public static final double MELD_LEFT = McrTableScene.MELD_LEFT;
     public static final double RIVER_X = McrTableScene.RIVER_X;
-    public enum Area { WALL, HAND, RIVER, MELD }
+    public enum Area { WALL, HAND, RIVER, MELD, LOOSE }
+    /** The seat-local depth of the middle of a built wall, the destination of a wall-building drag. */
+    public static final double WALL_Z = TiltedWallLayout.compact(14, WIDTH, HEIGHT).position(7).z;
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
                         float yaw, boolean flat, boolean back) {
         public TileDimensions dimensions() { return DIMENSIONS; }
@@ -58,7 +60,20 @@ public final class SichuanTableScene {
 
     public static List<Piece> build(SichuanView view) {
         boolean ended = view.phase() == SichuanGame.Phase.HAND_END || view.phase() == SichuanGame.Phase.MATCH_END;
-        return build(view.wall().slots(), view.seats(), ended, view.wall().eastWestLongWall());
+        var pieces = build(view.wall().slots(), view.seats(), ended, view.wall().eastWestLongWall());
+        if (view.handling() == null || view.phase() != SichuanGame.Phase.SHUFFLE && view.phase() != SichuanGame.Phase.BUILD_WALL) return pieces;
+        // Unbuilt sides lie face down in the middle of the table, each tile owned by the seat that builds it.
+        var result = new ArrayList<>(pieces);
+        for (int index = 0; index < 108; index++) {
+            int seat = SichuanWallLayout.seat(index, view.wall().eastWestLongWall());
+            if ((view.handling().builtWalls() & 1 << seat) != 0) continue;
+            int slot = index * 53 % 108;
+            var random = new java.util.Random(index * 193L + view.handNumber() * 71L);
+            result.add(new Piece(Tile.HIDDEN, seat, Area.LOOSE, index,
+                new Vec3((slot % 12 - 5.5) * .12, TableGeometry.FELT_Y + DEPTH / 2 + slot / 72 * DEPTH,
+                    (slot / 12 % 6 - 2.5) * .19), (random.nextFloat() - .5f) * 50, true, true));
+        }
+        return List.copyOf(result);
     }
 
     static List<Piece> replay(top.skyeyefast.mchjong.engine.SichuanReplayPlayback.Frame frame) {

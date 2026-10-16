@@ -8,8 +8,9 @@ public record McrGameState(int format, long seed, long revision, long decision, 
                            int turn, McrGame.Phase phase, Wall wall, List<Player> players,
                            int claimTile, int claimFrom, McrAction pendingKong, boolean drawWallLast,
                            McrWinContext.KongWin drawKong, List<Reply> replies,
-                           List<McrSettlement.Penalty> penalties, McrSettlement.Result result) {
-    public static final int FORMAT = 5;
+                           List<McrSettlement.Penalty> penalties, McrSettlement.Result result,
+                           boolean manual, List<Integer> stock, ManualHandling.Saved handling) {
+    public static final int FORMAT = 6;
 
     public McrGameState {
         if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR save format: " + format);
@@ -17,7 +18,10 @@ public record McrGameState(int format, long seed, long revision, long decision, 
             || handNumber < 1 || handNumber > 16 || turn < 0 || turn > 3)
             throw new IllegalArgumentException("Invalid MCR save position");
         Objects.requireNonNull(phase);
-        Objects.requireNonNull(wall);
+        stock = List.copyOf(stock);
+        Objects.requireNonNull(handling);
+        if (!Tile.validStandard144Set(stock) || wall == null && (!manual || phase != McrGame.Phase.SHUFFLE))
+            throw new IllegalArgumentException("Invalid MCR equipment state");
         Objects.requireNonNull(drawKong);
         players = List.copyOf(players);
         replies = List.copyOf(replies);
@@ -30,7 +34,6 @@ public record McrGameState(int format, long seed, long revision, long decision, 
     public record Wall(List<Integer> tiles, McrOpening opening, int front, int back) {
         public Wall {
             tiles = List.copyOf(tiles);
-            Objects.requireNonNull(opening);
             if (tiles.size() != McrWallLayout.SLOTS || front < 0 || front > McrWallLayout.SLOTS
                 || back < 0 || back > McrWallLayout.SLOTS)
                 throw new IllegalArgumentException("Invalid MCR wall bounds");
@@ -40,12 +43,18 @@ public record McrGameState(int format, long seed, long revision, long decision, 
                 if (tile != Tile.ABSENT && (tile < 0 || tile >= 144 || !seen.add(tile))
                     || slot % 2 == 1 && tile == Tile.ABSENT && tiles.get(slot - 1) != Tile.ABSENT)
                     throw new IllegalArgumentException("Invalid MCR wall slot: " + slot);
+                if (opening == null) {
+                    if (front != 0 || back != 0 || tile == Tile.ABSENT)
+                        throw new IllegalArgumentException("Unopened MCR wall has missing tiles");
+                    continue;
+                }
                 if (slot < front && tiles.get(McrWallLayout.drawSlot(opening, slot)) != Tile.ABSENT
                     || slot < back && tiles.get(McrWallLayout.replacementSlot(opening, slot)) != Tile.ABSENT)
                     throw new IllegalArgumentException("MCR wall cursor skips an occupied slot");
             }
-            if (front < McrWallLayout.SLOTS && tiles.get(McrWallLayout.drawSlot(opening, front)) == Tile.ABSENT
+            if (opening != null && (front < McrWallLayout.SLOTS && tiles.get(McrWallLayout.drawSlot(opening, front)) == Tile.ABSENT
                 || back < McrWallLayout.SLOTS && tiles.get(McrWallLayout.replacementSlot(opening, back)) == Tile.ABSENT)
+                )
                 throw new IllegalArgumentException("MCR wall cursors must point to the next occupied slots");
         }
     }

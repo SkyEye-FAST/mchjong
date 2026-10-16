@@ -31,6 +31,7 @@ public final class ChineseGameplayFixtures {
                     case DISCARD -> 3;
                     case PASS -> 4;
                     case WIN -> 20;
+                    case SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET -> throw new IllegalStateException("Automatic fixture requested manual setup");
                 }).toList(), random);
                 if (!game.act(seat, game.decision(), index)) throw new IllegalStateException("Rejected MCR fixture action");
                 acted = true;
@@ -57,6 +58,7 @@ public final class ChineseGameplayFixtures {
                 if (actions.isEmpty()) continue;
                 var own = game.view(seat).seats().get(seat);
                 int index = choose(actions.stream().map(action -> switch (action.type()) {
+                    case SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET -> 0;
                     case VOID_SUIT -> (int) own.hand().stream().filter(tile -> Tile.kind(tile) / 9 == action.suit()).count();
                     case CONCEALED_KONG, ADDED_KONG, DISCARD_KONG -> 0;
                     case PUNG -> 1;

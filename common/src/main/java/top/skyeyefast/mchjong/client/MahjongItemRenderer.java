@@ -25,7 +25,7 @@ public final class MahjongItemRenderer implements SpecialModelRenderer<MahjongIt
 
     public static Item[] items() {
         return new Item[]{MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.STOOL_ITEM,
-            MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.BOX_ITEM, MahjongContent.POINT_STICK};
+            MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.BOX_ITEM, MahjongContent.POINT_STICK, MahjongContent.SCORING_CARD};
     }
 
     private MahjongItemRenderer() {}
@@ -52,6 +52,9 @@ public final class MahjongItemRenderer implements SpecialModelRenderer<MahjongIt
             FurnitureMesh.box(pose, buffers, light);
         } else if (stack.is(MahjongContent.CLOTH_ITEM)) {
             FurnitureMesh.foldedCloth(pose, buffers, light, MahjongSupplies.color(stack));
+        } else if (stack.is(MahjongContent.SCORING_CARD)) {
+            pose.translate(0, .3, 0);
+            FurnitureMesh.card(pose, buffers, light, stack.getOrDefault(MahjongComponents.POINTS, 0));
         } else if (stack.is(MahjongContent.POINT_STICK)) {
             pose.translate(0, .3, 0);
             FurnitureMesh.stick(pose, buffers, light, stack.getOrDefault(MahjongComponents.POINTS, 0));

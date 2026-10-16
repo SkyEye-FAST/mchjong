@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
-/** Shared machine and outward-facing ordinary-table readouts. */
+/** Shared automatic-table machine readouts. */
 public final class TableIndicator {
     public static final double HALF_WIDTH = .265;
     private static final float SURFACE = (float) TableGeometry.FELT_Y + .039f;
@@ -49,36 +49,6 @@ public final class TableIndicator {
 
     public static void render(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
         render(TableBoardState.live(view), view.phase() == RiichiView.Phase.TURN || view.phase() == RiichiView.Phase.REACTION, true, pose, buffers, light);
-    }
-    /** The upper outer rim leaves the felt and the point-stick drawers clear. */
-    public static void renderOrdinary(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
-        var vertices = buffers.getBuffer(TileRenderTypes.BACKS);
-        for (int seat = 0; seat < view.seats().size(); seat++) {
-            pose.pushPose();
-            pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
-            pose.translate(0, .93, TableGeometry.OUTER_HALF_WIDTH + .002);
-            pose.mulPose(Axis.XP.rotationDegrees(90));
-            pose.translate(0, -SURFACE, 0);
-            TileMesh.box(pose, vertices, -1.28f, SURFACE, -.0675f, 1.28f, SURFACE + .001f, .0675f, 0xff101e23, light);
-            number(pose, vertices, view.seats().get(seat).points(), -.72f, -.055f, .11f, .50f, DIGIT, light);
-            for (int tile = 0; tile < 3; tile++)
-                panel(pose, vertices, .64f + tile * .025f, -.035f, .659f + tile * .025f, .035f, DIGIT, light);
-            number(pose, vertices, view.remaining(), 1.0f, -.055f, .11f, .24f, DIGIT, light);
-            pose.popPose();
-        }
-        for (int seat = 0; seat < view.seats().size(); seat++) {
-            pose.pushPose();
-            pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
-            pose.translate(0, .93, TableGeometry.OUTER_HALF_WIDTH + .002);
-            pose.mulPose(Axis.XP.rotationDegrees(90));
-            pose.translate(0, -SURFACE, 0);
-            label(pose, buffers, Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())] + ".short"),
-                -1.15f, -.025f, .20f, .065f, light);
-            if (seat == view.dealer())
-                label(pose, buffers, Component.translatable("ui.mchjong.dealer"), -1.15f, .038f, .25f, .05f, light);
-            label(pose, buffers, RiichiTableScreen.roundName(view), .07f, 0, .94f, .10f, light);
-            pose.popPose();
-        }
     }
     public static void render(top.skyeyefast.mchjong.engine.McrView view, PoseStack pose, MultiBufferSource buffers, int light) {
         render(TableBoardState.live(view), view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.TURN

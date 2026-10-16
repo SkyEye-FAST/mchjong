@@ -29,6 +29,13 @@ public final class McrTableScreen extends Screen {
     private TableTurnClock turnClock;
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
     private int actionTop, actionHeight;
+    private final TableHandling.Drag handlingDrag = new TableHandling.Drag();
+    private long handlingDecision = -1;
+    private final TableDice dice = new TableDice(() -> {
+        var current = view();
+        if (current != null) for (int i = 0; i < current.game().actions().size(); i++)
+            if (current.game().actions().get(i).type() == McrAction.Type.PICK_UP_DICE) { send(current, i); return; }
+    });
     private final TableAutomation automation = new TableAutomation(this, this::automationOptions, this::rebuild);
 
     private List<TableAutomation.Toggle> automationOptions() {
@@ -83,6 +90,7 @@ public final class McrTableScreen extends Screen {
         if (shownRevision != view.revision()) pending = false;
         shownRevision = view.revision();
         if (decision != game.decision()) {
+            handlingDrag.clear();
             decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT;
         }
         hand = null;
@@ -100,13 +108,21 @@ public final class McrTableScreen extends Screen {
         turnClock = addRenderableWidget(new TableTurnClock());
         TableToolbar.build(this, pos, room, uiWidth(), immersive(), this::toggleView)
             .forEach(this::addRenderableWidget);
+        addRenderableWidget(dice);
+        // As at Riichi mahjong tables, seated payments use the results screen's drawer button.
+        if (immersive() && game.handling() != null)
+            addRenderableWidget(TableToolbar.drawer(pos, game.viewerSeat(), 16, 16, 2, handlingDrag::clear));
         automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         var choices = new ArrayList<Integer>();
         for (int i = 0; i < game.actions().size(); i++)
             if (game.actions().get(i).type() != McrAction.Type.DISCARD
-                && game.actions().get(i).type() != McrAction.Type.DRAW
-                && game.actions().get(i).type() != McrAction.Type.REPLACE_FLOWER) choices.add(i);
+                && game.actions().get(i).type() != McrAction.Type.REPLACE_FLOWER
+                && (game.handling() == null ? game.actions().get(i).type() != McrAction.Type.DRAW
+                    : immersive() || switch (game.actions().get(i).type()) {
+                        case SHUFFLE, BUILD_WALL, TAKE_PACKET, DRAW, PICK_UP_DICE -> false;
+                        default -> true;
+                    })) choices.add(i);
         var grid = TableActionLayout.of(choices.size(), uiWidth(), uiHeight(), hand == null ? -1 : hand.top(),
             immersive(), automation.available() && !immersive() ? automation.width(uiWidth()) + 8 : 0);
         actionTop = grid.top(); actionHeight = grid.spanHeight();
@@ -159,6 +175,10 @@ public final class McrTableScreen extends Screen {
         return view() != null && piece.area() == McrTableScene.Area.HAND && piece.seat() == view().game().viewerSeat();
     }
     public int highlight(McrTableScene.Piece piece) {
+        if (!immersive() && view() != null && TableSettings.get().highlightTiles) {
+            if (handlingDrag.active()) return handlingOffset(piece).lengthSqr() > 0 ? MahjongUi.POSITIVE : 0;
+            if (TableHandling.context(view().game()).source(piece.area().name(), piece.seat(), piece.index(), piece.tile())) return MahjongUi.ACCENT;
+        }
         if (immersive() || !TableSettings.get().highlightTiles || !ownHand(piece)) return 0;
         int focus = hovered;
         return piece.tile() == selected ? MahjongUi.ACCENT : piece.tile() == focus ? MahjongUi.POSITIVE : 0;
@@ -169,6 +189,37 @@ public final class McrTableScreen extends Screen {
                 && x >= widget.getX() && x < widget.getRight() && y >= widget.getY() && y < widget.getBottom());
     }
     private SeatedTableProjection projection() { return SeatedTableProjection.capture(pos, width, height, framePartial); }
+    public net.minecraft.world.phys.Vec3 handlingOffset(McrTableScene.Piece piece) {
+        return handlingDrag.offset(piece.area().name(), piece.seat(), piece.index(), piece.tile(), piece.position());
+    }
+    private net.minecraft.world.phys.Vec3 tablePoint(double x, double y) {
+        var pointer = projection().pointer(x, y);
+        double distance = (top.skyeyefast.mchjong.world.TableGeometry.FELT_Y + .05 - pointer.origin().y) / pointer.ray().y;
+        return distance > 0 && Double.isFinite(distance) ? pointer.origin().add(pointer.ray().scale(distance)) : null;
+    }
+    private boolean beginHandling(double x, double y) {
+        if (immersive() || pending || view() == null || view().paused() || overWidget(x, y)) return false;
+        var context = TableHandling.context(view().game());
+        if (context.action() < 0) return false;
+        var pointer = projection().pointer(x, y);
+        double nearest = Double.POSITIVE_INFINITY;
+        McrTableScene.Piece picked = null;
+        var scene = McrTableScene.build(view().game());
+        for (var piece : scene) {
+            double distance = TilePicking.distanceSquared(TableAnimation.of(table()).worldPose(piece, Util.getMillis()), piece.dimensions(), pointer.origin(), pointer.ray(), false);
+            if (distance < nearest) { nearest = distance; picked = piece; }
+        }
+        if (picked == null) return false;
+        var hit = picked;
+        // A lone lower tile can hide behind the next full stack, so that neighbouring stack also starts the drag.
+        if (!context.source(hit.area().name(), hit.seat(), hit.index(), hit.tile()) && (hit.area() != McrTableScene.Area.WALL
+            || scene.stream().noneMatch(piece -> context.source(piece.area().name(), piece.seat(), piece.index(), piece.tile())
+                && piece.position().distanceToSqr(hit.position()) < .03))) return false;
+        handlingDecision = view().game().decision();
+        handlingDrag.begin(context, tablePoint(x, y));
+        setFocused(null);
+        return true;
+    }
     private int pick(double x, double y) {
         var view = view();
         if (view == null || table().clientTableRoom().exitVote() != null || overWidget(x, y)) return Tile.ABSENT;
@@ -199,6 +250,12 @@ public final class McrTableScreen extends Screen {
         int mx = (int) Math.floor(transform.localX(mouseX)), my = (int) Math.floor(transform.localY(mouseY));
         transform.begin(g);
         try {
+            var dicePoint = immersive() ? null : projection().project(new net.minecraft.world.phys.Vec3(0, top.skyeyefast.mchjong.world.TableGeometry.FELT_Y + .075, -.06), .01);
+            int diceWidth = dicePoint == null ? 24 : Math.max(24, (int) (dicePoint.scale() * .24));
+            dice.update(view.game(), dicePoint == null ? -100 : (int) dicePoint.x() - diceWidth / 2,
+                dicePoint == null ? -100 : (int) dicePoint.y() - 10, diceWidth, 20, !immersive(), pending);
+            if (!immersive() && handlingDrag.active()) TableHandling.renderTarget(g,
+                projection().project(TableHandling.context(view.game()).destination(), .01), width, mx, my);
             if (immersive()) {
                 g.fill(0, 0, TableCanvas.WIDTH, TableCanvas.HEIGHT, MahjongUi.INPUT);
                 var deck = table().clientMcrDeck(); var animation = TableAnimation.of(table()); long now = Util.getMillis();
@@ -235,13 +292,15 @@ public final class McrTableScreen extends Screen {
             super.extractRenderState(g, mx, my, partialTick);
             if (table().clientTableRoom().exitVote() == null && (turnClock == null || !turnClock.visible)
                 && TableSettings.get().show(TableSettings.Information.HELP)) {
-                var help = Component.translatable("ui.mchjong.help." + TableSettings.get().discardMode.name().toLowerCase(java.util.Locale.ROOT));
+                var help = Component.translatable(view.game().handling() != null && TableHandling.context(view.game()).action() >= 0
+                    ? TableHandling.context(view.game()).help() : "ui.mchjong.help." + TableSettings.get().discardMode.name().toLowerCase(java.util.Locale.ROOT));
                 g.pose().pushMatrix(); g.pose().scale(s, s);
                 MahjongUi.text(g, font, help, immersive() ? 106 : 8, uiHeight() / s - 11,
                     uiWidth() / s - (immersive() ? 118 : 16), MahjongUi.MUTED, false);
                 g.pose().popMatrix();
             }
             if (hovered >= 0 && table().clientTableRoom().exitVote() == null) g.setTooltipForNextFrame(font, tileLabel(hovered), mx, my);
+            dice.renderTooltip(g, mx, my);
             g.pose().popMatrix();
         } finally { transform.end(g); }
     }
@@ -301,7 +360,7 @@ public final class McrTableScreen extends Screen {
         return new net.minecraft.client.gui.navigation.ScreenRectangle(x, y,
             (int) Math.min(width, Math.ceil(right)) - x, (int) Math.min(height, Math.ceil(bottom)) - y);
     }
-    private void toggleView() { presentation.toggle(); rebuild(); }
+    private void toggleView() { handlingDrag.clear(); presentation.toggle(); rebuild(); }
     public void resetView() { presentation.reset(); }
     @Override public void tick() { presentation.tick(); }
     private void cancelSelection() { selected = lastClicked = Tile.ABSENT; rebuild(); }
@@ -315,16 +374,26 @@ public final class McrTableScreen extends Screen {
             else cancelSelection();
             return true;
         }
-        if (button == 0) { int tile = pick(x, y); if (tile >= 0) { choose(tile); return true; } }
+        if (button == 0) {
+            if (beginHandling(x, y)) return true;
+            int tile = pick(x, y); if (tile >= 0) { choose(tile); return true; }
+        }
         return false;
     }
     @Override public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent event) {
         double x = event.x(), y = event.y(); int button = event.button();
+        if (button == 0 && handlingDrag.active()) {
+            double localX = canvasX(x), localY = canvasY(y);
+            int action = handlingDrag.release(overWidget(localX, localY) ? null : tablePoint(localX, localY));
+            if (view() != null && view().game().decision() == handlingDecision && action >= 0) send(view(), action);
+            return true;
+        }
         if (presentation.releaseDrag(button, this::cancelSelection)) return true;
         return super.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(canvasX(x), canvasY(y), event.buttonInfo()));
     }
     @Override public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent event, double dx, double dy) {
         double x = event.x(), y = event.y(); int button = event.button();
+        if (button == 0 && handlingDrag.active()) { handlingDrag.move(tablePoint(canvasX(x), canvasY(y))); return true; }
         if (presentation.drag(button, dx, dy, MahjongUi.shiftDown())) return true;
         double scale = canvas().scale();
         return super.mouseDragged(new net.minecraft.client.input.MouseButtonEvent(canvasX(x), canvasY(y), event.buttonInfo()), dx / scale, dy / scale);
@@ -338,6 +407,7 @@ public final class McrTableScreen extends Screen {
 
     @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
         int key = event.key();
+        if (key == GLFW.GLFW_KEY_ESCAPE && handlingDrag.active()) { handlingDrag.clear(); return true; }
         if (key == GLFW.GLFW_KEY_ESCAPE && selected >= 0) { cancelSelection(); return true; }
         return super.keyPressed(event);
     }

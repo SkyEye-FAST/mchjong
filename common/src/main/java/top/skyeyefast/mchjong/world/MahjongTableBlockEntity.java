@@ -146,7 +146,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     private void synchronizeEquipment() {
-        boolean active = host != null && host.riichi() != null && !host.session().lobby()
+        boolean active = host != null && !host.session().lobby()
             && host.session().lifecycle() != TableSession.Lifecycle.FINISHED;
         if (automatic() || syncingEquipment || equipment.matchActive() == active) return;
         syncingEquipment = true;
@@ -489,31 +489,40 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         return side >= 0 && side < 4 && !automatic() && unreadableSave == null && player.level() == level
             && !isRemoved() && player.isAlive() && !player.isRemoved() && !player.isSpectator()
             && player.distanceToSqr(worldPosition.getCenter()) <= 64 && level.getBlockEntity(worldPosition) == this
-            && (equipmentEditable() || player instanceof ServerPlayer server && participantGame(server) != null);
+            && (equipmentEditable() || player instanceof ServerPlayer server && participantRoom(server) != null);
     }
 
     public boolean canWithdrawSticks(net.minecraft.world.entity.player.Player player, int side) {
         if (!canUseSticks(player, side)) return false;
         if (equipmentEditable()) return true;
-        RiichiSession game = participantSession((ServerPlayer) player);
+        TableSession game = participantRoom((ServerPlayer) player);
         return game != null && (game.seatOf(player.getUUID()) == side || game.isHost(player.getUUID()) && game.trainingSeat(side));
     }
 
     public boolean canReceiveSticks(int side) {
-        RiichiSession game = serverRiichiSession();
-        return side >= 0 && side < (game == null ? 4 : game.rules().players());
+        TableSession game = serverSession();
+        return side >= 0 && side < (game == null ? 4 : game.capacity());
     }
 
     public int pointScore(int side) {
+        if (serverSession() instanceof McrSession mcr) {
+            var view = mcr.view(null);
+            return view == null ? 500 : 500 + view.game().seats().get(side).points();
+        }
+        if (serverSession() instanceof TaiwanSession taiwan)
+            return taiwan.game() == null ? 500 : Math.toIntExact(500 + taiwan.scores().get(side));
+        if (serverSession() instanceof SichuanSession sichuan)
+            return sichuan.game() == null ? 500 : 500 + sichuan.game().scores().get(side);
         RiichiGame game = serverGame();
         return game == null || side >= game.rules().players() ? 0 : game.points(side);
     }
 
     public void openSticks(ServerPlayer player, int side) {
+        serverSession();
         if (!canUseSticks(player, side)) return;
         player.openMenu(new net.minecraft.world.SimpleMenuProvider(
             (id, inventory, owner) -> new top.skyeyefast.mchjong.item.PointStickMenu(id, inventory, this, side),
-            Component.translatable("sticks.mchjong.title", side + 1)));
+            Component.translatable(equipment.cards() ? "cards.mchjong.title" : "sticks.mchjong.title", side + 1)));
     }
 
     public void use(ServerPlayer player, net.minecraft.world.phys.BlockHitResult hit) {
@@ -841,7 +850,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public void configureVariant(ServerPlayer player, TableVariantPayload payload) {
         TableSession session = serverSession();
-        if (session == null || !automatic() || !session.tableId().equals(payload.tableId())
+        if (session == null || !session.tableId().equals(payload.tableId())
             || authorizedViewer(player) == null
             || session.roomView(player.getUUID()).seating() != top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             || !host.selectVariant(player.getUUID(), payload.incarnation(), payload.decision(), payload.variant())) return;
@@ -940,6 +949,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         boolean changed = switch (payload.operation()) {
             case CONVENIENCE_HINTS -> session.configureConvenienceHints(player.getUUID(), payload.token(), payload.enabled());
+            case MANUAL_TIMEOUT -> session.configureManualTimeout(player.getUUID(), payload.token(), payload.enabled());
             case REQUEST_EXIT -> payload.token() == session.decision() && session.requestExit(player.getUUID());
             case ANSWER_EXIT -> session.answerExit(player.getUUID(), payload.token(), payload.enabled());
             case RESOLVE_LEAVE -> payload.token() == session.decision()
@@ -984,7 +994,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             case AUTO_SORT -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.SORT, payload.enabled());
             case AUTO_KITA -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.KITA, payload.enabled());
             case OPEN_HANDS -> session.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
-            case MANUAL_TIMEOUT -> session.configureManualTimeout(player.getUUID(), payload.token(), payload.enabled());
         };
         if (changed) {
             refreshParticipants(false);

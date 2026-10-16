@@ -38,6 +38,22 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.stock.kit.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.cards"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:blank_scoring_cards"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.cards.kit"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.cards.balance"
     }
   ]
 }

@@ -19,7 +19,6 @@ public final class RiichiSession extends TableSession {
     private transient List<ExternalBot> externalBots = List.of();
     final List<ReplayMatch> archiveQueue = new ArrayList<>();
     final Map<UUID, Integer> pendingExperience = new java.util.HashMap<>();
-    private int lobbyTicks;
 
     public RiichiSession(UUID tableId, RiichiPreset preset, long seed) {
         this(tableId, preset.config(), seed);
@@ -312,20 +311,7 @@ public final class RiichiSession extends TableSession {
 
     @Override public void tick() {
         if (game != null) { game.tick(); return; }
-        if (!tickRoom()) return;
-        if (++lobbyTicks % 12 != 0) return;
-        if (seating.stage == RoomSeating.Stage.DRAWING)
-            for (int seat = 0; seat < capacity; seat++)
-                if (participants[seat].id != null && !participants[seat].bot && seating.winds[seat] < 0) return;
-        for (int seat = 0; seat < capacity; seat++) if (participants[seat].bot && participants[seat].externalBotId == null) {
-            var actions = roomActions(seat);
-            int ready = actions.indexOf(new RoomAction(RoomAction.Type.READY));
-            if (ready >= 0) { actRoom(participants[seat].id, decision, actions.get(ready)); return; }
-            for (RoomAction action : actions) if (action.type() == RoomAction.Type.DRAW_WIND) {
-                actRoom(participants[seat].id, decision, action);
-                return;
-            }
-        }
+        if (tickRoom()) tickLobbyBots();
     }
 
     @Override protected void rosterChanged() {

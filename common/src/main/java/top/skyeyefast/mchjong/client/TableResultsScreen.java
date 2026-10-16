@@ -59,6 +59,12 @@ abstract class TableResultsScreen extends Screen {
             TableExitControls.voteButtons(pos, p.room(), w, h, s).forEach(this::addRenderableWidget); return;
         }
         TableToolbar.build(this, pos, p.room(), w, immersive(), this::toggleView).forEach(this::addRenderableWidget);
+        if (p.room().manual() && p.room().viewerSeat() >= 0) {
+            // The bottom-right corner stays clear of the status panel, results tabs and confirmation button.
+            var drawer = TableToolbar.drawer(pos, p.room().viewerSeat(), 0, h - 48 * s, s, () -> {});
+            drawer.setX(w - 10 * s - drawer.getWidth());
+            addRenderableWidget(drawer);
+        }
         int span = Math.min(w - 20 * s, 520 * s), left = (w - span) / 2;
         if (TableSettings.get().show(TableSettings.Information.RESULTS)) {
             addRenderableWidget(new MahjongButton(10 * s, h - 48 * s, 100 * s, 20 * s,

@@ -25,6 +25,12 @@ public final class TaiwanSceneRenderer {
     static void render(List<TaiwanTableScene.Piece> pieces, TaiwanDeck deck, PoseStack pose, MultiBufferSource buffers, int light,
                        java.util.function.ToIntFunction<TaiwanTableScene.Piece> highlight, java.util.function.Predicate<TaiwanTableScene.Piece> selected,
                        TableAnimation animation, long now) {
+        render(pieces, deck, pose, buffers, light, highlight, selected, animation, now, piece -> net.minecraft.world.phys.Vec3.ZERO);
+    }
+
+    static void render(List<TaiwanTableScene.Piece> pieces, TaiwanDeck deck, PoseStack pose, MultiBufferSource buffers, int light,
+                       java.util.function.ToIntFunction<TaiwanTableScene.Piece> highlight, java.util.function.Predicate<TaiwanTableScene.Piece> selected,
+                       TableAnimation animation, long now, java.util.function.Function<TaiwanTableScene.Piece, net.minecraft.world.phys.Vec3> offset) {
         var order = deck.material() == top.skyeyefast.mchjong.item.TileMaterial.GLASS
             ? new Layer[]{Layer.FACE, Layer.BACK, Layer.BODY, Layer.PATTERN, Layer.OUTLINE} : Layer.values();
         for (var layer : order) {
@@ -40,7 +46,7 @@ public final class TaiwanSceneRenderer {
                 if (layer == Layer.OUTLINE && color == 0) continue;
                 pose.pushPose();
                 var frame = animation == null ? new TableAnimation.Pose(piece.position(), piece.yaw(), piece.flat() ? piece.back() ? 90 : -90 : 0, piece.tile(), piece.back()) : animation.worldPose(piece, now);
-                var position = frame.position();
+                var position = frame.position().add(offset.apply(piece));
                 pose.translate(position.x, position.y + (selected.test(piece) ? .035 : 0), position.z);
                 pose.mulPose(Axis.YP.rotationDegrees(frame.yaw()));
                 boolean faceDown = frame.back() && frame.pitch() > 0;

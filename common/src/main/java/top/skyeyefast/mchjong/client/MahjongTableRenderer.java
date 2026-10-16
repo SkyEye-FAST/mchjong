@@ -98,20 +98,26 @@ public final class MahjongTableRenderer
             var screen = TaiwanTableScreen.active(Minecraft.getInstance().screen);
             var active = screen != null && screen.tablePos().equals(state.blockPos) ? screen : null;
             TaiwanSceneRenderer.render(state.taiwanPieces, state.taiwanDeck, pose, buffers, state.lightCoords,
-                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece), state.tableAnimation, state.now);
+                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece), state.tableAnimation, state.now,
+                piece -> active == null ? net.minecraft.world.phys.Vec3.ZERO : active.handlingOffset(piece));
             if (state.automatic) TableIndicator.render(state.taiwanView, pose, buffers, state.lightCoords);
+            TableDice.renderWorld(state.taiwanView.game(), pose, collector, state.lightCoords);
         } else if (state.sichuanPieces != null && state.sichuanDeck != null) {
             var screen = SichuanTableScreen.active(Minecraft.getInstance().screen);
             var active = screen != null && screen.tablePos().equals(state.blockPos) ? screen : null;
             SichuanSceneRenderer.render(state.sichuanPieces, state.sichuanDeck, pose, buffers, state.lightCoords,
-                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece), state.tableAnimation, state.now);
+                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece), state.tableAnimation, state.now,
+                piece -> active == null ? net.minecraft.world.phys.Vec3.ZERO : active.handlingOffset(piece));
             if (state.automatic) TableIndicator.render(state.sichuanView, pose, buffers, state.lightCoords);
+            TableDice.renderWorld(state.sichuanView, pose, collector, state.lightCoords);
         } else if (state.mcrPieces != null && state.mcrDeck != null) {
             var screen = Minecraft.getInstance().screen instanceof McrTableScreen mcr
                 && mcr.tablePos().equals(state.blockPos) ? mcr : null;
             McrSceneRenderer.render(state.mcrPieces, state.mcrDeck, pose, buffers, state.lightCoords,
-                piece -> screen == null ? 0 : screen.highlight(piece), piece -> screen != null && screen.selected(piece), state.tableAnimation, state.now);
+                piece -> screen == null ? 0 : screen.highlight(piece), piece -> screen != null && screen.selected(piece), state.tableAnimation, state.now,
+                piece -> screen == null ? net.minecraft.world.phys.Vec3.ZERO : screen.handlingOffset(piece));
             if (state.automatic) TableIndicator.render(state.mcrView, pose, buffers, state.lightCoords);
+            TableDice.renderWorld(state.mcrView, pose, collector, state.lightCoords);
         }
         pose.popPose();
         if (state.view == null) {
@@ -128,9 +134,8 @@ public final class MahjongTableRenderer
         }
         tiles(state, pose, buffers, Layer.FACE);
         if (state.automatic) TableIndicator.render(state.view, pose, buffers, state.lightCoords);
-        else TableIndicator.renderOrdinary(state.view, pose, buffers, state.lightCoords);
         RiichiDeposits.render(state.view, state.automatic, state.animation, state.animated, state.now, pose, buffers, collector, state.lightCoords);
-        RiichiDice.renderWorld(state.view, pose, collector, state.lightCoords);
+        TableDice.renderWorld(state.view, pose, collector, state.lightCoords);
         if (glass) {
             tiles(state, pose, buffers, Layer.BACK);
             tiles(state, pose, buffers, Layer.BODY);

@@ -8,10 +8,13 @@ import java.util.Objects;
 
 /** A single-threaded, server-owned MCR match. Seats are fixed indices in turn order. */
 public final class McrGame {
-    public enum Phase { INITIAL_FLOWERS, REPLACE_FLOWER, DRAW, TURN, REACTION, HAND_END, MATCH_END }
+    public enum Phase { SHUFFLE, BUILD_WALL, DEAL, INITIAL_FLOWERS, REPLACE_FLOWER, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
     private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     private final long seed;
+    private boolean manual;
+    private List<Integer> stock;
+    private ManualHandling handling = new ManualHandling();
     private final McrPlayerState[] players = {new McrPlayerState(), new McrPlayerState(), new McrPlayerState(), new McrPlayerState()};
     private final boolean[] winForbidden = new boolean[4];
     private final List<McrSettlement.Penalty> penalties = new ArrayList<>();
@@ -32,7 +35,7 @@ public final class McrGame {
     private List<Integer> initialWall;
     private List<List<Integer>> initialHands;
 
-    public McrGame(long seed) { this(seed, new McrWall(seed)); }
+    public McrGame(long seed) { this(seed, new McrWall(seed)); stock = Tile.standard144Set(); }
 
     /** Physical placement and opening are private engine inputs, never client-claimed draw order. */
     public McrGame(long seed, List<Integer> physicalWall, McrOpening opening) {
@@ -40,23 +43,48 @@ public final class McrGame {
     }
 
     /** Shuffles a copy of the complete 144-tile stock; invalid stock throws IllegalArgumentException. */
-    public static McrGame fromStock(long seed, List<Integer> stock) { return new McrGame(seed, new McrWall(seed, 0, stock)); }
+    public static McrGame fromStock(long seed, List<Integer> stock) {
+        var game = new McrGame(seed, new McrWall(seed, 0, stock));
+        game.stock = List.copyOf(stock);
+        return game;
+    }
+
+    public static McrGame fromStock(long seed, List<Integer> stock, boolean manual) {
+        if (!manual) return fromStock(seed, stock);
+        return new McrGame(seed, stock);
+    }
+
+    private McrGame(long seed, List<Integer> stock) {
+        if (!Tile.validStandard144Set(stock)) throw new IllegalArgumentException("Invalid MCR stock");
+        this.seed = seed;
+        this.stock = List.copyOf(stock);
+        manual = true;
+        startHand(null);
+    }
 
     private McrGame(long seed, McrWall wall) {
         this.seed = seed;
+        stock = wall.tiles();
         startHand(wall);
     }
 
     /** Rebuilds one archived hand from its sealed opening, without a future-wall seed. */
-    static McrGame replayHand(int number, List<Integer> layout, McrOpening opening, List<Integer> points) {
+    static McrGame replayHand(int number, List<Integer> layout, McrOpening opening, List<Integer> points, boolean manual) {
         if (number < 1 || number > 16 || points.size() != 4 || opening.dealer() != (number - 1) % 4)
             throw new IllegalArgumentException("Invalid MCR replay opening");
         var game = new McrGame(0, number - 1, layout, opening, points);
+        game.manual = manual;
+        if (manual) {
+            game.handling.builtWalls = 15;
+            game.handling.packets = 16;
+            game.rebuildChoices();
+        }
         return game;
     }
 
     private McrGame(long seed, int index, List<Integer> layout, McrOpening opening, List<Integer> points) {
         this.seed = seed;
+        stock = List.copyOf(layout);
         handIndex = index;
         for (int seat = 0; seat < 4; seat++) players[seat].points = points.get(seat);
         startHand(new McrWall(layout, opening));
@@ -64,12 +92,16 @@ public final class McrGame {
 
     private McrGame(McrGameState state) {
         seed = state.seed();
+        manual = state.manual();
+        stock = state.stock();
+        handling = ManualHandling.restore(state.handling());
         revision = Math.addExact(state.revision(), 1);
         decision = Math.addExact(state.decision(), 1);
         handIndex = state.handNumber() - 1;
         turn = state.turn();
         phase = state.phase();
-        wall = McrWall.restore(state.wall());
+        wall = state.wall() == null ? null : McrWall.restore(state.wall());
+        if (manual) initialWall = new McrWall(seed + WALL_SEED_STEP * handIndex, dealer(), stock, false).tiles();
         claimTile = state.claimTile();
         claimFrom = state.claimFrom();
         pendingKong = state.pendingKong();
@@ -114,7 +146,8 @@ public final class McrGame {
             if (replies[seat] != null) submitted.add(new McrGameState.Reply(seat, replies[seat]));
         }
         return new McrGameState(McrGameState.FORMAT, seed, revision, decision, handNumber(), turn, phase,
-            wall.save(), seats, claimTile, claimFrom, pendingKong, drawWallLast, drawKong, submitted, penalties, result);
+            wall == null ? null : wall.save(), seats, claimTile, claimFrom, pendingKong, drawWallLast, drawKong, submitted, penalties, result,
+            manual, stock, handling.save());
     }
 
     /** Does not deal, settle, apply penalties or resolve pending responses a second time. */
@@ -128,8 +161,9 @@ public final class McrGame {
     public int turn() { return turn; }
     public int roundWind() { return Tile.EAST + handIndex / 4; }
     public int seatWind(int seat) { checkSeat(seat); return Tile.EAST + Math.floorMod(seat - dealer(), 4); }
-    public int remaining() { return wall.remaining(); }
-    public McrOpening opening() { return wall.opening(); }
+    public boolean manual() { return manual; }
+    public int remaining() { return wall == null ? 144 : wall.remaining(); }
+    public McrOpening opening() { return wall == null ? null : wall.opening(); }
     public int points(int seat) { return player(seat).points; }
     public int drawn(int seat) { return player(seat).drawn; }
     public boolean winForbidden(int seat) { checkSeat(seat); return winForbidden[seat]; }
@@ -146,7 +180,70 @@ public final class McrGame {
     List<Integer> initialWall() { return initialWall; }
     List<List<Integer>> initialHands() { return initialHands; }
 
-    List<Integer> publicWall() { return wall.tiles().stream().map(tile -> tile == Tile.ABSENT ? Tile.ABSENT : Tile.HIDDEN).toList(); }
+    List<Integer> publicWall() {
+        if (wall == null) return java.util.Collections.nCopies(144, Tile.ABSENT);
+        var result = new ArrayList<Integer>(144);
+        for (int slot = 0; slot < 144; slot++) result.add(wall.tiles().get(slot) == Tile.ABSENT
+            || phase == Phase.BUILD_WALL && (handling.builtWalls & 1 << McrWallLayout.seat(McrWallLayout.stackOfSlot(slot))) == 0
+            ? Tile.ABSENT : Tile.HIDDEN);
+        return result;
+    }
+
+    boolean physicalPhase() { return manual && handlingHost().stage() != ManualHandling.Stage.NONE; }
+
+    ManualHandlingView handlingView() {
+        if (!manual) return null;
+        int count = phase == Phase.DEAL ? handlingHost().packetSize(handling.packets)
+            : physicalPhase() && handlingHost().stage() == ManualHandling.Stage.DRAW ? 1 : 0;
+        int source = count == 0 ? -1 : phase == Phase.DEAL ? McrWallLayout.initialDeal(opening()).get(dealOffset()).slot()
+            : phase == Phase.INITIAL_FLOWERS || phase == Phase.REPLACE_FLOWER || handling.replacement ? wall.nextReplacementSlot() : wall.nextDrawSlot();
+        return new ManualHandlingView(handling.builtWalls, source, count,
+            opening() == null ? 0 : opening().firstRoll().first(), opening() == null ? 0 : opening().firstRoll().second(), 0, handling.diceHeld);
+    }
+
+    private int dealOffset() { return handling.packets < 12 ? handling.packets * 4 : 48 + (handling.packets == 12 ? 0 : handling.packets - 11); }
+
+    private ManualHandling.Host handlingHost() {
+        return new ManualHandling.Host() {
+            public ManualHandling.Stage stage() {
+                return switch (phase) {
+                    case SHUFFLE -> ManualHandling.Stage.SHUFFLE;
+                    case BUILD_WALL -> ManualHandling.Stage.BUILD_WALL;
+                    case DEAL -> ManualHandling.Stage.DEAL;
+                    case DRAW, INITIAL_FLOWERS, REPLACE_FLOWER -> ManualHandling.Stage.DRAW;
+                    default -> ManualHandling.Stage.NONE;
+                };
+            }
+            public int seats() { return 4; }
+            // After three rounds of four, the dealer takes two tiles and each other player takes one.
+            public int packetSize(int packet) { return packet < 12 ? 4 : packet == 12 ? 2 : 1; }
+            public int dealer() { return McrGame.this.dealer(); }
+            public int turn() { return turn; }
+            public void phase(ManualHandling.Stage stage) { changePhase(Phase.valueOf(stage.name())); }
+            public void shuffled() {
+                wall = new McrWall(seed + WALL_SEED_STEP * handIndex, dealer(), stock, false);
+                initialWall = wall.tiles();
+            }
+            public void opened() { wall.open(seed + WALL_SEED_STEP * handIndex, dealer()); }
+            public void packet(int seat, int count) {
+                var plan = McrWallLayout.initialDeal(opening());
+                int offset = dealOffset();
+                int end = offset + count;
+                for (int index = offset; index < end; index++) {
+                    int tile = wall.takeRaw(plan.get(index).slot());
+                    players[seat].hand.add(tile);
+                    if (seat == dealer()) players[seat].drawn = tile;
+                }
+            }
+            public void dealt() { finishDeal(); }
+            public void draw() {
+                if (phase == Phase.INITIAL_FLOWERS || phase == Phase.REPLACE_FLOWER) replaceFlower();
+                else drawNow(handling.replacement);
+            }
+            public void next(int seat) { turn = (seat + 1) % 4; }
+            public void revised() { revision++; }
+        };
+    }
     boolean responded(int seat) { checkSeat(seat); return replies[seat] != null; }
 
     /** Engine inspection is private, not a recipient-filtered network snapshot. */
@@ -164,12 +261,13 @@ public final class McrGame {
         if (seat < 0 || seat >= 4 || expectedDecision != decision || replies[seat] != null
             || actionIndex < 0 || actionIndex >= choices.get(seat).size()) return false;
         McrAction action = choices.get(seat).get(actionIndex);
-        if (phase == Phase.REACTION) {
+        if (physicalPhase()) handling.act(handlingHost(), seat, ManualHandling.Action.valueOf(action.type().name()));
+        else if (phase == Phase.REACTION) {
             replies[seat] = action;
             if (responsesComplete()) resolveReactions();
         } else {
             switch (action.type()) {
-                case DRAW -> draw(false);
+                case DRAW -> drawNow(false);
                 case REPLACE_FLOWER -> replaceFlower();
                 case DISCARD -> discard(action.tiles().get(0));
                 case WIN -> declareSelfDraw();
@@ -191,14 +289,15 @@ public final class McrGame {
     public boolean nextHand() {
         if (phase != Phase.HAND_END) return false;
         handIndex++;
-        startHand(new McrWall(seed + WALL_SEED_STEP * handIndex, dealer(), Tile.standard144Set()));
+        startHand(manual ? null : new McrWall(seed + WALL_SEED_STEP * handIndex, dealer(), stock));
         revision = Math.addExact(revision, 1);
         return true;
     }
 
     private void startHand(McrWall nextWall) {
-        wall = Objects.requireNonNull(nextWall);
-        initialWall = wall.tiles();
+        wall = nextWall;
+        initialWall = wall == null ? null : wall.tiles();
+        initialHands = null;
         for (var player : players) player.resetHand();
         Arrays.fill(winForbidden, false);
         result = null;
@@ -208,6 +307,7 @@ public final class McrGame {
         drawKong = McrWinContext.KongWin.NONE;
         drawWallLast = false;
         turn = dealer();
+        if (manual) { handling.reset(); changePhase(Phase.SHUFFLE); return; }
         if (wall.opening().dealer() != dealer()) throw new IllegalArgumentException("Opening belongs to another dealer");
         // Allocate all raw physical packets, including the first/third-stack jump, before replacing any flower.
         for (var take : McrWallLayout.initialDeal(wall.opening())) {
@@ -215,6 +315,11 @@ public final class McrGame {
             players[take.seat()].hand.add(tile);
             if (take.seat() == dealer()) players[dealer()].drawn = tile;
         }
+        finishDeal();
+        validate();
+    }
+
+    private void finishDeal() {
         initialHands = Arrays.stream(players).map(player -> List.copyOf(player.hand)).toList();
         // Expose flowers in their public area; each owner explicitly takes their tail replacements.
         for (var player : players) {
@@ -226,7 +331,6 @@ public final class McrGame {
             player.hand.sort(Tile.ORDER);
         }
         advanceInitialFlowers();
-        validate();
     }
 
     private void advanceInitialFlowers() {
@@ -260,6 +364,14 @@ public final class McrGame {
     }
 
     private void draw(boolean afterKong) {
+        if (manual) {
+            players[turn].drawn = Tile.ABSENT;
+            handling.replacement = afterKong;
+            changePhase(Phase.DRAW);
+        } else drawNow(afterKong);
+    }
+
+    private void drawNow(boolean afterKong) {
         var player = players[turn];
         player.drawn = Tile.ABSENT;
         int tile = afterKong ? wall.replaceRaw() : wall.drawRaw();
@@ -343,7 +455,7 @@ public final class McrGame {
         if (selected >= 0) { claim(selected, replies[selected]); return; }
         turn = (claimFrom + 1) % 4;
         if (wall.remaining() == 0) finish(new McrSettlement.Draw());
-        else changePhase(Phase.DRAW);
+        else { handling.replacement = false; changePhase(Phase.DRAW); }
     }
 
     private void claim(int seat, McrAction action) {
@@ -430,7 +542,9 @@ public final class McrGame {
 
     private void rebuildChoices() {
         var actions = new ArrayList<List<McrAction>>(4);
-        for (int seat = 0; seat < 4; seat++) actions.add(McrLegalActions.forSeat(this, seat));
+        for (int seat = 0; seat < 4; seat++) actions.add(physicalPhase()
+            ? handling.actions(handlingHost(), seat).stream().map(action -> new McrAction(McrAction.Type.valueOf(action.name()))).toList()
+            : McrLegalActions.forSeat(this, seat));
         choices = List.copyOf(actions);
     }
 
@@ -483,7 +597,8 @@ public final class McrGame {
         Objects.requireNonNull(drawKong);
         checkSeat(turn);
         if (handIndex < 0 || handIndex >= 16 || revision < 1 || revision == Long.MAX_VALUE
-            || decision < 1 || decision == Long.MAX_VALUE || wall.save().front() < 53 || wall.opening().dealer() != dealer())
+            || decision < 1 || decision == Long.MAX_VALUE
+            || !physicalPhase() && (wall == null || wall.save().front() < 53 || wall.opening().dealer() != dealer()))
             throw new IllegalStateException("Invalid MCR position");
         boolean ended = phase == Phase.HAND_END || phase == Phase.MATCH_END;
         if (ended != (result != null) || ended && (phase == Phase.MATCH_END) != (handIndex == 15))
@@ -492,7 +607,7 @@ public final class McrGame {
             throw new IllegalStateException("Invalid MCR claim source");
         if (phase == Phase.REACTION && (claimFrom != turn || claimTile == Tile.ABSENT))
             throw new IllegalStateException("Reaction has no current claim");
-        if (phase == Phase.DRAW && (wall.remaining() == 0 || claimFrom < 0 || turn != (claimFrom + 1) % 4))
+        if (phase == Phase.DRAW && (wall.remaining() == 0 || !handling.replacement && (claimFrom < 0 || turn != (claimFrom + 1) % 4)))
             throw new IllegalStateException("Invalid next draw position");
         if (drawKong == McrWinContext.KongWin.ROBBED || drawWallLast && wall.remaining() != 0)
             throw new IllegalStateException("Invalid MCR draw origin");
@@ -522,11 +637,35 @@ public final class McrGame {
             throw new IllegalStateException("Invalid initial flower replacement");
         if (phase == Phase.REPLACE_FLOWER && (players[turn].flowers.isEmpty() || players[turn].drawn != Tile.ABSENT
             || drawKong != McrWinContext.KongWin.NONE)) throw new IllegalStateException("Invalid flower replacement");
-        wall.assertConservation(players);
+        boolean dealing = phase == Phase.SHUFFLE || phase == Phase.BUILD_WALL || phase == Phase.DEAL;
+        if (manual && (handling.builtWalls < 0 || handling.builtWalls > 15 || handling.packets < 0 || handling.packets > 16
+            || phase == Phase.SHUFFLE && wall != null || phase != Phase.SHUFFLE && wall == null
+            || wall != null && (phase == Phase.BUILD_WALL) != (opening() == null)))
+            throw new IllegalStateException("Invalid manual MCR handling state");
+        if (manual) {
+            if (phase == Phase.SHUFFLE && (handling.builtWalls != 0 || handling.packets != 0 || handling.diceHeld)
+                || phase == Phase.BUILD_WALL && (handling.packets != 0 || wall.remaining() != 144 || handling.diceHeld && handling.builtWalls != 15)
+                || phase != Phase.SHUFFLE && phase != Phase.BUILD_WALL && (handling.builtWalls != 15 || handling.diceHeld)
+                || !dealing && handling.packets != 16 || phase == Phase.DEAL && handling.packets >= 16)
+                throw new IllegalStateException("Manual MCR phase disagrees with handling progress");
+            if (dealing) {
+                int[] counts = new int[4];
+                if (phase == Phase.DEAL) {
+                    int count = handling.packets < 13 ? handling.packets * 4 : 49 + handling.packets - 12;
+                    var plan = McrWallLayout.initialDeal(opening());
+                    for (int i = 0; i < count; i++) counts[plan.get(i).seat()]++;
+                }
+                for (int seat = 0; seat < 4; seat++) if (players[seat].hand.size() != counts[seat]
+                    || !players[seat].melds.isEmpty() || !players[seat].river.isEmpty() || !players[seat].flowers.isEmpty())
+                    throw new IllegalStateException("Invalid manual MCR packet ownership");
+            }
+        }
+        if (wall != null) wall.assertConservation(dealing, players);
         if (Arrays.stream(players).mapToLong(player -> player.points).sum() != 0)
             throw new IllegalStateException("MCR point conservation failed");
         for (int seat = 0; seat < 4; seat++) {
             var player = players[seat];
+            if (dealing) continue;
             boolean extra = initial && seat == dealer() || phase == Phase.TURN && seat == turn
                 || phase == Phase.REACTION && pendingKong != null && seat == claimFrom
                 || result instanceof McrSettlement.Win win && win.winner() == seat;

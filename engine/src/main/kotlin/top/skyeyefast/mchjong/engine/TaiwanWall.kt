@@ -14,6 +14,8 @@ class TaiwanWall private constructor(private val slots: MutableList<Int>, privat
     val drawable: Int get() = slots.size - front - tail - reserve
     fun remaining(): List<Int> = java.util.List.copyOf(slots.filter { it != Tile.ABSENT })
     fun physicalSlots(): List<Int> = java.util.List.copyOf(slots)
+    internal fun nextDrawSlot(): Int = TaiwanWallLayout.drawSlot(slots.size, opening, front)
+    internal fun nextReplacementSlot(): Int = TaiwanWallLayout.replacementSlot(slots.size, opening, tail)
     internal fun draw(): Int? = if (drawable > 0) take(TaiwanWallLayout.drawSlot(slots.size, opening, front++)) else null
     internal fun replace(): Int? = if (drawable > 0) take(TaiwanWallLayout.replacementSlot(slots.size, opening, tail++)) else null
     private fun take(slot: Int): Int = slots[slot].also { check(it != Tile.ABSENT); slots[slot] = Tile.ABSENT }
@@ -22,9 +24,10 @@ class TaiwanWall private constructor(private val slots: MutableList<Int>, privat
     internal fun save() = TaiwanGameState.Wall(slots, front, tail, kongs)
     companion object {
         internal fun expected(rules: TaiwanRules): List<Int> = if (rules.flowers == TaiwanRules.Flowers.NONE) Tile.set(false, RedFives.NONE) else Tile.standard144Set()
-        internal fun restore(state: TaiwanGameState.Wall, opening: TaiwanOpening, rules: TaiwanRules): TaiwanWall {
+        /** A manual wall may be restored before or during dealing. */
+        internal fun restore(state: TaiwanGameState.Wall, opening: TaiwanOpening, rules: TaiwanRules, manual: Boolean): TaiwanWall {
             val size = expected(rules).size
-            require(state.slots().size == size && state.front() in 65..size && state.tail() in 0..size && state.kongs() in 0..20)
+            require(state.slots().size == size && state.front() in (if (manual) 0 else 65)..size && state.tail() in 0..size && state.kongs() in 0..20)
             val wall = TaiwanWall(state.slots().toMutableList(), opening, rules, state.front(), state.tail(), state.kongs())
             require(wall.drawable >= 0 && state.front() + state.tail() <= size)
             for (i in 0 until size) {

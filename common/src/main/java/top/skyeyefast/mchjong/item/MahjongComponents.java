@@ -11,6 +11,7 @@ import top.skyeyefast.mchjong.engine.RedFives;
 /** Shared values, registered by the loaders before recipes and item stacks are decoded. */
 public final class MahjongComponents {
     public static final Set<Integer> DENOMINATIONS = Set.of(-10000, 0, 100, 1000, 5000, 10000);
+    public static final Set<Integer> CARD_DENOMINATIONS = Set.of(-500, 0, 1, 8, 10, 50, 100);
     public static final DataComponentType<FurnitureWood> WOOD = type(FurnitureWood.CODEC);
     public static final DataComponentType<TileData> TILE = type(TileData.CODEC);
     public static final DataComponentType<TileFacePreset> FACE_PRESET = type(TileFacePreset.CODEC);
@@ -20,8 +21,8 @@ public final class MahjongComponents {
             if (candidate.name().equalsIgnoreCase(value)) return DataResult.success(candidate);
         return DataResult.error(() -> "Invalid red-five box preset");
     }, value -> value.name().toLowerCase(Locale.ROOT)));
-    public static final DataComponentType<Integer> POINTS = type(Codec.INT.validate(value -> DENOMINATIONS.contains(value)
-        ? DataResult.success(value) : DataResult.error(() -> "Invalid point-stick denomination")));
+    public static final DataComponentType<Integer> POINTS = type(Codec.INT.validate(value -> DENOMINATIONS.contains(value) || CARD_DENOMINATIONS.contains(value)
+        ? DataResult.success(value) : DataResult.error(() -> "Invalid payment denomination")));
     public static final Map<String, DataComponentType<?>> TYPES = Map.of(
         "wood", WOOD, "tile", TILE, "points", POINTS, "face_preset", FACE_PRESET,
         "back_preset", BACK_PRESET, "box_preset", BOX_PRESET);

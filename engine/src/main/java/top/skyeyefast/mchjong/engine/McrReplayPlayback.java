@@ -20,7 +20,7 @@ public final class McrReplayPlayback {
     public static Timeline timeline(ReplayMatch match, int handIndex) {
         if (match.variant() != MahjongVariant.MCR) throw new IllegalArgumentException("Not an MCR replay");
         var hand = match.mcr().hands().get(handIndex);
-        var game = McrGame.replayHand(hand.number(), hand.wall(), hand.opening(), hand.initialPoints());
+        var game = McrGame.replayHand(hand.number(), hand.wall(), hand.opening(), hand.initialPoints(), hand.manual());
         if (!game.initialHands().equals(hand.initialHands())) throw new IllegalArgumentException("MCR opening deal disagrees with wall");
         var frames = new ArrayList<Frame>();
         frames.add(new Frame(game.replayView(), null));

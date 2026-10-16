@@ -13,6 +13,50 @@ import static top.skyeyefast.mchjong.engine.SichuanAction.Type.*;
 class SichuanGameTest {
     private static final String WAIT = "1m 2m 3m 4m 5m 6m 1p 2p 3p 4p 5p 6p 9p";
 
+    @Test void manualDealsReachTheAutomaticPositionAcrossRestoresAndHands() {
+        for (var preset : SichuanPreset.values()) {
+            var automatic = new SichuanGame(41, preset.config(), Tile.sichuanSet());
+            var manual = new SichuanGame(41, preset.config(), Tile.sichuanSet(), true);
+            int steps = 0;
+            while (manual.handNumber() <= 2) {
+                assertTrue(++steps < 4000);
+                manual = SichuanCodec.restore(SichuanCodec.save(manual));
+                for (int seat = -1; seat < 4; seat++) {
+                    var view = manual.view(seat);
+                    assertEquals(view, SichuanCodec.decodeView(SichuanCodec.encodeView(view)));
+                    boolean unrolled = manual.phase() == SichuanGame.Phase.SHUFFLE || manual.phase() == SichuanGame.Phase.BUILD_WALL;
+                    assertEquals(unrolled, view.wall().die1() == 0);
+                }
+                if (manual.physicalPhase()) {
+                    var current = manual;
+                    int seat = java.util.stream.IntStream.range(0, 4).filter(s -> !current.actions(s).isEmpty()).findFirst().orElseThrow();
+                    assertTrue(manual.act(seat, manual.decision(), 0));
+                    continue;
+                }
+                var expected = JsonParser.parseString(SichuanCodec.save(automatic)).getAsJsonObject();
+                var position = JsonParser.parseString(SichuanCodec.save(manual)).getAsJsonObject();
+                for (var key : List.of("revision", "decision", "manual", "handling")) { expected.remove(key); position.remove(key); }
+                assertEquals(expected, position);
+                if (manual.phase() == SichuanGame.Phase.HAND_END) {
+                    assertTrue(automatic.nextHand());
+                    assertTrue(manual.nextHand());
+                    continue;
+                }
+                var current = automatic;
+                int seat = java.util.stream.IntStream.range(0, 4).filter(s -> !current.actions(s).isEmpty()).findFirst().orElseThrow();
+                var actions = automatic.actions(seat);
+                assertEquals(actions, manual.actions(seat));
+                int index = 0;
+                for (var type : List.of(WIN, PASS, DISCARD)) {
+                    int found = actions.stream().map(SichuanAction::type).toList().indexOf(type);
+                    if (found >= 0) { index = found; break; }
+                }
+                assertTrue(automatic.act(seat, automatic.decision(), index));
+                assertTrue(manual.act(seat, manual.decision(), index));
+            }
+        }
+    }
+
     @Test void automationWaitsForWinsWithoutChangingPassedFanAndRestoresPrivatePreferences() {
         var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, WAIT, WAIT);
         choose(game, 0, DISCARD, Tile.parseKind("9p"));
@@ -480,7 +524,7 @@ class SichuanGameTest {
         var rules = new SichuanRules(3, 1, 1, 2, 1, 24, true, true, 8, false, false, false, false);
         game = SichuanGame.restore(new SichuanGame.State(state.format(), rules, state.nextWallSeed(), 1, List.of(), state.phase(),
             state.revision(), state.decision(), state.turn(), state.wall(), state.players(), state.focus(), state.supplier(),
-            state.pendingKong(), state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result()));
+            state.pendingKong(), state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result(), state.manual(), state.handling()));
         choose(game, 0, CONCEALED_KONG, 8); choose(game, 0, DRAW, -1);
         choose(game, 0, DISCARD, Tile.parseKind("9p")); choose(game, 1, WIN, -1); choose(game, 2, WIN, -1); passAll(game);
         var ledger = game.save().ledger();
@@ -743,7 +787,7 @@ class SichuanGameTest {
             base.addedKongPayment(), base.activeFlowerPigPenalty(), base.transferKongOnShoot(), base.refundKongWhenNotReady(), 1, base.separateKongFan(), base.selectFirstDiscard(), base.addedKongAfterKongIsShoot(), base.eastWestLongWall());
         game = SichuanGame.restore(new SichuanGame.State(state.format(), rules, state.nextWallSeed(), 1, List.of(), state.phase(),
             state.revision(), state.decision(), state.turn(), state.wall(), state.players(), state.focus(), state.supplier(), state.pendingKong(),
-            state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result()));
+            state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result(), state.manual(), state.handling()));
         choose(game, 0, DISCARD, Tile.parseKind("9p")); session = session(game);
         for (int seat = 1; seat < 4; seat++) {
             view = session.view(id(seat));
@@ -768,7 +812,7 @@ class SichuanGameTest {
         var control = new TimeControl(1, 1);
         var clocks = Collections.nCopies(4, new TimeControl.Clock(20, 20, false));
         var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),
-            control, clocks, 0, 0, game.save(), null, null, List.of()));
+            control, clocks, 0, 0, game.save(), null, null, List.of(), false));
         session.synchronizeSeats(Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3), java.util.Set.of(id(0), id(1), id(2), id(3)));
         return session;
     }
@@ -824,7 +868,7 @@ class SichuanGameTest {
         if (!exhausted) for (int index = 0; index < stock.size(); index++) slots.set(order.get(53 + index), stock.get(index));
         var state = new SichuanGame.State(SichuanGame.State.FORMAT, SichuanPreset.TFMJ_2024.config(), 17, 1, List.of(), SichuanGame.Phase.TURN, 1, 1, 0,
             new SichuanWall.State(slots, 0, 1, 1, exhausted ? 108 : 53, false), players, Tile.ABSENT, -1, -1,
-            false, false, -1, List.of(), List.of(), List.of(), null);
+            false, false, -1, List.of(), List.of(), List.of(), null, false, new ManualHandling().save());
         return SichuanGame.restore(state);
     }
     private static ArrayList<Integer> take(ArrayList<Integer> stock, String notation) {
@@ -839,7 +883,7 @@ class SichuanGameTest {
     private static SichuanGame.State copy(SichuanGame.State state, List<SichuanPlayerState> players, SichuanWall.State wall) {
         return new SichuanGame.State(state.format(), state.rules(), state.nextWallSeed(), state.handNumber(), state.completedHands(), state.phase(), state.revision(), state.decision(), state.turn(),
             wall, players, state.focus(), state.supplier(), state.pendingKong(), state.replacementDraw(), state.afterKong(),
-            state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result());
+            state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result(), state.manual(), state.handling());
     }
     private static SichuanGame withRules(SichuanGame game, SichuanRules rules) {
         var state = game.save();
@@ -851,6 +895,6 @@ class SichuanGameTest {
         wall = new SichuanWall.State(slots, wall.dealer(), wall.die1(), wall.die2(), wall.cursor(), rules.eastWestLongWall());
         return SichuanGame.restore(new SichuanGame.State(state.format(), rules, state.nextWallSeed(), state.handNumber(), state.completedHands(),
             state.phase(), state.revision(), state.decision(), state.turn(), wall, state.players(), state.focus(), state.supplier(),
-            state.pendingKong(), state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result()));
+            state.pendingKong(), state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result(), state.manual(), state.handling()));
     }
 }

@@ -115,16 +115,16 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
 
     @Override protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         MahjongUi.text(graphics, font, title, 14, 5, 276, MahjongUi.TEXT, false);
-        MahjongUi.text(graphics, font, Component.translatable("box.mchjong.stick_storage"), 14, 104, 136, MahjongUi.MUTED, false);
+        MahjongUi.text(graphics, font, Component.translatable("box.mchjong.supply_storage"), 14, 104, 136, MahjongUi.MUTED, false);
         MahjongUi.text(graphics, font, Component.translatable("item.mchjong.dice"), 154, 104, 40, MahjongUi.MUTED, true);
         MahjongUi.text(graphics, font, playerInventoryTitle, 14, 132, 160, MahjongUi.MUTED, false);
         var items = menu.items();
         int tiles = MahjongSupplies.tileCount(items);
-        int sticks = items.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).mapToInt(stack -> stack.getCount()).sum();
+        int supplies = items.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.SCORING_CARD)).mapToInt(stack -> stack.getCount()).sum();
         var deck = MahjongSupplies.deck(items);
         boolean ready = deck != null;
         MahjongUi.text(graphics, font, CountedText.of("box.mchjong.tiles", 0, tiles), 196, 18, 94, MahjongUi.TEXT, false);
-        MahjongUi.text(graphics, font, CountedText.of("box.mchjong.sticks", 0, sticks), 196, 34, 94, MahjongUi.MUTED, false);
+        MahjongUi.text(graphics, font, CountedText.of("box.mchjong.supplies", 0, supplies), 196, 34, 94, MahjongUi.MUTED, false);
         MahjongUi.text(graphics, font, ready ? Component.translatable(deck.sanma() ? "box.mchjong.sanma_set" : "box.mchjong.set", Component.translatable(deck.redFives().translationKey()))
             : Component.translatable("box.mchjong.incomplete"), 196, 50, 94,
             ready ? MahjongUi.POSITIVE : MahjongUi.ACCENT, false);

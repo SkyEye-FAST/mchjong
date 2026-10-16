@@ -26,7 +26,7 @@ public final class TaiwanReplayPlayback {
         return new Timeline(frames);
     }
     private static TaiwanGame execute(TaiwanReplayRecorder.State recording, List<Frame> frames) {
-        var game = new TaiwanGame(recording.rules().restore(),recording.opening().restore(),recording.wall(),recording.roundWind(),recording.continuation());
+        var game = new TaiwanGame(recording.rules().restore(),recording.opening().restore(),recording.wall(),recording.roundWind(),recording.continuation(),recording.manual());
         if (!game.replaySteps().get(0).players().equals(recording.initialPlayers()))
             throw new IllegalArgumentException("Taiwan replay deal disagrees with physical wall");
         int cursor = check(TaiwanReplayRecorder.openingEffects(game.replaySteps()),recording,0,frames);
@@ -56,6 +56,6 @@ public final class TaiwanReplayPlayback {
     public static boolean samePosition(TaiwanGameState actual, TaiwanGameState expected) {
         return new TaiwanGameState(actual.format(),actual.rules(),actual.opening(),actual.roundWind(),actual.continuation(),expected.revision(),expected.decision(),
             actual.phase(),actual.turn(),actual.wall(),actual.players(),actual.drawn(),actual.turnDrawn(),actual.origin(),actual.turnWaits(),actual.calls(),actual.draws(),
-            actual.offer(),actual.replies(),actual.outcome(),actual.settlement()).equals(expected);
+            actual.offer(),actual.replies(),actual.outcome(),actual.settlement(),actual.manual()).equals(expected);
     }
 }

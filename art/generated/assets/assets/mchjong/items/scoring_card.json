@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "mchjong:item/scoring_card",
+    "model": {
+      "type": "mchjong:supply"
+    }
+  }
+}

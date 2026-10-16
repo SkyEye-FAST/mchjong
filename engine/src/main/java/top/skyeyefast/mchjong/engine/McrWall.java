@@ -10,7 +10,7 @@ import java.util.Random;
 /** One continuous physical MCR wall, traversed from both sides of its opening. */
 final class McrWall {
     private final List<Integer> tiles;
-    private final McrOpening opening;
+    private McrOpening opening;
     private int front;
     private int back;
     private int remaining;
@@ -20,11 +20,15 @@ final class McrWall {
     }
 
     McrWall(long seed, int dealer, List<Integer> stock) {
+        this(seed, dealer, stock, true);
+    }
+
+    McrWall(long seed, int dealer, List<Integer> stock, boolean opened) {
         if (!Tile.validStandard144Set(stock)) throw new IllegalArgumentException("An MCR wall requires one standard 144-tile set");
         tiles = new ArrayList<>(stock);
         var random = new Random(seed);
         Collections.shuffle(tiles, random);
-        opening = McrOpening.roll(random, dealer);
+        opening = opened ? McrOpening.roll(random, dealer) : null;
         remaining = McrWallLayout.SLOTS;
     }
 
@@ -38,6 +42,10 @@ final class McrWall {
 
     int remaining() { return remaining; }
     McrOpening opening() { return opening; }
+    void open(long seed, int dealer) {
+        if (opening != null) throw new IllegalStateException("Wall already opened");
+        opening = McrOpening.roll(new Random(seed), dealer);
+    }
     int nextDrawSlot() { return front == McrWallLayout.SLOTS ? Tile.ABSENT : McrWallLayout.drawSlot(opening, front); }
     int nextReplacementSlot() { return back == McrWallLayout.SLOTS ? Tile.ABSENT : McrWallLayout.replacementSlot(opening, back); }
 
@@ -76,7 +84,9 @@ final class McrWall {
     }
 
     /** Call after placing the returned ordinary tile in its destination zone. */
-    void assertConservation(McrPlayerState... players) {
+    void assertConservation(McrPlayerState... players) { assertConservation(false, players); }
+
+    void assertConservation(boolean dealing, McrPlayerState... players) {
         var seen = new HashSet<Integer>();
         for (int tile : tiles) {
             if (tile != Tile.ABSENT && !seen.add(tile)) throw new IllegalStateException("Duplicated wall tile: " + tile);
@@ -84,7 +94,7 @@ final class McrWall {
         for (var player : players) {
             if (player.flowers.stream().anyMatch(tile -> !Tile.isFlower(tile)))
                 throw new IllegalStateException("Only flowers belong in the flower area");
-            if (player.hand.stream().anyMatch(Tile::isFlower)
+            if (!dealing && player.hand.stream().anyMatch(Tile::isFlower)
                 || player.melds.stream().flatMap(meld -> meld.tiles().stream()).anyMatch(Tile::isFlower)
                 || player.river.stream().anyMatch(discard -> Tile.isFlower(discard.tile())))
                 throw new IllegalStateException("Flowers belong only in the flower area");
