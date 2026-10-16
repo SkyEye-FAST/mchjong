@@ -29,6 +29,9 @@
       "recipe": "mchjong:blank_point_sticks"
     },
     {
+      "type": "mchjong:mark_stick_recipe"
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.stock.kit"
     },

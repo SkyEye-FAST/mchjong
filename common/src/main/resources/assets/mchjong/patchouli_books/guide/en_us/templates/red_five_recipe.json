@@ -1,0 +1,64 @@
+{
+  "components": [
+    {
+      "type": "patchouli:image",
+      "image": "patchouli:textures/gui/crafting.png",
+      "x": 7,
+      "y": 2,
+      "u": 0,
+      "v": 0,
+      "width": 100,
+      "height": 62,
+      "texture_width": 128,
+      "texture_height": 256
+    },
+    {
+      "type": "patchouli:item",
+      "item": "mchjong:red_dora_dye",
+      "x": 12,
+      "y": 7
+    },
+    {
+      "type": "patchouli:item",
+      "item": "mchjong:mahjong_tile{mchjong:{tile:{face:4,material:'bone'}}}",
+      "x": 31,
+      "y": 7
+    },
+    {
+      "type": "patchouli:item",
+      "item": "mchjong:mahjong_tile{mchjong:{tile:{face:4,material:'bone',red:true}}}",
+      "x": 88,
+      "y": 26
+    },
+    {
+      "type": "patchouli:image",
+      "image": "patchouli:textures/gui/crafting.png",
+      "x": 7,
+      "y": 76,
+      "u": 0,
+      "v": 0,
+      "width": 100,
+      "height": 62,
+      "texture_width": 128,
+      "texture_height": 256
+    },
+    {
+      "type": "patchouli:item",
+      "item": "mchjong:undo_dye",
+      "x": 12,
+      "y": 81
+    },
+    {
+      "type": "patchouli:item",
+      "item": "mchjong:mahjong_tile{mchjong:{tile:{face:4,material:'bone',red:true}}}",
+      "x": 31,
+      "y": 81
+    },
+    {
+      "type": "patchouli:item",
+      "item": "mchjong:mahjong_tile{mchjong:{tile:{face:4,material:'bone'}}}",
+      "x": 88,
+      "y": 100
+    }
+  ]
+}
