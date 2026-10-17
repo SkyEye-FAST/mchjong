@@ -14,7 +14,27 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_tiles.tiles.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_tiles.tiles.continued_3"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_tiles.presets"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_tiles.presets.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_tiles.presets.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_tiles.presets.continued_3"
     }
   ]
 }

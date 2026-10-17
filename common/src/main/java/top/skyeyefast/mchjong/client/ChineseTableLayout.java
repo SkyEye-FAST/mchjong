@@ -58,50 +58,42 @@ final class ChineseTableLayout {
         return new PublicArea(List.copyOf(meldOrigins), List.copyOf(flowerOrigins), handLeft);
     }
 
-    static List<List<Vec3>> rivers(List<Integer> counts, List<Bounds> occupied, TileDimensions size) {
-        double riverZ = TableIndicator.HALF_WIDTH + size.height() / 2.0 + .005;
+    /**
+     * Places each seat's river on a fixed grid: the first column starts at the indicator's left edge and every
+     * six tiles open a row toward the owner. Rivers never move aside; other pieces yield to them instead.
+     * Positions are seat-local.
+     */
+    static List<List<Vec3>> rivers(List<Integer> counts, TileDimensions size) {
+        double left = -TableIndicator.HALF_WIDTH + size.width() / 2.0;
+        double near = TableIndicator.HALF_WIDTH + size.height() / 2.0 + .005;
         var result = new ArrayList<List<Vec3>>();
-        for (int seat = 0; seat < 4; seat++) result.add(new ArrayList<>());
-        var nextZ = new double[]{riverZ, riverZ, riverZ, riverZ};
-        int rows = counts.stream().mapToInt(count -> (count + 5) / 6).max().orElse(0);
-        for (int row = 0; row < rows; row++) for (int seat = 0; seat < 4; seat++) {
-            int count = Math.min(6, counts.get(seat) - row * 6);
-            if (count <= 0) continue;
-            double left = (size.width() / 2.0) - 2.5 * size.width();
-            double width = count * (double) size.width();
-            double preferred = left + (count - 1) * size.width() / 2;
-            Vec3 center = null;
-            search: for (int depth = 0; depth < 6; depth++) {
-                double z = nextZ[seat] + depth * size.height();
-                for (int shift = 0; shift <= 24; shift++) {
-                    int offset = shift == 0 ? 0 : (shift % 2 == 1 ? -(shift + 1) / 2 : shift / 2);
-                    double x = preferred + offset * size.width();
-                    if (clear(box(x, z, width, size.height(), seat), occupied)) {
-                        center = new Vec3(x, 0, z);
-                        break search;
-                    }
-                }
-            }
-            // A long blood-battle river can fill its outward lane. Start another six-column
-            // bank in free space rather than scaling tiles or crossing the owner's hand.
-            if (center == null) {
-                search: for (int depth = 0; depth < 5; depth++) for (int shift = 0; shift <= 24; shift++) {
-                    int offset = shift == 0 ? 0 : (shift % 2 == 1 ? -(shift + 1) / 2 : shift / 2);
-                    double x = preferred + offset * size.width();
-                    double z = riverZ + depth * size.height();
-                    if (clear(box(x, z, width, size.height(), seat), occupied)) {
-                        center = new Vec3(x, 0, z);
-                        break search;
-                    }
-                }
-            }
-            if (center == null) throw new IllegalStateException("No fixed-size river row fits for seat " + seat + ", row " + row);
-            occupied.add(box(center.x, center.z, width, size.height(), seat));
-            nextZ[seat] = center.z + size.height();
-            for (int column = 0; column < count; column++)
-                result.get(seat).add(new Vec3(center.x + (column - (count - 1) / 2.0) * size.width(), 0, center.z));
+        for (int count : counts) {
+            var seat = new ArrayList<Vec3>();
+            for (int index = 0; index < count; index++)
+                seat.add(new Vec3(left + index % 6 * size.width(), 0, near + index / 6 * size.height()));
+            result.add(List.copyOf(seat));
         }
+        return List.copyOf(result);
+    }
+
+    static List<Bounds> riverBounds(List<List<Vec3>> rivers, TileDimensions size) {
+        var result = new ArrayList<Bounds>();
+        for (int seat = 0; seat < rivers.size(); seat++) for (var position : rivers.get(seat))
+            result.add(box(position.x, position.z, size.width(), size.height(), seat));
         return result;
+    }
+
+    /**
+     * Pushes a flat wall stack straight back toward its owner until it clears every river tile, as players move
+     * stacks aside. Moving across the rail keeps the stack beside its neighbors.
+     */
+    static Vec3 clearOfRivers(Vec3 center, float yaw, List<Bounds> rivers, TileDimensions size) {
+        var step = tangent(yaw - 90).scale(.005);
+        while (true) {
+            var bound = bounds(center, yaw, true, size);
+            if (rivers.stream().noneMatch(river -> intersects(bound, river))) return center;
+            center = center.add(step);
+        }
     }
 
     private static Bounds box(double x, double z, double width, double depth, int seat) {

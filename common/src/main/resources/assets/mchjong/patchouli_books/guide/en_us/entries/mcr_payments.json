@@ -13,8 +13,20 @@
       "text": "manual.mchjong.entry.mcr_payments.payments.continued_1"
     },
     {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.mcr_payments.payments.table"
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_payments.match"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_payments.match.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_payments.draw"
     }
   ]
 }

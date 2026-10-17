@@ -21,8 +21,8 @@
       "text": "manual.mchjong.entry.stock.sticks"
     },
     {
-      "type": "patchouli:text",
-      "text": "manual.mchjong.entry.stock.sticks.continued_1"
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.stock.sticks.table"
     },
     {
       "type": "patchouli:stonecutting",
@@ -40,8 +40,16 @@
       "text": "manual.mchjong.entry.stock.kit.continued_1"
     },
     {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.stock.kit.table"
+    },
+    {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.stock.cards"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.stock.cards.table"
     },
     {
       "type": "patchouli:crafting",
@@ -50,6 +58,10 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.stock.cards.kit"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.stock.cards.kit.table"
     },
     {
       "type": "patchouli:text",

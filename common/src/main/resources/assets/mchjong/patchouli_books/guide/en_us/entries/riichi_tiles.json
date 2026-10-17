@@ -18,11 +18,39 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_tiles.tiles.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_tiles.wall"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_tiles.wall.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_tiles.wall.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_tiles.wall.continued_3"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_tiles.play"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_tiles.play.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_tiles.play.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_tiles.play.continued_3"
     }
   ]
 }

@@ -43,6 +43,10 @@
       "text": "manual.mchjong.entry.tiles.red_fives"
     },
     {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.red_fives.continued_1"
+    },
+    {
       "type": "patchouli:crafting",
       "recipe": "mchjong:red_dora_dye",
       "recipe2": "mchjong:undo_dye"

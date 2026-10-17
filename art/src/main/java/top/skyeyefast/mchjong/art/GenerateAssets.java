@@ -36,7 +36,7 @@ public final class GenerateAssets {
         png("tile/plain", resourceTexture("tile/plain"));
         text("assets/mchjong/textures/tile/back.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         png("furniture/cloth_pattern", resourceTexture("furniture/cloth_pattern"));
-        for (String name : List.of("brass", "edge", "felt", "steel",
+        for (String name : List.of("brass", "edge", "felt", "mahjong_box", "steel",
                 "wood_acacia", "wood_bamboo", "wood_birch", "wood_cherry",
                 "wood_crimson", "wood_dark_oak", "wood_jungle", "wood_mangrove",
                 "wood_oak", "wood_spruce", "wood_warped")) {
@@ -52,7 +52,8 @@ public final class GenerateAssets {
                 "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         }
         png("item/riichi_stick", PointStickArtwork.texture(1000));
-        for (int points : ScoringCardArtwork.POINTS) png("scoring_card/" + points, ScoringCardArtwork.texture(points));
+        for (int points : new int[]{0, 1, 8, 10, 50, 100, -500})
+            png("scoring_card/" + points, resourceTexture("scoring_card/" + points));
         png("gui/sprites/hud/riichi_stick", PointStickArtwork.texture(1000));
         png("gui/sprites/hud/honba_stick", PointStickArtwork.texture(100));
         text("assets/mchjong/models/item/riichi_stick.json", """
@@ -64,11 +65,6 @@ public final class GenerateAssets {
             """);
         models();
         dice();
-        for (String name : List.of("mahjong_printing_plate", "incomplete_mahjong_box")) {
-            png("item/" + name, CreateArtwork.texture(name));
-            text("assets/mchjong/models/item/" + name + ".json",
-                "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
-        }
         png("item/mahjong_manual", resourceTexture("item/mahjong_manual"));
         text("assets/mchjong/models/item/mahjong_manual.json",
             "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/mahjong_manual\"}}");
@@ -78,7 +74,7 @@ public final class GenerateAssets {
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
         }
         for (String name : List.of("mahjong_printing_plate", "incomplete_mahjong_box")) {
-            png("item/" + name, CreateArtwork.texture(name));
+            png("item/" + name, resourceTexture("item/" + name));
             text("assets/mchjong/models/item/" + name + ".json",
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
         }
@@ -122,6 +118,7 @@ public final class GenerateAssets {
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
             // Like a held sword, the free end rises outward while the printed surface faces inward.
             String held = switch (name) {
+                case "mahjong_box" -> "{\"rotation\":[0,30,0],\"translation\":[-1,4,-1],\"scale\":[0.6,0.6,0.6]}";
                 case "mahjong_tile" -> "{\"rotation\":[-12,-65,-25],\"translation\":[1,6,-3],\"scale\":[0.4,0.4,0.4]}";
                 case "point_stick", "scoring_card" -> "{\"rotation\":[65,60,25],\"translation\":[1,6,-2],\"scale\":[0.7,0.7,0.7]}";
                 default -> "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";

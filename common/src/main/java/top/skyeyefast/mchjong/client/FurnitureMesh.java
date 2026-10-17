@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.item.FurnitureWood;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Original furniture materials and compact meshes shared by world and item rendering. */
@@ -133,34 +134,24 @@ public final class FurnitureMesh {
     }
 
     public static void box(PoseStack pose, MultiBufferSource buffers, int light) {
-        var wooden = buffers.getBuffer(texture("wood_dark_oak"));
-        FurnitureShape.bevel(pose, wooden, -.359375f, 0, -.265625f, .359375f, .05f, .265625f, .0125f, SHADE, light);
-        FurnitureShape.box(pose, wooden, -.34375f, .03125f, -.25f, .34375f, .2375f, .25f, WHITE, light);
-        FurnitureShape.bevel(pose, wooden, -.359375f, .245f, -.265625f, .359375f, .328125f, .265625f, .0234375f, WHITE, light);
-        FurnitureShape.box(pose, wooden, -.28f, .328125f, -.1875f, .28f, .33f, .1875f, SHADE, light);
-        var edge = buffers.getBuffer(texture("edge"));
-        FurnitureShape.box(pose, edge, -.345f, .234375f, -.251f, .345f, .25f, .251f, WHITE, light);
-        FurnitureShape.box(pose, edge, -.1f, .126f, .273f, .1f, .151f, .302f, WHITE, light);
-        var brass = buffers.getBuffer(texture("brass"));
-        for (int side : new int[]{-1, 1}) {
-            float x = side * .21875f;
-            FurnitureShape.bevel(pose, brass, x - .032f, .175f, .249f, x + .032f, .282f, .275f, .006f, WHITE, light);
-            FurnitureShape.box(pose, brass, x - .041f, .213f, -.273f, x + .041f, .265f, -.25f, WHITE, light);
-            FurnitureShape.box(pose, brass, side * .105f - .014f, .126f, .258f,
-                side * .105f + .014f, .198f, .299f, WHITE, light);
-            for (int end : new int[]{-1, 1}) {
-                FurnitureShape.box(pose, brass, side * .322f - .02f, .055f, end * .252f - .009f,
-                    side * .322f + .02f, .219f, end * .252f + .009f, SHADE, light);
-                FurnitureShape.box(pose, brass, side * .345f - .009f, .055f, end * .228f - .025f,
-                    side * .345f + .009f, .219f, end * .228f + .025f, SHADE, light);
-            }
-        }
-        // A restrained tile-shaped lid inlay identifies the case without a borrowed block icon.
-        var inlay = buffers.getBuffer(TileRenderTypes.BACKS);
-        TileMesh.box(pose, inlay, -.048f, .33f, -.071f, .048f, .333f, .071f, 0xfff4f4ed, light);
-        TileMesh.box(pose, inlay, -.009f, .333f, -.042f, .009f, .334f, .042f, 0xff3c715e, light);
-        for (float z : new float[]{-.027f, 0, .027f})
-            TileMesh.box(pose, inlay, -.018f, .333f, z - .004f, .018f, .334f, z + .004f, 0xff3c715e, light);
+        var out = buffers.getBuffer(texture("mahjong_box"));
+        // A vanilla cube net would be 84 pixels wide; separate faces fit this 64-pixel atlas.
+        // Hidden horizontal faces share the plain underside region.
+        FurnitureShape.uvBox(pose, out, -12, 0, -9, 24, 1, 18, 64, light,
+            24,0, 24,0, 24,38, 0,38, 0,39, 18,39);
+        FurnitureShape.uvBox(pose, out, -11, 1, -8, 22, 7, 16, 64, light,
+            24,0, 24,0, 22,18, 0,18, 0,25, 16,25);
+        FurnitureShape.uvBox(pose, out, -12, 8, -9, 24, 3, 18, 64, light,
+            24,0, 0,0, 24,32, 0,32, 0,35, 18,35);
+        FurnitureShape.uvBox(pose, out, -1, 5, 8, 2, 4, 2, 64, light,
+            52,0, 50,0, 50,2, 54,2, 48,2, 52,2);
+        // The lid inlay is a real Kansai Green Dragon tile front, sharper than the 32-texel case around it.
+        pose.pushPose();
+        pose.translate(0, 11 / 32f - .055f, 0);
+        pose.mulPose(Axis.XP.rotationDegrees(-90));
+        pose.scale(1.75f, 1.75f, 1.75f);
+        TileMesh.drawArtwork(pose, buffers.getBuffer(TileRenderTypes.faces(TileFacePreset.KANSAI)), 32, light);
+        pose.popPose();
     }
 
     public static void foldedCloth(PoseStack pose, MultiBufferSource buffers, int light, DyeColor color) {

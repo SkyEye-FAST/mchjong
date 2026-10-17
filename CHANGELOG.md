@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Show fu, payment multiples, limit hands, uma, kong payments, dye values, stick and card kits and similar fixed values in the Mahjong Manual as tables on a new `mchjong:table` page, include the table text in the in-game rule explanations, and rewrite colon and semicolon lists in all four languages as sentences.
 - Enable MCR on ordinary mahjong tables with manual wall handling, flower replacements, craftable scoring cards and debt cards, and physical drawer settlement; Sichuan mahjong and Taiwanese mahjong still require automatic tables.
 - Enable Taiwanese mahjong and Sichuan mahjong on ordinary mahjong tables, so every variant can use either kind of table: manual wall handling, three dice for Taiwanese mahjong, Taiwanese flower replacements, the Sichuan dealer's jump tiles, manual draws and scoring-card settlement. Computer opponents now draw their winds at every ordinary table, and preset mahjong boxes hold three dice.
 - Show the automatic mahjong table upgrade, point-stick marking, Red Five and dye recipes as one-example diagrams in the Mahjong Manual, remove recipe text that repeats the recipe diagrams, and describe in-world actions as left-clicks and right-clicks.
@@ -21,6 +22,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Reorganize the four rule chapters of the Mahjong Manual into one entry per concept in all four languages: define terms before relying on them, state each base rule before the preset differences, explain each Sichuan mahjong preset difference where its rule appears, name the MCR scoring edition, add the Riichi mahjong kuitan and swap-calling rules, and use the paper icon for the rule chapters.
 - Watch live matches by walking around the table instead of opening a spectator screen; retire the spectator-access setting, retain spectator hand privacy, and extend in-world round, dealer, score and remaining-tile displays.
 - Optimize Mahjong table, stool, tablecloth, and tile textures to match authentic Minecraft wood, metal, felt, and mineral relief styles, replacing procedural artwork generation with static texture resources.
+- Redraw the mahjong printing plate, unfinished mahjong box and scoring cards with vanilla-style metal, dark oak and printed paper textures, replacing procedural artwork generation with static texture resources, and give the mahjong box model its own dark-oak case texture with a Green Dragon tile from the Kansai face preset set into the lid.
 - Repair the Mahjong Manual's furniture recipe tables and use a cyan table cloth and a white mahjong stool in the recipe examples.
 - Redraw Mahjong dyes with vanilla-style powder mounds, splicing crafting ingredient pigments for Mahjong Dye and scaling down Red Dora Dye and Undo Dye, replacing procedural artwork generation with static texture resources.
 - Redraw the Mahjong Manual item texture with an isometric jade-and-brass book matching the vanilla Minecraft book perspective, replacing procedural artwork generation with a static texture resource.
@@ -61,6 +63,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Keep MCR, Sichuan mahjong and Taiwanese mahjong rivers on a fixed six-column grid that starts at the left edge of the center indicator. Wall rails leave the first three river rows free, and later rows push the remaining wall stacks back toward their owners instead of moving discards elsewhere.
+- Show the player information tooltip over a table seat as separate lines instead of one line with line-feed placeholder glyphs.
 - Use Chow and Pung for Taiwanese mahjong actions in English, name the Sichuan mahjong table and replay entries after the game instead of SBR, write the blood-battle preset name in Chinese and Japanese without the English abbreviation, write the MCR settlement title with the full game name in Chinese, and use Title Case for English table and settlement titles.
 - Keep room member control captions complete, stop offering removal for disconnected members, and use the same Close Room caption in both close-room confirmations.
 - Ask for confirmation before an exit request that immediately closes the room, and explain the exit outcomes in the Exit button tooltip.

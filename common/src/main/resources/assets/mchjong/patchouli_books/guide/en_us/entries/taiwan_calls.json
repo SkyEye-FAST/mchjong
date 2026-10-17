@@ -11,6 +11,30 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_calls.calls.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.calls.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.calls.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.kongs"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.kongs.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.kongs.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_calls.kongs.continued_3"
     }
   ]
 }

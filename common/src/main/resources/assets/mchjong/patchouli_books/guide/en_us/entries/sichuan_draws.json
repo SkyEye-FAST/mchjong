@@ -18,11 +18,39 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.draws.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.draws.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.draws.continued_5"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_draws.flower_pig"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_draws.flower_pig.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.flower_pig.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.flower_pig.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.flower_pig.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_draws.flower_pig.continued_5"
     }
   ]
 }

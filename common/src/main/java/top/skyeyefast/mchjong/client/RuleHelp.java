@@ -18,10 +18,11 @@ import top.skyeyefast.mchjong.engine.SichuanRuleOption;
 
 /** Short help and precise handbook destinations share the handbook's existing resource pages. */
 public final class RuleHelp {
-    record Topic(List<String> textKeys, String entry, int page, TileDiagram diagram) {
+    record Topic(List<String> textKeys, List<String> tableKeys, String entry, int page, TileDiagram diagram) {
         Component description(boolean award) {
             String text = textKeys.stream().map(key -> Component.translatable(key).getString()).collect(java.util.stream.Collectors.joining("$(br2)"));
             if (award && text.startsWith("$(bold)") && text.contains("$(br2)")) text = text.substring(text.indexOf("$(br2)") + 6);
+            for (String key : tableKeys) text += "$(br2)" + Component.translatable(key).getString().replace("$(br)", " ").replace("|", " | ");
             return Component.literal(plain(text));
         }
     }
@@ -77,19 +78,23 @@ public final class RuleHelp {
             : entry.equals("sichuan_fan") ? "sichuan.mchjong.fan." : entry.equals("taiwan_tai") ? "taiwan.mchjong.pattern." : null;
         for (int index = 0; index < values.size(); index++) {
             var page = values.get(index).getAsJsonObject();
-            if (!page.has("text")) continue;
+            if (!page.has("text") || page.get("type").getAsString().equals("mchjong:table")) continue;
             String key = page.get("text").getAsString();
             if (key.contains(".continued_") || page.has("tiles") && !page.has("anchor")) continue;
             var textKeys = new java.util.ArrayList<String>();
             textKeys.add(key);
+            var tableKeys = new java.util.ArrayList<String>();
             for (int next = index + 1; next < values.size(); next++) {
                 var continuation = values.get(next).getAsJsonObject();
-                if (!continuation.has("text") || !continuation.get("text").getAsString().startsWith(key + ".continued_")) break;
-                textKeys.add(continuation.get("text").getAsString());
+                if (!continuation.has("text")) break;
+                String continued = continuation.get("text").getAsString();
+                if (continuation.get("type").getAsString().equals("mchjong:table")) tableKeys.add(continued);
+                else if (continued.startsWith(key + ".continued_") && tableKeys.isEmpty()) textKeys.add(continued);
+                else break;
             }
             TileDiagram diagram = page.has("tiles") ? TileDiagram.parse(page.get("tiles").getAsString(),
                 new top.skyeyefast.mchjong.item.TileFacePreset(ResourceIds.of(page.get("face").getAsString()))) : null;
-            var topic = new Topic(List.copyOf(textKeys), entry, index, diagram);
+            var topic = new Topic(List.copyOf(textKeys), List.copyOf(tableKeys), entry, index, diagram);
             pages.put(key, topic);
             if (prefix != null && page.has("anchor")) awards.put(prefix + page.get("anchor").getAsString(), topic);
         }

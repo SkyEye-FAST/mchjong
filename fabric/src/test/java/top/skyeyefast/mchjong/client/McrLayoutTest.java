@@ -37,6 +37,20 @@ class McrLayoutTest {
         assertEquals(25, parts.get(23).historyIndex());
     }
 
+    @Test void riversKeepTheirGridWhileLateWallStacksMoveAside() {
+        var view = top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.mcr(3, 12, 0, ignored -> {});
+        var scene = McrTableScene.build(view);
+        var river = scene.stream().filter(piece -> piece.area() == McrTableScene.Area.RIVER).toList();
+        assertTrue(river.stream().anyMatch(piece -> view.seats().get(piece.seat()).river().size() > 18));
+        for (var piece : river) {
+            var local = top.skyeyefast.mchjong.world.TableGeometry.orient(piece.position().x, 0, piece.position().z, (4 - piece.seat()) % 4);
+            double column = (local.x + TableIndicator.HALF_WIDTH) / TileDimensions.LARGE.width() - .5;
+            assertEquals(Math.round(column), column, 1e-6);
+            assertTrue(column >= 0 && column < McrRiverLayout.COLUMNS);
+        }
+        WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
+    }
+
     @Test void sourcesChooseLeftMiddleRightAndEveryKongIsOneFlatRow() {
         for (int from : new int[]{3, 2, 1}) {
             var triplet = ChineseMeldLayout.of(new Meld(Meld.Type.TRIPLET, List.of(0, 1, 2), from, 0), 0, false, TileDimensions.LARGE);

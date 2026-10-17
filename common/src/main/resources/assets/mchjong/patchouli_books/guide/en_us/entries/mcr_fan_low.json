@@ -10,6 +10,14 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.intro.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_low.intro.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_low.outside_hand",
       "anchor": "outside_hand"
     },

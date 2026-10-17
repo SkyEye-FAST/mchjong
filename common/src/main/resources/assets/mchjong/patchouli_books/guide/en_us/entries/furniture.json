@@ -14,11 +14,31 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.stools"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.stools.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.furniture.cloth"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.furniture.cloth.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.storage"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.storage.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.storage.continued_2"
     },
     {
       "type": "patchouli:text",
@@ -36,6 +56,10 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.furniture.manual"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.manual.continued_1"
     },
     {
       "type": "patchouli:crafting",

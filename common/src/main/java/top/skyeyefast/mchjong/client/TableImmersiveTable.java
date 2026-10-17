@@ -69,6 +69,9 @@ final class TableImmersiveTable {
         if (view.seats().get(0).variant() != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI) {
             var occupied = new java.util.ArrayList<ChineseTableLayout.Bounds>();
             occupied.add(new ChineseTableLayout.Bounds(net.minecraft.world.phys.Vec3.ZERO, 0, .53, .53));
+            var positions = ChineseTableLayout.rivers(view.seats().stream().map(player ->
+                (int) player.river().stream().filter(d -> !d.called()).count()).toList(), dimensions);
+            occupied.addAll(ChineseTableLayout.riverBounds(positions, dimensions));
             for (int seat = 0; seat < players; seat++) {
                 var player = view.seats().get(seat);
                 int owner = seat;
@@ -89,8 +92,6 @@ final class TableImmersiveTable {
                             ? RiichiTableScene.DRAW_GAP : 0), 0,
                         ChineseTableLayout.handZ(dimensions), seat), seat * 90, player.exposed() || view.layHandsOpen(), dimensions));
             }
-            var positions = ChineseTableLayout.rivers(view.seats().stream().map(player ->
-                (int) player.river().stream().filter(d -> !d.called()).count()).toList(), occupied, dimensions);
             for (int seat = 0; seat < players; seat++) riverPositions.put(seat, positions.get(seat));
         }
         // The frame and cloth use exactly the same camera as the tile geometry.

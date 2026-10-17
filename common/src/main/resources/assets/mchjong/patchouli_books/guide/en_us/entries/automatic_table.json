@@ -9,6 +9,14 @@
       "text": "manual.mchjong.entry.automatic_table.intro"
     },
     {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.automatic_table.intro.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.automatic_table.intro.continued_2"
+    },
+    {
       "type": "mchjong:upgrade_recipe",
       "text": "manual.mchjong.entry.automatic_table.upgrade"
     }

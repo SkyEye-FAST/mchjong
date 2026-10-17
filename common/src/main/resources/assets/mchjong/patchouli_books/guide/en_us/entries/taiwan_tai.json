@@ -14,6 +14,18 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.combining"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.combining.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_tai.combining.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_tai.heavenly_win",
       "anchor": "heavenly_win"
     },

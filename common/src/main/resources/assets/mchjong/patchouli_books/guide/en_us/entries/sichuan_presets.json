@@ -14,6 +14,18 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_presets.common.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_presets.common.continued_3"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.sichuan_presets.common.table"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_presets.differences"
     },
     {
@@ -23,6 +35,18 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_presets.differences.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_presets.differences.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_presets.differences.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_presets.differences.continued_5"
     }
   ]
 }

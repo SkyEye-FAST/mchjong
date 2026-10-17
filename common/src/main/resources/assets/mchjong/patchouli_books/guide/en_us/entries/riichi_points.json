@@ -13,8 +13,16 @@
       "text": "manual.mchjong.entry.riichi_points.fu.continued_1"
     },
     {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_points.fu.table"
+    },
+    {
       "type": "patchouli:text",
-      "text": "manual.mchjong.entry.riichi_points.fu.continued_2"
+      "text": "manual.mchjong.entry.riichi_points.fu_total"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.fu_total.continued_1"
     },
     {
       "type": "patchouli:text",
@@ -26,11 +34,27 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.points.continued_2"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_points.points.table"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_points.limits"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_points.limits.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_points.limits.continued_2"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_points.limits.table"
     }
   ]
 }

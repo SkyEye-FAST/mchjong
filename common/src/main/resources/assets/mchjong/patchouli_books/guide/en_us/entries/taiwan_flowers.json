@@ -11,6 +11,22 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_flowers.flowers.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flowers.flowers.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flowers.play"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flowers.play.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_flowers.play.continued_2"
     }
   ]
 }

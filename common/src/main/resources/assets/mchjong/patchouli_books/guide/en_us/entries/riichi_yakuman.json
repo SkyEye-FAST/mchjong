@@ -14,6 +14,10 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_yakuman.intro.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_yakuman.kokushi_musou",
       "anchor": "kokushi_musou"
     },

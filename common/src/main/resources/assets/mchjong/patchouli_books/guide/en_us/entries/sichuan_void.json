@@ -11,6 +11,14 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_void.void.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_void.void.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_void.void.continued_3"
     }
   ]
 }

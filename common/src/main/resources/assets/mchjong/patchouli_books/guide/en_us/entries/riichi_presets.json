@@ -14,6 +14,14 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.choice.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.choice.continued_3"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.scores"
     },
     {
@@ -23,6 +31,10 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.scores.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.scores.continued_3"
     },
     {
       "type": "patchouli:text",
@@ -43,6 +55,14 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.floating.continued_2"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_presets.floating.table"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.online"
     },
     {
@@ -55,6 +75,10 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.online.continued_3"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.competition"
     },
     {
@@ -63,11 +87,27 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.competition.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.pao"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_presets.pao.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.pao.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.pao.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_presets.pao.continued_4"
     }
   ]
 }

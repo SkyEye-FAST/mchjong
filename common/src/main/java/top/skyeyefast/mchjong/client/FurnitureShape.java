@@ -9,6 +9,38 @@ import org.joml.Vector3f;
 public final class FurnitureShape {
     private FurnitureShape() {}
 
+    /** Cuboid on a 32-texel/block grid, with pixel UV origins in down/up/north/south/west/east order. */
+    static void uvBox(PoseStack pose, VertexConsumer out, int x, int y, int z,
+            int width, int height, int depth, int textureSize, int light, int... uv) {
+        float x0 = x / 32f, y0 = y / 32f, z0 = z / 32f;
+        float x1 = (x + width) / 32f, y1 = (y + height) / 32f, z1 = (z + depth) / 32f;
+        uvQuad(pose, out, light, textureSize, uv[0], uv[1], width, depth,
+            x0,y0,z0, x1,y0,z0, x1,y0,z1, x0,y0,z1);
+        uvQuad(pose, out, light, textureSize, uv[2], uv[3], width, depth,
+            x0,y1,z1, x1,y1,z1, x1,y1,z0, x0,y1,z0);
+        uvQuad(pose, out, light, textureSize, uv[4], uv[5], width, height,
+            x1,y0,z0, x0,y0,z0, x0,y1,z0, x1,y1,z0);
+        uvQuad(pose, out, light, textureSize, uv[6], uv[7], width, height,
+            x0,y0,z1, x1,y0,z1, x1,y1,z1, x0,y1,z1);
+        uvQuad(pose, out, light, textureSize, uv[8], uv[9], depth, height,
+            x0,y0,z0, x0,y0,z1, x0,y1,z1, x0,y1,z0);
+        uvQuad(pose, out, light, textureSize, uv[10], uv[11], depth, height,
+            x1,y0,z1, x1,y0,z0, x1,y1,z0, x1,y1,z1);
+    }
+
+    private static void uvQuad(PoseStack pose, VertexConsumer out, int light, int size,
+            int u, int v, int width, int height, float... p) {
+        var normal = new Vector3f(p[3]-p[0], p[4]-p[1], p[5]-p[2])
+            .cross(new Vector3f(p[9]-p[0], p[10]-p[1], p[11]-p[2])).normalize();
+        for (int i = 0; i < 4; i++) {
+            out.vertex(pose.last().pose(), p[3*i], p[3*i+1], p[3*i+2]).color(-1)
+                .uv((u + (i == 1 || i == 2 ? width : 0)) / (float) size,
+                    (v + (i < 2 ? height : 0)) / (float) size)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
+                .normal(pose.last().normal(), normal.x, normal.y, normal.z).endVertex();
+        }
+    }
+
     public static void box(PoseStack pose, VertexConsumer out, float x0, float y0, float z0,
             float x1, float y1, float z1, int color, int light) {
         box(pose, out, x0, y0, z0, x1, y1, z1, color, light, true, true);

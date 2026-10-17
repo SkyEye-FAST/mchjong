@@ -81,9 +81,15 @@ public final class SichuanTableScene {
     }
 
     private static List<Piece> build(List<Integer> slots, List<SichuanView.Seat> seats, boolean ended, boolean eastWestLongWall) {
-        var pieces = new ArrayList<>(wall(slots, eastWestLongWall));
+        var rivers = seats.stream().map(player -> player.river().stream().filter(discard -> !discard.claimed()).toList()).toList();
+        var positions = ChineseTableLayout.rivers(rivers.stream().map(List::size).toList(), DIMENSIONS);
+        var riverBounds = ChineseTableLayout.riverBounds(positions, DIMENSIONS);
+        var pieces = new ArrayList<>(wall(slots, eastWestLongWall).stream().map(piece -> new Piece(piece.tile(), piece.seat(), piece.area(),
+            piece.index(), ChineseTableLayout.clearOfRivers(piece.position(), piece.yaw(), riverBounds, DIMENSIONS),
+            piece.yaw(), piece.flat(), piece.back())).toList());
         var occupied = new ArrayList<>(pieces.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
         occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
+        occupied.addAll(riverBounds);
         for (int seat = 0; seat < 4; seat++) {
             var player = seats.get(seat);
             int owner = seat;
@@ -114,10 +120,6 @@ public final class SichuanTableScene {
             pieces.stream().filter(piece -> piece.area() == Area.HAND).forEach(piece ->
                 occupied.add(ChineseTableLayout.bounds(piece.position(), piece.yaw(), piece.flat(), DIMENSIONS)));
         }
-        var rivers = seats.stream().map(player -> player.river().stream().filter(discard -> !discard.claimed()).toList()).toList();
-        var riverOccupied = new ArrayList<>(pieces.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
-        riverOccupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
-        var positions = ChineseTableLayout.rivers(rivers.stream().map(List::size).toList(), riverOccupied, DIMENSIONS);
         for (int seat = 0; seat < 4; seat++) {
             int index = 0;
             for (int history = 0; history < seats.get(seat).river().size(); history++) {
