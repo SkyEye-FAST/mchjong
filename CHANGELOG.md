@@ -62,6 +62,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Keep MCR, Sichuan mahjong and Taiwanese mahjong rivers on a fixed six-column grid that starts at the left edge of the center indicator. Wall rails leave the first three river rows free, and later rows push the remaining wall stacks back toward their owners instead of moving discards elsewhere.
 - Show the player information tooltip over a table seat as separate lines instead of one line with line-feed placeholder glyphs.
 - Use Chow and Pung for Taiwanese mahjong actions in English, name the Sichuan mahjong table and replay entries after the game instead of SBR, write the blood-battle preset name in Chinese and Japanese without the English abbreviation, write the MCR settlement title with the full game name in Chinese, and use Title Case for English table and settlement titles.
 - Keep room member control captions complete, stop offering removal for disconnected members, and use the same Close Room caption in both close-room confirmations.

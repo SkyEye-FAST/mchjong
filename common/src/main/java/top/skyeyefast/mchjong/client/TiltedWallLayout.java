@@ -12,7 +12,9 @@ record TiltedWallLayout(int stacks, double pitch, float angle, double centerX, d
         // Perpendicular neighboring ends clear by .012 along their own axes.
         double corner = halfLength + height / 2 + .012;
         double limit = top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH - .045;
-        double outward = Math.max(TableIndicator.HALF_WIDTH + height * 1.5 + .06,
+        // Like an automatic table's lift, the rail leaves the first three river rows free; later rows push stacks aside.
+        double river = TableIndicator.HALF_WIDTH + .005 + 3 * height;
+        double outward = Math.max(s * TableIndicator.HALF_WIDTH + c * river + height / 2 + .005,
             (c * (corner + halfLength) + s * height / 2 - limit) / (c + s));
         double along = corner - outward;
         return new TiltedWallLayout(stacks, width, ANGLE,
