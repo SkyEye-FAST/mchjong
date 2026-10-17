@@ -18,11 +18,27 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.dora.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.dora.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.dora.continued_5"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_dora.presets"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_dora.presets.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_dora.presets.continued_2"
     }
   ]
 }

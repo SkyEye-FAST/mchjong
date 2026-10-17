@@ -14,11 +14,27 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_furiten.furiten.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_furiten.furiten.continued_3"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_furiten.clear"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_furiten.clear.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_furiten.clear.continued_2"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_furiten.clear.table"
     }
   ]
 }

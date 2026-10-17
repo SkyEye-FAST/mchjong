@@ -18,6 +18,18 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.calls.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.calls.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.calls.continued_5"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_calls.kuitan",
       "anchor": "kuitan"
     },
@@ -28,6 +40,22 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_calls.kuitan.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.kuikae"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.kuikae.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.kuikae.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_calls.kuikae.continued_3"
     }
   ]
 }

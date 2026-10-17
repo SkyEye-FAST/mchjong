@@ -15,6 +15,42 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_rounds.rounds.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.rounds.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.dealer"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.dealer.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.dealer.continued_2"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_rounds.dealer.table"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.honba"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.honba.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_rounds.honba.continued_2"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_rounds.honba.table"
     }
   ]
 }

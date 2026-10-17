@@ -14,6 +14,34 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.kongs.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.kongs.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.kongs.continued_4"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.sichuan_kongs.kongs.table"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.robbing"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.robbing.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.robbing.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_kongs.shooting"
     },
     {
@@ -27,6 +55,38 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_kongs.shooting.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.shooting.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.shooting.continued_5"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.examples"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.examples.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.examples.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.examples.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.examples.continued_4"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_kongs.examples.continued_5"
     }
   ]
 }

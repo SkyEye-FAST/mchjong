@@ -10,6 +10,18 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.kans.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.kans.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.kans.continued_3"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_kans.after"
     },
     {
@@ -19,6 +31,10 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_kans.after.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_kans.after.continued_3"
     }
   ]
 }

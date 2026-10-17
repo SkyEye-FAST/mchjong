@@ -13,6 +13,14 @@
       "text": "manual.mchjong.entry.riichi_winning.shape.continued_1"
     },
     {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.shape.continued_2"
+    },
+    {
+      "type": "patchouli:empty",
+      "draw_filler": false
+    },
+    {
       "type": "mchjong:example",
       "text": "manual.mchjong.entry.riichi_winning.example",
       "tiles": "123m 456m 789p 234s 55p",
@@ -34,7 +42,31 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.win.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.tenpai"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.tenpai.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.tenpai.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_winning.requirement"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.requirement.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_winning.requirement.continued_2"
     }
   ]
 }

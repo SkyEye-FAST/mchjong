@@ -11,6 +11,10 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.maid.maid.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.maid.maid.continued_2"
     }
   ]
 }

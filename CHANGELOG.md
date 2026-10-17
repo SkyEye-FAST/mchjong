@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Show fu, payment multiples, limit hands, uma, kong payments, dye values, stick and card kits and similar fixed values in the Mahjong Manual as tables on a new `mchjong:table` page, include the table text in the in-game rule explanations, and rewrite colon and semicolon lists in all four languages as sentences.
 - Enable MCR on ordinary mahjong tables with manual wall handling, flower replacements, craftable scoring cards and debt cards, and physical drawer settlement; Sichuan mahjong and Taiwanese mahjong still require automatic tables.
 - Enable Taiwanese mahjong and Sichuan mahjong on ordinary mahjong tables, so every variant can use either kind of table: manual wall handling, three dice for Taiwanese mahjong, Taiwanese flower replacements, the Sichuan dealer's jump tiles, manual draws and scoring-card settlement. Computer opponents now draw their winds at every ordinary table, and preset mahjong boxes hold three dice.
 - Show the automatic mahjong table upgrade, point-stick marking, Red Five and dye recipes as one-example diagrams in the Mahjong Manual, remove recipe text that repeats the recipe diagrams, and describe in-world actions as left-clicks and right-clicks.

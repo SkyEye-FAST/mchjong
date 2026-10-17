@@ -11,6 +11,18 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.taiwan_passing.passing.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_passing.lifting"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_passing.lifting.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.taiwan_passing.lifting.continued_2"
     }
   ]
 }

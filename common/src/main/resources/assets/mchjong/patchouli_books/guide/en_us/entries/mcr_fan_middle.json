@@ -10,6 +10,14 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.intro.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_middle.intro.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_middle.pure_straight",
       "anchor": "pure_straight"
     },

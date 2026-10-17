@@ -26,7 +26,19 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_winning.minimum.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_winning.false"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_winning.false.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_winning.false.continued_2"
     }
   ]
 }

@@ -11,6 +11,18 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_passing.passing.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_passing.passing.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_passing.passing.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_passing.passing.continued_4"
     }
   ]
 }

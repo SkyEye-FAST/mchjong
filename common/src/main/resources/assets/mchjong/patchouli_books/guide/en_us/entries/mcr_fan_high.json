@@ -10,6 +10,14 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.intro.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_fan_high.intro.continued_2"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_fan_high.big_four_winds",
       "anchor": "big_four_winds"
     },
