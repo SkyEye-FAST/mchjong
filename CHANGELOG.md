@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-17
+
 ### Changed
 
 - Show fu, payment multiples, limit hands, uma, kong payments, dye values, stick and card kits and similar fixed values in the Mahjong Manual as tables on a new `mchjong:table` page, include the table text in the in-game rule explanations, and rewrite colon and semicolon lists in all four languages as sentences.
@@ -557,7 +559,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.9.1...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.10.0...HEAD
+[0.10.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.10.0
 [0.9.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.9.1
 [0.9.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.9.0
 [0.8.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.2
