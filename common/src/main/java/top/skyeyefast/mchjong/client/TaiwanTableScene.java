@@ -55,7 +55,12 @@ public final class TaiwanTableScene {
     }
 
     public static List<Piece> build(TaiwanView view) {
-        var result = new ArrayList<>(wall(view.wall()));
+        var rivers = view.seats().stream().map(TaiwanView.Seat::river).toList();
+        var positions = ChineseTableLayout.rivers(rivers.stream().map(List::size).toList(), DIMENSIONS);
+        var riverBounds = ChineseTableLayout.riverBounds(positions, DIMENSIONS);
+        var result = new ArrayList<>(wall(view.wall()).stream().map(piece -> new Piece(piece.tile(), piece.seat(), piece.area(),
+            piece.index(), ChineseTableLayout.clearOfRivers(piece.position(), piece.yaw(), riverBounds, DIMENSIONS),
+            piece.yaw(), piece.flat(), piece.back())).toList());
         if (view.handling() != null && (view.phase() == top.skyeyefast.mchjong.engine.TaiwanGame.Phase.SHUFFLE
             || view.phase() == top.skyeyefast.mchjong.engine.TaiwanGame.Phase.BUILD_WALL)) {
             // Unbuilt sides lie face down in the middle of the table, each tile owned by the seat that builds it.
@@ -72,6 +77,7 @@ public final class TaiwanTableScene {
         }
         var occupied = new ArrayList<>(result.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
         occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
+        occupied.addAll(riverBounds);
         for (int seat = 0; seat < 4; seat++) {
             var player = view.seats().get(seat);
             var hand = seat == view.recipient() ? player.concealed() : Collections.nCopies(player.concealedCount(), Tile.HIDDEN);
@@ -110,10 +116,6 @@ public final class TaiwanTableScene {
             result.stream().filter(piece -> piece.area() == Area.HAND).forEach(piece ->
                 occupied.add(ChineseTableLayout.bounds(piece.position(), piece.yaw(), piece.flat(), DIMENSIONS)));
         }
-        var rivers = view.seats().stream().map(TaiwanView.Seat::river).toList();
-        var riverOccupied = new ArrayList<>(result.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat(), DIMENSIONS)).toList());
-        riverOccupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
-        var positions = ChineseTableLayout.rivers(rivers.stream().map(List::size).toList(), riverOccupied, DIMENSIONS);
         for (int seat = 0; seat < 4; seat++) for (int index = 0; index < rivers.get(seat).size(); index++) {
             var part = rivers.get(seat).get(index);
             var position = positions.get(seat).get(index);

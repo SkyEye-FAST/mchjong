@@ -18,6 +18,18 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.base.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_fan.base.continued_4"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.sichuan_fan.base.table"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_fan.all_pungs",
       "anchor": "all_pungs"
     },

@@ -48,10 +48,15 @@
         30,
         0
       ],
+      "translation": [
+        -1,
+        4,
+        -1
+      ],
       "scale": [
-        0.7,
-        0.7,
-        0.7
+        0.6,
+        0.6,
+        0.6
       ]
     },
     "firstperson_lefthand": {
@@ -60,10 +65,15 @@
         30,
         0
       ],
+      "translation": [
+        -1,
+        4,
+        -1
+      ],
       "scale": [
-        0.7,
-        0.7,
-        0.7
+        0.6,
+        0.6,
+        0.6
       ]
     },
     "thirdperson_righthand": {

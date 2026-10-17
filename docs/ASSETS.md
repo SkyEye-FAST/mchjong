@@ -21,6 +21,7 @@ Other replacement paths under `assets/mchjong/` include:
 | Default tile-back pattern | `textures/tile/back.png` |
 | Tile materials | `textures/tile_material/` |
 | Cloth pattern | `textures/furniture/cloth_pattern.png` |
+| Mahjong box model texture | `textures/furniture/mahjong_box.png` |
 | Physical point sticks | `textures/point_stick/<points>.png` |
 | Physical scoring cards | `textures/scoring_card/<points>.png` |
 | Default riichi-stick model and texture | `models/item/riichi_stick.json`, `textures/item/riichi_stick.png` |
@@ -48,6 +49,13 @@ those anchors so rule explanations continue to reach the matching award. A
 `mchjong:example` tile diagram occupies a spread: two consecutive pages, starting
 on an even page index, with matching `text`, `tiles` and `face` fields. Tile
 diagrams use the playing atlas and the selected regional face preset.
+
+A `mchjong:table` page holds one translation key in its `text` field. Each line
+of the translated text is a table row, `|` separates cells, `$(br)` breaks a
+line inside a cell, the first row is the header, a first line without `|` is a
+caption, and a blank line starts another table on the same page. Keep the tables
+within one page, and place a table page directly after the text pages of the
+section it belongs to, so rule explanations include it.
 
 ## Preset ZIPs
 

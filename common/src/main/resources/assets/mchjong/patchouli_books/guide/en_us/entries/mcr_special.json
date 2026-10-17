@@ -10,15 +10,15 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.mcr_special.pairs.continued_1"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_special.knitted"
     },
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.mcr_special.knitted.continued_1"
-    },
-    {
-      "type": "patchouli:empty",
-      "draw_filler": false
     },
     {
       "type": "mchjong:example",

@@ -14,6 +14,18 @@
     },
     {
       "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_riichi.riichi.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_riichi.riichi.continued_3"
+    },
+    {
+      "type": "mchjong:table",
+      "text": "manual.mchjong.entry.riichi_riichi.riichi.table"
+    },
+    {
+      "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_riichi.after"
     },
     {
@@ -23,6 +35,22 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.riichi_riichi.after.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_riichi.after.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_riichi.deposits"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_riichi.deposits.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi_riichi.deposits.continued_2"
     }
   ]
 }

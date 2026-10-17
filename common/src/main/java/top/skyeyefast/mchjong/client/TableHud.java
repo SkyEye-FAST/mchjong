@@ -95,7 +95,7 @@ final class TableHud {
                 if (settings.show(TableSettings.Information.RANKS)) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.rank", 1 + state.seats().stream().filter(other -> other.points() > p.points()).count()));
                 if (settings.show(TableSettings.Information.COUNTS)) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.counts", p.hand().size(), p.river().size(), p.norths().size()));
                 hover = hover.copy().append("\n").append(RoomMembers.presence(member.presence()));
-                g.setTooltipForNextFrame(font, hover, mouseX, mouseY);
+                g.setTooltipForNextFrame(font, font.split(hover, 260), mouseX, mouseY);
             }
         }
         if (room.exitVote() == null && state.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {

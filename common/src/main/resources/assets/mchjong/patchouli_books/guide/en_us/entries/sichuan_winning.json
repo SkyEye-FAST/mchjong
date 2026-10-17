@@ -13,6 +13,22 @@
       "text": "manual.mchjong.entry.sichuan_winning.shape.continued_1"
     },
     {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_winning.shape.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_winning.shape.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_winning.shape.continued_4"
+    },
+    {
+      "type": "patchouli:empty",
+      "draw_filler": false
+    },
+    {
       "type": "mchjong:example",
       "text": "manual.mchjong.entry.sichuan_winning.example",
       "tiles": "1111m 22m 33m 44p 55p 66p",
@@ -27,6 +43,22 @@
     {
       "type": "patchouli:text",
       "text": "manual.mchjong.entry.sichuan_winning.battle"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_winning.battle.continued_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_winning.battle.continued_2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_winning.battle.continued_3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.sichuan_winning.battle.continued_4"
     }
   ]
 }
