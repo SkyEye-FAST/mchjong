@@ -50,6 +50,13 @@ those anchors so rule explanations continue to reach the matching award. A
 on an even page index, with matching `text`, `tiles` and `face` fields. Tile
 diagrams use the playing atlas and the selected regional face preset.
 
+A `mchjong:table` page holds one translation key in its `text` field. Each line
+of the translated text is a table row, `|` separates cells, `$(br)` breaks a
+line inside a cell, the first row is the header, a first line without `|` is a
+caption, and a blank line starts another table on the same page. Keep the tables
+within one page, and place a table page directly after the text pages of the
+section it belongs to, so rule explanations include it.
+
 ## Preset ZIPs
 
 Client presets go in `config/mchjong/presets/<category>/`; shared server presets
